@@ -1,0 +1,33 @@
+/* Header H1 Title Styles */
+#site-title {
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000,
+    2px 2px 0 #000,
+    0 0 10px rgba(0, 0, 0, 0.8) !important;
+  font-weight: bold !important;
+  letter-spacing: 2px !important;
+}
+
+#site-title:hover {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000,
+    2px 2px 0 #000,
+    0 0 15px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Subtitle style */
+#site-subtitle {
+  color: rgba(255, 255, 255, 0.7) !important;
+  text-shadow: 
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 8px rgba(0, 0, 0, 0.7) !important;
+}
