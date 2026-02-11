@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/2026/02/11/ffmpeg%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B%EF%BC%88windows%EF%BC%89/</loc>
+    
+    <lastmod>2026-02-11</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/categories/index.html</loc>
     
     <lastmod>2026-02-11</lastmod>
@@ -63,6 +72,34 @@
     <priority>1.0</priority>
   </url>
 
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/ffmpeg/</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/%E5%AE%89%E8%A3%85/</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/%E6%95%99%E7%A8%8B/</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/windows/</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
   
   <url>
     <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/%E5%8D%9A%E5%AE%A2/</loc>
