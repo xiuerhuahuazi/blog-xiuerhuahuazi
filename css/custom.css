@@ -31,3 +31,382 @@
     1px 1px 0 #000,
     0 0 8px rgba(0, 0, 0, 0.7) !important;
 }
+
+/* Hide Scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;
+}
+
+::-webkit-scrollbar-track {
+  display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+::-webkit-scrollbar-corner {
+  display: none;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+/* Hide scrollbar for all elements */
+html, body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* Frosted Glass Effect for Cards and Containers */
+.recent-post-item,
+.card-widget,
+#recent-posts,
+#post-info,
+.article-meta-wrap,
+.tag-cloud,
+.category-list,
+.site-author-card,
+.links-of-author,
+.sidebar-panel,
+#articleslide,
+.swiper-slide,
+.swiper-wrapper,
+#bbtalk-show,
+.curtain,
+.menus,
+.nav-links,
+.pagination,
+.page-number,
+.comments,
+.comment-position,
+.tabs-comment,
+.respond,
+#comments,
+#footer,
+#page-header,
+#nav,
+.site-brand-container,
+.site-info-wrap,
+.content-wrap,
+.main,
+.main-inner,
+.header,
+.footer,
+.nav,
+.menu,
+.menu-item,
+.sidebar,
+.sidebar-inner,
+.sidebar-wrapper,
+#sidebar-dimmer,
+.back-to-top,
+.post-toc,
+.toc-child,
+.toc-link,
+.author-info,
+#author_info,
+#author_avatar,
+#socials,
+.social-links,
+.social-links-item,
+.friend-links,
+.friend-link,
+.article-sort-item,
+.article-sort-item img,
+.archive-article-inner,
+.archive-article-title,
+#archive-nav,
+#category-nav,
+#tag-nav,
+.page-nav,
+.post-copyright,
+.post-reward,
+.reward-container,
+#rewardBtn,
+#qr,
+#qrcode,
+.qrcode-img,
+.post-widgets,
+.social-like,
+.share-icons,
+.share-icon,
+.relatedPosts,
+#relatedPosts,
+#post-nav,
+#busuanzi_value_page_pv,
+#busuanzi_value_site_pv,
+#busuanzi_value_site_uv,
+.site-data,
+.data-item,
+.notice-content,
+.notice-item,
+.reading-progress,
+.progress-bar {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .recent-post-item,
+[data-theme="dark"] .card-widget,
+[data-theme="dark"] #recent-posts,
+[data-theme="dark"] #post-info,
+[data-theme="dark"] .article-meta-wrap {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 0 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hover effects */
+.recent-post-item:hover,
+.card-widget:hover,
+#recent-posts:hover {
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 
+    0 6px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 0 30px rgba(255, 255, 255, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Special styling for navigation */
+#nav,
+.nav,
+.menu,
+.menu-item {
+  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(15px) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+/* Footer styling */
+#footer,
+.footer,
+.site-footer {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px 12px 0 0 !important;
+  box-shadow: 
+    0 -4px 30px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Article cards */
+.recent-post-item {
+  margin-bottom: 20px !important;
+  padding: 20px !important;
+}
+
+.recent-post-info {
+  padding: 0 10px !important;
+}
+
+.article-title {
+  font-size: 1.2em !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  text-shadow: 
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000 !important;
+}
+
+/* Avatar styling */
+.site-author-image {
+  border-radius: 50% !important;
+  box-shadow: 
+    0 0 20px rgba(0, 0, 0, 0.3),
+    0 0 0 4px rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.5s ease !important;
+}
+
+.site-author-image:hover {
+  transform: rotate(360deg) scale(1.1) !important;
+  box-shadow: 
+    0 0 30px rgba(0, 0, 0, 0.4),
+    0 0 0 6px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Sidebar styling */
+.sidebar {
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0 12px 12px 0 !important;
+  box-shadow: 
+    4px 0 30px rgba(0, 0, 0, 0.1),
+    inset -1px 0 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* TOC styling */
+.post-toc,
+.toc-child {
+  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(15px) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+}
+
+.toc-link {
+  color: #fff !important;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5) !important;
+}
+
+.toc-link:hover,
+.toc-link.active {
+  color: #49d6fb !important;
+  text-shadow: 0 0 10px rgba(73, 214, 251, 0.5) !important;
+}
+
+/* Pagination styling */
+.pagination,
+.page-number,
+.next,
+.prev {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  margin: 0 5px !important;
+}
+
+.pagination .page-number:hover,
+.pagination .next:hover,
+.pagination .prev:hover {
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Social icons */
+.social-icon,
+.social-icon:hover {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 50% !important;
+  padding: 8px !important;
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Tag and category badges */
+.tag-cloud a,
+.category-list-item,
+.article-meta__tags,
+.post-meta__tags {
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 15px !important;
+  padding: 4px 12px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Search box */
+#search-button,
+#search-button:hover,
+.local-search-popup,
+.search-dialog {
+  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(15px) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Code blocks */
+pre,
+.code-container,
+.highlight {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
+  border-radius: 12px !important;
+  box-shadow: 
+    0 4px 30px rgba(0, 0, 0, 0.2),
+    inset 0 0 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Quote blocks */
+blockquote {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-left: 4px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+/* Table styling */
+table {
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+table th,
+table td {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Post navigation */
+#post-nav,
+.next-post,
+.prev-post {
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 10px !important;
+}
+
+/* Comments section */
+.comments,
+#comments,
+.comments-area {
+  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(15px) !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 15px !important;
+}
+
+/* Notice boxes */
+.notice,
+.alert,
+.tip,
+.warning,
+.danger {
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 10px !important;
+}
