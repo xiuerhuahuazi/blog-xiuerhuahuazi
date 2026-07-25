@@ -65,9 +65,63 @@
   </url>
   
 
+    <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/2026/07/26/Hermes-Agent-DeepSeek-V4-模型名弃用问题的排查与修复/</loc>
+    
+    <lastmod>2026-07-26</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
   <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/archives/2026/07/index.html</loc>
+    
+    <lastmod>2026-07-26</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/deepseek/</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/hermes-agent/</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/LLM/</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/troubleshooting/</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/NAS/</loc>
+    <lastmod>2026-07-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+
+<url>
     <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi</loc>
-    <lastmod>2026-02-11</lastmod>
+    <lastmod>2026-07-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
