@@ -119,9 +119,39 @@
   </url>
   
 
-<url>
+  <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/2026/07/27/SSH-Docker-Alias-简化Hermes启动命令/</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+    <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/archives/2026/07/index.html</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+    <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/nas/</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+    <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/hermes-agent/</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+    <url>
+    <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/tags/教程/</loc>
+    <lastmod>2026-07-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
     <loc>https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-07-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
