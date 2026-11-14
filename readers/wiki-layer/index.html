@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>你的 LLM 在烧 token——Karpathy 找到了省下 90% 的办法｜Your LLM Is Burning Through Tokens - Karpathy Found a Way to Save 90%</title>
+<meta name="description" content="你的 LLM 在烧 token——Karpathy 找到了省下 90% 的办法｜Your LLM Is Burning Through Tokens - Karpathy Found a Way to Save 90%：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/wiki-layer/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="你的 LLM 在烧 token——Karpathy 找到了省下 90% 的办法">
+<meta property="og:description" content="把「每次上传文件」换成「先编译成 Wiki，再提问」：一篇把 Karpathy 的 LLM Wiki 讲成四步流程的短文">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/wiki-layer/">
+<meta property="og:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/wiki-layer/media/cover.jpg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">X Article · Bonsai (@bonsaixbt) · 2026-05-26</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Your LLM Is Burning Through Tokens - Karpathy Found a Way to Save 90%</span><span class="h1-zh">你的 LLM 在烧 token——Karpathy 找到了省下 90% 的办法</span></h1><div class="hero-meta"><span>原文 690 词</span><span>中文 1500 字</span><span>逐句对照 <i>66</i> 句</span><span>预计 6 分钟</span><span><a href="https://x.com/bonsaixbt/status/2059266993950277656" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><figure class="cover"><img src="media/cover.jpg" alt="原文封面：黑白 AI 插画，两只枯瘦的手分别托着一枚透明圆盘和一颗水晶"><figcaption>题图｜原文封面（AI 生成的黑白插画）。它与正文论证无关，只起氛围作用；正文本身没有任何配图。</figcaption></figure><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：Karpathy 的做法是「先编译、再提问」——让 LLM 把原始文件一次性清洗、结构化、互链成 Markdown 知识库，之后只在知识库上工作，不再反复上传原件。</li><li><b>为什么省词元</b>：传统做法每次提问都重新读文档，词元花在重复劳动上；编译一次之后，重复查询的开销就降下来了。原文给的数字是「重复查询最高省 70–90%」，标题写成了 90%。</li><li><b>三个部分</b>：raw/（不可改动的原料文件夹）、wiki/（LLM 维护的 Markdown 知识库文件夹），以及一组「指令与模板」文件——原文把它们也叫 folder，其实是文件。三者的分工：Wiki 层＝这套做法；wiki/＝那个文件夹；知识库＝文件夹里的 Markdown 内容。</li><li><b>四步流程</b>：建项目 → 在 Claude 里跑一个「结构化智能体」把 raw/ 编译成 wiki/ → 用 Obsidian 打开看知识图谱 → 以后直接说「用 wiki/ 里的库」。</li><li><b>什么时候值得用</b>：同主题 10–20 份以上文档、数据常更新、经常产出内容、涉及机密信息——原文给的是四个场景，不是硬门槛。</li><li><b>原文没回答的三处</b>：70–90% 怎么测的、用云端 Claude 编译时「什么都不用上传」怎么成立、这套「Wiki 层」在 Karpathy 原文里叫什么——本页用译注标了。</li></ul><div class="compare"><div class="cmp"><h3>传统做法：每次上传，每次重读</h3><ol><li>把几十份文件塞给模型，每次提问都重新读一遍</li><li>词元花在重复阅读上，问得越多越贵</li><li>文件之间没有链接，关联靠模型当场猜</li><li>文件之间的关联容易漏，答案质量不稳定</li><li>没有积累：这次懂了，下次从头来</li></ol></div><div class="cmp win"><h3>本文做法：先编译成 Wiki，再提问</h3><ol><li>LLM 一次性清洗、结构化、互链成 Markdown</li><li>之后只在 wiki/ 上工作，不再碰原始文件</li><li>[[双链]]把文档连起来，Obsidian 里能看图</li><li>重复查询省词元（原文：最高 70–90%）</li><li>知识库会持续生长、自我更新</li></ol></div></div><p class="ov-foot cmp-foot">这是原文的对照，不是实测：标题取了区间上限 90%，正文写的是「最高 70–90%」，而且原文没给测法（见译注 N2）。</p><p class="ov-foot">读法建议：全文很短，5 分钟能读完。先看下面的对比卡，再读「结构」和「四步」两节；术语卡是给外行补工程词汇的，读到不懂的词悬停一下即可。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>这篇短文讲一个很具体的做法：把「每次上传文件」换成「让 LLM 先编译一次」。原料放进 raw/，LLM 清洗、结构化、互链成 wiki/ 里的 Markdown，之后提问就只在这个干净的知识库上取数。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">More specifically, we’re going to discuss how to build a <span class='term' data-term='knowledge base'>knowledge base</span> system inspired by Andrej Karpathy</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">更具体地说，我们要聊的是：怎么搭一套受 Andrej Karpathy 启发的<span class='term' data-term='knowledge base'>知识库</span>系统。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">One of the biggest problems with <span class='term' data-term='llm'>large language models</span> is having to repeatedly upload and reprocess the same <span class='term' data-term='raw files'>raw files</span> over and over again</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0"><span class='term' data-term='llm'>大语言模型</span>（LLM）最大的问题之一，就是同一批<span class='term' data-term='raw files'>原始文件</span>你得一遍又一遍地上传、重新处理。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">LLMs waste huge amounts of <span class='term' data-term='token'>tokens</span> re-reading documents, lose <span class='term' data-term='context'>context</span> between files, sometimes miss important relationships, and often produce less accurate answers because of it</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">LLM 会浪费大量<span class='term' data-term='token'>词元</span>去反复读同样的文档，文件之间还会丢失<span class='term' data-term='context'>上下文</span>，有时漏掉重要的关联，常常因此给出不那么准确的答案。</span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">Karpathy’s solution is the <span class='term' data-term='wiki layer'>Wiki Layer</span> (LLM Wiki)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">Karpathy 给出的答案是「<span class='term' data-term='wiki layer'>Wiki 层</span>」（Wiki Layer，也叫 LLM Wiki）。<sup class='tn' data-note='N1'>1</sup></span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">Don’t forget to bookmark this article so you can read it later or come back to it whenever you need it</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">别忘了收藏这篇文章：留到以后读，或者需要的时候再回来。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b5-0">The idea is simple, but incredibly powerful:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b5-0">思路很简单，但威力极大：</span></p></div></div>
+<div class="row" data-rid="intro-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b6-0">The LLM cleans, structures, and links all of your data once, then stops working with raw files entirely and instead operates on a clean, organized knowledge base</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b6-0">LLM 先把你的全部数据一次性清洗、结构化、互链；之后它完全不碰原始文件，只在一个干净、有组织的知识库上工作。</span></p></div></div>
+<div class="row" data-rid="intro-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b7-0">As a result, you get:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b7-0">于是你会得到：</span></p></div></div>
+<div class="row" data-rid="intro-b8"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="intro-b8-0-0">massive token savings (up to 70-90% on repeated queries)</span></li><li><span class="s" data-k="intro-b8-1-0">significantly better answer quality and relevance</span></li><li><span class="s" data-k="intro-b8-2-0">automatic links between documents</span></li><li><span class="s" data-k="intro-b8-3-0">a visual <span class='term' data-term='knowledge graph'>knowledge graph</span></span></li><li><span class="s" data-k="intro-b8-4-0">a system that continuously grows and updates itself over time</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="intro-b8-0-0">大幅节省词元（重复查询时最高省 70–90%）<sup class='tn' data-note='N2'>2</sup></span></li><li><span class="s" data-k="intro-b8-1-0">明显更好的答案质量与相关性</span></li><li><span class="s" data-k="intro-b8-2-0">文档之间自动互链</span></li><li><span class="s" data-k="intro-b8-3-0">一张可视化的<span class='term' data-term='knowledge graph'>知识图谱</span></span></li><li><span class="s" data-k="intro-b8-4-0">一套会随时间不断生长、自我更新的系统</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-structure">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">The Structure of the Wiki Layer</span><span class="h-zh">Wiki 层的结构</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>三个文件夹就是全部：raw/ 是不可改的原料，wiki/ 是 LLM 自己维护的 Markdown 知识库，第三样是规则——清洗方式、模板、链接、元数据。注意原文的编号从 2 开始（见译注 N3）。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="structure-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b0-0">The entire system is built around three core folders:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b0-0">整套系统围绕三个核心文件夹搭建：</span></p></div></div>
+<div class="row" data-rid="structure-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="structure-b1-0-0">raw/ - immutable source files</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="structure-b1-0-0">raw/——不可改动的原始文件</span></li></ul></div></div>
+<div class="row" data-rid="structure-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b2-0">This is where all original materials are stored: HTML pages, PDFs, text notes, screenshots, spreadsheets, and any other raw data</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b2-0">所有原始材料都放这儿：HTML 页面、PDF、文字笔记、截图、表格，以及任何其他原始数据。</span></p></div></div>
+<div class="row" data-rid="structure-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b3-0">This folder is never edited manually, it remains the single source of truth</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b3-0">这个文件夹从不手动改动，它始终是唯一的事实来源。</span></p></div></div>
+<div class="row" data-rid="structure-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b4-0">2. wiki/ - the main knowledge base</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b4-0">2. wiki/——主知识库<sup class='tn' data-note='N3'>3</sup></span></p></div></div>
+<div class="row" data-rid="structure-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b5-0">Clean, well-structured <span class='term' data-term='markdown'>Markdown</span> files generated and maintained by the LLM itself</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b5-0">由 LLM 自己生成并维护的、干净且结构良好的 <span class='term' data-term='markdown'>Markdown</span> 文件。</span></p></div></div>
+<div class="row" data-rid="structure-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b6-0">This becomes the primary workspace the model interacts with going forward</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b6-0">从此以后，这就是模型主要打交道的工作区。</span></p></div></div>
+<div class="row" data-rid="structure-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b7-0">3. Instructions and templates</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b7-0">3. 指令与模板</span></p></div></div>
+<div class="row" data-rid="structure-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b8-0">Separate files that define all the rules:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b8-0">单独的文件，用来定下所有规则：</span></p></div></div>
+<div class="row" data-rid="structure-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="structure-b9-0">How data should be cleaned, which templates to use, how links are created, what <span class='term' data-term='metadata'>metadata</span> should be added, and how the knowledge base should be updated over time</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="structure-b9-0">数据该怎么清洗、用哪些模板、链接怎么建、要加哪些<span class='term' data-term='metadata'>元数据</span>，以及知识库该怎样随时间更新。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-steps">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Step-by-Step Guide to Building a Wiki Layer</span><span class="h-zh">搭一个 Wiki 层的四步</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>四步：建项目 → 在 Claude 里跑一个「结构化智能体」把 raw/ 编译成 wiki/ → 用 Obsidian 打开看知识图谱 → 以后直接说「用 wiki/ 里的库」。原文没有给提示词全文，只给了它该做什么。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="steps-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b0-0">1. Set Up the Project</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b0-0">1. 建好项目</span></p></div></div>
+<div class="row" data-rid="steps-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b1-0">Create a root project folder and place all your existing materials inside a raw/ subfolder</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b1-0">建一个项目根文件夹，把你现有的材料全部放进里面的 raw/ 子文件夹。</span></p></div></div>
+<div class="row" data-rid="steps-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b2-0">2. Launch the Structuring <span class='term' data-term='agent'>Agent</span></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b2-0">2. 启动「结构化<span class='term' data-term='agent'>智能体</span>」</span></p></div></div>
+<div class="row" data-rid="steps-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b3-0">In Claude (or any powerful LLM with file and code support), provide a dedicated <span class='term' data-term='system prompt'>system prompt</span></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b3-0">在 Claude（或任何支持文件与代码的强模型）里，给它一段专用的<span class='term' data-term='system prompt'>系统提示词</span>。</span></p></div></div>
+<div class="row" data-rid="steps-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b4-0">The agent will automatically:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b4-0">这个智能体会自动：</span></p></div></div>
+<div class="row" data-rid="steps-b5"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="steps-b5-0-0">clean files from technical junk, ads, and unnecessary formatting</span></li><li><span class="s" data-k="steps-b5-1-0">convert everything into clean, readable Markdown</span></li><li><span class="s" data-k="steps-b5-2-0">apply predefined templates</span></li><li><span class="s" data-k="steps-b5-3-0">create internal <span class='term' data-term='wiki link'>wiki links</span> ([[Page_Name]])</span></li><li><span class="s" data-k="steps-b5-4-0">add metadata and establish relationships between documents</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="steps-b5-0-0">清掉文件里的技术性杂物（残留代码、乱码等）、广告和多余的格式</span></li><li><span class="s" data-k="steps-b5-1-0">把所有东西转成干净、可读的 Markdown</span></li><li><span class="s" data-k="steps-b5-2-0">套用预先定好的模板</span></li><li><span class="s" data-k="steps-b5-3-0">建立内部的 <span class='term' data-term='wiki link'>Wiki 链接</span>（[[Page_Name]]）</span></li><li><span class="s" data-k="steps-b5-4-0">补上元数据，并在文档之间建立关联</span></li></ul></div></div>
+<div class="row" data-rid="steps-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b6-0">3. Open the Knowledge Base in <span class='term' data-term='obsidian'>Obsidian</span></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b6-0">3. 用 <span class='term' data-term='obsidian'>Obsidian</span> 打开知识库</span></p></div></div>
+<div class="row" data-rid="steps-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b7-0">Simply open the project folder in Obsidian</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b7-0">在 Obsidian 里直接打开项目文件夹就行。</span></p></div></div>
+<div class="row" data-rid="steps-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b8-0">You’ll instantly get:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b8-0">你会立刻得到：</span></p></div></div>
+<div class="row" data-rid="steps-b9"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="steps-b9-0-0">a visual knowledge graph with automatic links</span></li><li><span class="s" data-k="steps-b9-1-0">powerful full-text search</span></li><li><span class="s" data-k="steps-b9-2-0">the ability to jump between connected notes in seconds</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="steps-b9-0-0">一张带自动链接的可视化知识图谱</span></li><li><span class="s" data-k="steps-b9-1-0">强大的全文搜索</span></li><li><span class="s" data-k="steps-b9-2-0">可以几秒钟就在互相关联的笔记之间跳来跳去</span></li></ul></div></div>
+<div class="row" data-rid="steps-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b10-0">4. Work With the Finished Knowledge Base</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b10-0">4. 用这套搭好的知识库干活</span></p></div></div>
+<div class="row" data-rid="steps-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b11-0">Now, instead of uploading dozens of files every time, you simply tell the model:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b11-0">现在，你不用每次上传几十个文件了，只要跟模型说：</span></p></div></div>
+<div class="row" data-rid="steps-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b12-0">“Work with my Wiki database inside the wiki/ folder”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b12-0">「用我 wiki/ 文件夹里的知识库来干活」</span></p></div></div>
+<div class="row" data-rid="steps-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steps-b13-0">The LLM can then instantly retrieve information from a clean, structured, and interconnected knowledge system</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steps-b13-0">LLM 就能立刻从一个干净、有结构、互相连通的知识系统里取信息。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-why">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Why a Wiki Layer Is Better Than the Traditional Approach</span><span class="h-zh">为什么 Wiki 层比传统做法好</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>作者列了五条好处：省词元、更准、可扩展、工作流更好、隐私。其中「隐私」那条要打问号——流程里用云端 Claude 编译时，原始文件其实是要上传的（见译注 N4）。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="why-b0"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="why-b0-0-0">token efficiency - the model no longer has to repeatedly re-read raw files every time you ask a question</span></li><li><span class="s" data-k="why-b0-1-0">higher accuracy - all information is already cleaned, structured, and interconnected</span></li><li><span class="s" data-k="why-b0-2-0">scalability - the knowledge base can easily grow to hundreds or even thousands of documents</span></li><li><span class="s" data-k="why-b0-3-0">better workflow - <span class='typo' data-typo='0'>obsidian</span> turns the entire system into a visual “<span class='term' data-term='second brain'>second brain</span>”</span></li><li><span class="s" data-k="why-b0-4-0">privacy - everything stays on your local machine, nothing needs to be uploaded to the cloud</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="why-b0-0-0">词元效率——你每次提问，模型都不必再反复重读原始文件</span></li><li><span class="s" data-k="why-b0-1-0">更高的准确度——所有信息都已经清洗、结构化、互链好了</span></li><li><span class="s" data-k="why-b0-2-0">可扩展性——知识库能轻松长到几百甚至几千份文档</span></li><li><span class="s" data-k="why-b0-3-0">更好的工作流——Obsidian 把整套系统变成一个可视化的「<span class='term' data-term='second brain'>第二大脑</span>」</span></li><li><span class="s" data-k="why-b0-4-0">隐私——一切都留在你的本机，什么都不用上传到云端。<sup class='tn' data-note='N4'>4</sup></span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-when">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">When You Should Start Using a Wiki Layer</span><span class="h-zh">什么时候该开始用 Wiki 层</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>四条触发条件：同主题 10–20 份以上文档、数据常更新、经常产出内容、涉及机密信息。原文都写成「你已经……」的场景，不是硬门槛。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="when-b0"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="when-b0-0-0">you already have more than 10-20 documents on the same topic</span></li><li><span class="s" data-k="when-b0-1-0">your data is constantly being updated or expanded</span></li><li><span class="s" data-k="when-b0-2-0">you regularly generate content, reports, research or ideas</span></li><li><span class="s" data-k="when-b0-3-0">you work with personal, business, or confidential information</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="when-b0-0-0">同一主题的文档已经超过一二十份</span></li><li><span class="s" data-k="when-b0-1-0">你的数据一直在更新或扩充</span></li><li><span class="s" data-k="when-b0-2-0">你经常产出内容、报告、研究或想法</span></li><li><span class="s" data-k="when-b0-3-0">你手上是个人、商业或机密信息</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-adapt">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Adapting the System to Your Own Needs</span><span class="h-zh">把它改成适合你的样子</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节讲可定制：模板、必填元数据、链接规则、更新与冲突的处理方式。作者没有给具体配置示例，只列了可以定义什么。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="adapt-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="adapt-b0-0">The agent prompt is fully customizable</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="adapt-b0-0">智能体的提示词完全可定制。</span></p></div></div>
+<div class="row" data-rid="adapt-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="adapt-b1-0">Inside the instruction files, you can define:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="adapt-b1-0">在前面说的「指令与模板」文件里，你可以规定：</span></p></div></div>
+<div class="row" data-rid="adapt-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="adapt-b2-0-0">which templates should be used for different document types</span></li><li><span class="s" data-k="adapt-b2-1-0">which metadata fields are required (date, author, tags, summary, etc.)</span></li><li><span class="s" data-k="adapt-b2-2-0">the rules for creating links between notes</span></li><li><span class="s" data-k="adapt-b2-3-0">how the agent should handle updates and conflicts</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="adapt-b2-0-0">不同类型的文档分别用哪些模板</span></li><li><span class="s" data-k="adapt-b2-1-0">哪些元数据字段是必填的（日期、作者、标签、摘要等）</span></li><li><span class="s" data-k="adapt-b2-2-0">笔记之间建链接的规则</span></li><li><span class="s" data-k="adapt-b2-3-0">智能体该怎么处理更新与冲突</span></li></ul></div></div>
+<div class="row" data-rid="adapt-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="adapt-b3-0">This makes the Wiki Layer useful for almost any field:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="adapt-b3-0">这让 Wiki 层几乎在任何领域都用得上：</span></p></div></div>
+<div class="row" data-rid="adapt-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="adapt-b4-0">marketing, software development, learning, health, business analytics, and much more</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="adapt-b4-0">市场营销、软件开发、学习、健康、商业分析，以及更多。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-final">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Final Thoughts</span><span class="h-zh">最后几句</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>收尾是作者的总结 + 引流（转发、关注）。「省 90%」这个数字在标题里，正文写的是「最高 70–90%」，且没有给测量方法（见译注 N2）。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="final-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="final-b0-0">Karpathy’s Wiki Layer transforms a chaotic collection of files into a true AI knowledge base</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="final-b0-0">Karpathy 的 Wiki 层，把一堆乱糟糟的文件变成一个真正的 AI 知识库。</span></p></div></div>
+<div class="row" data-rid="final-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="final-b1-0">Once you spend time setting it up, you get a powerful, constantly evolving system that dramatically improves both the quality and speed of working with any LLM</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="final-b1-0">只要花时间把它搭起来，你得到的是一套强大、持续演进的系统，它能大幅提升你和任何 LLM 协作时的质量与速度。</span></p></div></div>
+<div class="row" data-rid="final-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="final-b2-0">If you enjoyed this article or found it useful:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="final-b2-0">如果你喜欢这篇、或者觉得它有用：</span></p></div></div>
+<div class="row" data-rid="final-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="final-b3-0-0">I’d really appreciate a repost</span></li><li><span class="s" data-k="final-b3-1-0">And don’t forget to follow @bonsaixbt</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="final-b3-0-0">转发一下，我会很感激</span></li><li><span class="s" data-k="final-b3-1-0">也别忘了关注 @bonsaixbt</span></li></ul></div></div>
+<div class="row" data-rid="final-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="final-b4-0">I share AI-related content and discoveries daily, so don’t lose me in your feed 👀</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="final-b4-0">我每天都分享 AI 相关内容与发现，别让我在你的信息流里走丢了 👀</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文的引用合并后指向 4 个不同目的地。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>LLM Wiki：让大模型维护个人知识库的模式</h4><p class="lnk-site">gist.github.com · LLM Wiki</p><p><b>这是什么：</b>Karpathy 2026 年 4 月的「想法文件」：让 LLM 把 raw/ 原始资料编译成持续维护的 Markdown 维基。</p><p><b>为什么值得点：</b>补足本文开头「Karpathy’s solution is the Wiki Layer (LLM Wiki)」的出处：三层结构、raw/ 不可变、LLM 全权维护都来自这里。</p><p><b>访问说明：</b>译者补充：正文未直接引用</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>它把系统拆成三层：raw/ 只读原始资料、wiki/ 由模型生成的 Markdown 页面、以及规定工作规则的「规则文件」（schema，比如 CLAUDE.md）；日常只做三件事——ingest 摄入新资料、query 提问（好答案回填 wiki）、lint 定期体检矛盾、孤页和缺链。作者强调这是一份给 agent 抄的「想法文件」，不是现成软件，并用 index.md 做目录、log.md 记时间线；全文没有「省 90% token」这类的数字。</p><ul><li>三层：raw/（不可变原始资料）→ wiki/（LLM 维护的 Markdown）→ schema（规则文档）</li><li>三种操作：ingest 摄入、query 提问、lint 体检；好答案回填 wiki，让探索也复利</li><li>index.md + log.md 支撑中等规模（约百份资料）的检索，不必再搭向量检索（把文字转成数字再搜索的系统）</li><li>定位是「idea file」，要复制给你的 agent，由它按你的领域落地</li></ul></details><a class="lnk-open" href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip bg">背景</span><span class="chip">建议第 2 个读</span></div><h4>Obsidian：把本地 Markdown 文件夹变成知识库的笔记软件</h4><p class="lnk-site">obsidian.md · Obsidian - Sharpen your thinking</p><p><b>这是什么：</b>一款免费的本地笔记软件：直接打开一个装满 .md 文件的文件夹，就能用双链、关系图谱和全文搜索浏览。</p><p><b>为什么值得点：</b>对应本文 Step 3：说明为什么不用导入数据库——模型写好的 Markdown 文件夹，用它打开就是可视化知识库。</p><p><b>访问说明：</b>译者补充：正文未直接引用</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>官网的卖点是「免费、灵活、私密」：笔记以纯文本存在你自己的设备上，不锁进某家云服务；打开文件夹即可用 [[双链]]、图谱视图和搜索在页面间跳转。本文说「用 Obsidian 打开 wiki/ 就有知识图谱」，靠的就是这些内置功能，不需要额外插件。</p><ul><li>本地 Markdown 文件，数据留在自己电脑上</li><li>双链、图谱视图、全文搜索都是内置功能</li><li>软件免费；Sync 同步和 Publish 发布是另购服务</li><li>官网提供 Windows / macOS / Linux 与移动端下载</li></ul></details><a class="lnk-open" href="https://obsidian.md/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 3 个读</span></div><h4>Claude Code：能读写文件、运行命令的 AI 编程智能体</h4><p class="lnk-site">claude.com · Claude Code by Anthropic | AI coding agent and assistant</p><p><b>这是什么：</b>Anthropic 的编程智能体：在你的终端或 IDE 里读代码库、改文件、运行命令，权限由你设定。</p><p><b>为什么值得点：</b>解释 Step 2 为什么强调「any powerful LLM with file and code support」：编译 wiki 要批量读写 Markdown、跑脚本，聊天框做不到。</p><p><b>访问说明：</b>译者补充：正文未直接引用</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>官方页面把它定位成能接手修 bug、写测试、多日迁移的 agent：它理解代码库、编辑文件、执行命令，你设定权限并在桌面、终端、IDE 或 Slack 里复核。本文让它干的正是这类活——批量读 raw/、生成 wiki/ 页面、维护链接和索引；没有文件读写与命令执行能力的聊天窗口，无法自动做完这些步骤。</p><ul><li>能读代码库、编辑文件、执行命令</li><li>权限由用户设定，改动可逐步审阅</li><li>终端、IDE、桌面、Slack 多入口</li><li>页面提供 macOS / Linux / Windows 下载入口</li></ul></details><a class="lnk-open" href="https://claude.com/product/claude-code" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip">可选</span><span class="chip">建议第 4 个读</span></div><h4>Karpathy 的 LLM wiki 真有用吗？用了一个月后的实测评价</h4><p class="lnk-site">rdworldonline.com · Is Karpathy’s viral LLM wiki helpful? My opinion after one month of experimenting with one.</p><p><b>这是什么：</b>R&amp;D World 2026 年 6 月的实测：作者用编码 agent 搭了约 760 页的 LLM wiki，复盘一个月体验。</p><p><b>为什么值得点：</b>给外行补「RAG vs 编译成 wiki」的对照：RAG 每次提问都去原始文档捞片段，wiki 则先把知识编译成互链页面；还说了这套做法何时划算、何时不值得。</p><p><b>访问说明：</b>译者补充：正文未直接引用</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章一句话讲清区别：RAG 是每次提问都从原始文档里检索片段、现场拼接；LLM wiki 是让模型维护一套持久的 Markdown 页面，新资料进来就更新相关页面、标出与旧说法矛盾之处。作者实测一个月后的结论很克制——维护花的时间和省下的时间大致打平，只在「某个主题已经挖得很深」时才划算，而且 wiki 不会自动更新，也免不了人工核查。</p><ul><li>RAG：查询时检索原始片段；LLM wiki：摄入时先编译、查询时直接复用</li><li>作者搭了约 760 页，其中约 430 页达到可公开质量</li><li>一个月实测：投入与节省大致打平，窄而深的主题才划算</li><li>不会自动更新，仍需人工核查，别把它当省事神器</li></ul></details><a class="lnk-open" href="https://www.rdworldonline.com/is-karpathys-viral-llm-wiki-helpful-mostly-yes-one-month-in/" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 14 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">large language models</span><span class="gl-zh">大语言模型</span></div><p class="gl-def">ChatGPT 背后那类 AI 模型：读过海量文字，回答时一个词一个词往下接。本文要解决的，就是它每次都得把材料重读一遍的问题。</p><p class="gl-ana">像一个读过很多书、但每次只能看几页的助手。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tokens</span><span class="gl-zh">词元</span></div><p class="gl-def">词元是模型读写的计量单位：它把文字切成小片段，一个片段算一个词元，收费和长度上限都按它算。本文节省的就是它。</p><p class="gl-ana">像按条计费的短信，只不过它数的不是字，而是词元。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context</span><span class="gl-zh">上下文</span></div><p class="gl-def">上下文指模型这一次能看到的全部内容：你的问题、上传的文件、前面聊过的记录都算。文件一多就装不下、彼此接不上，本文用整理好的知识库来缓解。</p><p class="gl-ana">像一张一次只能摊开这么大的桌面，文件越多越摊不开。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">knowledge base</span><span class="gl-zh">知识库</span></div><p class="gl-def">知识库是事先整理好、按规则归档的资料集合，模型直接在里面查，不必每次重读原始文件。本文里它就是那个 wiki/ 文件夹。</p><p class="gl-ana">像把散落资料分类上架之后的图书馆。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Wiki Layer</span><span class="gl-zh">Wiki 层</span></div><p class="gl-def">Wiki 层是原始文件和模型之间的一层整理结果：模型先把材料清洗、结构化、互相链接，之后只在这一层工作，不再反复读原始文件。</p><p class="gl-ana">像把一堆原书重新编成一套带索引的百科。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">raw files</span><span class="gl-zh">原始文件</span></div><p class="gl-def">原始文件指你手头未经处理的材料：网页、PDF、文字笔记、截图、表格等。本文把它们放进 raw/ 文件夹，不手动修改，作为唯一可信来源。</p><p class="gl-ana">像做菜前买回来、还没洗切的原材料。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Markdown</span><span class="gl-zh">Markdown</span></div><p class="gl-def">Markdown 是一种用纯文本写格式的简单标记法：用符号表示标题、列表、加粗，文件小、人和程序都好读。本文让模型把所有材料都转成它。</p><p class="gl-ana">像用记事本就能写出标题和列表的简易排版法。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Obsidian</span><span class="gl-zh">Obsidian</span></div><p class="gl-def">Obsidian 是本地笔记软件：打开文件夹就能读里面的 Markdown，并按链接画成网络图。本文用它把 wiki/ 变成可点可搜的界面。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">knowledge graph</span><span class="gl-zh">知识图谱</span></div><p class="gl-def">知识图谱是把笔记间的链接画成一张网络图：每篇笔记是一个点，链接是连接的线。本文靠它一眼看出哪些主题连在一起，由 Obsidian 显示。</p><p class="gl-ana">像地铁线路图：站点是笔记，线路是它们之间的链接。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">system prompt</span><span class="gl-zh">系统提示词</span></div><p class="gl-def">系统提示词是开工前一次性交代给模型的角色和规则，比如怎么清洗、用哪个模板、加哪些字段。它和每次提问分开，本文靠它约束结构化智能体。</p><p class="gl-ana">像新员工入职时拿到的那份岗位说明书。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体</span></div><p class="gl-def">智能体是能自己连做多步的 AI：不只回一句话，还会读文件、改文件、按规则批量处理。本文的「结构化智能体」负责把 raw/ 转成 wiki/。</p><p class="gl-ana">像一个照清单办事的实习生，不用你每步都盯着。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">metadata</span><span class="gl-zh">元数据</span></div><p class="gl-def">元数据是描述一篇笔记本身的信息，比如日期、作者、标签、摘要，不是正文。本文让模型给每篇 wiki 笔记统一加上这些字段，方便筛选和互相引用。</p><p class="gl-ana">像书脊上的标签：不读内容也知道是哪本书。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">second brain</span><span class="gl-zh">第二大脑</span></div><p class="gl-def">第二大脑指把外部资料系统化存起来、随时可查的个人知识库，等于给记忆配一个外挂仓库。本文用它形容 Obsidian 里那张可视化知识网络。</p><p class="gl-ana">像给大脑配了一块可随时检索的外接硬盘。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">wiki links</span><span class="gl-zh">Wiki 链接</span></div><p class="gl-def">Wiki 链接是笔记之间用双方括号写的内部链接，形如 [[Page_Name]]，点一下即可跳转。本文让模型生成这类链接，把笔记连成一张网。</p><p class="gl-ana">像文档里可以点击跳转的「参见」超链接。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>「Karpathy 的 Wiki 层」到底出自哪里</h4><p>原文只给了括号里的 (LLM Wiki)，没有链接。它对应 Andrej Karpathy 2026 年 4 月公开的 LLM Wiki 构想（GitHub gist 与他的 X 帖「LLM Knowledge Bases」）：raw/ 放原始资料、LLM 增量编译成 markdown wiki、用 schema 约束、定期 lint。三处差别值得知道：① gist 没有把「Wiki Layer」当专名（它写的是「There are three layers」「The LLM owns this layer entirely」），这个名字是本文作者起的；② gist 与本文都是「先编译一次、之后持续维护」，差别在 gist 把 ingest / query / lint 写成日常操作，本文只用一句「随时间更新」带过；③ 本文也没提 gist 里的 index.md / log.md。文末「延伸阅读」第 1 条就是出处。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>标题的 90% 与正文的 70–90%</h4><p>标题取了上限「Save 90%」，正文写的是「up to 70-90% on repeated queries」——两者不是两个数。真正的问题是：标题只取上限，而且 70–90% 怎么测出来的没交代（哪种查询、多长的文档、和什么基线比）。另外，Karpathy 的 gist 里「90%」「percent」「token」的命中数都是 0——这个百分比出自本文作者，不是 Karpathy 的量测。两处都按原文照录、不做统一；建议把它当成「量级上的省」，不要当成精确指标。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>原文的编号从「2.」开始</h4><p>原文列三个文件夹：raw/（这一条是项目符号，没有编号）、「2. wiki/」、「3. Instructions and templates」——「1.」不存在。这是原文的排版瑕疵，不是漏译；本页按原样保留，并在这里备案。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>「什么都不用上传云端」是有条件的</h4><p>这一条只能理解为查询阶段：知识库在你本机，提问时不用再把原始文件传上去（原文并没有明说这个限定）。但第 2 步「在 Claude 里跑结构化智能体」本身就要把 raw/ 的内容交给云端模型处理。想全程不出本机，得换成可本地运行的模型——原文没有交代这一层，不要把它读成「这个方案天然隐私安全」。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 1 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>obsidian</code><p>品牌名 Obsidian 在原文这一处写成了小写（obsidian），全篇其余位置都是大写；按原文照录，不改动，仅在此备案。</p></div></div></section><footer><p>原文版权归 Bonsai（@bonsaixbt）所有。本页是学习用的逐句对照与注释：英文列逐字照录原文，中文列与所有补充材料（速览、术语卡、译注、背景链接）由译者添加并逐处标注。</p><p>原文：<a href="https://x.com/bonsaixbt/status/2059266993950277656" target="_blank" rel="noopener">Your LLM Is Burning Through Tokens - Karpathy Found a Way to Save 90%</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-structure"><span class="dot">●</span>Wiki 层的结构</a><a class="l2" href="#s-steps"><span class="dot">●</span>搭一个 Wiki 层的四步</a><a class="l2" href="#s-why"><span class="dot">●</span>为什么 Wiki 层比传统做法好</a><a class="l2" href="#s-when"><span class="dot">●</span>什么时候该开始用 Wiki 层</a><a class="l2" href="#s-adapt"><span class="dot">●</span>把它改成适合你的样子</a><a class="l2" href="#s-final"><span class="dot">●</span>最后几句</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"LLM Wiki：让大模型维护个人知识库的模式","title_en":"LLM Wiki","site":"gist.github.com","what_zh":"Karpathy 2026 年 4 月的「想法文件」：让 LLM 把 raw/ 原始资料编译成持续维护的 Markdown 维基。","why_zh":"补足本文开头「Karpathy’s solution is the Wiki Layer (LLM Wiki)」的出处：三层结构、raw/ 不可变、LLM 全权维护都来自这里。","tier":"必读","order":1,"url":"https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f"},"L2":{"title_zh":"Obsidian：把本地 Markdown 文件夹变成知识库的笔记软件","title_en":"Obsidian - Sharpen your thinking","site":"obsidian.md","what_zh":"一款免费的本地笔记软件：直接打开一个装满 .md 文件的文件夹，就能用双链、关系图谱和全文搜索浏览。","why_zh":"对应本文 Step 3：说明为什么不用导入数据库——模型写好的 Markdown 文件夹，用它打开就是可视化知识库。","tier":"背景","order":2,"url":"https://obsidian.md/"},"L3":{"title_zh":"Claude Code：能读写文件、运行命令的 AI 编程智能体","title_en":"Claude Code by Anthropic | AI coding agent and assistant","site":"claude.com","what_zh":"Anthropic 的编程智能体：在你的终端或 IDE 里读代码库、改文件、运行命令，权限由你设定。","why_zh":"解释 Step 2 为什么强调「any powerful LLM with file and code support」：编译 wiki 要批量读写 Markdown、跑脚本，聊天框做不到。","tier":"背景","order":3,"url":"https://claude.com/product/claude-code"},"L4":{"title_zh":"Karpathy 的 LLM wiki 真有用吗？用了一个月后的实测评价","title_en":"Is Karpathy’s viral LLM wiki helpful? My opinion after one month of experimenting with one.","site":"rdworldonline.com","what_zh":"R&D World 2026 年 6 月的实测：作者用编码 agent 搭了约 760 页的 LLM wiki，复盘一个月体验。","why_zh":"给外行补「RAG vs 编译成 wiki」的对照：RAG 每次提问都去原始文档捞片段，wiki 则先把知识编译成互链页面；还说了这套做法何时划算、何时不值得。","tier":"可选","order":4,"url":"https://www.rdworldonline.com/is-karpathys-viral-llm-wiki-helpful-mostly-yes-one-month-in/"}},"terms":{"llm":{"en":"large language models","zh":"大语言模型","def_zh":"ChatGPT 背后那类 AI 模型：读过海量文字，回答时一个词一个词往下接。本文要解决的，就是它每次都得把材料重读一遍的问题。","analogy_zh":"像一个读过很多书、但每次只能看几页的助手。"},"token":{"en":"tokens","zh":"词元","def_zh":"词元是模型读写的计量单位：它把文字切成小片段，一个片段算一个词元，收费和长度上限都按它算。本文节省的就是它。","analogy_zh":"像按条计费的短信，只不过它数的不是字，而是词元。"},"context":{"en":"context","zh":"上下文","def_zh":"上下文指模型这一次能看到的全部内容：你的问题、上传的文件、前面聊过的记录都算。文件一多就装不下、彼此接不上，本文用整理好的知识库来缓解。","analogy_zh":"像一张一次只能摊开这么大的桌面，文件越多越摊不开。"},"knowledge base":{"en":"knowledge base","zh":"知识库","def_zh":"知识库是事先整理好、按规则归档的资料集合，模型直接在里面查，不必每次重读原始文件。本文里它就是那个 wiki/ 文件夹。","analogy_zh":"像把散落资料分类上架之后的图书馆。"},"wiki layer":{"en":"Wiki Layer","zh":"Wiki 层","def_zh":"Wiki 层是原始文件和模型之间的一层整理结果：模型先把材料清洗、结构化、互相链接，之后只在这一层工作，不再反复读原始文件。","analogy_zh":"像把一堆原书重新编成一套带索引的百科。"},"raw files":{"en":"raw files","zh":"原始文件","def_zh":"原始文件指你手头未经处理的材料：网页、PDF、文字笔记、截图、表格等。本文把它们放进 raw/ 文件夹，不手动修改，作为唯一可信来源。","analogy_zh":"像做菜前买回来、还没洗切的原材料。"},"markdown":{"en":"Markdown","zh":"Markdown","def_zh":"Markdown 是一种用纯文本写格式的简单标记法：用符号表示标题、列表、加粗，文件小、人和程序都好读。本文让模型把所有材料都转成它。","analogy_zh":"像用记事本就能写出标题和列表的简易排版法。"},"obsidian":{"en":"Obsidian","zh":"Obsidian","def_zh":"Obsidian 是本地笔记软件：打开文件夹就能读里面的 Markdown，并按链接画成网络图。本文用它把 wiki/ 变成可点可搜的界面。","analogy_zh":null},"knowledge graph":{"en":"knowledge graph","zh":"知识图谱","def_zh":"知识图谱是把笔记间的链接画成一张网络图：每篇笔记是一个点，链接是连接的线。本文靠它一眼看出哪些主题连在一起，由 Obsidian 显示。","analogy_zh":"像地铁线路图：站点是笔记，线路是它们之间的链接。"},"system prompt":{"en":"system prompt","zh":"系统提示词","def_zh":"系统提示词是开工前一次性交代给模型的角色和规则，比如怎么清洗、用哪个模板、加哪些字段。它和每次提问分开，本文靠它约束结构化智能体。","analogy_zh":"像新员工入职时拿到的那份岗位说明书。"},"agent":{"en":"agent","zh":"智能体","def_zh":"智能体是能自己连做多步的 AI：不只回一句话，还会读文件、改文件、按规则批量处理。本文的「结构化智能体」负责把 raw/ 转成 wiki/。","analogy_zh":"像一个照清单办事的实习生，不用你每步都盯着。"},"metadata":{"en":"metadata","zh":"元数据","def_zh":"元数据是描述一篇笔记本身的信息，比如日期、作者、标签、摘要，不是正文。本文让模型给每篇 wiki 笔记统一加上这些字段，方便筛选和互相引用。","analogy_zh":"像书脊上的标签：不读内容也知道是哪本书。"},"second brain":{"en":"second brain","zh":"第二大脑","def_zh":"第二大脑指把外部资料系统化存起来、随时可查的个人知识库，等于给记忆配一个外挂仓库。本文用它形容 Obsidian 里那张可视化知识网络。","analogy_zh":"像给大脑配了一块可随时检索的外接硬盘。"},"wiki link":{"en":"wiki links","zh":"Wiki 链接","def_zh":"Wiki 链接是笔记之间用双方括号写的内部链接，形如 [[Page_Name]]，点一下即可跳转。本文让模型生成这类链接，把笔记连成一张网。","analogy_zh":"像文档里可以点击跳转的「参见」超链接。"}},"notes":{"N1":{"title_zh":"「Karpathy 的 Wiki 层」到底出自哪里","body_zh":"原文只给了括号里的 (LLM Wiki)，没有链接。它对应 Andrej Karpathy 2026 年 4 月公开的 LLM Wiki 构想（GitHub gist 与他的 X 帖「LLM Knowledge Bases」）：raw/ 放原始资料、LLM 增量编译成 markdown wiki、用 schema 约束、定期 lint。三处差别值得知道：① gist 没有把「Wiki Layer」当专名（它写的是「There are three layers」「The LLM owns this layer entirely」），这个名字是本文作者起的；② gist 与本文都是「先编译一次、之后持续维护」，差别在 gist 把 ingest / query / lint 写成日常操作，本文只用一句「随时间更新」带过；③ 本文也没提 gist 里的 index.md / log.md。文末「延伸阅读」第 1 条就是出处。"},"N2":{"title_zh":"标题的 90% 与正文的 70–90%","body_zh":"标题取了上限「Save 90%」，正文写的是「up to 70-90% on repeated queries」——两者不是两个数。真正的问题是：标题只取上限，而且 70–90% 怎么测出来的没交代（哪种查询、多长的文档、和什么基线比）。另外，Karpathy 的 gist 里「90%」「percent」「token」的命中数都是 0——这个百分比出自本文作者，不是 Karpathy 的量测。两处都按原文照录、不做统一；建议把它当成「量级上的省」，不要当成精确指标。"},"N3":{"title_zh":"原文的编号从「2.」开始","body_zh":"原文列三个文件夹：raw/（这一条是项目符号，没有编号）、「2. wiki/」、「3. Instructions and templates」——「1.」不存在。这是原文的排版瑕疵，不是漏译；本页按原样保留，并在这里备案。"},"N4":{"title_zh":"「什么都不用上传云端」是有条件的","body_zh":"这一条只能理解为查询阶段：知识库在你本机，提问时不用再把原始文件传上去（原文并没有明说这个限定）。但第 2 步「在 Claude 里跑结构化智能体」本身就要把 raw/ 的内容交给云端模型处理。想全程不出本机，得换成可本地运行的模型——原文没有交代这一层，不要把它读成「这个方案天然隐私安全」。"}},"typos":[{"quote_en":"obsidian","body_zh":"品牌名 Obsidian 在原文这一处写成了小写（obsidian），全篇其余位置都是大写；按原文照录，不改动，仅在此备案。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

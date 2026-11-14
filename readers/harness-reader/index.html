@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>为长程应用开发设计 harness：生成器 × 评估器｜Harness design for long-running application development</title>
+<meta name="description" content="为长程应用开发设计 harness：生成器 × 评估器｜Harness design for long-running application development：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/harness-reader/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="为长程应用开发设计 harness：生成器 × 评估器">
+<meta property="og:description" content="Anthropic Labs 的工程复盘：把主观设计变成可评分项，让生成与评估两个智能体互相制衡；把多小时的自主编程，做成从规划到验收的流水线。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/harness-reader/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic · Research · 2026-03-24</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Harness design for long-running application development</span><span class="h1-zh">为长程应用开发设计 harness：生成器 × 评估器</span></h1><div class="hero-meta"><span>原文 5030 词</span><span>中文 10200 字</span><span>逐句对照 <i>213</i> 句</span><span>预计 22 分钟</span><span><a href="https://www.anthropic.com/research/harness-design-long-running-apps" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：让负责干活的智能体和负责打分的智能体分开，是这套 harness 的一个有力抓手——主观的前端设计和有标准答案的全栈编程，都能因此从「看着还行」推到「真的能用」。</li><li><b>关键动作 1</b>：先给主观质量写四条可评分标准（设计质量、原创性、工艺、功能性），把「美不美」变成「符不符合我们的设计原则」；再让评估器带着 Playwright MCP 真的打开网页操作、打分、写批评。</li><li><b>关键动作 2</b>：长程任务怕两件事——上下文写满后模型跑偏，以及模型以为自己快到上限就提前收尾（上下文焦虑）。早先的 harness 用「重置上下文 + 结构化交接产物」解决它，代价是编排复杂度、token 开销与延迟；到本文这套，Opus 4.5 已不再需要重置，上下文增长改由 Claude Agent SDK 的自动压缩处理。</li><li><b>关键动作 3</b>：三角色流水线——规划器把一句话扩成完整产品规格，生成器按冲刺逐个特性实现，评估器照「冲刺契约」里的验收标准挑错；每个标准都有硬阈值，不达标这一轮就判失败。更新版（v2）又删掉了冲刺结构，把评估器改成整轮结束时评估一次。</li><li><b>数字</b>：solo 单智能体 20 分钟、9 美元；完整版（v1）harness 6 小时、200 美元（成本是 solo 的 20 倍以上，时间约 18 倍），但 solo 版连核心玩法都是坏的。更新版（v2）去掉冲刺结构后跑 DAW 约 3 小时 50 分、124.70 美元。</li><li><b>结论</b>：模型变强不会让 harness 消失，只会让它移动——每个组件都在编码「模型现在做不到什么」的假设；新模型一到，就该重新压力测试、拆掉不再承重的部件。</li></ul><div class="compare"><div class="cmp"><h3>常见搭法：一个智能体从需求一路做到尾</h3><ol><li>用户给一句话需求，模型自己拆任务、写代码、收尾</li><li>上下文写满就中断或压缩，长任务容易跑偏、提前收尾</li><li>同一个模型既当选手又当裁判，往往「自信地表扬」</li><li>结果：界面看着像做完了，核心功能其实经常是坏的</li></ol></div><div class="cmp win"><h3>本文建议：三个角色 + 外部反馈</h3><ol><li>规划器：一句话 → 完整产品规格，还主动把 AI 功能设计进去</li><li>生成器：按冲刺逐个特性实现，每轮交出可运行的东西</li><li>评估器：用 Playwright 真点真用，按硬性阈值打分并写批评</li><li>结果：主观与客观任务都能收敛；代价是成本约 22 倍（$200 vs $9）、时间约 18 倍（6 小时 vs 20 分钟）</li></ol></div></div><p class="ov-foot cmp-foot">这张卡是译者按全文论证压缩的，不是原文；卡里的成本、时长数字都能在正文表格里找到。</p><p class="ov-foot">读法建议：速览和对比卡是译者按正文压缩的，不是原文；正文里带虚线底线的词可悬停看术语，上标数字是译者注。原文发布于 2026-03-24，文中 Opus 4.5 / 4.6、Sonnet 4.5 是当时的模型版本。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>作者同时推进两件事：让 Claude 做出高质量的前端设计，让它无需人工干预地构建完整应用。两条线都靠提示词工程与 harness 设计把表现推到远超基线，但最终都撞上天花板；于是他借 GAN 的结构设计了「生成器 + 评估器」的多智能体循环，再把同一套思路迁移到长程全栈编程。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Over the past several months I’ve been working on two interconnected problems: getting Claude to produce high-quality frontend designs, and getting it to build complete applications without human intervention.</span> <span class="s" data-k="intro-b0-1">This work originated with earlier efforts on our <a class='lnk' href='https://github.com/anthropics/claude-plugins-official/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md' target='_blank' rel='noopener' data-link='L1'>frontend design skill</a> and <a class='lnk' href='https://www.anthropic.com/research/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L2'>long-running coding agent harness</a>, where my colleagues and I were able to improve Claude’s performance well above baseline through prompt engineering and <span class='term' data-term='harness'>harness</span> design—but both eventually hit ceilings.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">过去几个月，我一直在琢磨两个相互关联的难题：怎么让 Claude 产出高质量的前端设计，怎么让它无需人工干预就能构建出完整应用。</span><span class="s" data-k="intro-b0-1">这项工作源自我们早先的<a class='lnk' href='https://github.com/anthropics/claude-plugins-official/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md' target='_blank' rel='noopener' data-link='L1'>前端设计技能（frontend design skill）</a>和<a class='lnk' href='https://www.anthropic.com/research/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L2'>长程编程智能体的 harness</a>：靠提示词工程和 harness（<span class='term' data-term='harness'>运行框架</span>）设计，我和同事曾把 Claude 的表现提升到远超基线的水平——但这两项早先的工作最终都撞上了天花板。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">To break through, I sought out novel AI engineering approaches that held across two quite different domains, one defined by subjective taste, the other by verifiable correctness and usability.</span> <span class="s" data-k="intro-b1-1">Taking inspiration from <a class='lnk' href='https://en.wikipedia.org/wiki/Generative_adversarial_network' target='_blank' rel='noopener' data-link='L3'>Generative Adversarial Networks</a> (<span class='term' data-term='gan'>GANs</span>), I designed a multi-<span class='term' data-term='agent'>agent</span> structure with a <b><span class='term' data-term='generator'>generator</span></b> and <b><span class='term' data-term='evaluator'>evaluator</span></b> agent.<sup class='tn' data-note='N1'>1</sup></span> <span class="s" data-k="intro-b1-2">Building an evaluator that graded outputs reliably—and with taste—meant first developing a set of criteria that could turn subjective judgments like “is this design good?” into concrete, gradable terms.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">为了突破，我去寻找新的 AI 工程方法，要求它能在两个相当不同的领域同时成立：一个由主观审美定义，另一个由可验证的正确性和可用性定义。</span><span class="s" data-k="intro-b1-1">借鉴<a class='lnk' href='https://en.wikipedia.org/wiki/Generative_adversarial_network' target='_blank' rel='noopener' data-link='L3'>生成对抗网络（GAN）</a>的思路，我设计了一套多<span class='term' data-term='agent'>智能体</span>结构：一个<b><span class='term' data-term='generator'>生成器</span>（generator）</b>加一个<b><span class='term' data-term='evaluator'>评估器</span>（evaluator）</b>智能体（agent）。<sup class='tn' data-note='N1'>1</sup></span><span class="s" data-k="intro-b1-2">要做出一个既能稳定打分、又懂品味的评估器，就得先定义一套标准，把「这个设计好不好？」这类主观判断，变成具体、可评分的表述。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">I then applied these techniques to long-running autonomous coding, carrying over two lessons from our earlier harness work: decomposing the build into tractable chunks, and using structured artifacts to hand off context between sessions.</span> <span class="s" data-k="intro-b2-1">The final result was a three-agent architecture—<span class='term' data-term='planner'>planner</span>, generator, and evaluator—that produced rich <span class='term' data-term='full_stack'>full-stack</span> applications over multi-hour autonomous coding sessions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">之后我把这些方法用到长程自主编程上，并沿用了早先 harness 工作的两条经验：把构建拆成一块块能处理的任务；用结构化产物在会话之间交接上下文。</span><span class="s" data-k="intro-b2-1">最终得到的是一个三智能体架构——<span class='term' data-term='planner'>规划器</span>（planner）、生成器、评估器——它能在持续数小时的自主编程会话里，产出功能丰富的<span class='term' data-term='full_stack'>全栈</span>（full-stack）应用。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-naive">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Why naive implementations fall short</span><span class="h-zh">为什么简单直接的做法不够用</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>过去两代 harness 已经证明：harness 设计能大幅提升长程编程的表现，但仍有两个顽固问题——上下文越写越满导致模型跑偏，以及自己评自己时往往稳定偏向正面。作者把这两点分开处理：前者在早先的 harness 里靠「重置上下文 + 结构化交接」，后者靠「独立的评估器」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="naive-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="naive-b0-0">We've previously shown that harness design has a substantial impact on the effectiveness of long running agentic coding.</span> <span class="s" data-k="naive-b0-1">In an earlier <a class='lnk' href='https://www.anthropic.com/research/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L2'>experiment</a>, we used an initializer agent to decompose a product <span class='term' data-term='spec'>spec</span> into a task list, and a coding agent that implemented the tasks one feature at a time before handing off artifacts to carry context across sessions.</span> <span class="s" data-k="naive-b0-2">The broader developer community has converged on similar insights, with approaches like the "<a class='lnk' href='https://ghuntley.com/ralph/' target='_blank' rel='noopener' data-link='L5'>Ralph Wiggum</a>" method using hooks or scripts to keep agents in continuous iteration cycles.<sup class='tn' data-note='N2'>2</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="naive-b0-0">我们之前已经展示过：harness 设计会显著影响长程 agentic 编程的效果。</span><span class="s" data-k="naive-b0-1">在早先的一次<a class='lnk' href='https://www.anthropic.com/research/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L2'>实验</a>里，我们用一个初始化智能体（initializer agent）把<span class='term' data-term='spec'>产品规格</span>（spec）拆成任务清单，再让一个编程智能体一次实现一个特性，并在会话结束时交出结构化产物来跨会话传递上下文。</span><span class="s" data-k="naive-b0-2">开发者社区也收敛到了类似的洞见：比如「<a class='lnk' href='https://ghuntley.com/ralph/' target='_blank' rel='noopener' data-link='L5'>Ralph Wiggum</a>」方法，用钩子或脚本让智能体一直处在连续迭代的循环里。<sup class='tn' data-note='N2'>2</sup></span></p></div></div>
+<div class="row" data-rid="naive-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="naive-b1-0">But some problems remained persistent.</span> <span class="s" data-k="naive-b1-1">For more complex tasks, the agent still tends to go off the rails over time.</span> <span class="s" data-k="naive-b1-2">While decomposing this issue, we observed two common failure modes with agents executing these sorts of tasks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="naive-b1-0">但有些问题一直顽固地存在。</span><span class="s" data-k="naive-b1-1">任务越复杂，智能体跑着跑着就越容易脱轨。</span><span class="s" data-k="naive-b1-2">在拆解这个问题时，我们观察到智能体执行这类任务时常见的两种失败模式。</span></p></div></div>
+<div class="row" data-rid="naive-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="naive-b2-0">First is that models tend to lose coherence on lengthy tasks as the <span class='term' data-term='context_window'>context window</span> fills (see our post on <a class='lnk' href='https://www.anthropic.com/research/effective-context-engineering-for-ai-agents' target='_blank' rel='noopener' data-link='L4'>context engineering</a>).</span> <span class="s" data-k="naive-b2-1">Some models also exhibit "<span class='term' data-term='context_anxiety'>context anxiety</span>," in which they begin wrapping up work prematurely as they approach what they believe is their context limit.<sup class='tn' data-note='N3'>3</sup></span> <span class="s" data-k="naive-b2-2">Context resets—clearing the context window entirely and starting a fresh agent, combined with a structured <span class='term' data-term='handoff'>handoff</span> that carries the previous agent's state and the next steps—addresses both these issues.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="naive-b2-0">第一，任务一长、<span class='term' data-term='context_window'>上下文窗口</span>（context window）被填满时，模型往往会失去连贯性（参见我们关于<a class='lnk' href='https://www.anthropic.com/research/effective-context-engineering-for-ai-agents' target='_blank' rel='noopener' data-link='L4'>上下文工程（context engineering）</a>的文章）。</span><span class="s" data-k="naive-b2-1">有些模型还会表现出「<span class='term' data-term='context_anxiety'>上下文焦虑</span>（context anxiety）」：当它们觉得自己快到上下文上限时，就会提前开始收尾。<sup class='tn' data-note='N3'>3</sup></span><span class="s" data-k="naive-b2-2">上下文重置（context reset）——把上下文整个清空、启用一个全新的智能体，再配上一份结构化<span class='term' data-term='handoff'>交接产物</span>，带着前一个智能体的状态和下一步计划——能同时解决这两个问题。</span></p></div></div>
+<div class="row" data-rid="naive-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="naive-b3-0">This differs from <span class='term' data-term='compaction'>compaction</span>, where earlier parts of the conversation are summarized in place so the same agent can keep going on a shortened history.<sup class='tn' data-note='N4'>4</sup></span> <span class="s" data-k="naive-b3-1">While compaction preserves continuity, it doesn't give the agent a clean slate, which means context anxiety can still persist.</span> <span class="s" data-k="naive-b3-2">A reset provides a clean slate, at the cost of the handoff artifact having enough state for the next agent to pick up the work cleanly.</span> <span class="s" data-k="naive-b3-3">In our earlier testing, we found Claude Sonnet 4.5 exhibited context anxiety strongly enough that compaction alone wasn't sufficient to enable strong long task performance, so <span class='term' data-term='context_reset'>context resets</span> became essential to the harness design.</span> <span class="s" data-k="naive-b3-4">This solves the core issue, but adds orchestration complexity, token overhead, and latency to each harness run.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="naive-b3-0">这和<span class='term' data-term='compaction'>上下文压缩</span>（compaction）不同：压缩是把对话的早期部分就地摘要，让同一个智能体带着缩短的历史继续干。<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="naive-b3-1">压缩保住了连续性，却没给智能体一个干净的开局，所以上下文焦虑依然可能存在。</span><span class="s" data-k="naive-b3-2">重置给了一个干净的开局，代价是交接产物里必须有足够的状态，让下一个智能体能把工作干净利落地接过去。</span><span class="s" data-k="naive-b3-3">在早先的测试中，我们发现 Claude Sonnet 4.5 的上下文焦虑已经强到单靠压缩不足以支撑出色的长任务表现，于是<span class='term' data-term='context_reset'>上下文重置</span>成了这套 harness 设计中不可缺少的一环。</span><span class="s" data-k="naive-b3-4">这解决了核心问题，但也给每次 harness 运行增加了编排复杂度、token 开销和延迟。</span></p></div></div>
+<div class="row" data-rid="naive-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="naive-b4-0">A second issue, which we haven’t previously addressed, is self-evaluation.</span> <span class="s" data-k="naive-b4-1">When asked to evaluate work they've produced, agents tend to respond by confidently praising the work—even when, to a human observer, the quality is obviously mediocre.</span> <span class="s" data-k="naive-b4-2">This problem is particularly pronounced for subjective tasks like design, where there is no binary check equivalent to a verifiable software test.</span> <span class="s" data-k="naive-b4-3">Whether a layout feels polished or generic is a judgment call, and agents reliably skew positive when grading their own work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="naive-b4-0">第二个问题我们之前没有处理过：自我评估。</span><span class="s" data-k="naive-b4-1">当被要求评价自己产出的工作时，智能体往往会自信地把作品夸一顿——即便在人类观察者看来，质量明显平庸。</span><span class="s" data-k="naive-b4-2">这个问题在「设计」这类主观任务上尤其突出，因为这里没有类似可验证软件测试那样的二元检查。</span><span class="s" data-k="naive-b4-3">一个布局是精致还是平庸，本身就是主观判断；而智能体在给自己的作品打分时，总是稳定地偏向正面。</span></p></div></div>
+<div class="row" data-rid="naive-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="naive-b5-0">However, even on tasks that do have verifiable outcomes, agents still sometimes exhibit poor judgment that impedes their performance while completing the task.</span> <span class="s" data-k="naive-b5-1">Separating the agent doing the work from the agent judging it proves to be a strong lever to address this issue.</span> <span class="s" data-k="naive-b5-2">The separation doesn't immediately eliminate that leniency on its own; the evaluator is still an LLM that is inclined to be generous towards LLM-generated outputs.</span> <span class="s" data-k="naive-b5-3">But tuning a standalone evaluator to be skeptical turns out to be far more tractable than making a generator critical of its own work, and once that external feedback exists, the generator has something concrete to iterate against.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="naive-b5-0">不过，就算任务有可验证的结果，智能体有时仍会判断失准，拖累自己完成任务时的表现。</span><span class="s" data-k="naive-b5-1">事实证明，把「干活的智能体」和「评判的智能体」分开，是解决这个问题的强有力杠杆。</span><span class="s" data-k="naive-b5-2">这种分离本身并不能立刻消除偏袒：评估器仍然是一个 LLM，天然倾向于对 LLM 生成的产出手下留情。</span><span class="s" data-k="naive-b5-3">但把独立的评估器调教成一个爱挑刺的角色，远比让生成器对自己的作品吹毛求疵容易得多；而一旦有了外部反馈，生成器就有了具体的靶子可以反复迭代。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-frontend">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Frontend design: making subjective quality gradable</span><span class="h-zh">前端设计：让主观质量变得可评分</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>前端设计最能暴露「自我评估偏袒」。作者的做法：先把主观质量拆成四条可评分标准（设计质量、原创性、工艺、功能性）并给权重，再让评估器带着 Playwright MCP 真的打开页面研究后再批评，形成「生成 → 评分 → 批评 → 再生成」的循环。分数会提升但不总线性，措辞本身也塑造风格；最典型的是荷兰美术馆案例——第十轮突然把落地页改成了 3D 空间体验。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="frontend-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b0-0">I started by experimenting on frontend design, where the self-evaluation issue was most visible.</span> <span class="s" data-k="frontend-b0-1">Absent any intervention, Claude normally gravitates toward safe, predictable layouts that are technically functional but visually unremarkable.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b0-0">我先从前端设计入手做实验，因为自我评估问题在这里最明显。</span><span class="s" data-k="frontend-b0-1">如果没有任何干预，Claude 通常会被安全、可预测的布局吸引：技术上能用，但视觉上平平无奇。</span></p></div></div>
+<div class="row" data-rid="frontend-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b1-0">Two insights shaped the harness I built for frontend design.</span> <span class="s" data-k="frontend-b1-1">First, while aesthetics can’t be fully reduced to a score—and individual tastes will always vary—they can be improved with <span class='term' data-term='grading_criteria'>grading criteria</span> that encode design principles and preferences.</span> <span class="s" data-k="frontend-b1-2">"Is this design beautiful?" is hard to answer consistently, but "does this follow our principles for good design?" gives Claude something concrete to grade against.</span> <span class="s" data-k="frontend-b1-3">Second, by separating frontend generation from frontend grading, we can create a feedback loop that drives the generator toward stronger outputs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b1-0">有两项洞见塑造了我为前端设计搭的这套 harness。</span><span class="s" data-k="frontend-b1-1">第一，审美虽然没法完全折算成一个分数——而且个人口味总会不同——但可以用编码了设计原则与偏好的<span class='term' data-term='grading_criteria'>评分标准</span>（grading criteria）来改善。</span><span class="s" data-k="frontend-b1-2">「这个设计美不美？」很难有一致的答案；但「它符不符合我们这套好设计的原则？」给了 Claude 一个具体的可评分对象。</span><span class="s" data-k="frontend-b1-3">第二，把前端生成与前端评分拆开，就能造出一个反馈回路，把生成器推向更强的产出。</span></p></div></div>
+<div class="row" data-rid="frontend-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b2-0">With this in mind, I wrote four grading criteria that I gave to both the generator and evaluator agents in their prompts:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b2-0">基于这个思路，我写了四条评分标准，并把它们同时写进生成器和评估器的提示词里：</span></p></div></div>
+<div class="row" data-rid="frontend-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="frontend-b3-0-0"><b>Design quality:</b> Does the design feel like a coherent whole rather than a collection of parts?</span> <span class="s" data-k="frontend-b3-0-1">Strong work here means the colors, typography, layout, imagery, and other details combine to create a distinct mood and identity.</span></li><li><span class="s" data-k="frontend-b3-1-0"><b>Originality:</b> Is there evidence of custom decisions, or is this template layouts, library defaults, and AI-generated patterns?</span> <span class="s" data-k="frontend-b3-1-1">A human designer should recognize deliberate creative choices.</span> <span class="s" data-k="frontend-b3-1-2">Unmodified stock components—or telltale signs of AI generation like purple gradients over white cards—fail here.</span></li><li><span class="s" data-k="frontend-b3-2-0"><b>Craft:</b> Technical execution: typography hierarchy, spacing consistency, color harmony, contrast ratios.</span> <span class="s" data-k="frontend-b3-2-1">This is a competence check rather than a creativity check.</span> <span class="s" data-k="frontend-b3-2-2">Most reasonable implementations do fine here by default; failing means broken fundamentals.</span></li><li><span class="s" data-k="frontend-b3-3-0"><b>Functionality:</b> Usability independent of aesthetics.</span> <span class="s" data-k="frontend-b3-3-1">Can users understand what the interface does, find primary actions, and complete tasks without guessing?</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="frontend-b3-0-0"><b>设计质量（Design quality）：</b>整个设计读起来是一个连贯的整体，还是东拼西凑的一堆零件？</span><span class="s" data-k="frontend-b3-0-1">这一项做得好，意味着颜色、字体、布局、图像等细节组合起来，能营造出独特的气氛和识别度。</span></li><li><span class="s" data-k="frontend-b3-1-0"><b>原创性（Originality）：</b>能看出有定制的决策吗，还是模板布局、库默认样式和 AI 生成套路？</span><span class="s" data-k="frontend-b3-1-1">人类设计师应该能辨认出有意的创作选择。</span><span class="s" data-k="frontend-b3-1-2">未经修改的现成组件——或者「白卡片上叠紫色渐变」这类一眼能看出 AI 生成的标志——这一项就不及格。</span></li><li><span class="s" data-k="frontend-b3-2-0"><b>工艺（Craft）：</b>技术执行：字体层级、间距一致性、色彩和谐、对比度。</span><span class="s" data-k="frontend-b3-2-1">这是能力检查，不是创造力检查。</span><span class="s" data-k="frontend-b3-2-2">大多数像样的实现默认就能过；过不了说明基本功有问题。</span></li><li><span class="s" data-k="frontend-b3-3-0"><b>功能性（Functionality）：</b>与美观无关的可用性。</span><span class="s" data-k="frontend-b3-3-1">用户能看懂界面是干什么的吗？能找到主要操作吗？能不用猜就完成任务吗？</span></li></ul></div></div>
+<div class="row" data-rid="frontend-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b4-0">I emphasized design quality and originality over craft and functionality.</span> <span class="s" data-k="frontend-b4-1">Claude already scored well on craft and functionality by default, as the required technical competence tended to come naturally to the model.</span> <span class="s" data-k="frontend-b4-2">But on design and originality, Claude often produced outputs that were bland at best.</span> <span class="s" data-k="frontend-b4-3">The criteria explicitly penalized highly generic "<span class='term' data-term='ai_slop'>AI slop</span>" patterns, and by weighting design and originality more heavily it pushed the model toward more aesthetic risk-taking.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b4-0">我把设计质量和原创性的权重放在了工艺和功能性之上。</span><span class="s" data-k="frontend-b4-1">Claude 默认在工艺和功能性上得分已经不错，因为这类技术能力模型往往天生就有。</span><span class="s" data-k="frontend-b4-2">但在设计和原创性上，Claude 经常产出顶多算平庸的结果。</span><span class="s" data-k="frontend-b4-3">这套标准会明确惩罚高度模板化的「<span class='term' data-term='ai_slop'>AI 套路化产物</span>（AI slop）」；把设计和原创性的权重调高之后，模型被推向更愿意在审美上冒险。</span></p></div></div>
+<div class="row" data-rid="frontend-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b5-0">I calibrated the evaluator using <span class='term' data-term='few_shot'>few-shot</span> examples with detailed score breakdowns.</span> <span class="s" data-k="frontend-b5-1">This ensured the evaluator’s judgment aligned with my preferences, and reduced score drift across iterations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b5-0">我用带详细分数拆解的<span class='term' data-term='few_shot'>少样本示例</span>（few-shot）来校准评估器。</span><span class="s" data-k="frontend-b5-1">这确保了评估器的判断和我的偏好对齐，也减少了多轮迭代之间的分数漂移。</span></p></div></div>
+<div class="row" data-rid="frontend-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b6-0">I built the loop on the <a class='lnk' href='https://code.claude.com/docs/en/agent-sdk/overview' target='_blank' rel='noopener' data-link='L6'>Claude Agent SDK</a>, which kept the orchestration straightforward.</span> <span class="s" data-k="frontend-b6-1">A generator agent first created an HTML/CSS/JS frontend based on a user prompt.</span> <span class="s" data-k="frontend-b6-2">I gave the evaluator the <span class='term' data-term='playwright_mcp'>Playwright MCP</span>, which let it interact with the live page directly before scoring each criterion and writing a detailed critique.<sup class='tn' data-note='N5'>5</sup></span> <span class="s" data-k="frontend-b6-3">In practice, the evaluator would navigate the page on its own, screenshotting and carefully studying the implementation before producing its assessment.</span> <span class="s" data-k="frontend-b6-4">That feedback flowed back to the generator as input for the next iteration.</span> <span class="s" data-k="frontend-b6-5">I ran 5 to 15 iterations per generation, with each iteration typically pushing the generator in a more distinctive direction as it responded to the evaluator's critique.</span> <span class="s" data-k="frontend-b6-6">Because the evaluator was actively navigating the page rather than scoring a static screenshot, each cycle took real wall-clock time.</span> <span class="s" data-k="frontend-b6-7">Full runs stretched up to four hours.</span> <span class="s" data-k="frontend-b6-8">I also instructed the generator to make a strategic decision after each evaluation: refine the current direction if scores were trending well, or pivot to an entirely different aesthetic if the approach wasn't working.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b6-0">这个循环我搭在<a class='lnk' href='https://code.claude.com/docs/en/agent-sdk/overview' target='_blank' rel='noopener' data-link='L6'>Claude Agent SDK</a>上，编排逻辑因此保持得很直接。</span><span class="s" data-k="frontend-b6-1">生成器智能体先根据用户提示词做出一个 HTML/CSS/JS 前端。</span><span class="s" data-k="frontend-b6-2">我给评估器配上了 Playwright MCP（<span class='term' data-term='playwright_mcp'>浏览器自动化工具</span>），让它能直接和运行中的页面交互，然后再给每条标准打分、写详细批评。<sup class='tn' data-note='N5'>5</sup></span><span class="s" data-k="frontend-b6-3">实际运行时，评估器会自己浏览页面、截图、仔细研究实现，最后给出评估。</span><span class="s" data-k="frontend-b6-4">这些反馈再流回生成器，作为下一轮迭代的输入。</span><span class="s" data-k="frontend-b6-5">每次生成我跑 5 到 15 轮迭代；随着生成器不断回应评估器的批评，每一轮通常都会把它推向更有辨识度的方向。</span><span class="s" data-k="frontend-b6-6">因为评估器是主动在页面上操作，而不是给一张静态截图打分，所以每个循环都实打实消耗真实时间。</span><span class="s" data-k="frontend-b6-7">完整跑一轮最长能拉到四小时。</span><span class="s" data-k="frontend-b6-8">我还要求生成器在每次评估后做一个策略决定：分数趋势好就打磨当前方向；如果这个方向不奏效，就彻底换一种审美。</span></p></div></div>
+<div class="row" data-rid="frontend-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b7-0">Across runs, the evaluator's assessments improved over iterations before plateauing, with headroom still remaining.</span> <span class="s" data-k="frontend-b7-1">Some generations refined incrementally.</span> <span class="s" data-k="frontend-b7-2">Others took sharp aesthetic turns between iterations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b7-0">从多次运行看，评估器的评分会随着迭代提升，然后进入平台期，但仍有提升空间。</span><span class="s" data-k="frontend-b7-1">有些生成是一点点精修出来的。</span><span class="s" data-k="frontend-b7-2">另一些则在迭代之间发生剧烈的审美转向。</span></p></div></div>
+<div class="row" data-rid="frontend-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b8-0">The wording of the criteria steered the generator in ways I didn't fully anticipate.</span> <span class="s" data-k="frontend-b8-1">Including phrases like "the best designs are museum quality" pushed designs toward a particular visual convergence, suggesting that the prompting associated with the criteria directly shaped the character of the output.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b8-0">这些标准的措辞会以我没完全预料到的方式影响生成器。</span><span class="s" data-k="frontend-b8-1">比如写进「最好的设计要有博物馆级水准」这类说法，会把设计推向某种特定的视觉趋同——这说明和标准绑在一起的提示词，直接塑造了产出的性格。</span></p></div></div>
+<div class="row" data-rid="frontend-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b9-0">While scores generally improved over iterations, the pattern was not always cleanly linear.</span> <span class="s" data-k="frontend-b9-1">Later implementations tended to be better as a whole, but I regularly saw cases where I preferred a middle iteration over the last one.</span> <span class="s" data-k="frontend-b9-2">Implementation complexity also tended to increase across rounds, with the generator reaching for more ambitious solutions in response to the evaluator’s feedback.</span> <span class="s" data-k="frontend-b9-3">Even on the first iteration, outputs were noticeably better than a baseline with no prompting at all, suggesting the criteria and associated language themselves steered the model away from generic defaults before any evaluator feedback led to further refinement.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b9-0">虽然分数总体上随迭代提升，但这条曲线并不总是干净的线性关系。</span><span class="s" data-k="frontend-b9-1">后面的实现整体上往往更好，但我也经常遇到更喜欢中间某一轮、而不是最后一轮的情况。</span><span class="s" data-k="frontend-b9-2">实现复杂度也往往一轮比一轮高，生成器会为了回应评估器反馈去尝试更激进的方案。</span><span class="s" data-k="frontend-b9-3">甚至第一轮迭代的产出，就明显好过没有任何提示工程和评分标准加持的基线——这说明在评估器反馈带来进一步改进之前，评分标准和相关措辞本身就已经把模型从通用默认样式上引开了。</span></p></div></div>
+<div class="row" data-rid="frontend-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="frontend-b10-0">In one notable example, I prompted the model to create a website for a Dutch art museum.</span> <span class="s" data-k="frontend-b10-1">By the ninth iteration, it had produced a clean, dark-themed landing page for a fictional museum.</span> <span class="s" data-k="frontend-b10-2">The page was visually polished but largely in line with my expectations.</span> <span class="s" data-k="frontend-b10-3">Then, on the tenth cycle, it scrapped the approach entirely and reimagined the site as a spatial experience: a 3D room with a checkered floor rendered in CSS perspective, artwork hung on the walls in free-form positions, and doorway-based navigation between gallery rooms instead of scroll or click.</span> <span class="s" data-k="frontend-b10-4">It was the kind of creative leap that I hadn't seen before from a single-pass generation.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="frontend-b10-0">有个很典型的例子：我让模型给一家荷兰美术馆做网站。</span><span class="s" data-k="frontend-b10-1">到第九轮迭代，它已经做出了一个干净、深色主题的虚构美术馆落地页。</span><span class="s" data-k="frontend-b10-2">页面视觉上挺精致，但基本在我预期之内。</span><span class="s" data-k="frontend-b10-3">然后在第十轮，它把整个方案推倒重来，把网站重新构想成一种空间体验：一个 3D 房间，棋盘格地板用 CSS 透视渲染出来，画作随意挂在墙上，房间之间靠门洞穿行，而不是滚动或点击。</span><span class="s" data-k="frontend-b10-4">这样的创意跳跃，我在单次生成里从没见过。</span></p></div></div>
+<figure class="row wide fig has-video" id="vid1" data-cap="美术馆视频：10 轮迭代后变成可走动的 3D 展厅"><div class="fig-media has-video"><img class="video-poster" src="media/vid1.png" alt="vid1" loading="lazy"><button class="video-play" type="button" data-video="vid1" data-src="media/slim-vid1.mp4"><b>▶ 播放视频</b><small>1.7 MB · 按需加载</small></button><div class="fig-bar"><span class="vtag">视频按需加载 · 支持拖动</span><a class="vbtn" href="https://cdn.sanity.io/files/4zrzovbb/website/9877febd34432f7f582aecd0023b951223605c6a.mp4" target="_blank" rel="noopener">原站播放 ↗</a></div></div><figcaption><p class="cap-zh"><b>美术馆视频：10 轮迭代后变成可走动的 3D 展厅</b>　视频已内嵌本页（海报取其中一帧）：经过 10 轮反馈，荷兰美术馆网站没有继续打磨落地页，而是改造成可走进的 3D 展厅——DE KAMER 品牌悬在深蓝墙上，三幅荷兰名画挂在墙上、中间的《夜巡》配展签，黑白棋盘地板做出纵深，右侧门洞通往下一间展厅。</p><p class="cap-video">▶ 视频按需加载（1.7 MB，浏览器 Range 请求，点击后才下载）。 <a href="https://cdn.sanity.io/files/4zrzovbb/website/9877febd34432f7f582aecd0023b951223605c6a.mp4" target="_blank" rel="noopener">原站在线版 ↗</a></p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>视频就在本页播放（点 ▶ 即可），海报是其中一帧；先看它，再读下面的文字说明。</li><li>正中《夜巡》下方挂着白底展签 De Nachtwacht / Rembrandt van Rijn, 1642，画名、作者与年份都齐全，展签信息完整。</li><li>棋盘地板近大远小的斜线是 CSS 透视做出来的，正是原文说的 3D room with a checkered floor，不是贴图。</li><li>底部提示 PRESS → 进入下一间展厅、CLICK PAINTINGS 可探索，导航不再靠滚动，而是靠走动与点画。</li></ol><p class="takeaway">一句话：这一版的价值不在页面更精致，而在直接换了一种交互形态。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-scaling">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Scaling to full-stack coding</span><span class="h-zh">扩展到全栈编程</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>把 GAN 式循环搬到全栈开发：规划器把一句话扩成完整产品规格，生成器按冲刺逐个特性实现，评估器用 Playwright 真点真用、按硬阈值判分。三个角色靠「写文件」沟通，每个冲刺前先谈冲刺契约。Opus 4.5 跑完整版（v1）harness 6 小时、200 美元，产出质量肉眼可见地好过 20 分钟、9 美元的 solo 版。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="scaling-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b0-0">With these findings in hand, I applied this GAN-inspired pattern to full-stack development.</span> <span class="s" data-k="scaling-b0-1">The generator-evaluator loop maps naturally onto the software development lifecycle, where code review and <span class='term' data-term='qa'>QA</span> serve the same structural role as the design evaluator.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b0-0">有了这些发现，我把这个受 GAN 启发的模式用到全栈开发上。</span><span class="s" data-k="scaling-b0-1">生成器-评估器循环很自然地对应到软件开发生命周期：代码评审和<span class='term' data-term='qa'>质检</span>（QA）在其中扮演的结构性角色，正对应设计评估器。</span></p></div></div>
+<div class="row h3row wide" id="h-scaling-b1"><h3><span class='h3-en'>The architecture</span><span class='h3-zh'>架构</span></h3></div>
+<div class="row" data-rid="scaling-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b2-0">In our earlier <a class='lnk' href='https://www.anthropic.com/research/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L2'>long-running harness</a>, we had solved for coherent multi-session coding with an initializer agent, a coding agent that worked one feature at a time, and context resets between sessions.</span> <span class="s" data-k="scaling-b2-1">Context resets were a key unlock: the harness used Sonnet 4.5, which exhibited the “context anxiety” tendency mentioned earlier.</span> <span class="s" data-k="scaling-b2-2">Creating a harness that worked well across context resets was key to keeping the model on task.</span> <span class="s" data-k="scaling-b2-3">Opus 4.5 largely removed that behavior on its own, so I was able to drop context resets from this harness entirely.</span> <span class="s" data-k="scaling-b2-4">The agents were run as one continuous session across the whole build, with the <a class='lnk' href='https://code.claude.com/docs/en/agent-sdk/overview' target='_blank' rel='noopener' data-link='L6'>Claude Agent SDK</a>’s automatic compaction handling context growth along the way.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b2-0">在早先的<a class='lnk' href='https://www.anthropic.com/research/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L2'>长程 harness</a>里，我们用初始化智能体、一次只做一个特性的编码智能体，以及会话之间的上下文重置，解决了跨多个会话的一致编程问题。</span><span class="s" data-k="scaling-b2-1">上下文重置是一个关键突破：那套 harness 用的是 Sonnet 4.5，它表现出了前面提到的「上下文焦虑」倾向。</span><span class="s" data-k="scaling-b2-2">打造一套能在上下文重置之间运转良好的 harness，是让模型不偏离任务的关键。</span><span class="s" data-k="scaling-b2-3">Opus 4.5 基本靠自己就去掉了这种行为，所以我能把这套 harness 里的上下文重置整个删掉。</span><span class="s" data-k="scaling-b2-4">整个构建过程中，各个智能体被当作一个连续会话运行，由 <a class='lnk' href='https://code.claude.com/docs/en/agent-sdk/overview' target='_blank' rel='noopener' data-link='L6'>Claude Agent SDK</a> 的自动压缩顺带处理上下文增长。</span></p></div></div>
+<div class="row" data-rid="scaling-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b3-0">For this work I built on the foundation from the original harness with a three-agent system, with each agent addressing a specific gap I'd observed in prior runs.</span> <span class="s" data-k="scaling-b3-1">The system contained the following agent personas:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b3-0">在这项工作里，我在前作 harness 的基础上搭了一个三智能体系统，每个智能体针对我在先前运行中观察到的一个具体缺口。</span><span class="s" data-k="scaling-b3-1">系统包含以下三个智能体角色：</span></p></div></div>
+<div class="row" data-rid="scaling-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b4-0"><b>Planner:</b> Our previous long-running harness required the user to provide a detailed spec upfront.</span> <span class="s" data-k="scaling-b4-1">I wanted to automate that step, so I created a planner agent that took a simple 1-4 sentence prompt and expanded it into a full product spec.</span> <span class="s" data-k="scaling-b4-2">I prompted it to be ambitious about scope and to stay focused on product context and high level technical design rather than detailed technical implementation.</span> <span class="s" data-k="scaling-b4-3">This emphasis was due to the concern that if the planner tried to specify granular technical details upfront and got something wrong, the errors in the spec would cascade into the downstream implementation.</span> <span class="s" data-k="scaling-b4-4">It seemed smarter to constrain the agents on the deliverables to be produced and let them figure out the path as they worked.</span> <span class="s" data-k="scaling-b4-5">I also asked the planner to find opportunities to weave AI features into the product specs. (See example in the Appendix at the bottom.)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b4-0"><b>规划器（Planner）：</b>我们之前的长程 harness 要求用户预先提供一份详细的产品规格。</span><span class="s" data-k="scaling-b4-1">我想把这一步自动化，于是做了一个规划器智能体：它接收一句到四句的简单提示，把它扩写成完整的产品规格。</span><span class="s" data-k="scaling-b4-2">我在提示词里要求它在范围上大胆一些，同时聚焦产品背景和高层技术设计，而不是细颗粒度的技术实现。</span><span class="s" data-k="scaling-b4-3">之所以这样强调，是担心规划器如果提前把技术细节规定得太细、又出了错，规格里的错误会一路级联到下游实现里。</span><span class="s" data-k="scaling-b4-4">更聪明的做法似乎是：只约束智能体要交付什么，让它们在干活过程中自己摸索路径。</span><span class="s" data-k="scaling-b4-5">我还要求规划器寻找机会，把 AI 功能织进产品规格里。（示例见文末附录。）</span></p></div></div>
+<div class="row" data-rid="scaling-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b5-0"><b>Generator:</b> The one-feature-at-a-time approach from the earlier harness worked well for scope management.</span> <span class="s" data-k="scaling-b5-1">I applied a similar model here, instructing the generator to work in <span class='term' data-term='sprint'>sprints</span>, picking up one feature at a time from the spec.</span> <span class="s" data-k="scaling-b5-2">Each sprint implemented the app with a React, Vite, FastAPI, and SQLite (later PostgreSQL) stack, and the generator was instructed to self-evaluate its work at the end of each sprint before handing off to QA.</span> <span class="s" data-k="scaling-b5-3">It also had git for version control.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b5-0"><b>生成器（Generator）：</b>早先 harness 里「一次一个特性」的做法，在范围管理上效果很好。</span><span class="s" data-k="scaling-b5-1">我在这里套用了类似的模式：让生成器按<span class='term' data-term='sprint'>冲刺</span>（sprint）推进，每次从规格里拿一个特性来做。</span><span class="s" data-k="scaling-b5-2">每个冲刺用 React、Vite、FastAPI 和 SQLite（后来换成 PostgreSQL）的技术栈来实现应用；生成器被要求在每次冲刺结束、交给质检之前先自我评估。</span><span class="s" data-k="scaling-b5-3">它还有 git 做版本控制。</span></p></div></div>
+<div class="row" data-rid="scaling-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b6-0"><b>Evaluator:</b> Applications from earlier harnesses often looked impressive but still had real bugs when you actually tried to use them.</span> <span class="s" data-k="scaling-b6-1">To catch these, the evaluator used the Playwright MCP to click through the running application the way a user would, testing UI features, API endpoints, and database states.</span> <span class="s" data-k="scaling-b6-2">It then graded each sprint against both the bugs it had found and a set of criteria modeled on the frontend experiment, adapted here to cover product depth, functionality, visual design, and code quality.</span> <span class="s" data-k="scaling-b6-3">Each criterion had a hard threshold, and if any one fell below it, the sprint failed and the generator got detailed feedback on what went wrong.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b6-0"><b>评估器（Evaluator）：</b>早先 harness 做出来的应用常常看着很唬人，但真上手用的时候还是有实实在在的 bug。</span><span class="s" data-k="scaling-b6-1">为了抓住这些问题，评估器用 Playwright MCP 像用户一样把运行中的应用点一遍，测试 UI 功能、API 端点和数据库状态。</span><span class="s" data-k="scaling-b6-2">然后它同时对照两类东西给每个冲刺打分：自己发现的 bug，以及一套参照前端实验改造的评分标准——这套标准覆盖产品深度、功能、视觉设计和代码质量。</span><span class="s" data-k="scaling-b6-3">每条标准都有硬性阈值；只要有一项低于阈值，这个冲刺就判失败，生成器会收到详细的反馈，说明哪里出了问题。</span></p></div></div>
+<div class="row" data-rid="scaling-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b7-0">Before each sprint, the generator and evaluator negotiated a <span class='term' data-term='sprint_contract'>sprint contract</span>: agreeing on what "done" looked like for that chunk of work before any code was written.<sup class='tn' data-note='N6'>6</sup></span> <span class="s" data-k="scaling-b7-1">This existed because the product spec was intentionally high-level, and I wanted a step to bridge the gap between user stories and testable implementation.</span> <span class="s" data-k="scaling-b7-2">The generator proposed what it would build and how success would be verified, and the evaluator reviewed that proposal to make sure the generator was building the right thing.</span> <span class="s" data-k="scaling-b7-3">The two iterated until they agreed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b7-0">每个冲刺开始前，生成器和评估器会先谈一份<span class='term' data-term='sprint_contract'>冲刺契约</span>（sprint contract）：在写任何代码之前，就「这一块工作做成什么样算完成」达成一致。<sup class='tn' data-note='N6'>6</sup></span><span class="s" data-k="scaling-b7-1">之所以有这一步，是因为产品规格是刻意写在高层的，我需要一个环节来弥合「用户故事」与「可测试的实现」之间的落差。</span><span class="s" data-k="scaling-b7-2">生成器提出自己打算做什么、以及怎么验证成功；评估器审核这份提案，确保生成器在做对的东西。</span><span class="s" data-k="scaling-b7-3">双方反复来回，直到谈拢为止。</span></p></div></div>
+<div class="row" data-rid="scaling-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b8-0">Communication was handled via files: one agent would write a file, another agent would read it and respond either within that file or with a new file that the previous agent would read in turn.</span> <span class="s" data-k="scaling-b8-1">The generator then built against the agreed-upon contract before handing the work off to QA.</span> <span class="s" data-k="scaling-b8-2">This kept the work faithful to the spec without over-specifying implementation too early.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b8-0">沟通通过文件完成：一个智能体写文件，另一个智能体读文件，然后或者在同一个文件里回复，或者新建一个文件、让前一个智能体接着读。</span><span class="s" data-k="scaling-b8-1">然后生成器按谈好的契约开始构建，做完再交给质检。</span><span class="s" data-k="scaling-b8-2">这样既保证工作不偏离规格，又不会过早把实现细节规定死。</span></p></div></div>
+<div class="row h3row wide" id="h-scaling-b9"><h3><span class='h3-en'>Running the harness</span><span class='h3-zh'>运行这套 harness</span></h3></div>
+<div class="row" data-rid="scaling-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b10-0">For the first version of this harness, I used Claude Opus 4.5, running user prompts against both the full harness and a single-agent system for comparison.</span> <span class="s" data-k="scaling-b10-1">I used Opus 4.5 since this was our best coding model when I began these experiments.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b10-0">这套 harness 的第一个版本，我用了 Claude Opus 4.5；同一个用户提示词，分别跑「完整版（v1）harness」和「单智能体系统」，以便对比。</span><span class="s" data-k="scaling-b10-1">之所以用 Opus 4.5，是因为我开始做这些实验时，它是我们最强的编程模型。</span></p></div></div>
+<div class="row" data-rid="scaling-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b11-0">I wrote the following prompt to generate a retro video game maker:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b11-0">我写了下面这段提示词，让模型生成一个复古游戏制作器：</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b12-0">Create a 2D retro game maker with features including a level editor, sprite editor, entity behaviors, and a playable test mode.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b12-0">做一个 2D 复古游戏制作器，功能包括关卡编辑器、精灵编辑器、实体行为，以及可玩的测试模式。</span></p></div></div></div></div>
+<div class="row" data-rid="scaling-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b13-0">The table below shows the harness type, length it ran for, and the total cost.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b13-0">下表展示了 harness 类型、运行时长和总成本。</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">Harness</span><span class="th-zh">harness 方式</span></th><th><span class="th-en">Duration</span><span class="th-zh">时长</span></th><th><span class="th-en">Cost</span><span class="th-zh">成本</span></th></tr></thead><tbody><tr><td><span class="td-en">Solo</span><span class="td-zh">单智能体（solo）</span></td><td><span class="td-en">20 min</span><span class="td-zh">20 分钟</span></td><td><span class="td-en">$9</span><span class="td-zh">9 美元</span></td></tr><tr><td><span class="td-en">Full harness</span><span class="td-zh">完整版（v1）harness</span></td><td><span class="td-en">6 hr</span><span class="td-zh">6 小时</span></td><td><span class="td-en">$200</span><span class="td-zh">200 美元</span></td></tr></tbody></table></div></div>
+<div class="row" data-rid="scaling-b15"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b15-0">The harness was over 20x more expensive, but the difference in output quality was immediately apparent.<sup class='tn' data-note='N7'>7</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b15-0">完整 harness 贵了 20 倍以上，但产出质量的差距一眼就能看出来。<sup class='tn' data-note='N7'>7</sup></span></p></div></div>
+<div class="row" data-rid="scaling-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b16-0">I was expecting an interface where I could construct a level and its component parts (sprites, entities, tile layout) then hit play to actually play the level.</span> <span class="s" data-k="scaling-b16-1">I started by opening the solo run’s output, and the initial application seemed in line with those expectations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b16-0">我期待的界面是：能搭出一个关卡和它的组成部分（精灵、实体、瓦片布局），然后按下播放，真的把这一关玩起来。</span><span class="s" data-k="scaling-b16-1">我先打开 solo 那版的产出，初看之下应用似乎符合这些预期。</span></p></div></div>
+<div class="row" data-rid="scaling-b17"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b17-0">As I clicked through, however, issues started to emerge.</span> <span class="s" data-k="scaling-b17-1">The layout wasted space, with fixed-height panels leaving most of the viewport empty.</span> <span class="s" data-k="scaling-b17-2">The workflow was rigid.</span> <span class="s" data-k="scaling-b17-3">Trying to populate a level prompted me to create sprites and entities first, but nothing in the UI guided me toward that sequence.</span> <span class="s" data-k="scaling-b17-4">More to the point, the actual game was broken.</span> <span class="s" data-k="scaling-b17-5">My entities appeared on screen but nothing responded to input.</span> <span class="s" data-k="scaling-b17-6">Digging into the code revealed that the wiring between entity definitions and the game runtime was broken, with no surface indication of where.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b17-0">但当我一路点下去，问题开始冒出来。</span><span class="s" data-k="scaling-b17-1">布局浪费空间：固定高度的面板让大部分视口空着。</span><span class="s" data-k="scaling-b17-2">工作流很死板。</span><span class="s" data-k="scaling-b17-3">我想往关卡里放东西时，它要求我先创建精灵和实体，但界面里没有任何地方引导我按这个顺序走。</span><span class="s" data-k="scaling-b17-4">更关键的是，游戏本身是坏的。</span><span class="s" data-k="scaling-b17-5">我的实体出现在屏幕上，但任何输入都没有反应。</span><span class="s" data-k="scaling-b17-6">翻代码才发现：实体定义和游戏运行时之间的连接是断的，而表面上看不出断在哪。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="Solo 版的初始界面：能打开，但空空荡荡"><div class="fig-media"><img class="still" src="media/fig1.png" loading="lazy" decoding="async" alt="Initial screen when opening the app created by the solo harness."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Solo 版的初始界面：能打开，但空空荡荡</b>　Solo 版只花 20 分钟、9 美元就做出了这个游戏编辑器，首页是像素风大标题：巨大的项目区里只有一句「还没有项目」，右上角的 + NEW PROJECT 和底部的 PRESS START 都像摆设，整页大面积留白。</p><p class="cap-en">原文图注：Initial screen when opening the app created by the solo harness.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>顶部绿色像素字 RETRO GAME MAKER 和副标语 CREATE · DESIGN · PLAY，标明这是做游戏的工具而非游戏本身。</li><li>中间 YOUR PROJECTS 区空着，只留一句 No projects yet 和 CREATE PROJECT 按钮，也没有任何新手引导说明下一步。</li><li>对照 fig4：完整 harness 版有 Import 与建项目表单，这版只有 + NEW PROJECT 和底部 PRESS START 两个孤立入口。</li></ol><p class="takeaway">一句话：Solo 版首页能打开，但空荡得像半成品，离可用还差得远。</p></details></figcaption></figure>
+<figure class="row wide fig" id="fig2" data-cap="Solo 版精灵编辑器：画得出来，但工具摊在一起"><div class="fig-media"><img class="still" src="media/fig2.png" loading="lazy" decoding="async" alt="Creating a sprite in the sprite editor made by the solo harness"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Solo 版精灵编辑器：画得出来，但工具摊在一起</b>　Solo 版应用里的精灵编辑器：左侧素材列表只有两个精灵，中间网格上是一张 16×16 的青色笑脸，右侧挤着预览、配色和调色板，底栏是单帧时间轴与新增、删除按钮，四块功能平铺在一起、没有主次。</p><p class="cap-en">原文图注：Creating a sprite in the sprite editor made by the solo harness</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>顶部四个标签 LEVELS、SPRITES、ENTITIES、PLAY 平铺成一级入口，当前 SPRITES 高亮，功能是四等分摊开的。</li><li>左侧 SPRITES 列表只有 Sprite A 和 Sprite B，唯一的新建入口是旁边的小加号，素材一多就挤成一列。</li><li>右侧 COLORS 只有 Primary、Secondary 两个色块和 Set Transparent，取色得回到底部 PALETTE 小方格逐格点选，色组很有限。</li><li>底栏 Frame 1/1 配 ADD、DEL 说明支持帧动画，但只有单帧画面，动画效果要靠自己来回切换检查。</li></ol><p class="takeaway">一句话：能画精灵、能做单帧动画，但工具按面板摊开，谈不上好用。</p></details></figcaption></figure>
+<figure class="row wide fig" id="fig3" data-cap="Solo 版试玩：场面画好了，角色却动不了"><div class="fig-media"><img class="still" src="media/fig3.png" loading="lazy" decoding="async" alt="Trying unsuccessfully to play the level I created"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Solo 版试玩：场面画好了，角色却动不了</b>　Solo 版点进 PLAY 试玩：Level 下拉框停在 level 1，暂停、重置按钮与 SCORE、HEALTH 状态栏都在，场上有两块青色方块和四只粉色小怪，可角色对键盘毫无反应、画面毫无变化，正是原文说的「实体出现了，玩法没接通」。</p><p class="cap-en">原文图注：Trying unsuccessfully to play the level I created</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>顶栏 PLAY 标签是选中态，左侧 Level: level 1 下拉框与 PAUSE、RESET 说明已经进入试玩页面，不是编辑器。</li><li>右上 SCORE: 000000 和 HEALTH: 红心正常显示，说明界面状态栏没问题，失败的是输入与游戏逻辑。</li><li>PLAY 试玩画面里排着两块青色方块和四只粉色小怪，画面不报错，但按键后角色不动、画面无变化，玩不下去。</li><li>PLAY 模式的场地缩在中央、左右各留大片灰色网格，也印证了原文对布局浪费空间的批评。</li></ol><p class="takeaway">一句话：solo 版最致命的地方：界面像游戏，实际根本玩不了，核心玩法是坏的。</p></details></figcaption></figure>
+<div class="row" data-rid="scaling-b21"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b21-0">After evaluating the solo run, I turned my attention to the harness run.</span> <span class="s" data-k="scaling-b21-1">This run started from the same one-sentence prompt, but the planner step expanded that prompt into a 16-feature spec spread across ten sprints.</span> <span class="s" data-k="scaling-b21-2">It went well beyond what the solo run attempted.</span> <span class="s" data-k="scaling-b21-3">In addition to the core editors and play mode, the spec called for a sprite animation system, behavior templates, sound effects and music, an AI-assisted sprite generator and level designer, and game export with shareable links.</span> <span class="s" data-k="scaling-b21-4">I gave the planner access to our <a class='lnk' href='https://github.com/anthropics/claude-plugins-official/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md' target='_blank' rel='noopener' data-link='L1'>frontend design skill</a>, which it read and used to create a visual design language for the app as part of the spec.</span> <span class="s" data-k="scaling-b21-5">For each sprint, the generator and evaluator negotiated a contract defining the specific implementation details for the sprint, and the testable behaviors that would be tested to verify completion.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b21-0">评估完 solo 版之后，我把注意力转向 harness 版。</span><span class="s" data-k="scaling-b21-1">这一版从同一句提示词出发，但规划器那一步把它扩成了一份包含 16 个特性、铺在十个冲刺里的产品规格。</span><span class="s" data-k="scaling-b21-2">这远远超出了 solo 版尝试的范围。</span><span class="s" data-k="scaling-b21-3">除了核心编辑器和播放模式，规格还要求有精灵动画系统、行为模板、音效与音乐、AI 辅助的精灵生成器和关卡设计器，以及带分享链接的游戏导出。</span><span class="s" data-k="scaling-b21-4">我让规划器读到了我们的<a class='lnk' href='https://github.com/anthropics/claude-plugins-official/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md' target='_blank' rel='noopener' data-link='L1'>前端设计技能</a>，它读完并用它为应用设计了一套视觉设计语言，作为规格的一部分。</span><span class="s" data-k="scaling-b21-5">每个冲刺前，生成器和评估器都会谈一份契约，明确这个冲刺的具体实现细节，以及用来验证完成的、可测试的行为。</span></p></div></div>
+<div class="row" data-rid="scaling-b22"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b22-0">The app immediately showed more polish and smoothness than the solo run.</span> <span class="s" data-k="scaling-b22-1">The canvas used the full viewport, the panels were sized sensibly, and the interface had a consistent visual identity that tracked the design direction from the spec.</span> <span class="s" data-k="scaling-b22-2">Some of the clunkiness I'd seen in the solo run did remain—the workflow still didn't make it clear that you should build sprites and entities before trying to populate a level, and I had to figure that out by poking around.</span> <span class="s" data-k="scaling-b22-3">This read as a gap in the base model’s product intuition rather than something the harness was designed to address, though it did suggest a place where targeted iteration inside the harness could help to further improve output quality.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b22-0">这个应用一上来就比 solo 版更精致、更流畅。</span><span class="s" data-k="scaling-b22-1">画布用满了整个视口，面板尺寸合理，界面也有一套统一的视觉风格，和规格里的设计方向保持一致。</span><span class="s" data-k="scaling-b22-2">不过 solo 版里那种笨重感有一部分还在——工作流仍然没讲清楚：应该先建精灵和实体，再去填充关卡；这一点我是自己到处点才弄明白的。</span><span class="s" data-k="scaling-b22-3">这更像是基础模型产品直觉上的缺口，而不是这套 harness 被设计来解决的事；不过它确实提示了一个方向：在 harness 内部做有针对性的迭代，也许能进一步提升产出质量。</span></p></div></div>
+<div class="row" data-rid="scaling-b23"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b23-0">Working through the editors, the new run's advantages over solo became more apparent.</span> <span class="s" data-k="scaling-b23-1">The sprite editor was richer and more fully featured, with cleaner tool palettes, a better color picker, and more usable zoom controls.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b23-0">挨个用过编辑器之后，新版相对 solo 的优势更明显了。</span><span class="s" data-k="scaling-b23-1">精灵编辑器更丰富、功能更齐全：工具面板更干净，取色器更好用，缩放控件也更顺手。</span></p></div></div>
+<div class="row" data-rid="scaling-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b24-0">Because I'd asked the planner to weave AI features into its specs, the app also came with a built-in Claude integration that let me generate different parts of the game through prompting.</span> <span class="s" data-k="scaling-b24-1">This significantly sped up the workflow.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b24-0">因为我要求规划器把 AI 功能织进规格，这个应用还自带 Claude 集成，让我可以通过提示词生成游戏的不同部分。</span><span class="s" data-k="scaling-b24-1">这显著加快了工作流。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="完整 harness 版：新建项目有正经表单"><div class="fig-media"><img class="still" src="media/fig4.png" loading="lazy" decoding="async" alt="Initial screen: Creating a new game, in the app built with the full harness"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>完整 harness 版：新建项目有正经表单</b>　完整 harness 版应用 RETROFORGE 的首页：点右上角新建项目会弹出表单，可填名称与描述，并选分辨率、图块尺寸和调色板，默认值都替用户想好了，和 solo 版那个空荡荡的首页形成鲜明对照。</p><p class="cap-en">原文图注：Initial screen: Creating a new game, in the app built with the full harness</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>顶部左侧 RETROFORGE 标志配副标题，右侧并排 Import 与 + New Project 两个入口，入口区分清楚。</li><li>弹窗里 Project Name 预填 Game #1，Description 留灰字占位，一看就知道该往下填，表单有引导，不会让人卡住。</li><li>三个下拉框分别预设 8-Bit (256×224)、16x16 pixels、8-Bit (54 colors)，技术选项被收成默认值，不用自己查参数。</li><li>右下 Cancel 暗、Create Project 亮，主次分明；背后项目区空着，正是初始界面的样子，等着被填满。</li></ol><p class="takeaway">一句话：从新建项目这一步起，完整 harness 版就比 solo 版专业得多，也更像成品。</p></details></figcaption></figure>
+<figure class="row wide fig" id="fig5" data-cap="完整 harness 版精灵编辑器：工具排成一条流水线"><div class="fig-media"><img class="still" src="media/fig5.png" loading="lazy" decoding="async" alt="The sprite editor felt cleaner and easier to use"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>完整 harness 版精灵编辑器：工具排成一条流水线</b>　同一个画精灵任务，完整 harness 版的编辑器清爽得多：顶部有 AI 生成与保存按钮，左侧竖排画具，中央红脸精灵同步显示在右侧三档预览里，底部是一条横贯窗口的调色板。</p><p class="cap-en">原文图注：The sprite editor felt cleaner and easier to use</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>顶栏 New Sprite * 16x16 的星号表示尚未保存，右边并排的 AI Generate 与 Save 是 solo 版没有的两个动作。</li><li>同一张红色方块笑脸同时出现在右侧 PREVIEW 的 1x、2x、4x 三档中，放大观感一眼可比。</li><li>底部调色板横贯整个窗口、色块排成两行，左下角标着 L/R CLICK：左键上色，右键取色或擦除。</li><li>右侧 SPRITES 面板写着 No sprites yet，说明这是新建未保存的精灵，素材库入口被收进右栏。</li></ol><p class="takeaway">一句话：同样画精灵，完整 harness 版把工具、预览、保存排成了一条顺手流水线。</p></details></figcaption></figure>
+<figure class="row wide fig" id="fig6" data-cap="AI 关卡助手：一句话生成城堡布局（提要求时）"><div class="fig-media"><img class="still" src="media/fig6.png" loading="lazy" decoding="async" alt="Using the built in AI feature to generate the level"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>AI 关卡助手：一句话生成城堡布局（提要求时）</b>　完整 harness 版弹出 AI LEVEL ASSISTANT 对话框：在描述框里用英文要求造一座有守卫精灵的城堡，点生成布局后先给缩略图与实体数量，不满意可重试或丢弃，满意才应用到关卡。</p><p class="cap-en">原文图注：Using the built in AI feature to generate the level</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>弹窗标题 AI LEVEL ASSISTANT 下写着一句说明：既能生成关卡布局，也能给设计建议。</li><li>在 Level Description 描述框里已经写好一句英文需求，下方大按钮 Generate Layout 负责执行并生成预览。</li><li>缩略图下方标着 9 entities placed，Try Another 可重来、Discard 可丢弃，结果先试后定不改关卡，保留选择权。</li><li>背景关卡是 20x15 网格，右栏 LAYERS 的 2. Playfield 高亮，左下角 TILESET PALETTE 还提示没有图块，图块库还是空的。</li></ol><p class="takeaway">一句话：AI 生成关卡被做成可预览、可重来的对话框，不是黑箱一键替换。</p></details></figcaption></figure>
+<figure class="row wide fig" id="fig7" data-cap="同一功能的下一步：生成结果落到画布上"><div class="fig-media"><img class="still" src="media/fig7.png" loading="lazy" decoding="async" alt="Using the built in AI feature to generate the level"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>同一功能的下一步：生成结果落到画布上</b>　还是 AI 生成关卡，但这张是点下 Accept &amp; Apply 之后的画面：城堡的塔楼与城墙已经变成蓝色图块铺在 20x15 网格上，红色问号是 AI 生成的标记，右下 Minimap 同步显示整张布局，AI 弹窗已经关闭。</p><p class="cap-en">原文图注：Using the built in AI feature to generate the level</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>画布上蓝色图块拼出带城垛的城堡：中间塔楼、两侧城墙和底部长条，对应上一张说的 castle。</li><li>画布上既有蓝色城堡图块，也散布着红色问号标记；右栏 LAYERS 把 Background、Playfield、Collision、Foreground、Entity 分成五层。</li><li>右下 Minimap 镶着青色边框，蓝底粉点正是同一张关卡的小地图，用来把握整体结构。</li><li>右上 AI Assist 按钮还在、画布却没有弹窗，说明这一轮生成已经应用，接下来可直接编辑或试玩。</li></ol><p class="takeaway">一句话：图6 是提要求的对话框，图7 是它落到画布上的结果，两张要连着看。</p></details></figcaption></figure>
+<figure class="row wide fig" id="fig8" data-cap="试玩完整 harness 生成的关卡：角色真的能动了"><div class="fig-media"><img class="still" src="media/fig8.png" loading="lazy" decoding="async" alt="Playing the game I generated"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>试玩完整 harness 生成的关卡：角色真的能动了</b>　完整 harness 版 PLAY 模式：左上角调试面板显示当前关卡、坐标、速度与是否踩地，说明角色真的站在地面上、物理循环在跑；深蓝城堡关卡与青色小方块角色就位，底部还列着快捷键。</p><p class="cap-en">原文图注：Playing the game I generated</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左上调试面板 Level 1 - 20x15 与 Pos: 32, 208 会随角色移动变化，是物理真跑起来的最直接证据。</li><li>同一面板里 State: idle、Ground: Yes 表示角色静止且踩在地面上，Vel: 0.0, 0.0 说明速度归零，不是卡死。</li><li>PLAY 模式里两块青色小方块是游戏对象，其中一块贴着平台边缘、看起来和地形有重叠；深蓝色大块是城堡地形。</li><li>底部提示条把 ESC 退出、P 暂停、R 重开关卡、Ctrl+R 重开游戏、D 调试等快捷键都列了出来。</li></ol><p class="takeaway">一句话：同一句提示词，完整 harness 版把游戏做到了能玩，这是最大的差别。</p></details></figcaption></figure>
+<div class="row" data-rid="scaling-b30"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b30-0">The biggest difference was in play mode.</span> <span class="s" data-k="scaling-b30-1">I was actually able to move my entity and play the game.</span> <span class="s" data-k="scaling-b30-2">The physics had some rough edges—my character jumped onto a platform but ended up overlapping with it, which felt intuitively wrong—but the core thing worked, which the solo run did not manage.</span> <span class="s" data-k="scaling-b30-3">After moving around a bit, I did hit some limitations with the AI’s game level construction.</span> <span class="s" data-k="scaling-b30-4">There was a large wall that I wasn’t able to jump past, so I was stuck.</span> <span class="s" data-k="scaling-b30-5">This suggested there were some common sense improvements and edge cases that the harness could handle to further refine the app.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b30-0">最大的差别在播放模式。</span><span class="s" data-k="scaling-b30-1">我真的能移动实体、把游戏玩起来了。</span><span class="s" data-k="scaling-b30-2">物理有些粗糙——我的角色跳到平台上，最后却和平台重叠在一起，直觉上就不对——但核心功能是通的，而 solo 版连这都没做到。</span><span class="s" data-k="scaling-b30-3">走动了一会儿之后，我确实撞上了 AI 关卡构筑的一些局限。</span><span class="s" data-k="scaling-b30-4">有一堵很大的墙我跳不过去，于是卡住了。</span><span class="s" data-k="scaling-b30-5">这说明还有一些常识性的改进和边界情况，harness 可以处理，从而进一步打磨这个应用。</span></p></div></div>
+<div class="row" data-rid="scaling-b31"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b31-0">Reading through the logs, it was clear that the evaluator kept the implementation in line with the spec.</span> <span class="s" data-k="scaling-b31-1">Each sprint, it walked through the sprint contract's test criteria and exercised the running application through Playwright, filing bugs against anything that diverged from expected behavior.</span> <span class="s" data-k="scaling-b31-2">The contracts were granular—Sprint 3 alone had 27 criteria covering the level editor—and the evaluator's findings were specific enough to act on without extra investigation.</span> <span class="s" data-k="scaling-b31-3">The table below shows several examples of issues our evaluator identified:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b31-0">翻日志可以清楚看到，评估器一直让实现贴着规格走。</span><span class="s" data-k="scaling-b31-1">每个冲刺，它都会过一遍冲刺契约里的测试标准，通过 Playwright 把运行中的应用实际操作一遍，凡是偏离预期行为的地方都登记为 bug。</span><span class="s" data-k="scaling-b31-2">这些契约非常细——光是冲刺 3 就有 27 条覆盖关卡编辑器的标准——而且评估器的发现足够具体，不用再额外调查就能直接动手修。</span><span class="s" data-k="scaling-b31-3">下表列出几个评估器发现的问题示例：</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">Contract criterion</span><span class="th-zh">契约标准</span></th><th><span class="th-en">Evaluator finding</span><span class="th-zh">评估器的发现</span></th></tr></thead><tbody><tr><td><span class="td-en">Rectangle fill tool allows click-drag to fill a rectangular area with selected tile</span><span class="td-zh">矩形填充工具允许通过点击拖拽，用选中的瓦片填满一块矩形区域</span></td><td><span class="td-en"><b>FAIL</b> — Tool only places tiles at drag start/end points instead of filling the region. <code>fillRectangle</code> function exists but isn't triggered properly on mouseUp.</span><span class="td-zh"><b>失败</b> —— 工具只在拖拽的起点和终点放瓦片，而不是填满整个区域。<code>fillRectangle</code> 函数是存在的，但没有在 mouseUp 时被正确触发。</span></td></tr><tr><td><span class="td-en">User can select and delete placed entity spawn points</span><span class="td-zh">用户可以选择并删除已放置的实体生成点</span></td><td><span class="td-en"><b>FAIL</b> — Delete key handler at <code>LevelEditor.tsx:892</code> requires both <code>selection</code> and <code>selectedEntityId </code>to be set, but clicking an entity only sets <code>selectedEntityId</code>. Condition should be <code>selection || (selectedEntityId &amp;&amp; activeLayer === 'entity')</code>.</span><span class="td-zh"><b>失败</b> —— <code>LevelEditor.tsx:892</code> 处的 Delete 键处理逻辑要求 <code>selection</code> 和 <code>selectedEntityId </code> 同时被设置，但点击实体只会设置 <code>selectedEntityId</code>。条件应该是 <code>selection || (selectedEntityId &amp;&amp; activeLayer === 'entity')</code>。</span></td></tr><tr><td><span class="td-en">User can reorder animation frames via API</span><span class="td-zh">用户可以通过 API 重排序动画帧</span></td><td><span class="td-en"><b>FAIL</b> — <code>PUT /frames/reorder</code> route defined after <code>/{frame_id}</code> routes. FastAPI matches 'reorder' as a frame_id integer and returns 422: "unable to parse string as an integer."</span><span class="td-zh"><b>失败</b> —— <code>PUT /frames/reorder</code> 路由定义在 <code>/{frame_id}</code> 这类路由之后。FastAPI 会把 'reorder' 当作 frame_id 的整数来匹配，于是返回 422：「无法把字符串解析为整数」。</span></td></tr></tbody></table></div></div>
+<div class="row" data-rid="scaling-b33"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b33-0">Getting the evaluator to perform at this level took work.</span> <span class="s" data-k="scaling-b33-1">Out of the box, Claude is a poor QA agent.</span> <span class="s" data-k="scaling-b33-2">In early runs, I watched it identify legitimate issues, then talk itself into deciding they weren't a big deal and approve the work anyway.</span> <span class="s" data-k="scaling-b33-3">It also tended to test superficially, rather than probing edge cases, so more subtle bugs often slipped through.</span> <span class="s" data-k="scaling-b33-4">The tuning loop was to read the evaluator's logs, find examples where its judgment diverged from mine, and update <span class='typo' data-typo='0'>the QAs prompt</span> to solve for those issues.</span> <span class="s" data-k="scaling-b33-5">It took several rounds of this development loop before the evaluator was grading in a way that I found reasonable.</span> <span class="s" data-k="scaling-b33-6">Even then, the harness output showed the limits of the model’s QAing capabilities: small layout issues, interactions that felt unintuitive in places, and undiscovered bugs in more deeply nested features that the evaluator hadn't exercised thoroughly.</span> <span class="s" data-k="scaling-b33-7">There was clearly more verification headroom to capture with further tuning.</span> <span class="s" data-k="scaling-b33-8">But compared to the solo run, where the central feature of the application simply didn't work, the lift was obvious.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b33-0">让评估器达到这个水平是花了功夫的。</span><span class="s" data-k="scaling-b33-1">开箱即用的 Claude 是个糟糕的质检（QA）智能体。</span><span class="s" data-k="scaling-b33-2">在早期运行里，我看着它先识别出真问题，然后自己把自己说服：这些不算大事，于是照样批准通过。</span><span class="s" data-k="scaling-b33-3">它还倾向于浅层测试，而不是去探边界情况，所以更隐蔽的 bug 经常漏过去。</span><span class="s" data-k="scaling-b33-4">调优循环是这样的：读评估器的日志，找出它判断和我分歧的例子，然后改质检的提示词来解决这类问题。</span><span class="s" data-k="scaling-b33-5">这样迭代了好几轮，评估器的打分方式才变得让我觉得合理。</span><span class="s" data-k="scaling-b33-6">即便如此，harness 的产出还是暴露了模型质检能力的上限：小的布局问题、有些地方操作起来不直观，以及更深的嵌套功能里那些评估器没有充分演练到、因而没被发现的 bug。</span><span class="s" data-k="scaling-b33-7">显然还有更多验证空间，等着通过进一步调优去拿到。</span><span class="s" data-k="scaling-b33-8">但和 solo 版——应用的核心功能干脆就是坏的——相比，提升是显而易见的。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-scaling-b">
+
+<div class="reader-body">
+<div class="row h3row wide" id="h-scaling-b-b0"><h3><span class='h3-en'>Iterating on the harness</span><span class='h3-zh'>迭代改进这套 harness</span></h3></div>
+<div class="row" data-rid="scaling-b-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b1-0">The first set of harness results was encouraging, but it was also bulky, slow, and expensive.</span> <span class="s" data-k="scaling-b-b1-1">The logical next step was to find ways to simplify the harness without degrading its performance.</span> <span class="s" data-k="scaling-b-b1-2">This was partly common sense and partly a function of a more general principle: every component in a harness encodes an assumption about what the model can't do on its own, and those assumptions are worth stress testing, both because they may be incorrect, and because they can quickly go stale as models improve.</span> <span class="s" data-k="scaling-b-b1-3">Our blog post <a class='lnk' href='https://www.anthropic.com/research/building-effective-agents' target='_blank' rel='noopener' data-link='L7'>Building Effective Agents</a> frames the underlying idea as "find the simplest solution possible, and only increase complexity when needed," and it's a pattern that shows up consistently for anyone maintaining an agent harness.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b1-0">第一套 harness 的结果令人鼓舞，但它也臃肿、慢、贵。</span><span class="s" data-k="scaling-b-b1-1">顺理成章的下一步，是找到简化这套 harness、又不让性能下降的办法。</span><span class="s" data-k="scaling-b-b1-2">这一部分靠常识，一部分来自一条更普遍的原则：harness 里的每个组件，都在编码一个「模型自己做不到什么」的假设；这些假设值得反复做压力测试——既因为它们可能本来就是错的，也因为模型一进步，它们很快就会过时。</span><span class="s" data-k="scaling-b-b1-3">我们的博客文章<a class='lnk' href='https://www.anthropic.com/research/building-effective-agents' target='_blank' rel='noopener' data-link='L7'>《Building Effective Agents》</a>把背后的思路概括为「找到尽可能简单的方案，只在需要时才增加复杂度」——任何维护智能体 harness 的人都会反复遇到这个模式。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b2-0">In my first attempt to simplify, I cut the harness back radically and tried a few creative new ideas, but I wasn't able to replicate the performance of the original.</span> <span class="s" data-k="scaling-b-b2-1">It also became difficult to tell which pieces of the harness design were actually <span class='term' data-term='load_bearing'>load-bearing</span>, and in what ways.</span> <span class="s" data-k="scaling-b-b2-2">Based on that experience, I moved to a more methodical approach, removing one component at a time and reviewing what impact it had on the final result.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b2-0">我第一次尝试简化时，把 harness 大刀阔斧地砍了一通，还试了几个有创意的新点子，但没能复现原来的表现。</span><span class="s" data-k="scaling-b-b2-1">同时也变得很难判断：这套 harness 设计里到底哪些部分是真正<span class='term' data-term='load_bearing'>承重</span>（load-bearing）的，又以什么方式承重。</span><span class="s" data-k="scaling-b-b2-2">基于这次经验，我改用更有条理的做法：一次只移除一个组件，再看它对最终结果有什么影响。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b3-0">As I was going through these iteration cycles, we also released Opus 4.6, which provided further motivation to reduce harness complexity.</span> <span class="s" data-k="scaling-b-b3-1">There was good reason to expect 4.6 would need less <span class='term' data-term='scaffolding'>scaffolding</span> than 4.5 did.</span> <span class="s" data-k="scaling-b-b3-2">From our <a class='lnk' href='https://www.anthropic.com/news/claude-opus-4-6' target='_blank' rel='noopener' data-link='L8'>launch blog:</a> "[Opus 4.6] plans more carefully, sustains agentic tasks for longer, can operate more reliably in larger codebases, and has better code review and debugging skills to catch its own mistakes."</span> <span class="s" data-k="scaling-b-b3-3">It also improved substantially on long-context retrieval.</span> <span class="s" data-k="scaling-b-b3-4">These were all capabilities the harness had been built to supplement.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b3-0">就在我走这些迭代循环的时候，我们又发布了 Opus 4.6，这进一步给了我们削减 harness 复杂度的动力。</span><span class="s" data-k="scaling-b-b3-1">有充分理由预期：4.6 需要的<span class='term' data-term='scaffolding'>脚手架</span>（scaffolding）会比 4.5 少。</span><span class="s" data-k="scaling-b-b3-2">我们<a class='lnk' href='https://www.anthropic.com/news/claude-opus-4-6' target='_blank' rel='noopener' data-link='L8'>发布博客</a>里写道：「[Opus 4.6] 规划更仔细，能把 agentic 任务维持得更久，在更大的代码库里运行得更可靠，也有更好的代码评审和调试能力来抓自己的错误。」</span><span class="s" data-k="scaling-b-b3-3">它在长上下文检索上也有大幅提升。</span><span class="s" data-k="scaling-b-b3-4">这些全都是这套 harness 当初被造出来要补足的能力。</span></p></div></div>
+<div class="row h3row wide" id="h-scaling-b-b4"><h3><span class='h3-en'>Removing the sprint construct</span><span class='h3-zh'>移除冲刺结构</span></h3></div>
+<div class="row" data-rid="scaling-b-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b5-0">I started by removing the sprint construct entirely.</span> <span class="s" data-k="scaling-b-b5-1">The sprint structure had helped to decompose work into chunks for the model to work coherently.</span> <span class="s" data-k="scaling-b-b5-2">Given the improvements in Opus 4.6, there was good reason to believe that the model could natively handle the job without this sort of decomposition.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b5-0">我先从彻底移除冲刺结构开始。</span><span class="s" data-k="scaling-b-b5-1">冲刺结构原本有助于把工作拆成块，让模型能连贯地做完。</span><span class="s" data-k="scaling-b-b5-2">考虑到 Opus 4.6 的进步，有充分理由相信：不用这种拆解，模型也能原生地把活干好。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b6-0">I kept both the planner and evaluator, as each continued to add obvious value.</span> <span class="s" data-k="scaling-b-b6-1">Without the planner, the generator under-scoped: given the raw prompt, it would start building without first speccing its work, and end up creating a less feature-rich application than the planner did.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b6-0">我保留了规划器和评估器，因为它们各自都继续带来明显的价值。</span><span class="s" data-k="scaling-b-b6-1">没有规划器时，生成器会把范围做小：拿到原始提示词就直接开始构建，没有先给工作做规格，最终做出来的应用不如有规划器时那么功能丰富。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b7-0">With the sprint construct removed, I moved the evaluator to a single pass at the end of the run rather than grading per sprint.</span> <span class="s" data-k="scaling-b-b7-1">Since the model was much more capable, it changed how load-bearing the evaluator was for certain runs, with its usefulness depending on where the task sat relative to what the model could do reliably on its own.</span> <span class="s" data-k="scaling-b-b7-2">On 4.5, that boundary was close: our builds were at the edge of what the generator could do well solo, and the evaluator caught meaningful issues across the build.</span> <span class="s" data-k="scaling-b-b7-3">On 4.6, the model's raw capability increased, so the boundary moved outward.</span> <span class="s" data-k="scaling-b-b7-4">Tasks that used to need the evaluator's check to be implemented coherently were now often within what the generator handled well on its own, and for tasks within that boundary, the evaluator became unnecessary overhead.</span> <span class="s" data-k="scaling-b-b7-5">But for the parts of the build that were still at the edge of the generator’s capabilities, the evaluator continued to give real lift.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b7-0">移除冲刺结构后，我把评估器改成在整轮运行结束时做一次评估，而不是每个冲刺都评分。</span><span class="s" data-k="scaling-b-b7-1">因为模型能力强了很多，评估器在某些运行里到底有多大作用也变了：这取决于任务相对「模型能独立可靠完成的范围」落在哪一侧。</span><span class="s" data-k="scaling-b-b7-2">在 4.5 上，这条能力边界离任务很近：我们的构建正好卡在生成器单干能力的边缘，评估器在整个构建过程中都抓到了有意义的问题。</span><span class="s" data-k="scaling-b-b7-3">到 4.6，模型的原始能力提升了，边界就向外移了。</span><span class="s" data-k="scaling-b-b7-4">过去需要评估器把关才能实现得连贯的任务，现在往往落在生成器自己就能处理好的范围内；边界之内的任务，评估器就成了不必要的开销。</span><span class="s" data-k="scaling-b-b7-5">但对构建里那些仍处在生成器能力边缘的部分，评估器依然带来了实在的提升。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b8-0">The practical implication is that the evaluator is not a fixed yes-or-no decision.</span> <span class="s" data-k="scaling-b-b8-1">It is worth the cost when the task sits beyond what the current model does reliably solo.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b8-0">实际含义是：评估器不是一个固定的「要不要」决策。</span><span class="s" data-k="scaling-b-b8-1">当任务超出当前模型单干能稳定做到的范围时，它才值得这份成本。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b9-0">Alongside the structural simplification, I also added prompting to improve how the harness built AI features into each app, specifically getting the generator to build a proper agent that could drive the app's own functionality through tools.</span> <span class="s" data-k="scaling-b-b9-1">That took real iteration, since the relevant knowledge is recent enough that Claude's training data covers it thinly.</span> <span class="s" data-k="scaling-b-b9-2">But with enough tuning, the generator was building agents correctly.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b9-0">除了结构简化，我还加了提示词，改进 harness 把 AI 功能做进每个应用的方式——具体说，就是让生成器构建一个像样的智能体，能通过工具驱动应用自身的功能。</span><span class="s" data-k="scaling-b-b9-1">这花了不少迭代，因为相关知识足够新，Claude 的训练数据覆盖得很薄。</span><span class="s" data-k="scaling-b-b9-2">但经过足够多的调优，生成器能正确地把智能体建出来了。</span></p></div></div>
+<div class="row h3row wide" id="h-scaling-b-b10"><h3><span class='h3-en'>Results from the updated harness</span><span class='h3-zh'>更新版 harness 的结果</span></h3></div>
+<div class="row" data-rid="scaling-b-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b11-0">To put the updated harness to the test, I used the following prompt to generate a <span class='term' data-term='daw'>Digital Audio Workstation (DAW)</span>, a music production program for composing, recording, and mixing songs:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b11-0">为了测试更新后的 harness，我用下面这段提示词生成一个<span class='term' data-term='daw'>数字音频工作站</span>（DAW）——一种用来作曲、录音、混音的音乐制作程序：</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b12-0">Build a fully featured DAW in the browser using the Web Audio API.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b12-0">用 Web Audio API 在浏览器里构建一个功能完整的 DAW。</span></p></div></div></div></div>
+<div class="row" data-rid="scaling-b-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b13-0">The run was still lengthy and expensive, at about 4 hours and $124 in token costs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b13-0">这次运行依然长且贵：大约 4 小时，token 成本 124 美元。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b14-0">Most of the time went to the builder, which ran coherently for over two hours without the sprint decomposition that Opus 4.5 had needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b14-0">大部分时间花在构建阶段（也就是生成器）上：它连续跑了两个多小时，没有采用 Opus 4.5 当年必需的那种冲刺拆解。</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">Agent &amp; Phase</span><span class="th-zh">智能体与阶段</span></th><th><span class="th-en">Duration</span><span class="th-zh">时长</span></th><th><span class="th-en">Cost</span><span class="th-zh">成本</span></th></tr></thead><tbody><tr><td><span class="td-en">Planner</span><span class="td-zh">规划器</span></td><td><span class="td-en">4.7 min</span><span class="td-zh">4.7 分钟</span></td><td><span class="td-en">$0.46</span><span class="td-zh">0.46 美元</span></td></tr><tr><td><span class="td-en">Build (Round 1)</span><span class="td-zh">构建（第 1 轮）</span></td><td><span class="td-en">2 hr 7 min</span><span class="td-zh">2 小时 7 分</span></td><td><span class="td-en">$71.08</span><span class="td-zh">71.08 美元</span></td></tr><tr><td><span class="td-en">QA (Round 1)</span><span class="td-zh">质检（第 1 轮）</span></td><td><span class="td-en">8.8 min</span><span class="td-zh">8.8 分钟</span></td><td><span class="td-en">$3.24</span><span class="td-zh">3.24 美元</span></td></tr><tr><td><span class="td-en">Build (Round 2)</span><span class="td-zh">构建（第 2 轮）</span></td><td><span class="td-en">1 hr 2 min</span><span class="td-zh">1 小时 2 分</span></td><td><span class="td-en">$36.89</span><span class="td-zh">36.89 美元</span></td></tr><tr><td><span class="td-en">QA (Round 2)</span><span class="td-zh">质检（第 2 轮）</span></td><td><span class="td-en">6.8 min</span><span class="td-zh">6.8 分钟</span></td><td><span class="td-en">$3.09</span><span class="td-zh">3.09 美元</span></td></tr><tr><td><span class="td-en">Build (Round 3)</span><span class="td-zh">构建（第 3 轮）</span></td><td><span class="td-en">10.9 min</span><span class="td-zh">10.9 分钟</span></td><td><span class="td-en">$5.88</span><span class="td-zh">5.88 美元</span></td></tr><tr><td><span class="td-en">QA (Round 3)</span><span class="td-zh">质检（第 3 轮）</span></td><td><span class="td-en">9.6 min</span><span class="td-zh">9.6 分钟</span></td><td><span class="td-en">$4.06</span><span class="td-zh">4.06 美元</span></td></tr><tr><td><span class="td-en"><b>Total V2 Harness</b></span><span class="td-zh"><b>V2 harness 总计</b></span></td><td><span class="td-en"><b>3 hr 50 min</b></span><span class="td-zh"><b>3 小时 50 分</b></span></td><td><span class="td-en"><b>$124.70</b></span><span class="td-zh"><b>124.70 美元</b></span></td></tr></tbody></table></div></div>
+<div class="row" data-rid="scaling-b-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b16-0">As with the previous harness, the planner expanded the one-line prompt into a full spec.</span> <span class="s" data-k="scaling-b-b16-1">From the logs, I could see the generator model did a good job planning the app and the agent design, wiring the agent up, and testing it before handing off to QA.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b16-0">和完整版（v1）一样，规划器把一行提示词扩成了完整的产品规格。</span><span class="s" data-k="scaling-b-b16-1">从日志里我能看到，生成器模型把应用规划、智能体设计、给智能体接上工具和接口、以及测试都做得不错，然后才交给质检。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b17"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b17-0">That being said, the QA agent still caught real gaps.</span> <span class="s" data-k="scaling-b-b17-1">In its first-round feedback, it noted:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b17-0">话虽如此，作为质检的智能体还是抓到了真实的缺口。</span><span class="s" data-k="scaling-b-b17-1">它在第一轮反馈里写道：</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b18-0">This is a strong app with excellent design fidelity, solid AI agent, and good backend.</span> <span class="s" data-k="scaling-b-b18-1">The main failure point is Feature Completeness — while the app looks impressive and the AI integration works well, several core DAW features are display-only without interactive depth: clips can't be dragged/moved on the timeline, there are no instrument UI panels (synth knobs, drum pads), and no visual effect editors (EQ curves, compressor meters).</span> <span class="s" data-k="scaling-b-b18-2">These aren't edge cases — they're the core interactions that make a DAW usable, and the spec explicitly calls for them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b18-0">这是一个很强的应用：设计还原度极佳，AI 智能体扎实，后端也不错。</span><span class="s" data-k="scaling-b-b18-1">主要失败点在功能完整性——应用看起来厉害、AI 集成也工作良好，但好几个核心 DAW 功能只是「显示」，没有交互深度：片段不能在时间线上拖动，没有乐器 UI 面板（合成器旋钮、鼓垫），也没有可视化的效果器编辑器（EQ 曲线、压缩器表）。</span><span class="s" data-k="scaling-b-b18-2">这些不是边界情况——它们是让 DAW 可用的核心交互，而规格里明确要求了这些。</span></p></div></div></div></div>
+<div class="row" data-rid="scaling-b-b19"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b19-0">In its second round feedback, it again caught several functionality gaps:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b19-0">第二轮反馈里，它又抓到了几个功能缺口：</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b20-0">Remaining gaps: <br/>- Audio recording is still stub-only (button toggles but no mic capture) <br/>- Clip resize by edge drag and clip split not implemented <br/>- Effect visualizations are numeric sliders, not graphical (no EQ curve)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b20-0">剩余缺口：<br/>- 音频录制仍然只是空壳（按钮能切换，但没有麦克风采集）<br/>- 拖动片段边缘缩放、切分片段都还没实现<br/>- 效果可视化只是数字滑杆，不是图形化的（没有 EQ 曲线）</span></p></div></div></div></div>
+<div class="row" data-rid="scaling-b-b21"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b21-0">The generator was still liable to miss details or stub features when left to its own devices, and the QA still added value in catching those last mile issues for the generator to fix.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b21-0">放任生成器自己干，它仍然可能漏细节或把功能做成空壳；而质检在抓这些「最后一公里」问题、交给生成器去修上，仍然是有价值的。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b22"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b22-0">Based on the prompt, I was expecting a program where I could create melodies, harmonies, and drum patterns, arrange them into a song, and get help from an integrated agent along the way.</span> <span class="s" data-k="scaling-b-b22-1">The video below shows the result.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b22-0">基于那段提示词，我期待的是一个能创作旋律、和声、鼓点模式，把它们编排成一首歌，并且全程有一个内置智能体帮忙的程序。</span><span class="s" data-k="scaling-b-b22-1">下面的视频展示了结果。</span></p></div></div>
+<figure class="row wide fig has-video" id="vid2" data-cap="DAW 视频：内置 AI 制作人把一首 lofi beat 编完"><div class="fig-media has-video"><img class="video-poster" src="media/vid2.png" alt="vid2" loading="lazy"><button class="video-play" type="button" data-video="vid2" data-src="media/slim-vid2.mp4"><b>▶ 播放视频</b><small>0.4 MB · 按需加载</small></button><div class="fig-bar"><span class="vtag">视频按需加载 · 支持拖动</span><a class="vbtn" href="https://cdn.sanity.io/files/4zrzovbb/website/555910f9adb3938734940224e7a6f4c7cbbbd8f2.mp4" target="_blank" rel="noopener">原站播放 ↗</a></div></div><figcaption><p class="cap-zh"><b>DAW 视频：内置 AI 制作人把一首 lofi beat 编完</b>　视频已内嵌本页（海报取其中一帧）：内置 AI 制作人 Forge 按一句写 D 小调 lofi beat 的指令，自动建出 Drums、Bass、Keys 三条轨道，在 1–9 小节里摆好彩色片段并加上混响，右侧日志逐条打勾，底部混音台已经能出声。</p><p class="cap-video">▶ 视频按需加载（0.4 MB，浏览器 Range 请求，点击后才下载）。 <a href="https://cdn.sanity.io/files/4zrzovbb/website/555910f9adb3938734940224e7a6f4c7cbbbd8f2.mp4" target="_blank" rel="noopener">原站在线版 ↗</a></p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>视频就在本页播放（点 ▶ 即可），海报是其中一帧；先看它，再读下面的文字说明。</li><li>左侧轨道区列出 Drums、Bass、Keys，各有 REVERB、FILTER 标记；中间 1–9 列格子里红蓝紫片段已经排好，说明编曲已落地。</li><li>右侧 PRODUCER 面板从上到下是加乐器、写乐句、放片段、加效果器等打勾步骤，全部由 Forge 完成。</li><li>最下方是 Forge 的完成总结；底部混音台 DRUMS、BASS、KEYS 三路推子停在 0.0 dB，MASTER 在 -13.8 dB，音量已经平衡。</li></ol><p class="takeaway">一句话：用户只提需求，建轨、编曲、混音全由内置智能体完成，这才是产品级 AI。</p></details></figcaption></figure>
+<div class="row" data-rid="scaling-b-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b24-0">The app is far from a professional music production program, and the agent's song composition skills could clearly use a lot of work.</span> <span class="s" data-k="scaling-b-b24-1">Additionally, Claude can’t actually hear, which made the QA feedback loop less effective with respect to musical taste.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b24-0">这个应用离专业音乐制作软件还差得远，智能体的作曲能力也明显还有很多要练。</span><span class="s" data-k="scaling-b-b24-1">另外，Claude 其实听不见声音，这让质检反馈循环在音乐品味这件事上效果打了折扣。</span></p></div></div>
+<div class="row" data-rid="scaling-b-b25"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scaling-b-b25-0">But the final app had all the core pieces of a functional music production program: a working arrangement view, mixer, and transport running in the browser.</span> <span class="s" data-k="scaling-b-b25-1">Beyond that, I was able to put together a short song snippet entirely through prompting: the agent set the tempo and key, laid down a melody, built a drum track, adjusted mixer levels, and added reverb.</span> <span class="s" data-k="scaling-b-b25-2">The core primitives for song composition were present, and the agent could drive them autonomously, using tools to create a simple production from end to end.</span> <span class="s" data-k="scaling-b-b25-3">You might say it’s not pitch-perfect yet—but it’s getting there.<sup class='tn' data-note='N8'>8</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scaling-b-b25-0">但最终这个应用具备了一个可用音乐制作程序的全部核心件：能用的编曲视图、混音台和播放控制条，都跑在浏览器里。</span><span class="s" data-k="scaling-b-b25-1">不仅如此，我完全靠提示词拼出了一小段歌曲：智能体设定了速度和调性，铺了旋律，搭了鼓轨，调了混音电平，还加了混响。</span><span class="s" data-k="scaling-b-b25-2">作曲所需的基础能力都在，而且智能体能自主驱动它们，用工具端到端地做出一个简单作品。</span><span class="s" data-k="scaling-b-b25-3">可以说，它现在还称不上「音准完美」——但确实在朝那个方向走了。<sup class='tn' data-note='N8'>8</sup></span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-next">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">What comes next</span><span class="h-zh">下一步会怎样</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>模型变强之后，harness 不是在缩小，而是在移动：每个组件都编码着「模型做不到什么」的假设。作者的建议是持续做实验、读真实运行轨迹、拆掉不再承重的部件，并在新模型到来时重新审视整套设计。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="next-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="next-b0-0">As models continue to improve, we can roughly expect them to be capable of working for longer, and on more complex tasks.</span> <span class="s" data-k="next-b0-1">In some cases, that will mean the scaffold surrounding the model matters less over time, and developers can wait for the next model and see certain problems solve themselves.</span> <span class="s" data-k="next-b0-2">On the other hand, the better the models get, the more space there is to develop harnesses that can achieve complex tasks beyond what the model can do at baseline.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="next-b0-0">随着模型继续进步，我们大致可以预期它们能工作得更久、处理更复杂的任务。</span><span class="s" data-k="next-b0-1">在一些情况下，这意味着模型外围的脚手架（scaffolding）会随时间变得没那么重要，开发者可以等下一个模型发布，看某些问题自己消失。</span><span class="s" data-k="next-b0-2">另一方面，模型越强，留给 harness 的空间反而越大——可以做出更复杂的 harness，去完成超出模型基线能力的任务。</span></p></div></div>
+<div class="row" data-rid="next-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="next-b1-0">With this in mind, there are a few lessons from this work worth carrying forward.</span> <span class="s" data-k="next-b1-1">It is always good practice to experiment with the model you're building against, read its traces on realistic problems, and tune its performance to achieve your desired outcomes.</span> <span class="s" data-k="next-b1-2">When working on more complex tasks, there is sometimes headroom from decomposing the task and applying specialized agents to each aspect of the problem.</span> <span class="s" data-k="next-b1-3">And when a new model lands, it is generally good practice to re-examine a harness, stripping away pieces that are no longer load-bearing to performance and adding new pieces to achieve greater capability that may not have been possible before.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="next-b1-0">基于这些，这项工作里有一些经验值得带走。</span><span class="s" data-k="next-b1-1">永远值得做的事：拿你真正在用的模型做实验，读它在真实问题上的运行轨迹，调它的表现来达到你想要的结果。</span><span class="s" data-k="next-b1-2">处理更复杂的任务时，把任务拆开、让专门的智能体各管一块，有时确实有提升空间。</span><span class="s" data-k="next-b1-3">而当新模型落地时，通常值得重新审视一套 harness：拆掉对性能不再承重的部件，再加上新的部件，去拿到以前可能拿不到的能力。</span></p></div></div>
+<div class="row" data-rid="next-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="next-b2-0">From this work, my conviction is that the space of interesting harness combinations doesn't shrink as models improve.</span> <span class="s" data-k="next-b2-1">Instead, it moves, and the interesting work for AI engineers is to keep finding the next novel combination.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="next-b2-0">从这项工作中，我越来越确信：有趣的 harness 组合空间，不会随模型变强而缩小。</span><span class="s" data-k="next-b2-1">它只是在移动；AI 工程师真正有意思的工作，是不断找到下一个新颖的组合。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-appendix">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Appendix</span><span class="h-zh">附录</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>原文附录展示了规划器把一句提示词扩展出来的产品规格样例（RetroForge：2D 复古游戏制作器）。这段是产品规格样板，不是论证内容，因此保留英文原文、不逐句翻译；原文网页本身也以「...」结尾，说明展示的是节选。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="appendix-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="appendix-b0-0">Example plan generated by planner agent.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="appendix-b0-0">规划器智能体生成的示例产品规格。</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>附录：planner 生成的示例规格（英文原文，未逐句翻译）<span class="code-note">原文此处即以「...」结尾，网页上本身就是节选；这里照录，不再翻译。</span></summary><pre>RetroForge - 2D Retro Game Maker
+
+Overview
+RetroForge is a web-based creative studio for designing and building 2D retro-style video games. It combines the nostalgic charm of classic 8-bit and 16-bit game aesthetics with modern, intuitive editing tools—enabling anyone from hobbyist creators to indie developers to bring their game ideas to life without writing traditional code.
+
+The platform provides four integrated creative modules: a tile-based Level Editor for designing game worlds, a pixel-art Sprite Editor for crafting visual assets, a visual Entity Behavior system for defining game logic, and an instant Playable Test Mode for real-time gameplay testing. By weaving AI assistance throughout (powered by Claude), RetroForge accelerates the creative process—helping users generate sprites, design levels, and configure behaviors through natural language interaction.
+
+RetroForge targets creators who love retro gaming aesthetics but want modern conveniences. Whether recreating the platformers, RPGs, or action games of their childhood, or inventing entirely new experiences within retro constraints, users can prototype rapidly, iterate visually, and share their creations with others.
+
+Features
+1. Project Dashboard &amp; Management
+The Project Dashboard is the home base for all creative work in RetroForge. Users need a clear, organized way to manage their game projects—creating new ones, returning to works-in-progress, and understanding what each project contains at a glance.
+
+User Stories: As a user, I want to:
+
+- Create a new game project with a name and description, so that I can begin designing my game
+- See all my existing projects displayed as visual cards showing the project name, last modified date, and a thumbnail preview, so that I can quickly find and continue my work
+- Open any project to enter the full game editor workspace, so that I can work on my game
+- Delete projects I no longer need, with a confirmation dialog to prevent accidents, so that I can keep my workspace organized
+- Duplicate an existing project as a starting point for a new game, so that I can reuse my previous work
+
+Project Data Model: Each project contains:
+
+Project metadata (name, description, created/modified timestamps)
+Canvas settings (resolution: e.g., 256x224, 320x240, or 160x144)
+Tile size configuration (8x8, 16x16, or 32x32 pixels)
+Color palette selection 
+All associated sprites, tilesets, levels, and entity definitions
+
+...</pre></details></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 12 处正文引用，指向 8 个不同链接；另有 10 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>前端设计技能（Claude Code 技能文件）</h4><p class="lnk-site">github.com · Frontend Design — Claude Code skill (SKILL.md)</p><p class="lnk-anchors">正文对应：<em>前端设计技能（frontend design skill）</em> <em>前端设计技能</em></p><p><b>这是什么：</b>这是 Claude Code 的「前端设计」技能文件：指导模型做出有主见的配色与版式，并点名 AI 生成页面最常见的套路以便避开。</p><p><b>为什么值得点：</b>原文开篇即称这项研究源自这个技能；第 02 节又把「避免 AI 套路化产物」写进评分标准，想知道设计品味如何变成可执行的提示词，就该读原文。</p><p><b>访问说明：</b>原文所给地址已失效（404，插件已迁移到 claude-plugins-official 仓库）；这里改用当前可用的官方地址，锚文本与页面内容的对应关系不变。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>技能把模型设定为一家以独特视觉识别著称的设计工作室的主理人，客户已拒绝过套路化方案，要求做出有主见的选择。第一步是确认产品或主题到底是什么、给谁看，再到主题的行业、材料、语汇里找视觉线索，而不是套默认模板。文中列出 AI 生成设计的五类典型特征：暖米色底加高对比衬线标题、黑底加单一荧光强调色、报纸式细线分栏、满屏同款圆角卡片阴影、每个标题上都挂一个全大写小标签等。规则上还要求字体家族不超两种、行宽小于 80 字符、结构元素必须承载信息，动效要克制。</p><ul><li>角色设定：像设计工作室主理人一样，先问清主题与受众，再做有主见的选择。</li><li>点名 AI 套路：暖米色底、单一荧光强调色、满屏圆角卡片、每节都淡入上滑，这些都是「机器味」信号。</li><li>排版与动效规则：行宽小于 80 字符、字体家族尽量少、结构元素必须承载信息；动效只在需要吸引注意时用一次。</li></ul></details><a class="lnk-open" href="https://github.com/anthropics/claude-plugins-official/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>为长时间运行的智能体设计有效的 harness</h4><p class="lnk-site">anthropic.com · Effective harnesses for long-running agents</p><p class="lnk-anchors">正文对应：<em>长程编程智能体的 harness</em> <em>实验</em> <em>长程 harness</em></p><p><b>这是什么：</b>Anthropic 前作：讲如何让编码智能体跨多个上下文窗口持续工作——初始化智能体先搭好环境，后续每个会话只推进一个功能并留下进度记录。</p><p><b>为什么值得点：</b>原文三次引用它，并把本文的生成器—评估器架构称为在早前 harness 上继续迭代。要理解「跨会话做长任务」这套思路从哪来、哪些问题被解决了、哪些还悬着，先读这篇。</p><p><b>访问说明：</b>原文链接现 308 重定向到 /research/ 路径，这里直接采用最终地址。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>长任务的卡点是「每个新会话都失忆」：像工程师轮班，接班的人不知道上一班做了什么，而压缩上下文并不能可靠传递指令。方案分两半：初始化智能体在第一次会话里写好 init.sh、进度日志和 git 初始提交，并把用户需求展开成两百多条、全部标记为「未通过」的功能清单；之后每个编码会话只挑一个功能做，自测通过才改状态。会话结束要求把代码留在「可合并到主干」的干净状态并提交说明。测试必须像真人一样用浏览器自动化走完整流程，否则模型会过早宣布功能完成。文末坦言多智能体架构与跨领域泛化仍是开放问题。</p><ul><li>失败模式一：想一次做完整个应用，结果上下文耗尽、留下半成品；失败模式二：后来者看到有进展就宣布项目完成。</li><li>解法是「初始化智能体 + 增量编码智能体」，并用 JSON 功能清单（含 steps 与 passes 字段）防止模型偷改验收标准。</li><li>每个会话开头先跑 pwd、读进度文件、读 git log、读功能清单，再跑一次端到端基本测试确认没有遗留 bug。</li><li>未解问题：单智能体与测试/质检/清理等多智能体架构孰优，以及这套经验能否推广到全栈 web 之外的领域。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>把 Ralph Wiggum 当成「软件工程师」</h4><p class="lnk-site">ghuntley.com · Ralph Wiggum as a “software engineer”</p><p class="lnk-anchors">正文对应：<em>Ralph Wiggum</em></p><p><b>这是什么：</b>Geoffrey Huntley 介绍 Ralph 技巧的原始文章：把智能体放进一个 while 循环里，反复喂同一份 PROMPT.md，让它每轮只做一件事，靠迭代把项目磨出来。</p><p><b>为什么值得点：</b>原文把 Ralph 列为社区里与本文思路汇流的做法。它代表另一条路线：不设计复杂 harness，而靠极简单循环、规格文件与反馈信号。两相对照，才看得懂本文为什么仍要保留规划器与评估器。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Ralph 最纯粹的形态是一行 Bash 循环：不停地 cat PROMPT.md 喂给 claude-code。作者把它的气质总结为「在不确定的世界里确定性地差」，缺陷可识别，也能靠改提示词逐项修掉。核心纪律是每轮只做一件事，并让规格与计划文件每轮固定压进上下文；上下文窗口只有约 170k，用得越少结果越好，所以主进程只当调度器，检索、摘要等重活交给子智能体。第二阶段靠「反馈信号」把关：类型系统、测试、构建都能充当拒绝坏代码的关卡，用于构建和测试的子智能体只开一个，避免惊群式拥堵。他还报告了用 Ralph 开发新编程语言 CURSED 的实践。</p><ul><li>本质是一行 while 循环加一份 PROMPT.md，任何不限制调用次数的工具都能实现，不是某个具体产品。</li><li>每轮只做一件事，并让智能体自己判断「什么最重要」；规格要在项目开始前通过长对话写进规格文件。</li><li>上下文要省着用：主窗口当调度器，把检索与验证外包给子智能体；搜索代码库时要明确「不要假设功能没实现」。</li><li>需要工程化的反馈信号（强类型语言、测试、构建）来淘汰坏产出；作者称有 5 万美元的合同被压到 297 美元的案例。</li></ul></details><a class="lnk-open" href="https://ghuntley.com/ralph/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 4 个读</span></div><h4>为 AI 智能体做有效的上下文工程</h4><p class="lnk-site">anthropic.com · Effective context engineering for AI agents</p><p class="lnk-anchors">正文对应：<em>上下文工程（context engineering）</em></p><p><b>这是什么：</b>Anthropic 讲「上下文工程」的专文：不只看提示词怎么写，而是管理进入上下文窗口的全部 token，在有限注意力预算下只放信噪比最高的信息。</p><p><b>为什么值得点：</b>原文只用一句「上下文填满后模型会失去连贯性」带过的问题，这篇给出了完整解释：上下文腐化、注意力预算、token 两两注意力的平方级增长。想弄清本文为何要做上下文重置，读它。</p><p><b>访问说明：</b>原文链接现 308 重定向到 /research/ 路径，这里直接采用最终地址。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>上下文指采样时送入模型的全部 token；上下文工程就是这场「curate」工作，而且每轮推理都要重做一次，不同于一次性的提示词写作。文章引用「上下文腐化」研究：token 越多，模型准确回忆其中信息的能力越差，因此上下文是边际收益递减的有限资源，应找「最小的高信号 token 集合」。系统提示要落在「正确的高度」：既不能写死复杂脆弱的逻辑，也不能空泛到没有具体信号。工具、示例、检索内容都按同一原则精简，能按需加载就不要一次性全塞进去。</p><ul><li>提示词工程是写指令，上下文工程是持续策展整个状态（系统指令、工具、MCP、外部数据、历史消息）。</li><li>性能是渐变而非悬崖：上下文变长时，检索精度与长程推理会先变差，所以别把窗口当免费仓库。</li><li>系统提示追求「最小但完整」并分区组织；工具与示例同样要少而精，术语要贴合具体用例。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>Agent SDK 概览（Claude Code 文档）</h4><p class="lnk-site">code.claude.com · Agent SDK overview - Claude Code Docs</p><p class="lnk-anchors">正文对应：<em>Claude Agent SDK</em></p><p><b>这是什么：</b>Claude Agent SDK 官方文档首页：把 Claude Code 的工具、agent loop 与上下文管理打包成 Python/TypeScript 库，让开发者在自己进程里跑同一个智能体。</p><p><b>为什么值得点：</b>本文的生成器—评估器循环就搭在这个 SDK 上。想知道「harness」在工程上到底指什么、会话、子智能体与自动压缩由谁提供，看这份能力清单最快。</p><p><b>访问说明：</b>原文链接现 307 重定向到 code.claude.com，这里直接采用最终地址。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>SDK 本质是一个库，替你运行 Claude Code 二进制，并暴露其内置工具、hooks、子智能体、MCP、权限、会话、技能与插件等能力，用 Python 或 TypeScript 编程。文档用一张表把 Agent SDK、Claude Code CLI、Client SDK 与托管版 Managed Agents 区分开：区别在于谁运行智能体、内置了什么、怎么接入；其他语言可用 CLI 子进程加 JSON 输出驱动同一个循环。文档还写明第三方产品不得提供 claude.ai 登录或速率，需用 API key 认证；品牌上可用 Claude Agent 等表述，但不得自称 Claude Code。</p><ul><li>SDK 提供的能力清单：内置工具、hooks、子智能体、MCP、权限、会话恢复/分叉、技能与插件。</li><li>四选一对照表：自己进程里嵌 SDK、终端用 CLI、直接调 Client SDK、或用 Anthropic 托管的 Managed Agents。</li><li>许可证与品牌有明确限制：受商业条款约束，第三方不得提供 claude.ai 登录，也不得把自己包装成 Claude Code。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/agent-sdk/overview" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span></div><h4>构建有效的 AI 智能体</h4><p class="lnk-site">anthropic.com · Building effective AI agents</p><p class="lnk-anchors">正文对应：<em>《Building Effective Agents》</em></p><p><b>这是什么：</b>Anthropic 关于智能体设计的基础文章：先分清「工作流」与「智能体」，再从增强 LLM 这块积木出发，逐级介绍提示链、路由、并行等可组合模式。</p><p><b>为什么值得点：</b>原文最后用它收束论证：harness 的每个部件都隐含「模型自己做不到什么」的假设，而假设会随模型变强而过期。要理解本文为何不断删减脚手架，这是直接依据。</p><p><b>访问说明：</b>页面 &lt;title&gt; 现在是 Building effective AI agents，与正文锚文本 Building Effective Agents 略有出入（同一篇文章，slug 未变）；正文顶部新增了指向 Managed Agents 的更新提示。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>调研数十个团队后的结论：最成功的实现往往不用复杂框架，而是把简单、可组合的模式用好；能用一次 LLM 调用加检索解决，就不该上 agent。文章区分「工作流」（由预定义代码路径编排 LLM 与工具）与「智能体」（由 LLM 动态决定流程与工具使用），建议按任务需要增加复杂度。模式清单包括提示链、路由、并行化（分片与投票）、编排者—工作者、评估者—优化者，最后才讨论自主智能体。文中还提醒框架会遮蔽底层提示与响应、增加调试难度，建议先直接调 API。</p><ul><li>先问最简方案是什么：优化单次 LLM 调用加检索与示例，往往已经够用。</li><li>工作流换来可预测性，智能体换来灵活性；只在任务确实需要动态决策时才上智能体。</li><li>五种可组合模式：提示链、路由、并行化（分片/投票）、编排者—工作者、评估者—优化者。</li><li>页面顶部现有一行更新提示：所述工具生态已变化，最新做法见 Managed Agents 文档。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip">可选</span><span class="chip">建议第 7 个读</span><span class="chip">本区域受限</span></div><h4>生成对抗网络（GAN）</h4><p class="lnk-site">en.wikipedia.org · Generative adversarial network</p><p class="lnk-anchors">正文对应：<em>生成对抗网络（GAN）</em></p><p><b>这是什么：</b>维基百科的 GAN 条目：用两个神经网络互相对抗来学习数据分布的框架，2014 年由 Ian Goodfellow 等人提出，是生成式 AI 的代表性方法之一。</p><p><b>为什么值得点：</b>原文明说整套 harness 的生成器—评估器循环灵感来自 GAN：一个负责生成，一个负责挑错。读懂 GAN 的对抗训练与极小极大博弈，才能判断这个类比在本文里成不成立。</p><p><b>访问说明：</b>本机网络无法连通 en.wikipedia.org（DNS 解析异常/连接超时，疑似大陆网络区域受限，需代理）。digest 依据该条目的 DBpedia 摘要与 2014 年原始论文 https://arxiv.org/abs/1406.2661 核对。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>GAN 由生成器与判别器两部分组成：生成器尽量造出以假乱真的样本，判别器则判断一个样本来自真实数据还是生成器。训练是一个极小极大两人博弈——生成器最大化判别器犯错的概率，判别器最小化它；理论最优时生成器复现训练数据分布，判别器只能给出 1/2 的概率。2014 年的原始论文证明，若两者都是多层感知机，整个系统可用反向传播端到端训练，无需马尔可夫链或近似推断网络。此后 GAN 成为图像生成等领域的主流框架，并衍生出 DCGAN、条件 GAN、CycleGAN 等变体。</p><ul><li>两大部件：生成器负责造假，判别器负责鉴别，两者在训练中一起变强。</li><li>损失对应两人零和博弈，理论均衡点是判别器无法区分真假（输出 1/2）。</li><li>2014 年 Ian Goodfellow 等提出，可用反向传播直接训练，是生成式 AI 的奠基工作之一。</li></ul></details><a class="lnk-open" href="https://en.wikipedia.org/wiki/Generative_adversarial_network" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip">可选</span><span class="chip">建议第 8 个读</span></div><h4>Claude Opus 4.6 发布</h4><p class="lnk-site">anthropic.com · Claude Opus 4.6</p><p class="lnk-anchors">正文对应：<em>发布博客</em></p><p><b>这是什么：</b>Claude Opus 4.6 发布博客：主打更强的规划与长程智能体任务能力，Opus 级首次提供 100 万 token 上下文（beta），并公布多项评测成绩与新功能。</p><p><b>为什么值得点：</b>原文说 4.6 的发布进一步促使作者削减 harness 复杂度。读发布说明里的自动压缩、自适应思考与 effort 控制，就能对上本文后来删掉了哪些承重部件、为什么敢删。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Opus 4.6 是 Opus 系列的升级版：更能规划、能更久地维持智能体任务、在大型代码库里更可靠，也更能自查代码；Opus 级首次提供 100 万 token 上下文（beta）。评测上拿下终端智能体基准 Terminal-Bench 2.0 最高分、Humanity’s Last Exam 领先，并在 GDPval-AA 上比 GPT-5.2 高约 144 Elo。同时上线 Claude Code 的 agent teams、API 的自动压缩、自适应思考与 effort 参数。价格为每百万 token 输入 5 美元、输出 25 美元，保持不变。</p><ul><li>能力卖点：更长程的自主工作、更强规划与代码审查，以及 Opus 级首个 1M token 上下文（beta）。</li><li>配套功能：Claude Code 的 agent teams、API 的 compaction、adaptive thinking、effort 控制。</li><li>定价不变（5/25 美元每百万 token）；若觉得简单任务上想太多，可把 effort 从默认 high 调低。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/news/claude-opus-4-6" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 24 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">运行框架</span></div><p class="gl-def">让 AI 模型能长时间持续干活的外层工程结构，负责调度模型、提供工具、安排角色分工和管理上下文。</p><p class="gl-ana">像给演员搭的舞台和场务：模型是演员，框架负责换景、递道具、控节奏。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体</span></div><p class="gl-def">能自己调用工具、把任务拆成多步并逐步推进的 AI 程序，不只是你问我答的聊天机器人。</p><p class="gl-ana">像带工具箱的实习生：给一个目标，他自己排步骤、动手、查错。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">generator</span><span class="gl-zh">生成器</span></div><p class="gl-def">多智能体结构里负责动手产出成果的 AI 角色，写代码、做设计稿都算它的活儿。</p><p class="gl-ana">像只负责出稿的设计师，先把东西做出来交给别人验收。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">evaluator</span><span class="gl-zh">评估器</span></div><p class="gl-def">多智能体结构里专门挑毛病、按标准给作品打分的 AI 角色，与生成器分工以避免自评自夸。</p><p class="gl-ana">像独立于作者的评审老师，只盯着作品哪里不行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">planner</span><span class="gl-zh">规划器</span></div><p class="gl-def">把一句简单需求扩写成完整产品规格的 AI 角色，会列出功能清单、范围和大致技术方向。</p><p class="gl-ana">像开工前先写好需求文档的产品经理。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口</span></div><p class="gl-def">模型一次能读入并记住的文本总量上限，超出之后，早先的内容会被压缩或干脆忘掉。</p><p class="gl-ana">像一张只能摊开固定页数的书桌，新纸放不下就得先收走旧纸。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context anxiety</span><span class="gl-zh">上下文焦虑</span></div><p class="gl-def">模型快接近上下文上限时提前收尾、草草结束任务的倾向，常把工作干成半成品。</p><p class="gl-ana">像考试快交卷时不再细想，最后几题胡乱写。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context reset</span><span class="gl-zh">上下文重置</span></div><p class="gl-def">清空当前对话记忆、换一个新的智能体接着做，并用结构化交接保住工作状态的做法。</p><p class="gl-ana">像换班：前一班留好交接单，新人从干净桌面继续干。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compaction</span><span class="gl-zh">上下文压缩</span></div><p class="gl-def">把较早的对话摘要成短文本、让同一个智能体在缩短后的历史上继续工作的做法。</p><p class="gl-ana">像把长会议记录浓缩成纪要，后面的人不用重听全程。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">handoff</span><span class="gl-zh">交接产物</span></div><p class="gl-def">上一个智能体留给下一个智能体的状态与待办文件，让工作能跨对话、跨会话接续。</p><p class="gl-ana">像值班交接单：做到哪、卡在哪、下一步做什么。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">spec</span><span class="gl-zh">产品规格</span></div><p class="gl-def">用文字写清产品要做什么、达到什么效果、包含哪些功能的文档，是智能体开发的依据。</p><p class="gl-ana">像装修前的需求清单加设计图。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">sprint</span><span class="gl-zh">冲刺</span></div><p class="gl-def">把一次大工程拆成若干个短周期单元，每个单元只实现一小批功能、做完就验收。</p><p class="gl-ana">像把一学期拆成每周作业，一周只攻一个目标。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">sprint contract</span><span class="gl-zh">冲刺契约</span></div><p class="gl-def">生成器和评估器在写代码前谈妥的验收清单，写明这一轮要做什么、怎样才算完成。</p><p class="gl-ana">像开工前先和质检员约定验收标准，免得事后扯皮。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">QA</span><span class="gl-zh">质检</span></div><p class="gl-def">质量检查环节：真的去操作软件找 bug、确认功能能不能用；本文里这一步由评估器承担，而不只是看代码看起来对不对。</p><p class="gl-ana">像产品出厂前的试玩员，专挑用起来别扭的地方。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Playwright MCP</span><span class="gl-zh">浏览器自动化工具（Playwright MCP）</span></div><p class="gl-def">让 AI 能真实操作浏览器的工具接口，可以点击、输入、截图，像真人用户一样把网页走一遍。</p><p class="gl-ana">像给 AI 装上一双能点鼠标、会截图的手。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Claude Agent SDK</span><span class="gl-zh">Claude Agent SDK（官方开发套件）</span></div><p class="gl-def">Anthropic 官方提供的开发套件，帮开发者搭建能调用工具、多步骤执行的智能体程序。</p><p class="gl-ana">像智能体的成品脚手架，省掉自己写调度和工具层。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">GAN</span><span class="gl-zh">生成对抗网络</span></div><p class="gl-def">由生成器和判别器互相对抗、一起变强的一类神经网络架构，常用于生成图像等内容。</p><p class="gl-ana">像造假者和鉴定师互相较劲，两边水平一起涨。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">few-shot</span><span class="gl-zh">少样本示例</span></div><p class="gl-def">在提示词里先给模型几组示例，让它照着例子学会任务该怎么做、输出该长什么样。</p><p class="gl-ana">像给新人看几份范本，再让他自己动笔。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">scaffolding</span><span class="gl-zh">脚手架</span></div><p class="gl-def">为弥补模型当前能力不足而临时搭的辅助结构，模型变强以后这些结构就可以拆掉。</p><p class="gl-ana">像盖楼时搭的支架，楼能自己站住后就撤掉。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">load-bearing</span><span class="gl-zh">承重</span></div><p class="gl-def">工程里真正支撑效果的关键部件，少了它结果会明显变差；与之相对的是可拆的辅助部分。</p><p class="gl-ana">像房子的承重墙，砸掉整层就不稳。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">AI slop</span><span class="gl-zh">AI 套路化产物</span></div><p class="gl-def">一眼能看出是 AI 批量生成、缺少个性与取舍的通用产物，比如紫渐变配白卡片的网页。</p><p class="gl-ana">像模板套出来的 PPT，换谁都长一个样。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">full-stack</span><span class="gl-zh">全栈</span></div><p class="gl-def">同时包含前端界面、后端服务和数据库的完整技术范围，指一个应用从上到下的全部层。</p><p class="gl-ana">像装修里从门面到水电管道全包。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">DAW</span><span class="gl-zh">数字音频工作站</span></div><p class="gl-def">用来作曲、录音、编曲和混音的音乐制作软件，传统上是桌面程序，现在也能在浏览器里跑。</p><p class="gl-ana">像音乐人的数字工作台：音轨、乐器、效果器都摆在上面。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">grading criteria</span><span class="gl-zh">评分标准</span></div><p class="gl-def">把「好不好」这类主观判断拆成若干条可逐条打分的具体标准，让评估器照着给作品评分。</p><p class="gl-ana">像比赛评分表：创意、完成度、技术分项打分。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>GAN 的类比边界</h4><p>原文借生成对抗网络（GAN）做类比。GAN 里是「生成器造假图」对「判别器辨真伪」互为对手；本文把它改成「生成器做设计、写代码」对「评估器按标准挑错、打分」的循环。差别在于：这里的评估器不打真假，而是给质量打分并写批评意见，反馈给生成器下一轮改进。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>Ralph Wiggum 是什么梗</h4><p>《辛普森一家》里的角色 Ralph Wiggum 屡败屡战、永远再来一轮。开发者社区用这个名字指「让智能体跑不停循环重试」的 harness 做法（Geoffrey Huntley 的推广文）。原文用它举例：社区也在摸索让智能体持续迭代的机制。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>「上下文焦虑」是原文自造的说法</h4><p>这不是学术术语，而是原文对一种观察的命名：模型在接近自己以为的上下文上限时，会「焦虑」地提前收尾、草草交差。原文后面提到 Sonnet 4.5 这种倾向很强，所以那代 harness 必须用重置来解决。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>压缩（compaction）与重置（reset）的区别</h4><p>压缩是把前面的对话摘要化，同一个智能体接着干；重置是直接清空，换一个新智能体，靠一份交接产物续命。压缩保留连续性，但清不掉「焦虑」；重置给干净起点，代价是交接产物必须写够状态。本文正文里，两代 harness 对这两种做法做了不同取舍。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>Playwright MCP 是什么</h4><p>Playwright 是浏览器自动化工具，能像人一样点按钮、填表单、读界面；MCP 是让模型调用外部工具的协议。给评估器配上它，评估器就能真的把应用跑起来点一遍，而不是只盯着一张静态截图打分。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>「冲刺契约」借的是敏捷开发术语</h4><p>冲刺（sprint）是敏捷开发里的一小段迭代。写代码之前，生成器先说明「这一步打算做什么、怎么算做完」，评估器审核并可能打回，双方谈拢才开工——避免规格太粗、验收无据。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>成本对比的口径</h4><p>solo 跑 20 分钟、9 美元；完整版（v1）harness 跑 6 小时、200 美元：成本约 22 倍（原文说 over 20x，只指成本），时间约 18 倍。后文更新版（v2）harness 跑 DAW 是 3 小时 50 分、124.70 美元。注意这些是文中实验当时的 token 计价，不能当成今天的价格。</p></div></div><div class="note-item"><div class="note-n">08</div><div><h4>pitch-perfect 的双关</h4><p>pitch-perfect 字面是音乐里的「音准完美」。作者写 DAW 时用这个词收尾是双关：这套音乐应用和智能体作曲都还称不上音准完美，但正在接近。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 1 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>the QAs prompt</code><p>原文这里少了一个撇号，应为 the QA's prompt（质检环节的提示词）。正文照录原文不改，只在对应位置加标注。</p></div></div></section><footer><p>原文：Anthropic Research《Harness design for long-running application development》，作者 Prithvi Rajasekaran（Anthropic Labs），2026-03-24 发布。本页是学习用双语精读版：英文逐句照录原文（含原文笔误），中文译文、速览、术语表、译注与图注为译者所加。附录里的 planner 示例规格是原文自带的产品规格样板，保留英文原文、未逐句翻译。</p><p>原文：<a href="https://www.anthropic.com/research/harness-design-long-running-apps" target="_blank" rel="noopener">Harness design for long-running application development</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-naive"><span class="dot">●</span>为什么简单直接的做法不够用</a><a class="l2" href="#s-frontend"><span class="dot">●</span>前端设计：让主观质量变得可评分</a><a class="l2" href="#s-scaling"><span class="dot">●</span>扩展到全栈编程</a><a class="l3" href="#h-scaling-b1"><span class="dot">●</span>架构</a><a class="l3" href="#h-scaling-b9"><span class="dot">●</span>运行这套 harness</a><a class="l3" href="#h-scaling-b-b0"><span class="dot">●</span>迭代改进这套 harness</a><a class="l3" href="#h-scaling-b-b4"><span class="dot">●</span>移除冲刺结构</a><a class="l3" href="#h-scaling-b-b10"><span class="dot">●</span>更新版 harness 的结果</a><a class="l2" href="#s-next"><span class="dot">●</span>下一步会怎样</a><a class="l2" href="#s-appendix"><span class="dot">●</span>附录</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"前端设计技能（Claude Code 技能文件）","title_en":"Frontend Design — Claude Code skill (SKILL.md)","site":"github.com","what_zh":"这是 Claude Code 的「前端设计」技能文件：指导模型做出有主见的配色与版式，并点名 AI 生成页面最常见的套路以便避开。","why_zh":"原文开篇即称这项研究源自这个技能；第 02 节又把「避免 AI 套路化产物」写进评分标准，想知道设计品味如何变成可执行的提示词，就该读原文。","tier":"必读","order":1,"url":"https://github.com/anthropics/claude-plugins-official/blob/main/plugins/frontend-design/skills/frontend-design/SKILL.md"},"L2":{"title_zh":"为长时间运行的智能体设计有效的 harness","title_en":"Effective harnesses for long-running agents","site":"anthropic.com","what_zh":"Anthropic 前作：讲如何让编码智能体跨多个上下文窗口持续工作——初始化智能体先搭好环境，后续每个会话只推进一个功能并留下进度记录。","why_zh":"原文三次引用它，并把本文的生成器—评估器架构称为在早前 harness 上继续迭代。要理解「跨会话做长任务」这套思路从哪来、哪些问题被解决了、哪些还悬着，先读这篇。","tier":"必读","order":2,"url":"https://www.anthropic.com/research/effective-harnesses-for-long-running-agents"},"L5":{"title_zh":"把 Ralph Wiggum 当成「软件工程师」","title_en":"Ralph Wiggum as a “software engineer”","site":"ghuntley.com","what_zh":"Geoffrey Huntley 介绍 Ralph 技巧的原始文章：把智能体放进一个 while 循环里，反复喂同一份 PROMPT.md，让它每轮只做一件事，靠迭代把项目磨出来。","why_zh":"原文把 Ralph 列为社区里与本文思路汇流的做法。它代表另一条路线：不设计复杂 harness，而靠极简单循环、规格文件与反馈信号。两相对照，才看得懂本文为什么仍要保留规划器与评估器。","tier":"必读","order":3,"url":"https://ghuntley.com/ralph/"},"L4":{"title_zh":"为 AI 智能体做有效的上下文工程","title_en":"Effective context engineering for AI agents","site":"anthropic.com","what_zh":"Anthropic 讲「上下文工程」的专文：不只看提示词怎么写，而是管理进入上下文窗口的全部 token，在有限注意力预算下只放信噪比最高的信息。","why_zh":"原文只用一句「上下文填满后模型会失去连贯性」带过的问题，这篇给出了完整解释：上下文腐化、注意力预算、token 两两注意力的平方级增长。想弄清本文为何要做上下文重置，读它。","tier":"背景","order":4,"url":"https://www.anthropic.com/research/effective-context-engineering-for-ai-agents"},"L6":{"title_zh":"Agent SDK 概览（Claude Code 文档）","title_en":"Agent SDK overview - Claude Code Docs","site":"code.claude.com","what_zh":"Claude Agent SDK 官方文档首页：把 Claude Code 的工具、agent loop 与上下文管理打包成 Python/TypeScript 库，让开发者在自己进程里跑同一个智能体。","why_zh":"本文的生成器—评估器循环就搭在这个 SDK 上。想知道「harness」在工程上到底指什么、会话、子智能体与自动压缩由谁提供，看这份能力清单最快。","tier":"背景","order":5,"url":"https://code.claude.com/docs/en/agent-sdk/overview"},"L7":{"title_zh":"构建有效的 AI 智能体","title_en":"Building effective AI agents","site":"anthropic.com","what_zh":"Anthropic 关于智能体设计的基础文章：先分清「工作流」与「智能体」，再从增强 LLM 这块积木出发，逐级介绍提示链、路由、并行等可组合模式。","why_zh":"原文最后用它收束论证：harness 的每个部件都隐含「模型自己做不到什么」的假设，而假设会随模型变强而过期。要理解本文为何不断删减脚手架，这是直接依据。","tier":"背景","order":6,"url":"https://www.anthropic.com/research/building-effective-agents"},"L3":{"title_zh":"生成对抗网络（GAN）","title_en":"Generative adversarial network","site":"en.wikipedia.org","what_zh":"维基百科的 GAN 条目：用两个神经网络互相对抗来学习数据分布的框架，2014 年由 Ian Goodfellow 等人提出，是生成式 AI 的代表性方法之一。","why_zh":"原文明说整套 harness 的生成器—评估器循环灵感来自 GAN：一个负责生成，一个负责挑错。读懂 GAN 的对抗训练与极小极大博弈，才能判断这个类比在本文里成不成立。","tier":"可选","order":7,"url":"https://en.wikipedia.org/wiki/Generative_adversarial_network"},"L8":{"title_zh":"Claude Opus 4.6 发布","title_en":"Claude Opus 4.6","site":"anthropic.com","what_zh":"Claude Opus 4.6 发布博客：主打更强的规划与长程智能体任务能力，Opus 级首次提供 100 万 token 上下文（beta），并公布多项评测成绩与新功能。","why_zh":"原文说 4.6 的发布进一步促使作者削减 harness 复杂度。读发布说明里的自动压缩、自适应思考与 effort 控制，就能对上本文后来删掉了哪些承重部件、为什么敢删。","tier":"可选","order":8,"url":"https://www.anthropic.com/news/claude-opus-4-6"}},"terms":{"harness":{"en":"harness","zh":"运行框架","def_zh":"让 AI 模型能长时间持续干活的外层工程结构，负责调度模型、提供工具、安排角色分工和管理上下文。","analogy_zh":"像给演员搭的舞台和场务：模型是演员，框架负责换景、递道具、控节奏。"},"agent":{"en":"agent","zh":"智能体","def_zh":"能自己调用工具、把任务拆成多步并逐步推进的 AI 程序，不只是你问我答的聊天机器人。","analogy_zh":"像带工具箱的实习生：给一个目标，他自己排步骤、动手、查错。"},"generator":{"en":"generator","zh":"生成器","def_zh":"多智能体结构里负责动手产出成果的 AI 角色，写代码、做设计稿都算它的活儿。","analogy_zh":"像只负责出稿的设计师，先把东西做出来交给别人验收。"},"evaluator":{"en":"evaluator","zh":"评估器","def_zh":"多智能体结构里专门挑毛病、按标准给作品打分的 AI 角色，与生成器分工以避免自评自夸。","analogy_zh":"像独立于作者的评审老师，只盯着作品哪里不行。"},"planner":{"en":"planner","zh":"规划器","def_zh":"把一句简单需求扩写成完整产品规格的 AI 角色，会列出功能清单、范围和大致技术方向。","analogy_zh":"像开工前先写好需求文档的产品经理。"},"context_window":{"en":"context window","zh":"上下文窗口","def_zh":"模型一次能读入并记住的文本总量上限，超出之后，早先的内容会被压缩或干脆忘掉。","analogy_zh":"像一张只能摊开固定页数的书桌，新纸放不下就得先收走旧纸。"},"context_anxiety":{"en":"context anxiety","zh":"上下文焦虑","def_zh":"模型快接近上下文上限时提前收尾、草草结束任务的倾向，常把工作干成半成品。","analogy_zh":"像考试快交卷时不再细想，最后几题胡乱写。"},"context_reset":{"en":"context reset","zh":"上下文重置","def_zh":"清空当前对话记忆、换一个新的智能体接着做，并用结构化交接保住工作状态的做法。","analogy_zh":"像换班：前一班留好交接单，新人从干净桌面继续干。"},"compaction":{"en":"compaction","zh":"上下文压缩","def_zh":"把较早的对话摘要成短文本、让同一个智能体在缩短后的历史上继续工作的做法。","analogy_zh":"像把长会议记录浓缩成纪要，后面的人不用重听全程。"},"handoff":{"en":"handoff","zh":"交接产物","def_zh":"上一个智能体留给下一个智能体的状态与待办文件，让工作能跨对话、跨会话接续。","analogy_zh":"像值班交接单：做到哪、卡在哪、下一步做什么。"},"spec":{"en":"spec","zh":"产品规格","def_zh":"用文字写清产品要做什么、达到什么效果、包含哪些功能的文档，是智能体开发的依据。","analogy_zh":"像装修前的需求清单加设计图。"},"sprint":{"en":"sprint","zh":"冲刺","def_zh":"把一次大工程拆成若干个短周期单元，每个单元只实现一小批功能、做完就验收。","analogy_zh":"像把一学期拆成每周作业，一周只攻一个目标。"},"sprint_contract":{"en":"sprint contract","zh":"冲刺契约","def_zh":"生成器和评估器在写代码前谈妥的验收清单，写明这一轮要做什么、怎样才算完成。","analogy_zh":"像开工前先和质检员约定验收标准，免得事后扯皮。"},"qa":{"en":"QA","zh":"质检","def_zh":"质量检查环节：真的去操作软件找 bug、确认功能能不能用；本文里这一步由评估器承担，而不只是看代码看起来对不对。","analogy_zh":"像产品出厂前的试玩员，专挑用起来别扭的地方。"},"playwright_mcp":{"en":"Playwright MCP","zh":"浏览器自动化工具（Playwright MCP）","def_zh":"让 AI 能真实操作浏览器的工具接口，可以点击、输入、截图，像真人用户一样把网页走一遍。","analogy_zh":"像给 AI 装上一双能点鼠标、会截图的手。"},"agent_sdk":{"en":"Claude Agent SDK","zh":"Claude Agent SDK（官方开发套件）","def_zh":"Anthropic 官方提供的开发套件，帮开发者搭建能调用工具、多步骤执行的智能体程序。","analogy_zh":"像智能体的成品脚手架，省掉自己写调度和工具层。"},"gan":{"en":"GAN","zh":"生成对抗网络","def_zh":"由生成器和判别器互相对抗、一起变强的一类神经网络架构，常用于生成图像等内容。","analogy_zh":"像造假者和鉴定师互相较劲，两边水平一起涨。"},"few_shot":{"en":"few-shot","zh":"少样本示例","def_zh":"在提示词里先给模型几组示例，让它照着例子学会任务该怎么做、输出该长什么样。","analogy_zh":"像给新人看几份范本，再让他自己动笔。"},"scaffolding":{"en":"scaffolding","zh":"脚手架","def_zh":"为弥补模型当前能力不足而临时搭的辅助结构，模型变强以后这些结构就可以拆掉。","analogy_zh":"像盖楼时搭的支架，楼能自己站住后就撤掉。"},"load_bearing":{"en":"load-bearing","zh":"承重","def_zh":"工程里真正支撑效果的关键部件，少了它结果会明显变差；与之相对的是可拆的辅助部分。","analogy_zh":"像房子的承重墙，砸掉整层就不稳。"},"ai_slop":{"en":"AI slop","zh":"AI 套路化产物","def_zh":"一眼能看出是 AI 批量生成、缺少个性与取舍的通用产物，比如紫渐变配白卡片的网页。","analogy_zh":"像模板套出来的 PPT，换谁都长一个样。"},"full_stack":{"en":"full-stack","zh":"全栈","def_zh":"同时包含前端界面、后端服务和数据库的完整技术范围，指一个应用从上到下的全部层。","analogy_zh":"像装修里从门面到水电管道全包。"},"daw":{"en":"DAW","zh":"数字音频工作站","def_zh":"用来作曲、录音、编曲和混音的音乐制作软件，传统上是桌面程序，现在也能在浏览器里跑。","analogy_zh":"像音乐人的数字工作台：音轨、乐器、效果器都摆在上面。"},"grading_criteria":{"en":"grading criteria","zh":"评分标准","def_zh":"把「好不好」这类主观判断拆成若干条可逐条打分的具体标准，让评估器照着给作品评分。","analogy_zh":"像比赛评分表：创意、完成度、技术分项打分。"}},"notes":{"N1":{"title_zh":"GAN 的类比边界","body_zh":"原文借生成对抗网络（GAN）做类比。GAN 里是「生成器造假图」对「判别器辨真伪」互为对手；本文把它改成「生成器做设计、写代码」对「评估器按标准挑错、打分」的循环。差别在于：这里的评估器不打真假，而是给质量打分并写批评意见，反馈给生成器下一轮改进。"},"N2":{"title_zh":"Ralph Wiggum 是什么梗","body_zh":"《辛普森一家》里的角色 Ralph Wiggum 屡败屡战、永远再来一轮。开发者社区用这个名字指「让智能体跑不停循环重试」的 harness 做法（Geoffrey Huntley 的推广文）。原文用它举例：社区也在摸索让智能体持续迭代的机制。"},"N3":{"title_zh":"「上下文焦虑」是原文自造的说法","body_zh":"这不是学术术语，而是原文对一种观察的命名：模型在接近自己以为的上下文上限时，会「焦虑」地提前收尾、草草交差。原文后面提到 Sonnet 4.5 这种倾向很强，所以那代 harness 必须用重置来解决。"},"N4":{"title_zh":"压缩（compaction）与重置（reset）的区别","body_zh":"压缩是把前面的对话摘要化，同一个智能体接着干；重置是直接清空，换一个新智能体，靠一份交接产物续命。压缩保留连续性，但清不掉「焦虑」；重置给干净起点，代价是交接产物必须写够状态。本文正文里，两代 harness 对这两种做法做了不同取舍。"},"N5":{"title_zh":"Playwright MCP 是什么","body_zh":"Playwright 是浏览器自动化工具，能像人一样点按钮、填表单、读界面；MCP 是让模型调用外部工具的协议。给评估器配上它，评估器就能真的把应用跑起来点一遍，而不是只盯着一张静态截图打分。"},"N6":{"title_zh":"「冲刺契约」借的是敏捷开发术语","body_zh":"冲刺（sprint）是敏捷开发里的一小段迭代。写代码之前，生成器先说明「这一步打算做什么、怎么算做完」，评估器审核并可能打回，双方谈拢才开工——避免规格太粗、验收无据。"},"N7":{"title_zh":"成本对比的口径","body_zh":"solo 跑 20 分钟、9 美元；完整版（v1）harness 跑 6 小时、200 美元：成本约 22 倍（原文说 over 20x，只指成本），时间约 18 倍。后文更新版（v2）harness 跑 DAW 是 3 小时 50 分、124.70 美元。注意这些是文中实验当时的 token 计价，不能当成今天的价格。"},"N8":{"title_zh":"pitch-perfect 的双关","body_zh":"pitch-perfect 字面是音乐里的「音准完美」。作者写 DAW 时用这个词收尾是双关：这套音乐应用和智能体作曲都还称不上音准完美，但正在接近。"}},"typos":[{"quote_en":"the QAs prompt","body_zh":"原文这里少了一个撇号，应为 the QA's prompt（质检环节的提示词）。正文照录原文不改，只在对应位置加标注。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{
+ "slug": "Hermes-Agent-DeepSeek-V4-模型名弃用问题的排查与修复",
+ "path": "2026/07/26/Hermes-Agent-DeepSeek-V4-模型名弃用问题的排查与修复",
+ "title": "Hermes Agent 接入 DeepSeek V4：模型名弃用问题的排查与修复",
+ "description": "接入 DeepSeek V4 时被模型名弃用卡住：从报错、配置文件到最终可用配置的排查过程。",
+ "date": "2026-07-26",
+ "tags": [
+  "hermes-agent",
+  "deepseek",
+  "排查"
+ ],
+ "content": "<blockquote><p>日期：2026-07-26  </p></blockquote>\n<blockquote><p>环境：UGREEN DXP4800PLUS-120 NAS + Docker (ugreen/hermes-agent:v1)  </p></blockquote>\n<blockquote><p>模型：DeepSeek V4 Flash</p></blockquote>\n<hr>\n<h2 id=\"背景\">背景</h2>\n<p>我在 UGREEN NAS 上部署了 Nous Research 的 Hermes Agent 作为家庭 AI 助手。它通过 OpenRouter 风格的 provider 机制接入各种大模型。我将默认模型从 OpenRouter 的 Claude 换成了 DeepSeek，配置如下：</p>\n<pre><code class=\"language-yaml\"># ~/workplace/config.yaml\nmodel:\n  default: deepseek-chat\n  provider: deepseek\n  base_url: https://api.deepseek.com</code></pre>\n<p>之前一切正常。但几天后，当我再次对话时，收到了这个错误：</p>\n<pre><code>⚠️  Normalized model &#x27;deepseek-v4-flash&#x27; to &#x27;deepseek-chat&#x27; for deepseek.\n⚠️  API call failed (attempt 1/3): BadRequestError [HTTP 400]\n\n   📝 Error: HTTP 400: The supported API model names are deepseek-v4-pro\n      or deepseek-v4-flash, but you passed deepseek-chat.</code></pre>\n<p>现象很矛盾：<strong>模型名写成 <code>deepseek-chat</code> 它报错不支持，写成 <code>deepseek-v4-flash</code> 又被自动\"修正\"回 <code>deepseek-chat</code></strong>。</p>\n<hr>\n<h2 id=\"排查过程\">排查过程</h2>\n<h3 id=\"第一步-查看错误日志\">第一步：查看错误日志</h3>\n<p>关键信息在日志开头：</p>\n<pre><code>Normalized model &#x27;deepseek-v4-flash&#x27; to &#x27;deepseek-chat&#x27; for deepseek.</code></pre>\n<p>这说明 Hermes 内部有一个<strong>模型名规范化（normalize）逻辑</strong>，把 DeepSeek 的模型名强制转换成了 <code>deepseek-chat</code>。</p>\n<h3 id=\"第二步-定位映射逻辑\">第二步：定位映射逻辑</h3>\n<p>在容器内搜索 <code>deepseek-chat</code>：</p>\n<pre><code class=\"language-bash\">sudo docker exec hermes-hermes-1 grep -rn &quot;deepseek-chat&quot; /opt/hermes/ 2&gt;/dev/null</code></pre>\n<p>找到三个关键文件：</p>\n<table>\n<thead>\n<tr>\n<th>文件</th>\n<th>作用</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>hermes_cli/model_switch.py:123</code></td>\n<td>模型切换逻辑，定义了 <code>\"deepseek\"</code> provider 的默认模型为 <code>\"deepseek-chat\"</code></td>\n</tr>\n<tr>\n<td><code>hermes_cli/model_normalize.py:148</code></td>\n<td>模型名规范化函数，强制所有 DeepSeek 模型返回 <code>\"deepseek-chat\"</code></td>\n</tr>\n<tr>\n<td><code>hermes_cli/models.py:195</code></td>\n<td>模型描述文件</td>\n</tr>\n</tbody>\n</table>\n<p>核心代码在 <code>model_normalize.py</code>：</p>\n<pre><code class=\"language-python\"># 第 148 行\nreturn &quot;deepseek-chat&quot;</code></pre>\n<p>这个函数无论输入什么 DeepSeek 模型名，都强制返回 <code>deepseek-chat</code>。</p>\n<h3 id=\"第三步-找到原因\">第三步：找到原因</h3>\n<p>DeepSeek 在 <strong>2026 年 7 月 24 日</strong> 正式弃用了旧模型名：</p>\n<table>\n<thead>\n<tr>\n<th>旧模型名（已弃用）</th>\n<th>新模型名</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>deepseek-chat</code></td>\n<td><code>deepseek-v4-flash</code>（非思考模式）</td>\n</tr>\n<tr>\n<td><code>deepseek-reasoner</code></td>\n<td><code>deepseek-v4-flash</code>（思考模式）或 <code>deepseek-v4-pro</code></td>\n</tr>\n</tbody>\n</table>\n<p>弃用时间正好是我们配置后就发生的——7 月 23 日部署，7 月 24 日 23:59 弃用生效。所以之前能用，几天后就不能用了。</p>\n<p>Hermes 的 <code>model_normalize.py</code> 还在用旧名称 <code>deepseek-chat</code>，导致：</p>\n<ol>\n<li>用户配置 <code>deepseek-v4-flash</code> → 被 normalize 为 <code>deepseek-chat</code></li>\n<li><code>deepseek-chat</code> 发送到 DeepSeek API → DeepSeek 返回 400 说这个模型名不支持</li>\n</ol>\n<hr>\n<h2 id=\"修复方法\">修复方法</h2>\n<p>将三个文件中所有 <code>deepseek-chat</code> 替换为 <code>deepseek-v4-flash</code>：</p>\n<pre><code class=\"language-bash\">sudo docker exec hermes-hermes-1 sed -i \\\n  &#x27;s/&quot;deepseek-chat&quot;/&quot;deepseek-v4-flash&quot;/g&#x27; \\\n  /opt/hermes/hermes_cli/model_switch.py \\\n  /opt/hermes/hermes_cli/model_normalize.py \\\n  /opt/hermes/hermes_cli/models.py</code></pre>\n<p>重启容器：</p>\n<pre><code class=\"language-bash\">sudo docker restart hermes-hermes-1</code></pre>\n<p>修复后对话恢复正常。</p>\n<hr>\n<h2 id=\"根本原因总结\">根本原因总结</h2>\n<p>这是一个典型的 <strong>Provider 端 Breaking Change 未被适配端同步</strong> 的问题：</p>\n<pre><code>时间线:\n\n  7/23     部署 Hermes，配置 deepseek-chat → 正常工作\n  7/24      DeepSeek 弃用旧模型名（生效时间 23:59）\n  7/26      Hermes 自动更新配置为 deepseek-v4-flash\n            → normalize 逻辑回退到 deepseek-chat\n            → DeepSeek API 拒绝\n            💥 对话失败\n\n  根因: Hermes 内置的 normalize 映射表未跟上 DeepSeek 的模型名变更</code></pre>\n<p>本质上是一个<strong>硬编码的映射表</strong>过时了。<code>model_normalize.py</code> 将\"所有 DeepSeek 模型\"强制映射到一个固定值，这个设计在 API 稳定时没问题，但一旦上游改了模型名，就会产生矛盾。</p>\n<hr>\n<h2 id=\"启示\">启示</h2>\n<ol>\n<li><strong>LLM Provider 的模型名不是稳定的 API 契约</strong>。DeepSeek 用了一年多的 <code>deepseek-chat</code> 说弃就弃了。</li>\n<li><strong>自动 normalize 逻辑要谨慎</strong>。好心帮你\"统一名称\"的逻辑，在 API 变更时会先于用户配置出错。</li>\n<li><strong>Docker 容器内的 Python 代码可以直接修</strong>。<code>docker exec + sed</code> 是临时修复的有效手段，但要等上游发新镜像才能永久解决。</li>\n<li><strong>看日志第一行很重要</strong>。<code>Normalized model ... to ...</code> 这个看似无害的日志，其实直接暴露了问题所在。</li>\n</ol>\n<hr>\n<h2 id=\"附录-DeepSeek-V4-新模型名\">附录：DeepSeek V4 新模型名</h2>\n<table>\n<thead>\n<tr>\n<th>模型</th>\n<th>说明</th>\n<th>价格</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>deepseek-v4-pro</code></td>\n<td>主力模型，支持思考模式</td>\n<td>¥1/1M tokens 入, ¥4/1M tokens 出</td>\n</tr>\n<tr>\n<td><code>deepseek-v4-flash</code></td>\n<td>快速模型，成本更低</td>\n<td>¥0.28/1M tokens 入, ¥1.1/1M tokens 出</td>\n</tr>\n</tbody>\n</table>\n<p>API 同时支持 OpenAI 和 Anthropic 两种格式：</p>\n<ul>\n<li>OpenAI 格式：<code>base_url = https://api.deepseek.com</code></li>\n<li>Anthropic 格式：<code>base_url = https://api.deepseek.com/anthropic</code></li>\n</ul>",
+ "toc": [
+  {
+   "level": 2,
+   "text": "背景",
+   "id": "背景"
+  },
+  {
+   "level": 2,
+   "text": "排查过程",
+   "id": "排查过程"
+  },
+  {
+   "level": 3,
+   "text": "第一步：查看错误日志",
+   "id": "第一步-查看错误日志"
+  },
+  {
+   "level": 3,
+   "text": "第二步：定位映射逻辑",
+   "id": "第二步-定位映射逻辑"
+  },
+  {
+   "level": 3,
+   "text": "第三步：找到原因",
+   "id": "第三步-找到原因"
+  },
+  {
+   "level": 2,
+   "text": "修复方法",
+   "id": "修复方法"
+  },
+  {
+   "level": 2,
+   "text": "根本原因总结",
+   "id": "根本原因总结"
+  },
+  {
+   "level": 2,
+   "text": "启示",
+   "id": "启示"
+  },
+  {
+   "level": 2,
+   "text": "附录：DeepSeek V4 新模型名",
+   "id": "附录-DeepSeek-V4-新模型名"
+  }
+ ]
+}

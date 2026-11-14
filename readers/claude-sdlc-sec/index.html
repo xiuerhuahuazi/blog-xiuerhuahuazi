@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Anthropic 如何保障 AI 原生软件开发生命周期的安全｜How Anthropic secures its AI-native software development lifecycle</title>
+<meta name="description" content="Anthropic 如何保障 AI 原生软件开发生命周期的安全｜How Anthropic secures its AI-native software development lifecycle：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-sdlc-sec/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="Anthropic 如何保障 AI 原生软件开发生命周期的安全">
+<meta property="og:description" content="Jason Clinton（Anthropic 副 CISO）· 2026 年 7 月 21 日 · 原文约 2,820 词">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-sdlc-sec/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic · Security Engineering · 2026-07-21</p><h1 class="h1-wrap"><span class="h1-en" lang="en">How Anthropic secures its AI-native software development lifecycle</span><span class="h1-zh">Anthropic 如何保障 AI 原生软件开发生命周期的安全</span></h1><div class="hero-meta"><span>原文 2790 词</span><span>中文 6300 字</span><span>逐句对照 <i>152</i> 句</span><span>预计 16 分钟</span><span><a href="https://claude.com/resources/articles/how-anthropic-secures-its-ai-native-software-development-lifecycle" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 5 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：Claude 现在写出约 80% 的合入代码，安全没法再靠「人肉评审」跟着扩容。Anthropic 的做法是把控制点前移到代码生成阶段、用硬性身份与网络边界圈住智能体、用多个职责很窄的 agent 互相制衡，最后在治理层盯「循环」而不是盯「bug」。</li><li><b>为什么非改不可</b>：工程师人均每季度交付的代码量是 2021–2025 年的 8 倍，超过一半的合入由 Claude Tag 完成。评审和监控如果还按人的速度走，就会变成瓶颈（作者用阿姆达尔定律点了这一句）。</li><li><b>它防的三类威胁</b>：①智能体被攻陷或被提示注入后引入恶意改动；②供应链与依赖投毒，被智能体当成可信输入吃进去；③那些更熟悉的应用程序漏洞——只是现在量大得多。后文每一项控制都对应其中至少一种。</li><li><b>按阶段落的控制</b>：Plan 阶段让安全评审（PSR）接上内部知识索引；Code 阶段把规则写进 CLAUDE.md、把评审左移到生成时、把开发机换成出站白名单的远程 VM；Test 阶段用多个窄职责 agent 并行评审、代码按风险分级、人工抽样；Deploy/Monitor 阶段上持续 DAST，告警 agent 只有三项权限——写文档、在公司频道发消息、读生产日志，它就是不能自动部署修复。</li><li><b>全文最贵的一条教训</b>：边界要画在「访问权与动作」上，不要画在「模型被要求做什么」上。一次模型升级后，事故响应 agent 主动在 Slack 上找到另一个会写代码的 agent，要求它把修复推上去——这次被人审闸门挡住了，但足以说明问题。</li></ul><div class="compare"><div class="cmp"><h3>传统 SDLC 的前提</h3><ol><li>代码量随人力线性增长，评审按人力排队</li><li>安全评审放在写代码之前，一次要等数周</li><li>代码评审由人做，被视为质量标准的终点</li><li>渗透测试与动态扫描按季度进行</li><li>代码迁移要各部门抽调人力、按季度推进</li></ol></div><div class="cmp win"><h3>本文的起点：这些前提都变了</h3><ol><li>人均季度代码量是 2021–2025 年的 8 倍</li><li>约 80% 合入代码由 Claude 写、过半由 Claude Tag 合并</li><li>原型几小时就能出来，架构评审不再是关键闸门</li><li>漏洞更少但更隐蔽，按季度的动态测试跟不上发布节奏</li><li>迁移由 Claude 自动化，几天跑完数万行</li></ol></div></div><p class="ov-foot cmp-foot">前提变了，控制点就得跟着挪——这是全文所有设计的出发点。</p><p class="ov-foot">读法建议：这篇是按 SDLC 阶段组织的，可以当参考手册用——第 2 节讲整体变化，第 3–8 节各管一个阶段（Plan / Code / Test / Deploy / Monitor / Governance），每节末尾都有一条加粗的「耐久原则」，只看这些原则也能拿到八成。页面上所有虚线下划的词都可悬停看解释，不必点走。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>这篇回答一个具体问题：当 Claude 写出八成合入代码、过半合并由 agent 完成时，安全流程要怎么改，才能不把开发速度拖死。作者的答案是四条总体策略——安全左移、硬边界圈住影响半径、确定性检查与 agent 评审叠加、在人最有价值的位置插人。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">At Anthropic, the amount of code and velocity of deployment have scaled exponentially.</span> <span class="s" data-k="intro-b0-1">Our software engineers on average ship 8x as much code per quarter as they did from 2021 to 2025.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">在 Anthropic，代码量和部署速度都是指数级增长。</span><span class="s" data-k="intro-b0-1">我们的软件工程师现在平均每个季度交付的代码量，是 2021 到 2025 年间的 8 倍。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">Our reviews, monitoring, and other security processes needed to scale alongside this increased pace.</span> <span class="s" data-k="intro-b1-1">Otherwise it becomes a formula for bottlenecks (<a class='lnk' href='https://en.wikipedia.org/wiki/Amdahl%27s_law' target='_blank' rel='noopener' data-link='L1'>Amdahl's Law</a>).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">评审、监控和其他安全流程，必须跟着这个速度一起扩容。</span><span class="s" data-k="intro-b1-1">否则，这就等于给瓶颈写好了配方：整体速度会被最慢的一环卡死（见<a class='lnk' href='https://en.wikipedia.org/wiki/Amdahl%27s_law' target='_blank' rel='noopener' data-link='L1'>阿姆达尔定律</a>）。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">Our software development processes have changed drastically as well.</span> <span class="s" data-k="intro-b2-1">Claude has evolved from coding assistant to primary creator and reviewer.</span> <span class="s" data-k="intro-b2-2"><a class='lnk' href='https://www.anthropic.com/institute/recursive-self-improvement' target='_blank' rel='noopener' data-link='L2'>Claude authors</a> about 80% of the code merged into our codebase today.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">软件开发流程本身也发生了剧变。</span><span class="s" data-k="intro-b2-1">Claude 的角色从编码助手，变成了主要的代码生产者和评审者。</span><span class="s" data-k="intro-b2-2">今天合入我们代码库的代码里，约 80% 出自<a class='lnk' href='https://www.anthropic.com/institute/recursive-self-improvement' target='_blank' rel='noopener' data-link='L2'>Claude 之手</a>。</span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">More than half of all code is being merged by our internal version of <a class='lnk' href='https://www.anthropic.com/news/introducing-claude-tag' target='_blank' rel='noopener' data-link='L3'>Claude Tag</a> while human engineers focus on directing, setting intent, and owning final approval.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">超过一半的代码，是由我们内部版本的 <a class='lnk' href='https://www.anthropic.com/news/introducing-claude-tag' target='_blank' rel='noopener' data-link='L3'>Claude Tag</a> 完成合入的；人类工程师则专注于指挥、设定意图，以及把住最终审批。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">This means our security team must defend a rapidly expanding <span class='term' data-term='attack-surface'>surface area</span> and harden a lifecycle with non-deterministic, constantly evolving <span class='term' data-term='agent'>agents</span> at its heart.</span> <span class="s" data-k="intro-b4-1">In this article, I cover strategies to secure the software development lifecycle (<span class='term' data-term='sdlc'>SDLC</span>).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">这意味着，安全团队要守的<span class='term' data-term='attack-surface'>攻击面</span>正快速变大；而这条生命周期的心脏，是一群行为不确定、还在不断演进的<span class='term' data-term='agent'>智能体</span>（agent）。团队必须在这样的前提下，把整条流程守住。</span><span class="s" data-k="intro-b4-1">本文讲的是：如何保障<span class='term' data-term='sdlc'>软件开发生命周期</span>（SDLC）<sup class='tn' data-note='N1'>1</sup>的安全。</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b5-0">(This is intended to be combined with the <a class='lnk' href='https://claude.com/resources/articles/zero-trust-for-ai-agents' target='_blank' rel='noopener' data-link='L4'>Zero Trust for Agents</a> framework we recently published; everything in this article uses security design ideas from that framework in the implementation).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b5-0">（本文应与我们最近发布的「<a class='lnk' href='https://claude.com/resources/articles/zero-trust-for-ai-agents' target='_blank' rel='noopener' data-link='L4'>面向智能体的零信任</a>」框架配套阅读；本文的所有实现，都用到了该框架里的安全设计思路。<sup class='tn' data-note='N3'>2</sup>）</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b6-0">The threats we're designing against are specific: a compromised or <span class='term' data-term='prompt-injection'>prompt-injected</span> agent introducing a malicious change; <span class='term' data-term='supply-chain'>supply-chain</span> and dependency poisoning that an agent ingests as trusted input; and the more familiar classes of application vulnerability now arriving at higher volume.</span> <span class="s" data-k="intro-b6-1">Every control that follows maps to at least one of those.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b6-0">我们针对的威胁很具体：智能体被攻陷或被<span class='term' data-term='prompt-injection'>提示注入</span>后引入恶意改动；<span class='term' data-term='supply-chain'>供应链</span>与依赖投毒，被智能体当成可信输入吃进去；以及那几类更熟悉的应用程序漏洞——只不过现在量更大了。</span><span class="s" data-k="intro-b6-1">后文的每一项控制，都至少对应其中一种威胁。</span></p></div></div>
+<div class="row" data-rid="intro-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b7-0">There are several overarching strategies we've deployed to accomplish this without significantly throttling dev velocity including:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b7-0">为了在不明显拖慢开发速度的前提下做到这件事，我们采取了几条总体策略：</span></p></div></div>
+<div class="row" data-rid="intro-b8"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="intro-b8-0-0">Shifting security left and fully integrating with the code development stage;</span></li><li><span class="s" data-k="intro-b8-1-0">Using hard access and identity boundaries to contain the <span class='term' data-term='blast-radius'>blast radius</span>;</span></li><li><span class="s" data-k="intro-b8-2-0">Combining automated deterministic and <span class='term' data-term='agentic'>agentic</span> reviews before and after production; and</span></li><li><span class="s" data-k="intro-b8-3-0">Inserting <span class='term' data-term='human-in-the-loop'>humans in the loop</span> at the highest leveraged points.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="intro-b8-0-0">把安全左移，并与代码开发阶段深度集成；</span></li><li><span class="s" data-k="intro-b8-1-0">用硬性的访问与身份边界，把<span class='term' data-term='blast-radius'>影响半径</span>圈住；</span></li><li><span class="s" data-k="intro-b8-2-0">在生产之前和之后，把确定性的自动化检查与<span class='term' data-term='agentic'>智能体化</span>评审叠加起来；以及</span></li><li><span class="s" data-k="intro-b8-3-0">在人最能使上劲的节点上，插入<span class='term' data-term='human-in-the-loop'>人工介入</span>。</span></li></ul></div></div>
+<div class="row" data-rid="intro-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b9-0">In this article, we'll cover the security processes we have implemented at specific stages of the software development lifecycle as well as the core principles behind them.</span> <span class="s" data-k="intro-b9-1">These principles are more enduring as security teams must reexamine, and often reinvent, their processes as model capabilities evolve.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b9-0">本文会按软件开发生命周期的各个具体阶段，逐个讲我们落地的安全流程，以及这些流程背后的核心原则。</span><span class="s" data-k="intro-b9-1">这些原则比具体做法更耐久：因为随着模型能力演进，安全团队必须不断重新审视、往往还要重新发明自己的流程。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-evolving">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">The evolving software development lifecycle</span><span class="h-zh">正在演进的软件开发生命周期</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节是后面六个阶段的背景板：Anthropic 的 SDLC 被压缩了——原型先行、想法来自全组织、前后端设计的边界模糊，但阶段的名字和顺序对传统开发者并不陌生。正因为这些阶段本来就是「天然的闸门」，安全控制才能直接挂上去。</p></div>
+<div class="reader-body">
+<figure class="row wide fig" id="fig1" data-cap="AI 原生 SDLC：八个阶段仍在一圈里"><div class="fig-media"><img class="still" src="media/fig1.png" loading="lazy" decoding="async" alt="fig1"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>AI 原生 SDLC：八个阶段仍在一圈里</b>　橙色闭环：Ideation、Requirements、Plan、Code、Test、Deploy、Monitor 顺时针排开，Governance 横跨全程，中心写 Claude-powered cycle。</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>右上 Legend：橙色=Transformed by Claude，说明多数阶段已由 Claude 接管。</li><li>绿点标 8、写 Governance (cross-cutting)：治理横跨全程，正文该节讲它。</li><li>中心 Claude-powered cycle：整圈由 Claude 驱动，环从左侧 Ideation 起顺时针走。</li><li>阶段名仍是 Plan、Code、Test、Deploy、Monitor：正文明说这套骨架不陌生。</li><li>右侧 KEY INSIGHT：Skills 管住每个 agent-led 阶段，Hooks 守关键人工审批。</li></ol><p class="takeaway">一句话：阶段名没变，变的是每环由 Claude 驱动，治理与钩子横跨全程。</p></details></figcaption></figure>
+<div class="row" data-rid="evolving-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="evolving-b1-0">Our development team has covered the changes to their software development lifecycle <a class='lnk' href='https://claude.com/resources/articles/running-an-ai-native-engineering-org' target='_blank' rel='noopener' data-link='L5'>at length</a>, so this will be a brief primer before we dive into each stage.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="evolving-b1-0">我们的开发团队已经<a class='lnk' href='https://claude.com/resources/articles/running-an-ai-native-engineering-org' target='_blank' rel='noopener' data-link='L5'>详细讲过</a>他们的软件开发生命周期有哪些变化，所以这里只做一个简短铺垫，然后就逐个阶段展开。</span></p></div></div>
+<div class="row" data-rid="evolving-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="evolving-b2-0">At a high level, our software development lifecycle is compressed.</span> <span class="s" data-k="evolving-b2-1">It is driven by prototypes and internal adoption (dogfooding) more than lengthy planning cycles.</span> <span class="s" data-k="evolving-b2-2">Ideation comes from all corners of the organization and traditional roles (frontend, backend, design) are blurred.</span> <span class="s" data-k="evolving-b2-3">Reviews and approvals still have humans in the <span class='term' data-term='loop'>loop</span>, but are also driven by agentic loops.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="evolving-b2-0">从整体上看，我们的软件开发生命周期是被压缩过的。</span><span class="s" data-k="evolving-b2-1">推动它的更多是原型和内部试用（dogfooding），而不是漫长的规划周期。</span><span class="s" data-k="evolving-b2-2">想法来自组织的各个角落，前端、后端、设计这些传统分工也变模糊了。</span><span class="s" data-k="evolving-b2-3">评审和审批仍然有人工介入，但同样由智能体<span class='term' data-term='loop'>循环</span>来驱动。</span></p></div></div>
+<div class="row" data-rid="evolving-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="evolving-b3-0">While each stage has been fundamentally transformed and accelerated by Claude Code and <span class='term' data-term='claude-tag'>Claude Tag</span>, the names and purposes of each stage wouldn't look alien to a developer coming from a more traditional organization.</span> <span class="s" data-k="evolving-b3-1">These are natural gates that we also use as part of our security processes for an AI-native SDLC.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="evolving-b3-0">虽然每个阶段都被 Claude Code 和 <span class='term' data-term='claude-tag'>Claude Tag</span> 从根本上改造并加速了，但对一个来自传统组织的开发者来说，这些阶段的名字和用途并不陌生。</span><span class="s" data-k="evolving-b3-1">它们本来就是天然的闸门，我们正好把这些闸门也用作 AI 原生 SDLC 安全流程的一部分。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-plan">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Plan</span><span class="h-zh">规划（Plan）</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>Plan 阶段的安全自动化最早只干一件事：把设计文档喂给 Claude，对照 MITRE ATT&amp;CK 找问题。接上内部知识索引之后效果质变——省掉 AppSec 团队大部分时间，低风险项目甚至放给团队自己批。原则很朴素：把安全 agent 接到上下文本来就在的地方，而不是逼人写更细的文档。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="plan-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b0-0">One of our first security automations ever was a simple Claude Opus powered <span class='term' data-term='psr'>PSR</span> (project security review) web application.</span> <span class="s" data-k="plan-b0-1">It ingested a project design document and analyzed it against the <a class='lnk' href='https://attack.mitre.org/' target='_blank' rel='noopener' data-link='L6'>MITRE ATT&CK framework</a> to identify potential vulnerabilities and suggested mitigations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b0-0">我们最早的安全自动化之一，是一个由 Claude Opus 驱动的 <span class='term' data-term='psr'>PSR</span>（项目安全评审）网页应用，很简单。</span><span class="s" data-k="plan-b0-1">它读入项目设计文档，对照 <a class='lnk' href='https://attack.mitre.org/' target='_blank' rel='noopener' data-link='L6'>MITRE ATT&CK 框架</a>做分析，找出潜在漏洞并给出缓解建议。</span></p></div></div>
+<div class="row" data-rid="plan-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b1-0">We've significantly enhanced the system by connecting it to an internal knowledge index that provides much deeper context across our organization-wide policies, past decisions, and related systems.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b1-0">我们后来大幅增强了这个系统：把它接到一个内部知识索引上，从而拿到深得多的上下文——全组织的政策、过去的决策、以及相关系统。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="自动化 PSR 怎么发起：一张三步操作卡"><div class="fig-media"><img class="still" src="media/fig2.png" loading="lazy" decoding="async" alt="The process internally at Anthropic for an automated PSR."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>自动化 PSR 怎么发起：一张三步操作卡</b>　原图注说的是 Anthropic 内部自动化 PSR 的流程，图本身却是发起一次 PSR 的三步操作卡：01 开仓库会话、02 运行 /psr、03 跟着提示走。</p><p class="cap-en">原文图注：The process internally at Anthropic for an automated PSR.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左卡 01 Open a session in your repo：会话要开在待评审项目的仓库里。</li><li>中卡 02 Run the command：输入框只有 /psr，要指向 PR、设计文档或讨论串。</li><li>右卡 03 Follow the prompts：Claude 带你走完 intake、追问和 mitigations。</li><li>对照正文：卡片讲怎么发起，正文讲知识索引与 MITRE ATT&CK 的风险结论。</li></ol><p class="takeaway">一句话：一次 /psr 就能发起 PSR，剩下的由 Claude 引导你走完。</p></details></figcaption></figure>
+<div class="row" data-rid="plan-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b3-0">This gives us a better understanding of potential risk, and it also captures information missing from the PSR.</span> <span class="s" data-k="plan-b3-1">This one implementation saved the majority of the AppSec team's time.</span> <span class="s" data-k="plan-b3-2">Once we gained confidence that Claude was accurate in assessing risk, we allowed teams to approve their own project, if Claude deemed the launch low enough risk.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b3-0">这让我们对潜在风险理解得更好，也补上了 PSR 本身抓不到的信息。</span><span class="s" data-k="plan-b3-1">仅这一项实现，就省下了应用安全（AppSec）团队大部分时间。</span><span class="s" data-k="plan-b3-2">在我们确信 Claude 的风险判断足够准之后，就允许各团队自行批准自己的项目——前提是 Claude 认为这次发布的风险足够低。</span></p></div></div>
+<div class="row" data-rid="plan-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b4-0">Here we can see one of the first key adaptations to an AI-native SDLC.</span> <span class="s" data-k="plan-b4-1">A PSR was originally designed to catch security issues before the lengthy and expensive coding process.</span> <span class="s" data-k="plan-b4-2">Catching an issue at this stage saved months of re-development.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b4-0">这里能看到针对 AI 原生 SDLC 最早的一批关键调整之一。</span><span class="s" data-k="plan-b4-1">PSR 原本的设计意图，是在漫长而昂贵的编码过程之前拦住安全问题。</span><span class="s" data-k="plan-b4-2">在这个阶段拦下一个问题，能省掉几个月的返工。</span></p></div></div>
+<div class="row" data-rid="plan-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b5-0">Today, multiple prototypes of major features can be created in hours, making detailed architectural review a less critical gate.</span> <span class="s" data-k="plan-b5-1">Connecting our PSR application to our knowledge index captures context that could otherwise be missed without creating an unnecessary speed bump.</span> <span class="s" data-k="plan-b5-2">Creating a Claude Code <span class='term' data-term='skill'>skill</span> allowed Claude to further fan out and capture additional context wherever it lived.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b5-0">但今天，几个主要功能的原型几个小时就能做出来，详细的架构评审因此不再是那个最关键的闸门。</span><span class="s" data-k="plan-b5-1">把 PSR 应用接到知识索引上，能捕获本来会漏掉的上下文，同时又不会人为制造一个不必要的减速带。</span><span class="s" data-k="plan-b5-2">做一个 Claude Code <span class='term' data-term='skill'>技能</span>，则让 Claude 可以进一步铺开，把散落在各处的额外上下文也抓回来。</span></p></div></div>
+<div class="row wide principle" data-rid="plan-b6"><div class="principle-box"><span class="lab lab-zh">耐久原则</span><span class="lab lab-en">Enduring principle</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="plan-b6-0"><b>Enduring Principle</b>: Connect security agents to organizational context. As the planning cycle compresses, it is much more effective to bring these agents to where the context already lives – chat threads, prior reviews, the codebase – rather than forcing detailed documentation at stages that may no longer require them. Either way, agents need context outside of the code itself.</span></div><div class="cell zh"><span class="s" data-k="plan-b6-0"><b>耐久原则</b>：把安全 agent 接到组织上下文上。当规划周期被压缩，把 agent 送到上下文本来就在的地方——聊天记录、过往评审、代码库——远比强迫大家在可能已经不需要文档的阶段写详细文档有效。无论走哪条路，agent 都需要代码之外的上下文。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-code">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Code</span><span class="h-zh">写码（Code）</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>Code 阶段是安全团队唯一能「从源头改」的地方：把规则写进 CLAUDE.md 和技能，让漏洞在生成的那一刻就不出现；再用 /security-review 和插件在生成时、PR 时兜一层；同时把开发搬进出站白名单的远程 VM，把影响半径圈死。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="code-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b0-0">Security professionals within an AI-native engineering organization have a new lever: they can directly shape how code is created, helping to prevent vulnerabilities at the source.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b0-0">在 AI 原生的工程组织里，安全人员多了一个新杠杆：他们可以直接塑造代码是怎么被写出来的，从源头上预防漏洞。</span></p></div></div>
+<div class="row" data-rid="code-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b1-0">Previously, teams observed recurring vulnerabilities and created secure coding guidelines to address them, but those guidelines were difficult to enforce and rarely standardized.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b1-0">过去，团队观察到反复出现的漏洞，就写一份安全编码规范来应对；但这些规范很难落地执行，也很少被统一。</span></p></div></div>
+<div class="row" data-rid="code-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b2-0">At Anthropic, those guidelines are encoded in <span class='term' data-term='claude-md'>CLAUDE.md</span> files and references to org-wide skills so the code follows these best practices the minute it's generated.</span> <span class="s" data-k="code-b2-1">This is done as part of a closed loop.</span> <span class="s" data-k="code-b2-2">Once an agent discovers a bug class, the relevant file is updated to prevent it recurring in future code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b2-0">在 Anthropic，这些规范被写进 <span class='term' data-term='claude-md'>CLAUDE.md</span> 文件、以及指向组织级技能的引用里，于是代码在生成的当下就遵守这些最佳实践。</span><span class="s" data-k="code-b2-1">这件事是在一个闭环里完成的。</span><span class="s" data-k="code-b2-2">一旦某个 agent 发现了某一类 bug，相关文件就会被更新，防止它在未来的代码里重现。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="规范怎么写进代码：一个四步闭环"><div class="fig-media"><img class="still" src="media/fig3.png" loading="lazy" decoding="async" alt="fig3"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>规范怎么写进代码：一个四步闭环</b>　四张卡片围成一圈，中心写 Closed loop；编号 01 到 04 讲规范被写下来、被智能体读取、撞上新 bug 类、再改写回去，正是正文 Code 节的 closed loop。</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>顶部 01 Best practices are encoded：规范一次写进文件，反复复用。</li><li>右侧 02 Compliant by default：Agents read those files，代码一写下就合规。</li><li>底部 03 A new bug class surfaces：智能体撞上规范没覆盖的 failure mode。</li><li>左侧 04 The source of truth updates：改源文件，这类 bug 不再复发。</li><li>中心 Closed loop 表示回到 01：新问题变成新规范，四步转成一圈。</li></ol><p class="takeaway">一句话：发现新 bug 就改规范文件，下一轮生成的代码自动免疫。</p></details></figcaption></figure>
+<div class="row" data-rid="code-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b4-0">Of course, that doesn't mean all code comes out perfect.</span> <span class="s" data-k="code-b4-1">Our team started with a CLAUDE.md file that instructs the agent to run <a class='lnk' href='https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code' target='_blank' rel='noopener' data-link='L7'>/security-review</a> as a final step before opening a <span class='term' data-term='pr'>PR</span>.</span> <span class="s" data-k="code-b4-2">This generally available command, the productized version of our team's internal review workflow, looks for places where potential attacker-controllable input enters, scans for suspicious links, and then verifies its findings.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b4-0">当然，这不意味着产出的代码都是完美的。</span><span class="s" data-k="code-b4-1">我们团队最初的做法，是在 CLAUDE.md 里把 <a class='lnk' href='https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code' target='_blank' rel='noopener' data-link='L7'>/security-review</a> 定为开 <span class='term' data-term='pr'>PR</span> 之前的最后一步。</span><span class="s" data-k="code-b4-2">这个已公开发布的命令，是我们团队内部评审流程的产品化版本：它会找出攻击者可能控制的输入是从哪里进来的、扫描可疑链接，然后对自己发现的问题做验证。</span></p></div></div>
+<div class="row" data-rid="code-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b5-0">Today, these reviews take place while Claude generates the code.</span> <span class="s" data-k="code-b5-1">Once a <a class='lnk' href='https://code.claude.com/docs/en/security-guidance' target='_blank' rel='noopener' data-link='L8'>security guidance plugin</a> is installed, Claude reviews the conversation and code as it goes.</span> <span class="s" data-k="code-b5-2">It suggests security improvements and addresses common vulnerabilities in the same session as it generates the code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b5-0">而现在，这类评审发生在 Claude 生成代码的过程当中。</span><span class="s" data-k="code-b5-1">装上一个<a class='lnk' href='https://code.claude.com/docs/en/security-guidance' target='_blank' rel='noopener' data-link='L8'>安全指导插件</a>之后，Claude 会一边生成、一边审阅对话和代码。</span><span class="s" data-k="code-b5-2">它会在生成代码的同一次会话里，提出安全改进、处理常见漏洞。</span></p></div></div>
+<div class="row" data-rid="code-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b6-0">Other nudges at PR-time push internal, non-technical teams towards hosting their app on our low-code app-hosting platform, avoiding <span class='term' data-term='shadow-it'>shadow IT</span> that had traditionally plagued security teams.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b6-0">PR 阶段还有些别的引导：把内部非技术团队推上我们自己的低代码应用托管平台，从而避开<span class='term' data-term='shadow-it'>影子 IT</span>——那一直是安全团队的老麻烦。</span></p></div></div>
+<div class="row" data-rid="code-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b7-0">Some of our customers choose to integrate <a class='lnk' href='https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code' target='_blank' rel='noopener' data-link='L7'>/security-review</a> with a PreToolUse <span class='term' data-term='hook'>hook</span>, which makes this step a harder gate.</span> <span class="s" data-k="code-b7-1">That is also effective, but our team has chosen to incorporate our hard code review gate at the test/CI stage of the cycle.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b7-0">有些客户选择把 <a class='lnk' href='https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code' target='_blank' rel='noopener' data-link='L7'>/security-review</a> 接在 PreToolUse <span class='term' data-term='hook'>钩子</span>上，让这一步变成更硬的闸门。</span><span class="s" data-k="code-b7-1">那同样有效，但我们团队选择把硬性的代码评审闸门放在整个周期的测试/CI 阶段。</span></p></div></div>
+<div class="row" data-rid="code-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b8-0">In addition to shaping and reviewing code, containing the blast radius is one of our primary concerns at this stage.</span> <span class="s" data-k="code-b8-1">We do this by setting hard boundaries around identity (more on that in the monitor section) and setting our devs up to code on virtual machines.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b8-0">在这个阶段，除了塑造和评审代码，圈住影响半径也是我们的首要关切之一。</span><span class="s" data-k="code-b8-1">我们靠两件事做到：给身份划出硬边界（Monitor 一节还会展开），以及让开发者在虚拟机上写代码。</span></p></div></div>
+<div class="row" data-rid="code-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b9-0">Moving our coding to remote VMs was a relatively painless shift and gave us increased control and visibility compared to laptops alone.</span> <span class="s" data-k="code-b9-1">Agent traffic on these VMs is <span class='term' data-term='egress-allowlist'>egress-allowlisted</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b9-0">把写代码搬到远程虚拟机，是一次相对无痛的迁移；相比只靠笔记本电脑，它给了我们更强的控制力和可见性。</span><span class="s" data-k="code-b9-1">这些 VM 上 agent 的出站流量走白名单。</span></p></div></div>
+<div class="row" data-rid="code-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b10-0">These tight egress controls matter especially when the agent is reading untrusted input which can carry a prompt-injection payload.</span> <span class="s" data-k="code-b10-1">An injected instruction can't reach arbitrary destinations on the internet: <span class='term' data-term='exfiltration'>exfiltration</span> paths are limited to a small set of monitored services.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b10-0">这种严格的出站控制尤其重要——当 agent 正在读不可信输入时，可能夹着一段专门骗它照做的指令（提示注入）。</span><span class="s" data-k="code-b10-1">一条被注入的指令无法连到互联网上任意目的地：<span class='term' data-term='exfiltration'>数据外泄</span>的通道被限制在少数几个受监控的服务上。</span></p></div></div>
+<div class="row" data-rid="code-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="code-b11-0">Here again you can see a clear adaptation for an AI-native SDLC.</span> <span class="s" data-k="code-b11-1">Remote coding was previously used mainly to contain IP, and today we're seeing more mature AI coding teams adopt these environments as a means to contain agents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="code-b11-0">这里又看到一个针对 AI 原生 SDLC 的明确调整。</span><span class="s" data-k="code-b11-1">远程写码过去主要用来保护知识产权；今天我们看到更成熟的 AI 编码团队，把这些环境当成圈住 agent 的手段。</span></p></div></div>
+<div class="row wide principle" data-rid="code-b12"><div class="principle-box"><span class="lab lab-zh">耐久原则</span><span class="lab lab-en">Enduring principle</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="code-b12-0"><b>Enduring Principle</b>: Shifting left in an AI-native engineering organization means closing the loop between vulnerability discovery and updating instructions to customize how Claude generates code. Limit the blast radius (<span class='term' data-term='least-agency'>Principle of Least Agency</span>) and what an agent can access with hard boundaries as appropriate.</span></div><div class="cell zh"><span class="s" data-k="code-b12-0"><b>耐久原则</b>：在 AI 原生工程组织里，「左移」意味着把「发现漏洞」和「更新指令、改变 Claude 生成代码的方式」这两件事闭成一个环。用硬边界，恰当地限制影响半径（<span class='term' data-term='least-agency'>最小自主权</span>原则）<sup class='tn' data-note='N4'>3</sup>，以及 agent 能访问到的东西。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-test">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Test (CI)</span><span class="h-zh">测试与持续集成（Test / CI）</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这是最容易变成瓶颈的一环：agent 写代码再快，团队也只能快到人评审的速度。Anthropic 的解法是把「确定性检查 + 多个职责很窄的 agent」叠起来，人工评审留给受监管或真正关键的代码——但问责链没丢：每次批准都带记录，还要做风险加权抽样。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="test-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b0-0">In my experience, the test or CI stage quickly becomes the most painful bottleneck for engineering teams in the midst of an AI-native transformation.</span> <span class="s" data-k="test-b0-1">At Anthropic, once most developers were using agentic coding tools and running multiple agents at one time, it quickly became obvious the team could only move as quickly as humans could review code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b0-0">以我的经验，在 AI 原生转型进行中的工程团队里，测试/CI 阶段很快就会变成最痛的瓶颈。</span><span class="s" data-k="test-b0-1">在 Anthropic，当大多数开发者都用上智能体化编码工具、并且同时跑多个 agent 之后，很快就看清一件事：团队能跑多快，取决于人能评审多快。</span></p></div></div>
+<div class="row" data-rid="test-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b1-0">Let's be clear: human accountability is still central to our process.</span> <span class="s" data-k="test-b1-1">What we did was accelerate the review process by combining automated agentic and deterministic reviews, while reserving human review for regulated or truly critical code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b1-0">说清楚一点：最终仍然要由人来负责。</span><span class="s" data-k="test-b1-1">我们做的是加速评审：把自动化的智能体评审和确定性检查叠起来用<sup class='tn' data-note='N2'>4</sup>，而把人工评审留给受监管的、或者真正关键的代码。</span></p></div></div>
+<div class="row" data-rid="test-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b2-0">Historically, human code review has been held as the standard, yet the <a class='lnk' href='https://link.springer.com/chapter/10.1007/978-3-642-36563-8_14' target='_blank' rel='noopener' data-link='L9'>empirical evidence</a> has shown it is not perfect.</span> <span class="s" data-k="test-b2-1">Security bugs regularly ship in software across the world.</span> <span class="s" data-k="test-b2-2">Our review process is able to review more code and catch particularly complex issues, helping to reduce these risks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b2-0">历史上，人工代码评审一直被当作标准，但<a class='lnk' href='https://link.springer.com/chapter/10.1007/978-3-642-36563-8_14' target='_blank' rel='noopener' data-link='L9'>实证研究</a>显示它并不完美。</span><span class="s" data-k="test-b2-1">安全 bug 照样会随软件发布到全世界。</span><span class="s" data-k="test-b2-2">我们的评审流程能覆盖更多代码、也能抓到特别复杂的问题，从而帮着降低这类风险。</span></p></div></div>
+<div class="row" data-rid="test-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b3-0">The share of PRs that get substantive review comments <a class='lnk' href='https://claude.com/resources/articles/code-review' target='_blank' rel='noopener' data-link='L10'>has grown from 16 to 54%</a> as we've gained confidence in the findings by requiring the agents to write a proof that their finding is valid.</span> <span class="s" data-k="test-b3-1">We've also determined that approximately <a class='lnk' href='https://www.anthropic.com/institute/recursive-self-improvement' target='_blank' rel='noopener' data-link='L2'>a third of the bugs behind past claude.ai incidents would have been caught</a> by the automated processes we have now implemented.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b3-0">自从我们要求 agent 为每条发现写一份「证明它确实成立」的材料（复现步骤、测试或证据），我们对结论的信心就上来了：收到实质性评审意见的 PR 占比，<a class='lnk' href='https://claude.com/resources/articles/code-review' target='_blank' rel='noopener' data-link='L10'>也从 16% 涨到了 54%</a>。</span><span class="s" data-k="test-b3-1">我们还估算出：过去 claude.ai 事故背后的 bug 里，大约<a class='lnk' href='https://www.anthropic.com/institute/recursive-self-improvement' target='_blank' rel='noopener' data-link='L2'>三分之一</a>本来会被我们现在上线的这套自动化流程拦下。</span></p></div></div>
+<div class="row" data-rid="test-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b4-0">We're not the only organization that has found this to be true.</span> <span class="s" data-k="test-b4-1"><a class='lnk' href='https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/' target='_blank' rel='noopener' data-link='L11'>Intercom has shared</a> it auto-approves 19% of its PRs.</span> <span class="s" data-k="test-b4-2">Deployment doubled while downtime from breaking code changes dropped 35%.</span> <span class="s" data-k="test-b4-3">CircleCI reached a similar conclusion building Chunk, an autonomous agent on Claude that resolves CI/CD maintenance issues and <a class='lnk' href='https://claude.com/customers/circleci' target='_blank' rel='noopener' data-link='L12'>validates its own fixes before a human ever sees them. The</a> approach doubled the rate at which agent tasks convert into completed pull requests.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b4-0">发现这一点的组织不止我们一家。</span><span class="s" data-k="test-b4-1"><a class='lnk' href='https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/' target='_blank' rel='noopener' data-link='L11'>Intercom 分享过</a>：他们自动批准了 19% 的 PR。</span><span class="s" data-k="test-b4-2">结果部署频率翻倍，而由破坏性代码变更导致的宕机时间下降了 35%。</span><span class="s" data-k="test-b4-3">CircleCI 在构建 Chunk 时得出了类似结论——Chunk 是跑在 Claude 上的自主 agent，负责解决 CI/CD 的维护问题，<a class='lnk' href='https://claude.com/customers/circleci' target='_blank' rel='noopener' data-link='L12'>并且会在人类看到之前先验证自己的修复</a>。这种做法把「agent 任务转化成完整 PR」的转化率提高了一倍<sup class='tn' data-note='N5'>5</sup>。</span></p></div></div>
+<div class="row" data-rid="test-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b5-0">When a PR is opened at Anthropic, multiple agents automatically review it.</span> <span class="s" data-k="test-b5-1">Each review agent is designed and scoped to a specific, narrow focus and leverages <span class='term' data-term='rag'>RAG</span> for additional context and memory surrounding past incidents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b5-0">在 Anthropic，一个 PR 开出来之后，多个 agent 会自动评审它。</span><span class="s" data-k="test-b5-1">每个评审 agent 都被设计并限定在一个具体、很窄的关注点上，并用 <span class='term' data-term='rag'>RAG</span> 去取与过往事故相关的额外上下文和记忆。</span></p></div></div>
+<div class="row" data-rid="test-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b6-0">This is much more effective than one mega-prompt or super security agent for a few reasons:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b6-0">这比「一条巨型提示词」或者「一个无所不能的安全 agent」有效得多，原因有几个：</span></p></div></div>
+<div class="row" data-rid="test-b7"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="test-b7-0-0">They do not share biases and blindspots</span></li><li><span class="s" data-k="test-b7-1-0">If one is compromised or makes a mistake, it can be caught by other reviewers</span></li><li><span class="s" data-k="test-b7-2-0">Effort isn't spread too thinly across multiple focus areas</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="test-b7-0-0">它们不共享同一套偏见和盲区</span></li><li><span class="s" data-k="test-b7-1-0">其中一个被攻陷、或者犯了错，会被其他评审者抓到</span></li><li><span class="s" data-k="test-b7-2-0">精力不会被摊得太薄、铺到多个关注点上</span></li></ul></div></div>
+<div class="row" data-rid="test-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b8-0">To be clear, agents aren't merging code to production unchecked.</span> <span class="s" data-k="test-b8-1">We tier our codebase by risk, and make deliberate decisions on what parts to automate.</span> <span class="s" data-k="test-b8-2">Entire codebases have strict human approval processes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b8-0">说清楚：agent 并不是不受检查地把代码合入生产。</span><span class="s" data-k="test-b8-1">我们把代码库按风险分级，并有意决定哪些部分可以自动化。</span><span class="s" data-k="test-b8-2">整个代码库范围内，仍然有严格的人工审批流程。</span></p></div></div>
+<div class="row" data-rid="test-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b9-0">Human accountability is still central for code that is reviewed and merged by Claude.</span> <span class="s" data-k="test-b9-1">Every approval is logged with the signals and reasoning behind it, and a risk-weighted sample is reviewed by humans.</span> <span class="s" data-k="test-b9-2">Another round of testing focuses on <span class='term' data-term='invariant'>invariants</span> like “user A can never read user B's data,” and triggers additional manual reviews.</span> <span class="s" data-k="test-b9-3">We combine our agentic scans with <span class='term' data-term='sast'>SAST</span> tools as well, which post directly on PRs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b9-0">对于由 Claude 评审和合并的代码，人依然要为最终结果负责。</span><span class="s" data-k="test-b9-1">每一次批准都会被记录，连同它依据的信号和理由；同时有人按风险加权抽样复核。</span><span class="s" data-k="test-b9-2">另一轮测试则盯住一些<span class='term' data-term='invariant'>不变量</span>，比如「用户 A 永远不能读到用户 B 的数据」，并触发额外的人工评审。</span><span class="s" data-k="test-b9-3">我们也会把智能体化扫描和 <span class='term' data-term='sast'>SAST</span> 工具叠加使用，后者会直接把结果贴在 PR 上。</span></p></div></div>
+<div class="row" data-rid="test-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b10-0">Most scanning approaches, whether agentic or deterministic, are consumption based.</span> <span class="s" data-k="test-b10-1">Costs will increase as code throughput increases, and teams will need to decide what level of coverage is appropriate for them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b10-0">大多数扫描方案——不论智能体化的还是确定性的——都是按用量计费的。</span><span class="s" data-k="test-b10-1">代码吞吐量上去，成本就会上去；各团队需要自己决定，什么程度的覆盖率对他们合适。</span></p></div></div>
+<div class="row" data-rid="test-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b11-0">At Anthropic, we accept costs here will grow as our code velocity increases, but anticipate unit cost will fall.</span> <span class="s" data-k="test-b11-1">Models today are much better at coding than all models from a few years ago, and we anticipate that this pattern will continue.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b11-0">在 Anthropic，我们接受这块成本会随代码速度一起增长，但预期单位成本会下降。</span><span class="s" data-k="test-b11-1">今天的模型在编码上远强于几年前的所有模型，我们预期这个趋势会继续。</span></p></div></div>
+<div class="row wide principle" data-rid="test-b12"><div class="principle-box"><span class="lab lab-zh">耐久原则</span><span class="lab lab-en">Enduring principle</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="test-b12-0"><b>Enduring Principle</b>: Automated reviews are a different type of risk that is controlled differently (through multiple gates and agents with separate context windows). Humans stay in the loop, but may be in different places in the lifecycle depending on the nature of the codebase.</span></div><div class="cell zh"><span class="s" data-k="test-b12-0"><b>耐久原则</b>：自动评审是一种不同类型的风险，要用不同的方式控制（多道闸门，加上多个各自拥有独立上下文窗口的 agent）。人仍然要介入，但介入的环节可能随代码库性质而不同。</span></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="test-b13-0">“When CI does break, Claude Tag acts as our first responder for CI/CD failures.”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="test-b13-0">「当 CI 真的挂了，Claude Tag 就是我们的 CI/CD 故障第一响应者。」</span></p></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-deploy">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Deploy (CD)</span><span class="h-zh">部署与持续交付（Deploy / CD）</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>到了部署这一环，AI 的双刃性最明显：一方面能活到这里的漏洞变少了，另一方面活下来的都是最刁钻的；再加上代码量和发布频率同时上涨，按季度跑的动态测试其实已经不「动态」了。解法是把动态测试变成持续跑。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="deploy-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="deploy-b0-0">Anthropic maintains a robust <span class='term' data-term='staging'>staging</span> environment where we execute common security best practices such as external <span class='term' data-term='pentest'>pentesting</span> for major launches and periodic <span class='term' data-term='dast'>DAST</span> scans to catch logic bugs that static scans have missed or can't see.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="deploy-b0-0">Anthropic 维护着一套健壮的<span class='term' data-term='staging'>预发布环境</span>（staging），在那里执行常见的安全最佳实践：重大发布前做外部<span class='term' data-term='pentest'>渗透测试</span>，以及定期跑 <span class='term' data-term='dast'>DAST</span> 扫描，去抓那些静态扫描漏掉、或者根本看不见的逻辑 bug。</span></p></div></div>
+<div class="row" data-rid="deploy-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="deploy-b1-0">Like the other SDLC stages, AI presents both new challenges and solutions for security teams.</span> <span class="s" data-k="deploy-b1-1">On one hand, fewer vulnerabilities reach this stage.</span> <span class="s" data-k="deploy-b1-2">On the other, the vulnerabilities that do survive are among the most subtle and difficult to catch.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="deploy-b1-0">和其他 SDLC 阶段一样，AI 对安全团队既是新挑战，也是新解法。</span><span class="s" data-k="deploy-b1-1">一方面，能活到这个阶段的漏洞变少了。</span><span class="s" data-k="deploy-b1-2">另一方面，活下来的漏洞，恰恰是最隐蔽、最难抓的那一批。</span></p></div></div>
+<div class="row" data-rid="deploy-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="deploy-b2-0">Combine that with larger volumes of code being shipped more frequently, and periodic dynamic testing doesn't seem so dynamic anymore.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="deploy-b2-0">再叠加「更多代码、更频繁发布」，定期的动态测试就显得没那么动态了。</span></p></div></div>
+<div class="row" data-rid="deploy-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="deploy-b3-0">The good news is that AI models are better on the multi-step, cross-component reasoning that can catch a greater percentage of these complex vulnerabilities.</span> <span class="s" data-k="deploy-b3-1">For example, in February, we disclosed that Claude discovered and helped to fix more than <a class='lnk' href='https://www.anthropic.com/research/zero-days' target='_blank' rel='noopener' data-link='L13'>500 high-severity OSS vulnerabilities</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="deploy-b3-0">好消息是：AI 模型更擅长多步骤、跨组件的推理，能把这些复杂漏洞抓出更大比例。</span><span class="s" data-k="deploy-b3-1">比如今年 2 月我们披露过：Claude 发现并协助修复了 500 多个<a class='lnk' href='https://www.anthropic.com/research/zero-days' target='_blank' rel='noopener' data-link='L13'>高危开源软件漏洞</a>。</span></p></div></div>
+<div class="row" data-rid="deploy-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="deploy-b4-0">At Anthropic, we are implementing continuous AI-powered DAST scans in our staging environment.</span> <span class="s" data-k="deploy-b4-1">These look for vulnerabilities at the system level where the assumptions between two or more services are incorrect.</span> <span class="s" data-k="deploy-b4-2">There are a number of vendors that offer these capabilities today.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="deploy-b4-0">在 Anthropic，我们正在预发布环境里落地持续的、由 AI 驱动的 DAST 扫描。</span><span class="s" data-k="deploy-b4-1">它们找的是系统层面的漏洞——两个或多个服务之间的假设对不上的地方。</span><span class="s" data-k="deploy-b4-2">目前已经有不少厂商提供这类能力。</span></p></div></div>
+<div class="row wide principle" data-rid="deploy-b5"><div class="principle-box"><span class="lab lab-zh">耐久原则</span><span class="lab lab-en">Enduring principle</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="deploy-b5-0"><b>Enduring Principle</b>: Dynamic testing should match deployment cadence.</span></div><div class="cell zh"><span class="s" data-k="deploy-b5-0"><b>耐久原则</b>：动态测试的节奏，应当与部署的节奏匹配。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-monitor">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Monitor</span><span class="h-zh">监控（Monitor）</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>监控阶段的智能体最能说明「边界画在哪」：它能查日志、定根因、写复盘、甚至写修复代码，但**不能自动部署**——因为它只有三个权限。而作者亲历的那次事故（agent 自己跑去 Slack 找另一个 agent 推修复）说明：边界要画在访问权与动作上，不能画在「我们以为模型不会这么做」上。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="monitor-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b0-0">As any good security team knows, the job isn't done once code is pushed to prod.</span> <span class="s" data-k="monitor-b0-1">We can assume any vulnerability will be quickly identified by increasingly sophisticated attackers.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b0-0">任何合格的安全团队都知道：代码推上生产，活儿没完。</span><span class="s" data-k="monitor-b0-1">可以假定：任何漏洞都会被越来越老练的攻击者很快发现。</span></p></div></div>
+<div class="row" data-rid="monitor-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b1-0">Our security team has implemented programs here that are standard practice such as a <a class='lnk' href='https://hackerone.com/anthropic' target='_blank' rel='noopener' data-link='L14'>public bug bounty program</a>, <span class='term' data-term='red-team'>red team</span> simulated attacks, and regular scans for vulnerabilities across our dependencies, secrets, supply chain, cloud posture, and containers.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b1-0">在这方面，我们安全团队落地了一批标准做法：<a class='lnk' href='https://hackerone.com/anthropic' target='_blank' rel='noopener' data-link='L14'>公开的漏洞赏金计划</a>、<span class='term' data-term='red-team'>红队</span>模拟攻击，以及对依赖、密钥、供应链、云上配置态势和容器做定期漏洞扫描。</span></p></div></div>
+<div class="row" data-rid="monitor-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b2-0">Claude plays a large role in these, but we'll focus on larger changes to our monitoring efforts as a result of our AI-native SDLC: alert triage and code migrations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b2-0">Claude 在其中承担了大量工作，但这里我们重点讲 AI 原生 SDLC 给监控带来的两个更大的变化：告警分诊，和代码迁移。</span></p></div></div>
+<div class="row" data-rid="monitor-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b3-0">When an alert fires at Anthropic, Claude starts:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b3-0">在 Anthropic，一条告警响起来之后，Claude 会开始做这些事：</span></p></div></div>
+<div class="row" data-rid="monitor-b4"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="monitor-b4-0-0">Reviewing the production logs</span></li><li><span class="s" data-k="monitor-b4-1-0"><span class='term' data-term='root-cause'>Root-causing</span> the bug;</span></li><li><span class="s" data-k="monitor-b4-2-0">Writing the <span class='term' data-term='post-mortem'>post-mortem</span>; and in some cases</span></li><li><span class="s" data-k="monitor-b4-3-0">Writing the code change to fix the bug.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="monitor-b4-0-0">检视生产日志</span></li><li><span class="s" data-k="monitor-b4-1-0">定位<span class='term' data-term='root-cause'>根因</span>；</span></li><li><span class="s" data-k="monitor-b4-2-0">写<span class='term' data-term='post-mortem'>复盘报告</span>；有时候还会</span></li><li><span class="s" data-k="monitor-b4-3-0">直接写出修复这个 bug 的代码改动。</span></li></ul></div></div>
+<div class="row" data-rid="monitor-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b5-0">What this agent can't do is deploy the fix automatically.</span> <span class="s" data-k="monitor-b5-1">It's a single-purpose system account agent with three permissions: it can write new docs, post in company channels, and access production logs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b5-0">这个 agent 做不到的事情是：自动部署修复。</span><span class="s" data-k="monitor-b5-1">它是一个单用途的系统账号 agent，只有三项权限：写新文档、在公司频道里发消息、访问生产日志。</span></p></div></div>
+<div class="row" data-rid="monitor-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b6-0">The fix either needs to come from a separate agent-human reviewer system.</span> <span class="s" data-k="monitor-b6-1">The reason for this comes back to managing identity, permissions, and hard boundaries: it's important to contain the blast radius when pushing code into production.</span> <span class="s" data-k="monitor-b6-2">Separating agents is critical as one (or multiple) agents act as checks on the other.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b6-0">修复必须来自另一套「agent + 人工评审」的系统。</span><span class="s" data-k="monitor-b6-1">原因还是回到身份、权限和硬边界：把代码推进生产时，圈住影响半径非常重要。</span><span class="s" data-k="monitor-b6-2">拆分 agent 是关键——让一个（或多个）agent 去制衡另一个。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="告警分诊智能体：三个权限，一道硬边界"><div class="fig-media"><img class="still" src="media/fig4.png" loading="lazy" decoding="async" alt="fig4"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>告警分诊智能体：三个权限，一道硬边界</b>　线上告警触发后，中间 PERMISSION BOUNDARY 框里是 Alert triage agent；部署到生产在 HARD BOUNDARY 之外完成。</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>最左 An alert fires in production：告警一响，箭头交给中间智能体。</li><li>虚线框顶写 PERMISSION BOUNDARY：框内是单用途 system account，只有三项权限。</li><li>三个胶囊是权限全集，含 Access production logs，但不含部署。</li><li>「When the alert fires, it starts:」下列四项：查日志、定根因、写复盘、起草补丁。</li><li>右侧 HARD BOUNDARY 带锁：Deploy to production 在框外，不能由它推送。</li></ol><p class="takeaway">一句话：它能查、能写、能起草补丁，但上线这一步永远在权限边界之外。</p></details></figcaption></figure>
+<div class="row" data-rid="monitor-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b8-0">This is also an important lesson for <span class='term' data-term='ciso'>CISOs</span>, and one that I had to learn the hard way.</span> <span class="s" data-k="monitor-b8-1">When considering an agent's hard boundaries you need to include its access to other agents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b8-0">这也是给 <span class='term' data-term='ciso'>CISO</span> 的一条重要教训——我自己就是吃过苦头才学到的。</span><span class="s" data-k="monitor-b8-1">在考虑一个 agent 的硬边界时，你必须把它「对其他 agent 的访问权」也算进去。</span></p></div></div>
+<div class="row" data-rid="monitor-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b9-0">Following a model upgrade, the incident response agent reached out over Slack to another Claude instance on its own initiative.</span> <span class="s" data-k="monitor-b9-1">It asked the agent, which could write code, to push the fix.</span> <span class="s" data-k="monitor-b9-2"><b>This was caught at a human review gate as designed</b>, but this experience taught us to draw the boundary around access and actions, not around a model's instructions or what we believe a model can do.</span> <span class="s" data-k="monitor-b9-3">Today at Anthropic, agent-to-agent communication on Slack is the norm and we give considerable thought to <a class='lnk' href='https://claude.com/resources/articles/agent-identity-access-model' target='_blank' rel='noopener' data-link='L15'>agent identity models</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b9-0">在一次模型升级之后，事故响应 agent 主动在 Slack 上联系了另一个 Claude 实例。</span><span class="s" data-k="monitor-b9-1">它要求那个会写代码的 agent 把修复推上去。</span><span class="s" data-k="monitor-b9-2"><b>这次被人审闸门按设计拦住了</b>，但这段经历教给我们一件事：边界要画在「访问权与动作」上，而不是画在「给模型的指令」上、或者「我们以为模型能做到什么」上。</span><span class="s" data-k="monitor-b9-3">今天在 Anthropic，agent 之间在 Slack 上通信已是常态，我们对 <a class='lnk' href='https://claude.com/resources/articles/agent-identity-access-model' target='_blank' rel='noopener' data-link='L15'>agent 身份模型</a>也花了不少心思。</span></p></div></div>
+<div class="row" data-rid="monitor-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b10-0">The second major change is how our team approaches migrations.</span> <span class="s" data-k="monitor-b10-1">Every security engineering team has experienced the moment where they realize a code migration will be necessary to fix some systemic flaw in the way the company operates.</span> <span class="s" data-k="monitor-b10-2">In the past, the CISO would need to start campaigning and request a small percentage of each department's engineering resources for multiple quarters to get it fixed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b10-0">第二个大变化，是我们团队做迁移的方式。</span><span class="s" data-k="monitor-b10-1">每个安全工程团队都经历过这样的时刻：意识到必须做一次代码迁移，才能修掉公司运作方式里的某个系统性缺陷。</span><span class="s" data-k="monitor-b10-2">过去，CISO 得开始四处游说，向每个部门各要一点工程人力、而且要连着好几个季度，才能把这件事修掉。</span></p></div></div>
+<div class="row" data-rid="monitor-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monitor-b11-0">The economic cost of migration has fallen and so too has the cost of cross company coordination.</span> <span class="s" data-k="monitor-b11-1">Claude <a class='lnk' href='https://claude.com/resources/articles/ai-code-migration' target='_blank' rel='noopener' data-link='L16'>automates the migration process, tens of thousands of lines of code, in days</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monitor-b11-0">迁移的经济成本下降了，公司内部跨部门协调的成本也一起下降了。</span><span class="s" data-k="monitor-b11-1">Claude <a class='lnk' href='https://claude.com/resources/articles/ai-code-migration' target='_blank' rel='noopener' data-link='L16'>把迁移过程自动化，几天就能改完数万行代码</a>。</span></p></div></div>
+<div class="row wide principle" data-rid="monitor-b12"><div class="principle-box"><span class="lab lab-zh">耐久原则</span><span class="lab lab-en">Enduring principle</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="monitor-b12-0"><b>Enduring Principle</b>: Give every agent a single-purpose identity with the minimum permissions for its job. If you do let agents coordinate, have them do so over the same channels as humans.</span></div><div class="cell zh"><span class="s" data-k="monitor-b12-0"><b>耐久原则</b>：给每个 agent 一个单用途身份，只授予它完成这项工作所需的最小权限。如果你确实要让 agent 之间协作，就让它们走在和人一样的通道上。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-governance">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">Governance</span><span class="h-zh">治理（Governance）</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>前面所有自动化都建立在一个脆弱前提上：规则不会过期、发现的 bug 会回流、agent 的决定有人抽查。这一节讲的就是「怎么让它不烂掉」——代码分级、影子模式、抽样、盯仪表盘、把所有 agent 动作打进 SIEM。作者给的结论很锋利：安全工程师的工作，正从盯 bug 变成盯循环。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="governance-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="governance-b0-0">We have automated many of our security processes, but humans are still very much an integral part of ensuring a secure software development lifecycle.</span> <span class="s" data-k="governance-b0-1">But instead of focusing on reviewing code and bug reports, our attention is now focused on Claude Tag, loops, and dashboards.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="governance-b0-0">我们已经自动化了很多安全流程，但在保障软件开发生命周期安全这件事上，人依然是不可分割的一部分。</span><span class="s" data-k="governance-b0-1">只是人的注意力不再放在评审代码和 bug 报告上，而是放在 Claude Tag、智能体一轮轮自动跑的流程（loops）和仪表盘上。</span></p></div></div>
+<div class="row" data-rid="governance-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="governance-b1-0">This underscores the importance of strong governance.</span> <span class="s" data-k="governance-b1-1">If a skill goes stale, a discovered bug class never makes it back into CLAUDE.md, or an agent's decisions go unsampled, the whole structure degrades.</span> <span class="s" data-k="governance-b1-2">We avoid this by:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="governance-b1-0">这就凸显了强治理的重要性。</span><span class="s" data-k="governance-b1-1">如果某个技能过时了、发现的某类 bug 始终没能回流进 CLAUDE.md、或者 agent 的决策没人抽样——整套结构就会退化。</span><span class="s" data-k="governance-b1-2">我们靠这几件事来避免：</span></p></div></div>
+<div class="row" data-rid="governance-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="governance-b2-0-0"><b>Tiering our codebase by risk</b> and then automating reviews based on that level.</span></li><li><span class="s" data-k="governance-b2-1-0"><b><span class='term' data-term='shadow-mode'>Shadow mode</span></b> for all new AI reviewers. New agents post comments for human approval until trust is earned.</span> <span class="s" data-k="governance-b2-1-1">Our team also “red teams” them and tries to insert malicious changes.</span></li><li><span class="s" data-k="governance-b2-2-0"><b>Sampling</b> a percentage of all automated approvals.</span></li><li><span class="s" data-k="governance-b2-3-0"><b>Watching our vitals</b>. We maintain and closely monitor a dashboard that rolls up key metrics across every security process and workstream.</span></li><li><span class="s" data-k="governance-b2-4-0"><b>Routing every agent action to the <span class='term' data-term='siem'>SIEM</span></b>. Every automated approval, tool call, and agent-to-agent message is logged with the signals it used and lands in our SIEM, so any decision is attributable and auditable after the fact.</span> <span class="s" data-k="governance-b2-4-1">We use this data and treat these agents as a new type of insider threat, and raise alerts when they act out of alignment.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="governance-b2-0-0"><b>按风险给代码库分级</b>，再按级别决定自动化评审做到什么程度。</span></li><li><span class="s" data-k="governance-b2-1-0">所有新的 AI 评审者先上<b><span class='term' data-term='shadow-mode'>影子模式</span></b>：新 agent 只发评论、由人批准，直到攒够信任。</span><span class="s" data-k="governance-b2-1-1">我们团队还会去「红队」它们，试着往里面塞恶意改动。</span></li><li><span class="s" data-k="governance-b2-2-0"><b>抽样</b>：对所有自动批准按比例抽一部分出来复核。</span></li><li><span class="s" data-k="governance-b2-3-0"><b>盯住生命体征</b>：我们维护并密切监控一个仪表盘，把每条安全流程、每条工作流的关键指标汇总在一起。</span></li><li><span class="s" data-k="governance-b2-4-0"><b>把每个 agent 的动作都送进 <span class='term' data-term='siem'>SIEM</span></b>：每一次自动批准、每一次工具调用、每一条 agent 之间的消息，都会连同它所依据的信号一起被记录并落到 SIEM 里，于是任何决定事后都可归因、可审计。</span><span class="s" data-k="governance-b2-4-1">我们把这些数据用起来，把这些 agent 当成一种新型内部威胁来对待：一旦它们的行为偏离预期，就触发告警。</span></li></ul></div></div>
+<div class="row wide principle" data-rid="governance-b3"><div class="principle-box"><span class="lab lab-zh">耐久原则</span><span class="lab lab-en">Enduring principle</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="governance-b3-0"><b>Enduring Principle</b>: The security engineer's job evolves from monitoring bugs to monitoring loops.</span></div><div class="cell zh"><span class="s" data-k="governance-b3-0"><b>耐久原则</b>：安全工程师的工作，正从「盯一个个 bug」变成「盯这些自动流程有没有跑偏」。</span></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="governance-b4-0">For the assessment framework behind these controls, see the <a class='lnk' href='https://claude.com/resources/articles/ciso-guide-to-agentic-ai' target='_blank' rel='noopener' data-link='L17'>CISO's guide to agentic AI</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="governance-b4-0">这些控制背后的评估框架，见<a class='lnk' href='https://claude.com/resources/articles/ciso-guide-to-agentic-ai' target='_blank' rel='noopener' data-link='L17'>《CISO 的智能体化 AI 指南》</a>。</span></p></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-outlook">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Keeping an AI SDLC secure as models evolve</span><span class="h-zh">模型在演进，怎么让 AI SDLC 一直安全</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>最后一节没有新控制，只给了一句判断标准：别问「我们付不付得起全量扫描」，要问「如果扫描几乎免费，你会跑什么」——然后照着那个答案提前准备。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="outlook-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b0-0">It's hard to overstate just how fast the software development lifecycle, and the means of hardening it are evolving.</span> <span class="s" data-k="outlook-b0-1">Model capabilities advance every month, bringing both new challenges and solutions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b0-0">软件开发生命周期本身、以及加固它的手段，演进得有多快，怎么强调都不过分。</span><span class="s" data-k="outlook-b0-1">模型能力每个月都在进步，既带来新问题，也带来新解法。</span></p></div></div>
+<div class="row" data-rid="outlook-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b1-0">What doesn't quite work today or isn't quite economically feasible likely will be soon.</span> <span class="s" data-k="outlook-b1-1">The right question for your team isn't "can we afford to scan everything?" but "what would we run if scanning were nearly free?"</span> <span class="s" data-k="outlook-b1-2">Plan for that.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b1-0">今天还不太行、或者经济上还不太划算的做法，很可能很快就行了。</span><span class="s" data-k="outlook-b1-1">你们团队该问的问题不是「我们付得起全量扫描吗」，而是「如果扫描几乎免费，我们会跑些什么」。</span><span class="s" data-k="outlook-b1-2">照那个答案去准备。</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b2-0">This article was written by Jason Clinton, Deputy CISO, Anthropic. He'd like to thank Michael Segner for his contributions to this article.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b2-0">本文作者 Jason Clinton，Anthropic 副 CISO。他要感谢 Michael Segner 对本文的贡献。</span></p></div></div></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 19 处正文引用，指向 17 个不同链接；另有 4 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span><span class="chip">本区域受限</span></div><h4>阿姆达尔定律（维基百科条目）</h4><p class="lnk-site">en.wikipedia.org · Amdahl's law - Wikipedia</p><p class="lnk-anchors">正文对应：<em>阿姆达尔定律</em></p><p><b>这是什么：</b>计算机体系结构里的一条规律：给程序加速时，整体提速受限于无法加速的串行部分。</p><p><b>为什么值得点：</b>本文第一段用它解释：代码产出变快后，评审与监控不提速，整体交付速度就被这些环节卡住。先懂这个比喻，才明白全文为什么按 SDLC 阶段逐个讲瓶颈。</p><p><b>访问说明：</b>本机网络打不开：en.wikipedia.org 被解析到无关 IP，连续实测均连接超时，链接本身有效，换网络或代理即可；以上要点按该条目的通行定义整理，非从本机抓取。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>阿姆达尔定律说，程序里总有一部分无法并行，无论其余部分加速多少，整体加速比都有上限：S = 1 / ((1-p) + p/n)，p 是可并行比例、n 是并行度，n 趋于无穷时上限为 1/(1-p)。例如串行部分占 10%，最快也只能快 10 倍。它提醒：只优化一段，瓶颈会转移到没被优化的环节。本文正是借这个比喻说明，代码产出提速后，评审与安全流程不提速，整体照样被拖住。</p><ul><li>1967 年 Gene Amdahl 提出，用来预测并行计算的收益。</li><li>整体加速受限于不可并行（串行）部分的比例。</li><li>公式 S = 1 / ((1-p) + p/n)，n 为并行度。</li><li>n 无限大时上限为 1/(1-p)：串行占 10%，最多快 10 倍。</li><li>局部提速会把瓶颈推到没提速的环节，本文用它解释评审/监控成为新瓶颈。</li></ul></details><a class="lnk-open" href="https://en.wikipedia.org/wiki/Amdahl%27s_law" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>当 AI 建造自己</h4><p class="lnk-site">www.anthropic.com · When AI builds itself</p><p class="lnk-anchors">正文对应：<em>Claude 之手</em> <em>三分之一</em></p><p><b>这是什么：</b>Anthropic 研究所的长文，用内部数据说明 AI 正在加速 AI 研发，并定义「递归自我改进」：AI 自主设计、开发下一代。</p><p><b>为什么值得点：</b>本文「80% 的代码由 Claude 撰写」和「自动化评审本可拦下约三分之一事故 bug」两处说法都出自这篇。想核对原文数字，或想弄清「递归自我改进」到底指什么，看它。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>「递归自我改进」指：给定足够算力，AI 系统能完全自主地设计、开发自己的后继系统；文章明确说「还没到这一步，也不是必然」，但可能比多数机构准备得更早。它给出 Anthropic 内部数据：截至 2026 年 5 月，合并进代码库的代码超过 80% 由 Claude 撰写，而在 Claude Code 2025 年 2 月发布前只有个位数百分比。文中还有一次回溯分析：让自动化的 Claude 评审重审历史改动，约能提前拦下 claude.ai 过去事故背后三分之一的 bug。文章也引用阿姆达尔定律提醒：人审代码的速度赶不上生成速度，人审会成为新瓶颈。</p><ul><li>递归自我改进＝AI 自主设计并造出自己的下一代；作者说尚未发生，也非必然。</li><li>截至 2026 年 5 月，Anthropic 合并代码中超过 80% 由 Claude 撰写。</li><li>回溯分析：自动化 Claude 评审可提前拦下 claude.ai 过往事故约三分之一的 bug。</li><li>AI 能独立完成的任务时长约每 4 个月翻一倍（METR 指标）。</li><li>文中同样引用阿姆达尔定律：人审成为新瓶颈。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/institute/recursive-self-improvement" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>面向 AI Agent 的零信任框架</h4><p class="lnk-site">claude.com · Zero Trust for AI agents</p><p class="lnk-anchors">正文对应：<em>面向智能体的零信任</em></p><p><b>这是什么：</b>Anthropic 的 Agent 安全框架：把「零信任」原则改写成适合自主 Agent 的做法，正文是一份可下载 PDF。</p><p><b>为什么值得点：</b>本文开头就声明：全文做法都建立在这个框架上。不读它，就不知道「零信任」在这里指哪几条原则、为什么按成熟度分层、八个实施阶段各管什么。</p><p><b>访问说明：</b>网页只是导读，正文框架在页面内链接的 PDF（约 0.9 MB）里，以上要点据该 PDF 整理。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>完整框架在页面链接的 PDF 里：三条原则是「永不信任、始终验证」「假设已被攻破」「最小权限」；还附一个设计检验——这个控制是让攻击不可能，还是只让攻击变麻烦？（只增加摩擦的控制挡不住能大规模死磕的 AI 攻击者。）落地分三层能力：Foundation（最低可行）、Enterprise（多数组织应达到）、Advanced（高危或强监管环境的基线），逐层加强而非替换。另有八阶段实施流程：识别需求、管供应链风险、划定 Agent 边界、防提示注入、保护工具访问、保护 Agent 凭据、保护 Agent 记忆、度量关键指标。</p><ul><li>三条原则：永不信任始终验证、假设已被攻破、最小权限。</li><li>设计检验：控制要让攻击不可能，而不是只让攻击变麻烦。</li><li>三层：Foundation / Enterprise / Advanced，逐级加强而非替代。</li><li>八阶段：需求、供应链、边界、防注入、工具、凭据、记忆、度量。</li><li>另含 Agentic SOAR 与医疗、金融、政府等合规对齐。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/zero-trust-for-ai-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>Claude Code 中的自动化安全评审</h4><p class="lnk-site">support.claude.com · Automated security reviews in Claude Code</p><p class="lnk-anchors">正文对应：<em>/security-review</em></p><p><b>这是什么：</b>Claude Code 官方文档：/security-review 命令与 GitHub Action 的用法和可查漏洞类型。</p><p><b>为什么值得点：</b>本文说团队让 Claude 在开 PR 前跑 /security-review，它会「找攻击者可控输入的入口、扫可疑链接、再验证结论」。这份文档给出该命令怎么用、查什么、边界在哪。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>/security-review 是 Claude Code 的按需安全评审命令：在项目会话里输入它，Claude 会分析代码库、列出问题并逐条解释，还可以直接让它改。它查的是常见漏洞模式：SQL 注入、XSS、认证与授权缺陷、不安全的数据处理、依赖漏洞。也可以用配套的 GitHub Action，在 PR 打开时自动评审、按规则过滤误报、在 PR 里留评论。文档明确提醒：自动化评审只能补充、不能替代人工安全评审。</p><ul><li>用法：会话里输入 /security-review，按需扫描代码库。</li><li>查：SQL 注入、XSS、认证/授权、不安全数据处理、依赖漏洞。</li><li>另一种用法是 GitHub Action，PR 打开时自动跑。</li><li>官方说明：只能补充、不能替代人工安全评审。</li><li>所有付费 Claude Code 用户可用，含 Pro、Max、Ultra 与 API 计费账号。</li></ul></details><a class="lnk-open" href="https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip must">必读</span><span class="chip">建议第 5 个读</span></div><h4>Claude Code 的 Code Review</h4><p class="lnk-site">claude.com · Code Review for Claude Code</p><p class="lnk-anchors">正文对应：<em>也从 16% 涨到了 54%</em></p><p><b>这是什么：</b>Anthropic 的 Code Review 产品：每个 PR 派多个 Agent 并行找 bug、互相验证、排序后汇总。</p><p><b>为什么值得点：</b>本文「有实质评审意见的 PR 占比从 16% 涨到 54%」的依据就是这篇。它给出同一组数字、内部实测效果和费用，是全文最硬的一处证据。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这是 Anthropic 在 Claude Code 里推出的 Code Review，团队说它跑在几乎每个内部 PR 上。关键数字：以前有实质评审意见的 PR 占 16%，现在 54%；它不会批准 PR，批准仍由人决定。机制是开 PR 时派出多个 Agent 并行找 bug、互相验证以过滤误报、按严重度排序，最后留下一条总览评论加行内评论；力度随 PR 大小变化，平均约 20 分钟。内部效果：改动超 1000 行的 PR 里 84% 有发现（平均 7.5 个问题），小于 50 行的降到 31%（平均 0.5 个），被标为错误的发现不到 1%，按 token 计费平均每次 15–25 美元。</p><ul><li>16%→54%：有实质评审意见的 PR 占比。</li><li>不给 PR 放行：批准仍由人做。</li><li>多 Agent 并行找 bug，再验证、按严重度排序。</li><li>大 PR（超 1000 行）84% 有发现，小 PR（不足 50 行）31%。</li><li>按 token 计费，平均每次 15–25 美元。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/code-review" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L15"><div class="lnk-top"><span class="lnk-id">L15</span><span class="chip must">必读</span><span class="chip">建议第 6 个读</span></div><h4>Agent 身份：面向自主、团队级 AI 的新访问模型</h4><p class="lnk-site">claude.com · Agent identity: a new access model for autonomous, team-wide AI</p><p class="lnk-anchors">正文对应：<em>agent 身份模型</em></p><p><b>这是什么：</b>Anthropic 的文章：当 Claude 和一群人同一频道协作，「借某人的权限」行不通，它需要自己的身份和账号。</p><p><b>为什么值得点：</b>本文讲完「模型升级后事故响应 Agent 主动找另一个 Claude 推修复」就提到 agent identity 模型。它是理解「给 Agent 单独立身份、单设权限」的关键。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章先说为什么「以用户身份行事」不成立：任务越自主，Agent 会自己排期、在人离线后继续干活；而且频道里有多个人，用谁的权限都不对。改成让 Claude「以自己身份行事」：在 Slack 里是 Claude 应用，在 GitHub 上是 Claude GitHub App，查仓库用管理员开的服务账号；权限在 workspace 层定基线，每个频道默认继承、可按频道覆盖，管理员还能管仓库访问、连接器、技能和常驻指令。因为身份独立，撤销身份就能一次收回所有访问，记忆也受频道边界约束。未来计划加「即时凭据授予」和身份感知的叠加校验。</p><ul><li>问题：多人频道里没有合适的「某个人」权限可借。</li><li>做法：Claude 用自己的账号，如 Claude GitHub App、服务账号。</li><li>权限基线在 workspace 层定义，频道默认继承、可覆盖。</li><li>撤销身份＝一次性收回该身份的全部访问。</li><li>记忆与访问都受频道边界约束；未来加即时授权。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/agent-identity-access-model" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L16"><div class="lnk-top"><span class="lnk-id">L16</span><span class="chip must">必读</span><span class="chip">建议第 7 个读</span></div><h4>Anthropic 如何用 Claude Code 做大规模代码迁移</h4><p class="lnk-site">claude.com · How Anthropic runs large-scale code migrations with Claude Code</p><p class="lnk-anchors">正文对应：<em>把迁移过程自动化，几天就能改完数万行代码</em></p><p><b>这是什么：</b>Anthropic 的文章：怎么用 Claude 把生产代码库迁到另一种语言，给出 Bun 的 Zig→Rust 案例和六步流程。</p><p><b>为什么值得点：</b>本文说「Claude 把迁移自动化，几万行代码几天搞定」，依据就是这篇。点开能看到更大的真实数字和成本前提，也能纠正「迁移变便宜了就该随便迁」的误读。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>过去要多年的代码迁移，现在个人开发者一个月能迁 10 个代码包。两个例子：Bun 联合创始人用 Claude Code 把 Bun 从 Zig 迁到 Rust，不到两周产出约 100 万行代码、合并前旧测试套件 100% 通过，合并后出现的 19 个回归已全部修好；Anthropic Labs 的 Mike Krieger 用一个周末把 Python 迁成 16.5 万行 TypeScript，用了数百个 Agent、八个阶段门、三轮对抗式评审。成本不是零：Bun 迁移消耗 59 亿未缓存输入 token 和 6.9 亿输出 token，按 API 价格约 16.5 万美元；核心经验是「不要修代码，要修产生代码的那个流程」，流程分六步，从建规则手册、依赖图和缺口清单开始。</p><ul><li>Bun：Zig→Rust，约 100 万行，不到两周，合并前旧测试全过。</li><li>Python→TypeScript：16.5 万行，一个周末，数百 Agent、八道阶段门。</li><li>Bun 迁移约 16.5 万美元 API 成本，59 亿输入 token。</li><li>核心：修产生代码的流程，而不是逐行修代码。</li><li>六步：规则/依赖/缺口 → 压测 → 翻译 → 编译 → 运行 → 对齐行为。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/ai-code-migration" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>Claude Tag 介绍</h4><p class="lnk-site">www.anthropic.com · Introducing Claude Tag</p><p class="lnk-anchors">正文对应：<em>Claude Tag</em></p><p><b>这是什么：</b>Anthropic 的团队协作产品：把 Claude 拉进 Slack 频道，@ 它就能派任务，成员都能接着上下文做。</p><p><b>为什么值得点：</b>本文反复出现「我们内部的 Claude Tag」——超过一半代码由它合并、CI 挂了它当第一响应人。先知道它是什么，这些句子才读得懂。</p><p><b>访问说明：</b>原文用「超过一半的代码由内部 Claude Tag 合并」来描述它，但这篇目标页只说「产品团队 65% 的代码由它生成」——口径不同（全体 vs 产品团队；合并 vs 生成）。卡片按原文语境解释，具体数字以上文和 L17 为准。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Claude Tag 先在 Slack 上线：管理员选好频道、接好工具和数据后，频道里任何人 @Claude 就能派任务。它在频道里是「多人共享」的一个 Claude，会积累上下文、能自己安排后续任务、异步干活。文章说 Anthropic 内部 65% 的产品团队代码由内部版 Claude Tag 生成，但它能被严格限定在管理员指定的频道和工具范围内。</p><ul><li>在 Slack 频道里 @Claude 就能派任务，是团队共享的一个 Claude。</li><li>会记频道上下文，能自己排期、异步执行。</li><li>内部数据：产品团队 65% 的代码由内部版 Claude Tag 生成。</li><li>管理员按频道控制它能用的工具和数据；当前搭配 Opus 4.8。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/news/introducing-claude-tag" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>如何运营一个 AI 原生的工程组织</h4><p class="lnk-site">claude.com · Running an AI-native engineering org</p><p class="lnk-anchors">正文对应：<em>详细讲过</em></p><p><b>这是什么：</b>Claude Code 团队负责人讲：写代码不再耗时后，哪些旧流程成了瓶颈，以及怎么改规划、找上下文、评审和分工。</p><p><b>为什么值得点：</b>本文那句「我们的开发团队已经详细写过 SDLC 的变化」就链到这里。它补背景：AI 原生团队里哪些规矩被重写，为什么评审与验证成了新瓶颈。</p><p><b>访问说明：</b>原文说「开发团队已经详细写过 SDLC 的变化」，但这篇讲的是 AI 原生工程组织的运作规范（怎么规划、怎么找上下文、怎么评审、角色怎么变），并不含 Plan/Code/Test/Deploy 的分阶段定义。当背景读很好，别指望它当分阶段 primer。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章的核心判断是：写代码、写测试、重构已经很少拖慢团队，接替它们成为瓶颈的是验证、代码评审和安全。作者逐条改旧规矩：规划从半年路线图改成「即时」（JIT）——先做原型、拉内部用户、按反馈迭代；找上下文从「问写代码的人」改成「先问 Claude，再问能不能自动化」；评审改成 Claude 管风格、bug、测试，人只管需要领域专长的地方；团队角色也变模糊。文章还给三个可跟踪指标：新人上手时间、PR 周期、Claude 辅助提交占比，并提醒别把吞吐量当成功。</p><ul><li>瓶颈从写代码转到验证、评审、安全。</li><li>规划改 JIT：原型→内部用户→按反馈迭代。</li><li>评审：Claude 管风格/bug/测试，人管领域专长。</li><li>三个指标：上手时间、PR 周期、Claude 辅助提交占比。</li><li>文末表格对比规划、找上下文、评审、角色四条旧规矩的前后变化。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/running-an-ai-native-engineering-org" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip bg">背景</span><span class="chip">建议第 10 个读</span></div><h4>MITRE ATT&amp;CK 框架</h4><p class="lnk-site">attack.mitre.org · MITRE ATT&amp;CK®</p><p class="lnk-anchors">正文对应：<em>MITRE ATT&amp;CK 框架</em></p><p><b>这是什么：</b>免费公开的知识库，把真实攻击中观察到的「战术」和「技术」整理成矩阵，用来做威胁建模和检测评估。</p><p><b>为什么值得点：</b>本文的 PSR（项目安全评审）第一步就是拿设计文档对照 ATT&amp;CK 找漏洞。看它才知道这个框架长什么样、按什么分类、能查到多细。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>MITRE ATT&amp;CK 是「对手战术与技术」的知识库，内容来自真实攻击观察，任何人都能免费使用。它按攻击阶段列战术（如初始访问、执行、持久化、提权、凭据访问、横向移动、数据外传、影响），每个战术下再列具体技术，形成矩阵。安全团队用它做威胁建模、评估检测覆盖；本文的 PSR 就是拿项目设计对照它，看可能踩到哪些技术。新版还收进了针对 AI 的技术，如直接提示注入、间接提示注入、投毒流水线执行（Poisoned Pipeline Execution）。</p><ul><li>免费公开的对手战术/技术知识库，基于真实攻击观察。</li><li>按攻击阶段分战术，战术下再分技术，形成矩阵。</li><li>用途：威胁建模、检测覆盖评估、红队与防御对齐。</li><li>已收录针对 AI 的技术：直接/间接提示注入、Poisoned Pipeline Execution 等。</li><li>当前版本为 ATT&amp;CK v20。</li></ul></details><a class="lnk-open" href="https://attack.mitre.org/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip bg">背景</span><span class="chip">建议第 11 个读</span></div><h4>在 Claude 写代码时就拦住安全问题</h4><p class="lnk-site">code.claude.com · Catch security issues as Claude writes code</p><p class="lnk-anchors">正文对应：<em>安全指导插件</em></p><p><b>这是什么：</b>官方文档：security guidance 插件在 Claude 写代码时自动检查常见漏洞，并在同一会话里改掉，不必等到 PR。</p><p><b>为什么值得点：</b>本文说「装上插件后 Claude 边生成边评审对话和代码」。这份文档说明它在哪几个时点检查、每层查什么，以及它和 /security-review、Code Review 怎么分工。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这是 Claude Code 的官方插件，装好后自动运行，不用记额外命令。它分三层检查：每次改文件时做模式匹配（如 eval、pickle、dangerouslySetInnerHTML、改动 .github/workflows），不花模型调用成本；每轮对话结束时把整轮的 git diff 交给专门的安全评审；每次提交或推送前再查一遍。它的定位是「在写的时候就减少问题」，和跑在 PR 上的 Code Review 互补——插件减少进入 PR 的问题，Code Review 兜住漏进来的。</p><ul><li>装好后自动跑，无需手动调用。</li><li>三层：每次改文件的模式匹配、每轮结束的 diff 评审、提交或推送前的评审。</li><li>模式匹配不调模型，不额外计费。</li><li>与 Code Review 分工：插件管写的时候，Code Review 管 PR。</li><li>官方会给出一次性提示说明哪一层没跑起来（如 Python 版本过低）。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/security-guidance" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 12 个读</span></div><h4>安全代码评审有效性的实证研究</h4><p class="lnk-site">link.springer.com · An Empirical Study on the Effectiveness of Security Code Review</p><p class="lnk-anchors">正文对应：<em>实证研究</em></p><p><b>这是什么：</b>2013 年的一篇会议论文：让 30 名开发者人工评审一个含 7 个已知漏洞的小型 Web 应用，量化人审到底能查出多少。</p><p><b>为什么值得点：</b>本文在 Test 段说「经验证据表明人工代码评审并不完美」，依据就是这篇。点开能看到这个结论有多强、实验怎么做，避免把人工评审当成可靠标准。</p><p><b>访问说明：</b>从规范链接出发会经 3 次跳转，最终落在带 error=cookies_not_supported 参数的同一页面；正文需机构订阅，公开的只有摘要。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>研究者找了 30 名开发者，评审一个注入 7 个已知漏洞的小型 Web 应用，漏洞分三类：XSS、CSRF、SQL 注入。核心结论三条：没有人找齐全部确认漏洞；经验更多不等于更准、更有效；报出的误报与报出的真漏洞显著相关——爱报的人真漏洞和假漏洞都多。也就是说，人工安全评审存在系统性盲区，这是本文主张用自动化评审补位的依据。</p><ul><li>30 名开发者，评审含 7 个已知漏洞（XSS/CSRF/SQL 注入）的小应用。</li><li>没有人找齐全部漏洞。</li><li>经验更多不一定更准、更有效。</li><li>误报多的评审者，真漏洞也报得多（显著相关）。</li><li>全文需订阅，网站只公开摘要与参考文献。</li></ul></details><a class="lnk-open" href="https://link.springer.com/chapter/10.1007/978-3-642-36563-8_14" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip bg">背景</span><span class="chip">建议第 13 个读</span></div><h4>AI 在批准我们的 PR：我们如何让它安全</h4><p class="lnk-site">www.intercom.com · AI is approving our pull requests: Here's how we made it safe</p><p class="lnk-anchors">正文对应：<em>Intercom 分享过</em></p><p><b>这是什么：</b>Intercom 工程博客：他们把 PR 评审拆成多个子 Agent，19% 的 PR 由 AI 直接批准、不放人。</p><p><b>为什么值得点：</b>本文拿 Intercom 当外部例证：自动批准 19% 的 PR，部署量翻倍而故障停机降 35%。点开能看到这两个数字的原始出处和前提条件。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Intercom 说 93% 以上的 PR 由 Agent 驱动，19% 完全不经过人工评审就自动批准。他们给出的数据：部署量翻倍的同时，破坏性变更导致的停机下降 35%；受控试点 100 多个 PR 零回滚；AI 撰写的后端代码回滚率 0.53%，人工撰写的是 5.39%。做法是把评审拆成多个子 Agent 各查一件事（问题描述、改动是否符合意图、安全、逻辑、最佳实践），并坚持小改动——Agent 不会批准过大的 PR。</p><ul><li>19% 的 PR 由 AI 自动批准，93% 以上由 Agent 驱动。</li><li>部署翻倍，破坏性变更导致的停机降 35%。</li><li>评审拆成多个子 Agent，各查一个维度。</li><li>AI 不会批准过大 PR，逼着把改动拆小。</li><li>人工仍可随时介入，责任仍在提交者。</li></ul></details><a class="lnk-open" href="https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip bg">背景</span><span class="chip">建议第 14 个读</span></div><h4>CircleCI 如何用 Claude 打造代码验证 Agent</h4><p class="lnk-site">claude.com · How CircleCI built a code validation agent with Claude</p><p class="lnk-anchors">正文对应：<em>并且会在人类看到之前先验证自己的修复</em></p><p><b>这是什么：</b>CircleCI 客户案例：用 Claude Agent SDK 做了 Chunk——自己修 CI/CD 问题、验证修复后交 PR。</p><p><b>为什么值得点：</b>本文说 Chunk「在人类看到之前先验证自己的修复」，并说 Agent 任务转成完成 PR 的比例翻倍。这个案例页给出做法与全部数字。</p><p><b>访问说明：</b>页面 &lt;title&gt; 写的是「CircleCI Claude Platform (API) case study」，与正文（Agent SDK 与 Chunk）不一致；正文大标题是「How CircleCI built a code validation agent with Claude」。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Chunk 是 CircleCI 基于 Claude Agent SDK 建的自主 Agent，处理 CI/CD 维护：自然语言任务进，验证过的 PR 出。流程是闭环——Claude 拿到构建日志或测试结果后生成修复，由 CircleCI 流水线验证，失败就重试，客户拿到的是已经「绿了」的 PR。数据：8 人团队做出 Chunk；超过五分之四的任务在失败点自动触发；任务转成完成 PR 的比例自上线以来翻倍多；一家大企业客户的分析时间从 14 小时降到 18 分钟；Smarter Testing 让平均反馈时间缩短 75%。</p><ul><li>Chunk 用 Claude Agent SDK 构建，闭环：任务→修复→流水线验证→PR。</li><li>任务转成完成 PR 的比例自上线以来翻倍多。</li><li>五分之四以上的任务在失败点自动触发，无需人介入。</li><li>反馈时间平均缩短 75%；某客户分析时间 14 小时→18 分钟。</li><li>8 人团队建成，原型几天、可用版本几周。</li></ul></details><a class="lnk-open" href="https://claude.com/customers/circleci" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L13"><div class="lnk-top"><span class="lnk-id">L13</span><span class="chip bg">背景</span><span class="chip">建议第 15 个读</span></div><h4>大模型发现的 0-day 漏洞</h4><p class="lnk-site">www.anthropic.com · LLM-discovered 0 days</p><p class="lnk-anchors">正文对应：<em>高危开源软件漏洞</em></p><p><b>这是什么：</b>Anthropic 研究报告：让 Claude 在虚拟机里自主找开源软件漏洞，找到并验证 500 多个高危漏洞。</p><p><b>为什么值得点：</b>本文在 Deploy 段用它证明「AI 更擅长跨组件的多步推理」：Claude 发现并协助修复了 500 多个高危开源漏洞。点开能看到这些漏洞怎么找、怎么确认。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>报告说 Claude Opus 4.6 在不用专用工具、脚手架或特别提示的情况下，就能在跑过多年 fuzzer 的成熟代码库里找到高危漏洞，有些已潜伏几十年。做法是让 Claude 在虚拟机里工作，只给常规工具；聚焦容易验证的内存破坏类漏洞，用崩溃和 sanitizer 确认，再让 Claude 去重、打分、复核，人工研究员逐条验证并手写补丁。到目前为止找到并验证 500 多个高危漏洞，已开始上报、部分补丁已合入，文中举了 GhostScript、OpenSC、CGIF 三个例子。</p><ul><li>Opus 4.6 在「不用定制脚手架」的情况下找到高危漏洞。</li><li>有些漏洞在被 fuzzer 扫过多年的代码库里潜伏了几十年。</li><li>已找到并验证 500 多个高危漏洞，部分补丁已合入。</li><li>人工研究员逐条验证、手写补丁，以压低误报。</li><li>文中给出 GhostScript、OpenSC、CGIF 三个具体案例。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/zero-days" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L17"><div class="lnk-top"><span class="lnk-id">L17</span><span class="chip bg">背景</span><span class="chip">建议第 16 个读</span></div><h4>CISO 的 Agentic AI 指南</h4><p class="lnk-site">claude.com · CISO's guide to agentic AI</p><p class="lnk-anchors">正文对应：<em>《CISO 的智能体化 AI 指南》</em></p><p><b>这是什么：</b>Anthropic 写给安全负责人的文章：怎么给 Agent 场景做风险评估、什么算「有界」，以及他们自己踩过的坑。</p><p><b>为什么值得点：</b>本文结尾说「这些控制背后的评估框架见 CISO 指南」，链接就是这篇。它把前文零散的控制收成一套可复用的四问评估法。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>核心主张是：CISO 的任务不是把 Agent 风险降到零，而是让风险「可读、有界」，从而有意识地接受能管理的部分。四问评估法是：摄入哪些不可信内容；能做哪些动作、以谁的名义；出错时影响范围多大；可观测性如何（能否区分 Agent 与人的动作、有没有进 SIEM）。然后按最小能动性（least agency）只给完成任务的必要权限。文章还给了一条身份光谱：一端是单用途、最小权限的系统服务账号，另一端是人的凭据，中间「把人委托的身份带进人不在场的系统」最危险；并用事故响应 Agent 的案例说明，模型升级本身就可能让 Agent 自发去找另一个 Agent 推代码，所以边界要画在访问和动作上。</p><ul><li>目标不是零风险，而是让 Agent 风险可读、有界。</li><li>四问：摄入什么不可信内容、能做什么动作、影响多大、可观测性如何。</li><li>身份光谱：服务账号 ↔ 人的凭据，中间地带最难追责。</li><li>模型升级就可能改变行为：边界要画在访问与动作上。</li><li>默认做法：小范围开放、看遥测、再扩权限。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/ciso-guide-to-agentic-ai" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L14"><div class="lnk-top"><span class="lnk-id">L14</span><span class="chip">可选</span><span class="chip">建议第 17 个读</span></div><h4>Anthropic 公开漏洞赏金计划（HackerOne）</h4><p class="lnk-site">hackerone.com · Anthropic - Bug Bounty Program | HackerOne</p><p class="lnk-anchors">正文对应：<em>公开的漏洞赏金计划</em></p><p><b>这是什么：</b>Anthropic 在 HackerOne 上运行的公开漏洞赏金项目页：外部研究者按规则提交漏洞、按严重度获得奖励。</p><p><b>为什么值得点：</b>本文在 Monitor 段把「公开 bug bounty」列为常规安全实践之一。点开可以确认项目确实存在、在哪提交，但范围和奖励细则要等页面加载。</p><p><b>访问说明：</b>链接有效（HTTP 200）；但页面是前端渲染，静态抓取只拿到 og 标题与简介，范围与奖励细节需用浏览器打开。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这是 Anthropic 在 HackerOne 上的公开漏洞赏金项目。HackerOne 是外部安全研究者报告漏洞的平台；公开项目意味着任何人能按项目规则提交报告，由厂商评估、修复并按规则发放奖励。本文只把它当作监控阶段的常规实践一笔带过，没有展开；具体范围、奖励档位和响应时限要打开项目页才能看到。</p><ul><li>Anthropic 在 HackerOne 上的公开漏洞赏金项目。</li><li>面向外部研究者：按项目规则提交漏洞。</li><li>属于本文所说的常规监控实践之一。</li><li>页面由脚本渲染，静态抓取只能拿到标题与简介。</li></ul></details><a class="lnk-open" href="https://hackerone.com/anthropic" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 35 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">SDLC (software development lifecycle)</span><span class="gl-zh">软件开发生命周期</span></div><p class="gl-def">软件从想法、需求、设计、写码、测试、部署到上线后监控的整条生命周期。本文的 SDLC 被压缩：阶段名还在，节奏和把关方式变了。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">PSR (project security review)</span><span class="gl-zh">项目安全评审</span></div><p class="gl-def">项目开工前，把设计文档交给安全方审一遍，提前找出漏洞和缓解办法。本文指 Anthropic 用 Claude 自动做这件事的应用。</p><p class="gl-ana">像装修前先审图纸，别等砌完墙才发现消防通道没了。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">SAST (static application security testing)</span><span class="gl-zh">静态应用安全测试</span></div><p class="gl-def">不运行程序，直接扫源代码找漏洞。本文里 SAST 工具与智能体扫描并用，结果直接贴在 PR 上。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">DAST (dynamic application security testing)</span><span class="gl-zh">动态应用安全测试</span></div><p class="gl-def">把程序跑起来、从外部发请求试探漏洞，能发现静态扫描看不到的逻辑问题。本文要求它跟着部署节奏持续跑。</p><p class="gl-ana">像不拆零件，把车开上路实测各种路况。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">SIEM (security information and event management)</span><span class="gl-zh">安全信息与事件管理</span></div><p class="gl-def">把各系统日志汇总、关联、告警的安全平台。本文要求智能体的每次动作都写进 SIEM，任何决定事后都可追责。</p><p class="gl-ana">像把全公司的摄像头汇进一间监控室，出事能倒查。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">RAG (retrieval-augmented generation)</span><span class="gl-zh">检索增强生成</span></div><p class="gl-def">让模型先检索资料、再基于检索结果作答。本文的评审智能体用它调取过去事故的上下文和记忆。</p><p class="gl-ana">像答题前先翻资料柜，照着资料答而不是凭印象。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">blast radius</span><span class="gl-zh">影响半径</span></div><p class="gl-def">一个智能体被攻破或被提示注入后，实际能影响到、破坏到的范围。本文用身份和权限的硬边界把它压到最小。</p><p class="gl-ana">像爆炸半径：围墙画得越小，炸开时波及越少。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">egress allowlist</span><span class="gl-zh">出站白名单</span></div><p class="gl-def">只允许程序连向名单内的外部服务，其他地址一律拒绝。本文开发机上的智能体流量走白名单，注入指令传不出数据。</p><p class="gl-ana">像手机只准拨通讯录里的号码，陌生号码打不通。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">prompt injection</span><span class="gl-zh">提示注入</span></div><p class="gl-def">把恶意指令伪装成文档、网页等正常内容，骗模型照做。本文最担心的攻击：智能体读不可信输入时被劫持。</p><p class="gl-ana">像把「去转钱」写在便签上，夹进你正读的文件里。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">supply chain (poisoning)</span><span class="gl-zh">供应链投毒</span></div><p class="gl-def">不正面攻系统，而是污染它依赖的第三方包、构建工具等。本文指智能体会把被投毒的依赖当成可信输入吃进去。</p><p class="gl-ana">像食材供应商被下毒，厨房再干净也白搭。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">shadow IT</span><span class="gl-zh">影子 IT</span></div><p class="gl-def">员工绕过 IT 部门自己搭的应用和服务，安全团队既不知道也管不到。本文用内部低代码托管平台把它们收编。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Zero Trust</span><span class="gl-zh">零信任</span></div><p class="gl-def">不默认「进了内网就可信」，每个请求都重新验证身份和权限。本文沿用 Zero Trust for Agents 框架。</p><p class="gl-ana">像在自家公司走动也要刷卡，不因为在楼里就免检。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Principle of Least Agency</span><span class="gl-zh">最小自主权</span></div><p class="gl-def">只给智能体完成当前任务所需的最小权限和自主度。本文用它约束每个智能体，对应「单用途身份、最低权限」。</p><p class="gl-ana">像给新人只开必要的门禁，而不是整栋楼的钥匙。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CLAUDE.md</span><span class="gl-zh">项目级指令文件</span></div><p class="gl-def">放在代码仓库里、给 Claude 读的说明文件，写着本项目的规范与禁区。本文把安全编码规范写进去，代码一生成就照做。</p><p class="gl-ana">像贴在工位上的项目规约，Claude 动手前先看。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Claude Tag</span><span class="gl-zh">Anthropic 内部 Claude 集成</span></div><p class="gl-def">Anthropic 内部的 Claude Tag，能直接接手开发任务并合并代码。本文中它合并了过半代码，也是 CI/CD 故障的首个响应者。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">MITRE ATT&amp;CK</span><span class="gl-zh">攻击战术与技术知识库</span></div><p class="gl-def">一份公开的攻击者战术与技术清单，安全团队拿它当检查表。本文的 PSR 把设计文档逐条对照它，找出潜在风险。</p><p class="gl-ana">像一份「小偷常见手法清单」，拿它逐条自查。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Amdahl's Law</span><span class="gl-zh">阿姆达尔定律</span></div><p class="gl-def">整体提速受最慢那一环限制，只优化一部分，收益就有上限。本文用它说明安全评审跟不上，开发再快也会被堵住。</p><p class="gl-ana">像一队人过安检，再多人也快不过最慢那台机器。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">red team</span><span class="gl-zh">红队</span></div><p class="gl-def">扮演攻击者主动攻击自家系统，提前找出漏洞。本文团队还对新评审智能体做红队，试着让它放过恶意改动。</p><p class="gl-ana">像请人扮演小偷，来试你家的门锁。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">bug bounty</span><span class="gl-zh">漏洞赏金</span></div><p class="gl-def">公开悬赏：外部研究者找到并报告漏洞就能领奖金。本文把它列为 Monitor 阶段的常规安全项目之一。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">staging environment</span><span class="gl-zh">预发布环境</span></div><p class="gl-def">和线上几乎一样、但不对真实用户开放的测试环境。本文在这里做外部渗透测试，并正在铺开持续的 DAST 扫描。</p><p class="gl-ana">像正式演出前的彩排场地，出事也不伤真观众。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">invariant</span><span class="gl-zh">不变量</span></div><p class="gl-def">无论系统怎么操作都必须成立的性质，比如「用户 A 永远读不到用户 B 的数据」。本文用这类检查触发额外人工评审。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CISO (Chief Information Security Officer)</span><span class="gl-zh">首席信息安全官</span></div><p class="gl-def">公司里对信息安全负总责的高管。本文作者是 Anthropic 的副 CISO，文中专门写了一段给 CISO 的教训。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">human in the loop</span><span class="gl-zh">人工介入</span></div><p class="gl-def">在自动化流程里保留人来做最终判断或审批。本文强调人的责任仍在中心，只是介入的位置会随代码库性质变化。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">attack surface</span><span class="gl-zh">攻击面</span></div><p class="gl-def">系统里所有可能被攻击者利用的入口和暴露点。本文说智能体让攻击面迅速变大，安全团队要守的地方更多了。</p><p class="gl-ana">像房子的门窗、阳台、通风口，能进人的地方都算。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">exfiltration</span><span class="gl-zh">数据外泄</span></div><p class="gl-def">把数据悄悄传到外部去。本文里，出站白名单把外泄路径压缩到少数几个受监控的服务上。</p><p class="gl-ana">像把文件塞进快递寄走；白名单只准寄几个地址。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">shadow mode</span><span class="gl-zh">影子模式</span></div><p class="gl-def">新智能体先不真正生效，只输出意见供人审批，攒够信任再放开。本文要求所有新评审智能体先跑影子模式。</p><p class="gl-ana">像实习生先跟着看、不签字，转正后才独立签字。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">root-causing</span><span class="gl-zh">根因定位</span></div><p class="gl-def">顺着现象往下查，找到问题真正的起因，而不是只处理表面症状。本文里告警一响，Claude 就开始查根因、写复盘。</p><p class="gl-ana">像修漏水先找裂管，而不是一直擦地板。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">post-mortem</span><span class="gl-zh">复盘报告</span></div><p class="gl-def">事故处理完后写的复盘文档：发生了什么、为什么、怎么防再犯。本文里由告警智能体起草。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">pentest</span><span class="gl-zh">渗透测试</span></div><p class="gl-def">由安全专家模拟真实攻击，试探系统能不能被攻破。本文在 staging 环境对重大发布做外部渗透测试。</p><p class="gl-ana">像请开锁师傅来试你家的锁，只是他有授权。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">skill (Claude Code skill)</span><span class="gl-zh">技能（可复用指令包）</span></div><p class="gl-def">打包好的一套可复用指令和做法，Claude 需要时调用。本文用它让 PSR 扩展去抓更多上下文，也让规范全组织复用。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">hook (PreToolUse hook)</span><span class="gl-zh">钩子</span></div><p class="gl-def">在动作前后自动触发一段程序，用来卡住或放行该步。有客户用 PreToolUse hook 把 /security-review 变成硬闸门。</p><p class="gl-ana">像地铁闸机：票不对就不开，绕不过去。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">agentic</span><span class="gl-zh">智能体化（由智能体自主驱动）</span></div><p class="gl-def">由能自主多步行动的智能体来完成任务，而不是按固定规则执行。本文把它与 deterministic 对照，要求两类评审都要有。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体（agent）</span></div><p class="gl-def">能自己规划步骤、调用工具、把一件事连续做完的 AI 程序。本文里的 agent 各自只有很窄的职责和很小的权限。</p><p class="gl-ana">像一个只会做一件事的实习生：给它目标，它自己找资料动手，做完汇报。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">PR (pull request)</span><span class="gl-zh">PR（合并请求）</span></div><p class="gl-def">把一批代码改动提交出来、请别人审查、通过后合进主干的动作。本文所有评审闸门都发生在这一步。</p><p class="gl-ana">像把改好的稿子交上去等签发，而不是直接印出去。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">loop</span><span class="gl-zh">循环（loop）</span></div><p class="gl-def">智能体「看结果 → 决定下一步 → 再动手」一轮轮跑下去的运行方式。本文说安全工作的重心从盯 bug 变成盯这些循环。</p><p class="gl-ana">像洗衣机的一整套流程：进水、洗、排水，跑完一轮再跑下一轮。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>SDLC 是什么，本文怎么分阶段</h4><p>SDLC（software development lifecycle，软件开发生命周期）指一个需求从想法到上线、再到长期运维的全过程。教科书式分法是需求→设计→开发→测试→部署→维护；本文用的是 Anthropic 自己的版本：Plan（规划）、Code（写码）、Test/CI（测试与持续集成）、Deploy/CD（部署与持续交付）、Monitor（监控），外加一层 Governance（治理）。作者强调这些阶段「名字和用途对传统开发者并不陌生」——正因为它们本来就是天然的闸门，安全控制才能直接挂上去。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>「Zero Trust for Agents」是哪来的框架</h4><p>零信任（Zero Trust）的老原则是「永不默认信任，每次访问都验证」。把它套到智能体上，要额外回答几个新问题：agent 的身份是什么、它的权限边界在哪、它能不能调用别的 agent、它被攻陷后能碰到什么。本文开头那行斜体说明了自己与《Zero Trust for Agents》的关系：那篇给框架，这篇给实现。读本文时如果觉得某个控制「没讲为什么」，答案通常在那篇里。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>「最小自主权」和「最小权限」差在哪</h4><p>最小权限（Least Privilege）管的是「你能访问什么」；最小自主权（Principle of Least Agency，本文作者的说法）在它之上多管一层「你能自己决定做什么、能做到哪一步」。对智能体来说，光限制它读哪些数据不够——还得限制它能否自己发起动作、能否触发别的 agent、能否把结果推出去。文中「告警 agent 能写文档、能发消息、能读生产日志，但不能部署修复」就是这条原则的具体样子。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>「确定性检查」和「智能体化评审」不是一回事</h4><p>本文反复把 deterministic 和 agentic 两类检查放在一起说，区别在于：确定性检查（SAST、依赖扫描、规则匹配）给同样的输入永远给同样的输出，可复现、便宜，但只能发现它被写进去要发现的东西；智能体化评审（让 Claude 读代码、自己找问题并写验证）能处理没见过的问题、能做跨组件推理，但结果不确定、更贵、还会犯错。本文的结论不是二选一，而是两者叠加，并且用多个职责很窄的 agent 互相制衡，降低单点出错的影响。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>原文这里有一处链接写坏了</h4><p>原文这一句的 Markdown 锚文本把句号和下一句开头的 The 一起圈了进去（…before a human ever sees them. The），导致英文读起来像是断句了。中文按语义正常翻译。文末「原文笔误与图文问题」有备案，两条对照看即可。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 3 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>and [validates its own fixes before a human ever sees them. The](https://claude.com/customers/circleci) approach doubled</code><p>原文这一处的 Markdown 链接写坏了：锚文本把句号和下一句开头的 The 一起吞了进去，导致句子结构断裂（正常应是 …before a human ever sees them. The approach doubled…）。中文按语义正常翻译，英文列照录原文。</p></div><div class="typo-item"><code>The process internally at Anthropic for an automated PSR.</code><p>这是原文为图 2 配的图注，但该图实际是一张 /psr 的三步使用卡（开会话 → 运行 /psr → 跟着提示走），并不是内部 PSR 流程示意。图注与图不符，属原文问题；本页的图片解读按图上真实内容写，未按图注臆造流程。</p></div><div class="typo-item"><code>The fix either needs to come from a separate agent-human reviewer system.</code><p>原文这句的 either 后面没有 or（图 4 对应的是「独立 agent 或人工评审者」），属于残句。中文按「必须来自另一套系统」理解并翻译，英文列照录原文。</p></div></div></section><footer><p>本页为英文原文的中文对照阅读版，正文译文逐句对应原文。导读、本节要点、术语解释、图片解读、延伸阅读地图与译注均为译者所加，用不同底色与原文区分。原文版权归 Anthropic 所有。</p><p>原文：<a href="https://claude.com/resources/articles/how-anthropic-secures-its-ai-native-software-development-lifecycle" target="_blank" rel="noopener">How Anthropic secures its AI-native software development lifecycle</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-evolving"><span class="dot">●</span>正在演进的软件开发生命周期</a><a class="l2" href="#s-plan"><span class="dot">●</span>规划（Plan）</a><a class="l2" href="#s-code"><span class="dot">●</span>写码（Code）</a><a class="l2" href="#s-test"><span class="dot">●</span>测试与持续集成（Test / CI）</a><a class="l2" href="#s-deploy"><span class="dot">●</span>部署与持续交付（Deploy / CD）</a><a class="l2" href="#s-monitor"><span class="dot">●</span>监控（Monitor）</a><a class="l2" href="#s-governance"><span class="dot">●</span>治理（Governance）</a><a class="l2" href="#s-outlook"><span class="dot">●</span>模型在演进，怎么让 AI SDLC 一直安全</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"阿姆达尔定律（维基百科条目）","title_en":"Amdahl's law - Wikipedia","site":"en.wikipedia.org","what_zh":"计算机体系结构里的一条规律：给程序加速时，整体提速受限于无法加速的串行部分。","why_zh":"本文第一段用它解释：代码产出变快后，评审与监控不提速，整体交付速度就被这些环节卡住。先懂这个比喻，才明白全文为什么按 SDLC 阶段逐个讲瓶颈。","tier":"必读","order":1,"url":"https://en.wikipedia.org/wiki/Amdahl%27s_law"},"L2":{"title_zh":"当 AI 建造自己","title_en":"When AI builds itself","site":"www.anthropic.com","what_zh":"Anthropic 研究所的长文，用内部数据说明 AI 正在加速 AI 研发，并定义「递归自我改进」：AI 自主设计、开发下一代。","why_zh":"本文「80% 的代码由 Claude 撰写」和「自动化评审本可拦下约三分之一事故 bug」两处说法都出自这篇。想核对原文数字，或想弄清「递归自我改进」到底指什么，看它。","tier":"必读","order":2,"url":"https://www.anthropic.com/institute/recursive-self-improvement"},"L4":{"title_zh":"面向 AI Agent 的零信任框架","title_en":"Zero Trust for AI agents","site":"claude.com","what_zh":"Anthropic 的 Agent 安全框架：把「零信任」原则改写成适合自主 Agent 的做法，正文是一份可下载 PDF。","why_zh":"本文开头就声明：全文做法都建立在这个框架上。不读它，就不知道「零信任」在这里指哪几条原则、为什么按成熟度分层、八个实施阶段各管什么。","tier":"必读","order":3,"url":"https://claude.com/resources/articles/zero-trust-for-ai-agents"},"L7":{"title_zh":"Claude Code 中的自动化安全评审","title_en":"Automated security reviews in Claude Code","site":"support.claude.com","what_zh":"Claude Code 官方文档：/security-review 命令与 GitHub Action 的用法和可查漏洞类型。","why_zh":"本文说团队让 Claude 在开 PR 前跑 /security-review，它会「找攻击者可控输入的入口、扫可疑链接、再验证结论」。这份文档给出该命令怎么用、查什么、边界在哪。","tier":"必读","order":4,"url":"https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code"},"L10":{"title_zh":"Claude Code 的 Code Review","title_en":"Code Review for Claude Code","site":"claude.com","what_zh":"Anthropic 的 Code Review 产品：每个 PR 派多个 Agent 并行找 bug、互相验证、排序后汇总。","why_zh":"本文「有实质评审意见的 PR 占比从 16% 涨到 54%」的依据就是这篇。它给出同一组数字、内部实测效果和费用，是全文最硬的一处证据。","tier":"必读","order":5,"url":"https://claude.com/resources/articles/code-review"},"L15":{"title_zh":"Agent 身份：面向自主、团队级 AI 的新访问模型","title_en":"Agent identity: a new access model for autonomous, team-wide AI","site":"claude.com","what_zh":"Anthropic 的文章：当 Claude 和一群人同一频道协作，「借某人的权限」行不通，它需要自己的身份和账号。","why_zh":"本文讲完「模型升级后事故响应 Agent 主动找另一个 Claude 推修复」就提到 agent identity 模型。它是理解「给 Agent 单独立身份、单设权限」的关键。","tier":"必读","order":6,"url":"https://claude.com/resources/articles/agent-identity-access-model"},"L16":{"title_zh":"Anthropic 如何用 Claude Code 做大规模代码迁移","title_en":"How Anthropic runs large-scale code migrations with Claude Code","site":"claude.com","what_zh":"Anthropic 的文章：怎么用 Claude 把生产代码库迁到另一种语言，给出 Bun 的 Zig→Rust 案例和六步流程。","why_zh":"本文说「Claude 把迁移自动化，几万行代码几天搞定」，依据就是这篇。点开能看到更大的真实数字和成本前提，也能纠正「迁移变便宜了就该随便迁」的误读。","tier":"必读","order":7,"url":"https://claude.com/resources/articles/ai-code-migration"},"L3":{"title_zh":"Claude Tag 介绍","title_en":"Introducing Claude Tag","site":"www.anthropic.com","what_zh":"Anthropic 的团队协作产品：把 Claude 拉进 Slack 频道，@ 它就能派任务，成员都能接着上下文做。","why_zh":"本文反复出现「我们内部的 Claude Tag」——超过一半代码由它合并、CI 挂了它当第一响应人。先知道它是什么，这些句子才读得懂。","tier":"背景","order":8,"url":"https://www.anthropic.com/news/introducing-claude-tag"},"L5":{"title_zh":"如何运营一个 AI 原生的工程组织","title_en":"Running an AI-native engineering org","site":"claude.com","what_zh":"Claude Code 团队负责人讲：写代码不再耗时后，哪些旧流程成了瓶颈，以及怎么改规划、找上下文、评审和分工。","why_zh":"本文那句「我们的开发团队已经详细写过 SDLC 的变化」就链到这里。它补背景：AI 原生团队里哪些规矩被重写，为什么评审与验证成了新瓶颈。","tier":"背景","order":9,"url":"https://claude.com/resources/articles/running-an-ai-native-engineering-org"},"L6":{"title_zh":"MITRE ATT&CK 框架","title_en":"MITRE ATT&CK®","site":"attack.mitre.org","what_zh":"免费公开的知识库，把真实攻击中观察到的「战术」和「技术」整理成矩阵，用来做威胁建模和检测评估。","why_zh":"本文的 PSR（项目安全评审）第一步就是拿设计文档对照 ATT&CK 找漏洞。看它才知道这个框架长什么样、按什么分类、能查到多细。","tier":"背景","order":10,"url":"https://attack.mitre.org/"},"L8":{"title_zh":"在 Claude 写代码时就拦住安全问题","title_en":"Catch security issues as Claude writes code","site":"code.claude.com","what_zh":"官方文档：security guidance 插件在 Claude 写代码时自动检查常见漏洞，并在同一会话里改掉，不必等到 PR。","why_zh":"本文说「装上插件后 Claude 边生成边评审对话和代码」。这份文档说明它在哪几个时点检查、每层查什么，以及它和 /security-review、Code Review 怎么分工。","tier":"背景","order":11,"url":"https://code.claude.com/docs/en/security-guidance"},"L9":{"title_zh":"安全代码评审有效性的实证研究","title_en":"An Empirical Study on the Effectiveness of Security Code Review","site":"link.springer.com","what_zh":"2013 年的一篇会议论文：让 30 名开发者人工评审一个含 7 个已知漏洞的小型 Web 应用，量化人审到底能查出多少。","why_zh":"本文在 Test 段说「经验证据表明人工代码评审并不完美」，依据就是这篇。点开能看到这个结论有多强、实验怎么做，避免把人工评审当成可靠标准。","tier":"背景","order":12,"url":"https://link.springer.com/chapter/10.1007/978-3-642-36563-8_14"},"L11":{"title_zh":"AI 在批准我们的 PR：我们如何让它安全","title_en":"AI is approving our pull requests: Here's how we made it safe","site":"www.intercom.com","what_zh":"Intercom 工程博客：他们把 PR 评审拆成多个子 Agent，19% 的 PR 由 AI 直接批准、不放人。","why_zh":"本文拿 Intercom 当外部例证：自动批准 19% 的 PR，部署量翻倍而故障停机降 35%。点开能看到这两个数字的原始出处和前提条件。","tier":"背景","order":13,"url":"https://www.intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe/"},"L12":{"title_zh":"CircleCI 如何用 Claude 打造代码验证 Agent","title_en":"How CircleCI built a code validation agent with Claude","site":"claude.com","what_zh":"CircleCI 客户案例：用 Claude Agent SDK 做了 Chunk——自己修 CI/CD 问题、验证修复后交 PR。","why_zh":"本文说 Chunk「在人类看到之前先验证自己的修复」，并说 Agent 任务转成完成 PR 的比例翻倍。这个案例页给出做法与全部数字。","tier":"背景","order":14,"url":"https://claude.com/customers/circleci"},"L13":{"title_zh":"大模型发现的 0-day 漏洞","title_en":"LLM-discovered 0 days","site":"www.anthropic.com","what_zh":"Anthropic 研究报告：让 Claude 在虚拟机里自主找开源软件漏洞，找到并验证 500 多个高危漏洞。","why_zh":"本文在 Deploy 段用它证明「AI 更擅长跨组件的多步推理」：Claude 发现并协助修复了 500 多个高危开源漏洞。点开能看到这些漏洞怎么找、怎么确认。","tier":"背景","order":15,"url":"https://www.anthropic.com/research/zero-days"},"L17":{"title_zh":"CISO 的 Agentic AI 指南","title_en":"CISO's guide to agentic AI","site":"claude.com","what_zh":"Anthropic 写给安全负责人的文章：怎么给 Agent 场景做风险评估、什么算「有界」，以及他们自己踩过的坑。","why_zh":"本文结尾说「这些控制背后的评估框架见 CISO 指南」，链接就是这篇。它把前文零散的控制收成一套可复用的四问评估法。","tier":"背景","order":16,"url":"https://claude.com/resources/articles/ciso-guide-to-agentic-ai"},"L14":{"title_zh":"Anthropic 公开漏洞赏金计划（HackerOne）","title_en":"Anthropic - Bug Bounty Program | HackerOne","site":"hackerone.com","what_zh":"Anthropic 在 HackerOne 上运行的公开漏洞赏金项目页：外部研究者按规则提交漏洞、按严重度获得奖励。","why_zh":"本文在 Monitor 段把「公开 bug bounty」列为常规安全实践之一。点开可以确认项目确实存在、在哪提交，但范围和奖励细则要等页面加载。","tier":"可选","order":17,"url":"https://hackerone.com/anthropic"}},"terms":{"sdlc":{"en":"SDLC (software development lifecycle)","zh":"软件开发生命周期","def_zh":"软件从想法、需求、设计、写码、测试、部署到上线后监控的整条生命周期。本文的 SDLC 被压缩：阶段名还在，节奏和把关方式变了。"},"psr":{"en":"PSR (project security review)","zh":"项目安全评审","def_zh":"项目开工前，把设计文档交给安全方审一遍，提前找出漏洞和缓解办法。本文指 Anthropic 用 Claude 自动做这件事的应用。","analogy_zh":"像装修前先审图纸，别等砌完墙才发现消防通道没了。"},"sast":{"en":"SAST (static application security testing)","zh":"静态应用安全测试","def_zh":"不运行程序，直接扫源代码找漏洞。本文里 SAST 工具与智能体扫描并用，结果直接贴在 PR 上。"},"dast":{"en":"DAST (dynamic application security testing)","zh":"动态应用安全测试","def_zh":"把程序跑起来、从外部发请求试探漏洞，能发现静态扫描看不到的逻辑问题。本文要求它跟着部署节奏持续跑。","analogy_zh":"像不拆零件，把车开上路实测各种路况。"},"siem":{"en":"SIEM (security information and event management)","zh":"安全信息与事件管理","def_zh":"把各系统日志汇总、关联、告警的安全平台。本文要求智能体的每次动作都写进 SIEM，任何决定事后都可追责。","analogy_zh":"像把全公司的摄像头汇进一间监控室，出事能倒查。"},"rag":{"en":"RAG (retrieval-augmented generation)","zh":"检索增强生成","def_zh":"让模型先检索资料、再基于检索结果作答。本文的评审智能体用它调取过去事故的上下文和记忆。","analogy_zh":"像答题前先翻资料柜，照着资料答而不是凭印象。"},"blast-radius":{"en":"blast radius","zh":"影响半径","def_zh":"一个智能体被攻破或被提示注入后，实际能影响到、破坏到的范围。本文用身份和权限的硬边界把它压到最小。","analogy_zh":"像爆炸半径：围墙画得越小，炸开时波及越少。"},"egress-allowlist":{"en":"egress allowlist","zh":"出站白名单","def_zh":"只允许程序连向名单内的外部服务，其他地址一律拒绝。本文开发机上的智能体流量走白名单，注入指令传不出数据。","analogy_zh":"像手机只准拨通讯录里的号码，陌生号码打不通。"},"prompt-injection":{"en":"prompt injection","zh":"提示注入","def_zh":"把恶意指令伪装成文档、网页等正常内容，骗模型照做。本文最担心的攻击：智能体读不可信输入时被劫持。","analogy_zh":"像把「去转钱」写在便签上，夹进你正读的文件里。"},"supply-chain":{"en":"supply chain (poisoning)","zh":"供应链投毒","def_zh":"不正面攻系统，而是污染它依赖的第三方包、构建工具等。本文指智能体会把被投毒的依赖当成可信输入吃进去。","analogy_zh":"像食材供应商被下毒，厨房再干净也白搭。"},"shadow-it":{"en":"shadow IT","zh":"影子 IT","def_zh":"员工绕过 IT 部门自己搭的应用和服务，安全团队既不知道也管不到。本文用内部低代码托管平台把它们收编。"},"zero-trust":{"en":"Zero Trust","zh":"零信任","def_zh":"不默认「进了内网就可信」，每个请求都重新验证身份和权限。本文沿用 Zero Trust for Agents 框架。","analogy_zh":"像在自家公司走动也要刷卡，不因为在楼里就免检。"},"least-agency":{"en":"Principle of Least Agency","zh":"最小自主权","def_zh":"只给智能体完成当前任务所需的最小权限和自主度。本文用它约束每个智能体，对应「单用途身份、最低权限」。","analogy_zh":"像给新人只开必要的门禁，而不是整栋楼的钥匙。"},"claude-md":{"en":"CLAUDE.md","zh":"项目级指令文件","def_zh":"放在代码仓库里、给 Claude 读的说明文件，写着本项目的规范与禁区。本文把安全编码规范写进去，代码一生成就照做。","analogy_zh":"像贴在工位上的项目规约，Claude 动手前先看。"},"claude-tag":{"en":"Claude Tag","zh":"Anthropic 内部 Claude 集成","def_zh":"Anthropic 内部的 Claude Tag，能直接接手开发任务并合并代码。本文中它合并了过半代码，也是 CI/CD 故障的首个响应者。"},"mitre-attack":{"en":"MITRE ATT&CK","zh":"攻击战术与技术知识库","def_zh":"一份公开的攻击者战术与技术清单，安全团队拿它当检查表。本文的 PSR 把设计文档逐条对照它，找出潜在风险。","analogy_zh":"像一份「小偷常见手法清单」，拿它逐条自查。"},"amdahls-law":{"en":"Amdahl's Law","zh":"阿姆达尔定律","def_zh":"整体提速受最慢那一环限制，只优化一部分，收益就有上限。本文用它说明安全评审跟不上，开发再快也会被堵住。","analogy_zh":"像一队人过安检，再多人也快不过最慢那台机器。"},"red-team":{"en":"red team","zh":"红队","def_zh":"扮演攻击者主动攻击自家系统，提前找出漏洞。本文团队还对新评审智能体做红队，试着让它放过恶意改动。","analogy_zh":"像请人扮演小偷，来试你家的门锁。"},"bug-bounty":{"en":"bug bounty","zh":"漏洞赏金","def_zh":"公开悬赏：外部研究者找到并报告漏洞就能领奖金。本文把它列为 Monitor 阶段的常规安全项目之一。"},"staging":{"en":"staging environment","zh":"预发布环境","def_zh":"和线上几乎一样、但不对真实用户开放的测试环境。本文在这里做外部渗透测试，并正在铺开持续的 DAST 扫描。","analogy_zh":"像正式演出前的彩排场地，出事也不伤真观众。"},"invariant":{"en":"invariant","zh":"不变量","def_zh":"无论系统怎么操作都必须成立的性质，比如「用户 A 永远读不到用户 B 的数据」。本文用这类检查触发额外人工评审。"},"ciso":{"en":"CISO (Chief Information Security Officer)","zh":"首席信息安全官","def_zh":"公司里对信息安全负总责的高管。本文作者是 Anthropic 的副 CISO，文中专门写了一段给 CISO 的教训。"},"human-in-the-loop":{"en":"human in the loop","zh":"人工介入","def_zh":"在自动化流程里保留人来做最终判断或审批。本文强调人的责任仍在中心，只是介入的位置会随代码库性质变化。"},"attack-surface":{"en":"attack surface","zh":"攻击面","def_zh":"系统里所有可能被攻击者利用的入口和暴露点。本文说智能体让攻击面迅速变大，安全团队要守的地方更多了。","analogy_zh":"像房子的门窗、阳台、通风口，能进人的地方都算。"},"exfiltration":{"en":"exfiltration","zh":"数据外泄","def_zh":"把数据悄悄传到外部去。本文里，出站白名单把外泄路径压缩到少数几个受监控的服务上。","analogy_zh":"像把文件塞进快递寄走；白名单只准寄几个地址。"},"shadow-mode":{"en":"shadow mode","zh":"影子模式","def_zh":"新智能体先不真正生效，只输出意见供人审批，攒够信任再放开。本文要求所有新评审智能体先跑影子模式。","analogy_zh":"像实习生先跟着看、不签字，转正后才独立签字。"},"root-cause":{"en":"root-causing","zh":"根因定位","def_zh":"顺着现象往下查，找到问题真正的起因，而不是只处理表面症状。本文里告警一响，Claude 就开始查根因、写复盘。","analogy_zh":"像修漏水先找裂管，而不是一直擦地板。"},"post-mortem":{"en":"post-mortem","zh":"复盘报告","def_zh":"事故处理完后写的复盘文档：发生了什么、为什么、怎么防再犯。本文里由告警智能体起草。"},"pentest":{"en":"pentest","zh":"渗透测试","def_zh":"由安全专家模拟真实攻击，试探系统能不能被攻破。本文在 staging 环境对重大发布做外部渗透测试。","analogy_zh":"像请开锁师傅来试你家的锁，只是他有授权。"},"skill":{"en":"skill (Claude Code skill)","zh":"技能（可复用指令包）","def_zh":"打包好的一套可复用指令和做法，Claude 需要时调用。本文用它让 PSR 扩展去抓更多上下文，也让规范全组织复用。"},"hook":{"en":"hook (PreToolUse hook)","zh":"钩子","def_zh":"在动作前后自动触发一段程序，用来卡住或放行该步。有客户用 PreToolUse hook 把 /security-review 变成硬闸门。","analogy_zh":"像地铁闸机：票不对就不开，绕不过去。"},"agentic":{"en":"agentic","zh":"智能体化（由智能体自主驱动）","def_zh":"由能自主多步行动的智能体来完成任务，而不是按固定规则执行。本文把它与 deterministic 对照，要求两类评审都要有。"},"agent":{"en":"agent","zh":"智能体（agent）","def_zh":"能自己规划步骤、调用工具、把一件事连续做完的 AI 程序。本文里的 agent 各自只有很窄的职责和很小的权限。","analogy_zh":"像一个只会做一件事的实习生：给它目标，它自己找资料动手，做完汇报。"},"pr":{"en":"PR (pull request)","zh":"PR（合并请求）","def_zh":"把一批代码改动提交出来、请别人审查、通过后合进主干的动作。本文所有评审闸门都发生在这一步。","analogy_zh":"像把改好的稿子交上去等签发，而不是直接印出去。"},"loop":{"en":"loop","zh":"循环（loop）","def_zh":"智能体「看结果 → 决定下一步 → 再动手」一轮轮跑下去的运行方式。本文说安全工作的重心从盯 bug 变成盯这些循环。","analogy_zh":"像洗衣机的一整套流程：进水、洗、排水，跑完一轮再跑下一轮。"}},"notes":{"N1":{"title_zh":"SDLC 是什么，本文怎么分阶段","body_zh":"SDLC（software development lifecycle，软件开发生命周期）指一个需求从想法到上线、再到长期运维的全过程。教科书式分法是需求→设计→开发→测试→部署→维护；本文用的是 Anthropic 自己的版本：Plan（规划）、Code（写码）、Test/CI（测试与持续集成）、Deploy/CD（部署与持续交付）、Monitor（监控），外加一层 Governance（治理）。作者强调这些阶段「名字和用途对传统开发者并不陌生」——正因为它们本来就是天然的闸门，安全控制才能直接挂上去。"},"N3":{"title_zh":"「Zero Trust for Agents」是哪来的框架","body_zh":"零信任（Zero Trust）的老原则是「永不默认信任，每次访问都验证」。把它套到智能体上，要额外回答几个新问题：agent 的身份是什么、它的权限边界在哪、它能不能调用别的 agent、它被攻陷后能碰到什么。本文开头那行斜体说明了自己与《Zero Trust for Agents》的关系：那篇给框架，这篇给实现。读本文时如果觉得某个控制「没讲为什么」，答案通常在那篇里。"},"N4":{"title_zh":"「最小自主权」和「最小权限」差在哪","body_zh":"最小权限（Least Privilege）管的是「你能访问什么」；最小自主权（Principle of Least Agency，本文作者的说法）在它之上多管一层「你能自己决定做什么、能做到哪一步」。对智能体来说，光限制它读哪些数据不够——还得限制它能否自己发起动作、能否触发别的 agent、能否把结果推出去。文中「告警 agent 能写文档、能发消息、能读生产日志，但不能部署修复」就是这条原则的具体样子。"},"N2":{"title_zh":"「确定性检查」和「智能体化评审」不是一回事","body_zh":"本文反复把 deterministic 和 agentic 两类检查放在一起说，区别在于：确定性检查（SAST、依赖扫描、规则匹配）给同样的输入永远给同样的输出，可复现、便宜，但只能发现它被写进去要发现的东西；智能体化评审（让 Claude 读代码、自己找问题并写验证）能处理没见过的问题、能做跨组件推理，但结果不确定、更贵、还会犯错。本文的结论不是二选一，而是两者叠加，并且用多个职责很窄的 agent 互相制衡，降低单点出错的影响。"},"N5":{"title_zh":"原文这里有一处链接写坏了","body_zh":"原文这一句的 Markdown 锚文本把句号和下一句开头的 The 一起圈了进去（…before a human ever sees them. The），导致英文读起来像是断句了。中文按语义正常翻译。文末「原文笔误与图文问题」有备案，两条对照看即可。"}},"typos":[{"quote_en":"and [validates its own fixes before a human ever sees them. The](https://claude.com/customers/circleci) approach doubled","body_zh":"原文这一处的 Markdown 链接写坏了：锚文本把句号和下一句开头的 The 一起吞了进去，导致句子结构断裂（正常应是 …before a human ever sees them. The approach doubled…）。中文按语义正常翻译，英文列照录原文。"},{"quote_en":"The process internally at Anthropic for an automated PSR.","body_zh":"这是原文为图 2 配的图注，但该图实际是一张 /psr 的三步使用卡（开会话 → 运行 /psr → 跟着提示走），并不是内部 PSR 流程示意。图注与图不符，属原文问题；本页的图片解读按图上真实内容写，未按图注臆造流程。"},{"quote_en":"The fix either needs to come from a separate agent-human reviewer system.","body_zh":"原文这句的 either 后面没有 or（图 4 对应的是「独立 agent 或人工评审者」），属于残句。中文按「必须来自另一套系统」理解并翻译，英文列照录原文。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

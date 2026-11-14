@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>在 Anthropic 重新设计版本控制｜Redesigning source control at Anthropic</title>
+<meta name="description" content="在 Anthropic 重新设计版本控制｜Redesigning source control at Anthropic：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/anthropic-scm/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="在 Anthropic 重新设计版本控制">
+<meta property="og:description" content="合并量五个月涨了十倍之后，git 撑不住了：7 个人、5 个月，自研版本控制系统 Scion，并把内部 monorepo 全量迁了过去。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/anthropic-scm/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic Research · 2026-10-13</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Redesigning source control at Anthropic</span><span class="h1-zh">在 Anthropic 重新设计版本控制</span></h1><div class="hero-meta"><span>原文 3660 词</span><span>中文 8100 字</span><span>逐句对照 <i>165</i> 句</span><span>预计 18 分钟</span><span><a href="https://www.anthropic.com/research/redesigning-source-control" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：AI 写代码的速度第一次超过了「为人类规模设计」的开发者基础设施——Anthropic 的版本控制先撑不住了，于是自研了 Scion，并用五个月把内部巨型 monorepo 从 git 全量迁走。</li><li><b>动因是数量级</b>：2026 年 5 月每天约 2,500 次合并，9 月超过 30,000 次；主分支历史接近 100 GB，压缩后的工作副本超过 25 GB，每天约 2,500 万次代码检出——照老办法要产生 600 PB/天的 git 流量。</li><li><b>换掉的不是命令，是前提</b>：git 假设客户端离线、需要完整仓库；Scion 假设客户端永远在线，历史和 blame 由服务端回答，客户端只留一个有界缓存。</li><li><b>核心数据结构</b>：工作单元从 commit 换成 changeset——写进预写日志、只记录相对第一个父提交的改动；blame、路径历史、skip list 这些「派生数据」由一个通用机制递归算出。</li><li><b>结果</b>：7 个人、5 个月，同时建成 Scion 与代码评审工具 Antique 并完成迁移，期间合并量还涨了 10 倍；Scion 的 CPU 与内存占用比原来的 git 镜像方案小 200 倍，检出从分钟级降到秒级，CI 单独省出 25% 的 CPU。</li><li><b>边界</b>：Scion 并不适合替代通用场景的 git，只对「数万工程师、或成群的智能体」这种超大 monorepo 有意义；作者更希望把这些思路反哺给 git 生态，而不是让大家都换系统。</li></ul><div class="compare"><div class="cmp"><h3>git 的设计前提：人、离线、完整副本</h3><ol><li>每个克隆都是完整、自包含的仓库</li><li>离线也能算 diff、读历史与 blame、检出任意版本</li><li>想查仓库问题，得先有本地副本或厂商专有 API</li><li>靠 packfile 压缩与定期维护来省空间</li><li>提交先在本地产生，再 push 分享</li><li>检出（checkout）是默认动作，大仓库靠内部镜像、浅克隆、快照（seeds）扩展</li></ol></div><div class="cmp win"><h3>Scion 的设计前提：智能体、永远在线、服务端权威</h3><ol><li>服务端是权威副本，客户端只保留有界的对象缓存</li><li>历史、blame、合并、变基都由服务端回答</li><li>所有查询都通过 API 暴露，作业可以没有本地仓库</li><li>没有 packfile，因此也没有仓库维护</li><li>提交在服务端产生，没有「push」这一步</li><li>检出变成可选：稀疏检出、虚拟化检出按需取文件</li></ol></div></div><p class="ov-foot cmp-foot">六行分别对应正文第三节的六条设计原则。差别不在功能，而在「谁在线、谁掌握完整数据」。</p><p class="ov-foot">读法建议：先看第 1、3、4 条拿到主线，再读正文。第 2 条的数字要和配图 1 一起看：30,401 是 9 月 9 日的单日峰值，7 日均线约 1.8 万；第 5 条的三个数字（规模只剩 1/200、检出从分钟到秒、CI 省 25% CPU）是全文最有说服力的结果。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>一句话：AI 写代码已经不再是瓶颈，为人类规模设计的那套开发者基础设施（版本控制、构建、CI）成了瓶颈。Anthropic 的回应是自研版本控制系统 Scion，五个月完成内部 monorepo 的迁移。</p></div>
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Updated October 15 to include more detail on the projects that pioneered many of the techniques we use in Scion.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">10 月 15 日更新：补充了更多细节，说明我们在 Scion 中沿用的许多技术，最早是由哪些项目开创的。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">At Anthropic, coding is no longer the bottleneck to building systems or doing research.</span> <span class="s" data-k="intro-b1-1">Claude is able to autonomously iterate on research loops, micro-optimize complex programs, and build new services from the ground up at a speed and scale we haven’t seen before.</span> <span class="s" data-k="intro-b1-2">The bottleneck, now, is all of the developer infrastructure built for human scale: source control, builds, and <span class='term' data-term='ci'>CI</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">在 Anthropic，写代码已经不再是构建系统或做研究的瓶颈。</span><span class="s" data-k="intro-b1-1">Claude 能自主地反复迭代研究流程、对复杂程序做微优化，也能从零开始搭建新服务，速度和规模都是我们此前没见过的。</span><span class="s" data-k="intro-b1-2">现在的瓶颈，变成了那一整套按人的规模设计的开发者基础设施：版本控制、构建和<span class='term' data-term='ci'>持续集成</span>（CI）。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">In May 2026, Anthropic averaged around 2,500 code changes merged per day; as of September, we merged over 30,000 per day.</span> <span class="s" data-k="intro-b2-1">We don’t expect this rate of growth to slow down anytime soon; the latent demand for merging code is practically infinite, and every bottleneck we remove immediately leads to a further increase in the amount of code we produce.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">2026 年 5 月，Anthropic 平均每天合并约 2,500 处代码改动；到 9 月，我们每天合并的改动超过 30,000 处。</span><span class="s" data-k="intro-b2-1">我们预计这个增速短时间内不会放缓；合并代码的潜在需求几乎是无限的，而且我们每拆掉一个瓶颈，代码产出立刻又涨一截。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="单日合并量九个月增长曲线"><div class="fig-media"><img class="still" src="media/fig1.png" loading="lazy" decoding="async" alt="Changes merged to our monorepo per day, from January to September 2026."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>单日合并量九个月增长曲线</b>　对应正文「5 月日均约 2,500 次、9 月已超 3 万次」：蓝条 Pull requests 与橙条 Antique change requests 此消彼长，黑线 7-day average 爬升到约一万八千，峰值 30,401。</p><p class="cap-en">原文图注：Changes merged to our monorepo per day, from January to September 2026.</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>纵轴 0 到 35,000，刻度每格 5,000，横轴从 Jan 走到 Sep，读的是每日合并量而非月总量。</li><li>蓝条 Pull requests 前五个月占绝对多数，6 月起橙色 Antique 变更条接管，颜色交替就是迁移节点。</li><li>黑线是 7-day average，7 月底 Quiet week 处跌到谷底，9 月底回到约 18,000。</li><li>右上气泡只标峰值：30,401 merged on Sep 9，对应正文「9 月已超 3 万」的说法。</li><li>口径提醒：30,401 是 9 月 9 日的单日峰值，黑色 7 日均线到月底约 1.8 万；正文那句「每天超过 3 万」应按单日口径读。</li></ol><p class="takeaway">一句话：单日合并量九个月涨近一个数量级，人类规模的 git 工具链开始失效。</p></details></figcaption></figure>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">In order to support this growth, we built Scion<sup class='tn' data-note='N1'>1</sup>, an in-house <span class='term' data-term='version-control'>version control</span> system, and fully migrated our <span class='term' data-term='monorepo'>monorepo</span> from <span class='term' data-term='git'>git</span> in five months.</span> <span class="s" data-k="intro-b4-1">We also built and shipped a <span class='term' data-term='code-review'>code review</span> surface (called Antique), code search, a rich source control <span class='term' data-term='iam'>IAM</span> system, novel ways of managing and landing large amounts of reviewed code, and more, all in that same time period.</span> <span class="s" data-k="intro-b4-2">In this post, we’ll focus on how we built Scion specifically.</span> <span class="s" data-k="intro-b4-3">It makes for an interesting case study: Claude’s ability to write code was both what put us in this situation in the first place <i>and</i> how we were able to quickly build a high-quality, scalable system to deal with it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">为了支撑这样的增长，我们自研了一套<span class='term' data-term='version-control'>版本控制系统</span> Scion<sup class='tn' data-note='N1'>1</sup>，并在五个月里把我们的<span class='term' data-term='monorepo'>单体仓库</span>（monorepo）从 <span class='term' data-term='git'>git</span> 完整迁移了过去。</span><span class="s" data-k="intro-b4-1">在同一段时间里，我们还建成并上线了<span class='term' data-term='code-review'>代码评审</span>界面（名为 Antique）、代码搜索、一套细粒度的版本控制<span class='term' data-term='iam'>身份与访问管理</span>（IAM）系统，以及用来管理和合入大批已评审代码的新办法，等等。</span><span class="s" data-k="intro-b4-2">本文只聚焦一件事：Scion 具体是怎么建起来的。</span><span class="s" data-k="intro-b4-3">这是一个很有意思的案例：Claude 写代码的能力，既是一开始把我们推进这个局面的原因，也正是我们能迅速做出一个高质量、可扩展的系统来应对它的原因。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-monorepo">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Growing our monorepo</span><span class="h-zh">让单体仓库长大</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本节要点（译者所加）：git 的假设是「每个人都有完整仓库、可以离线工作」，但 Anthropic 的仓库已经大到「拿一份完整副本」本身就不现实。他们用过所有现成的办法，只买到了时间。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="monorepo-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monorepo-b0-0">Before we explore what we built, we should acknowledge how unusual our workload is.</span> <span class="s" data-k="monorepo-b0-1">Unsurprisingly, Anthropic uses Claude to write software far more than almost any other company, so we’re often the first to see where tools built for human scale start to strain.</span> <span class="s" data-k="monorepo-b0-2">Source control is just one example of this.</span> <span class="s" data-k="monorepo-b0-3">While we don’t expect many organizations to have these problems in the very near term, we suspect it won’t be too long before others who use AI coding tools experience these same pressure points, which is why we wanted to share what we built and what we learned.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monorepo-b0-0">在讲我们造了什么之前，得先承认：我们的工作负载很不寻常。</span><span class="s" data-k="monorepo-b0-1">不出意外，Anthropic 用 Claude 写软件的程度远超几乎所有其他公司，所以「为人类规模设计的工具从哪里开始吃不消」，我们往往是最早撞上的那批人。</span><span class="s" data-k="monorepo-b0-2">版本控制只是其中一例。</span><span class="s" data-k="monorepo-b0-3">我们并不认为很多组织在短期内就会遇到这些问题，但我们猜，用不了多久，其他使用 AI 编程工具的团队也会经历同样的压力点——这正是我们想公开自己造了什么、学到了什么的原因。</span></p></div></div>
+<div class="row" data-rid="monorepo-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monorepo-b1-0">Git is a decentralized system: every clone is a complete, self-contained repository that can compute diffs, read history and <span class='term' data-term='blame'>blame</span>, and check out any revision while fully offline.</span> <span class="s" data-k="monorepo-b1-1">For the vast majority of repositories, this is the right design, and it’s a large part of why git became the standard.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monorepo-b1-0">git 是去中心化系统：每个克隆都是一个完整、自包含的仓库，可以完全离线地计算差异、读取历史与 <span class='term' data-term='blame'>blame</span>（逐行追溯），并检出任意版本。</span><span class="s" data-k="monorepo-b1-1">对绝大多数仓库来说，这是正确的设计，也是 git 成为标准的重要原因之一。</span></p></div></div>
+<div class="row" data-rid="monorepo-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monorepo-b2-0">As our monorepo grows, it increasingly doesn’t fit that design space.</span> <span class="s" data-k="monorepo-b2-1">The history of our main branch alone is almost 100 GB, and a <i>compressed</i> <span class='term' data-term='working-copy'>working copy</span> is over 25 GB.</span> <span class="s" data-k="monorepo-b2-2">We perform on the order of 25 million code <span class='term' data-term='checkout'>checkouts</span> per day for CI, before counting developer environments, <span class='term' data-term='agent'>agent</span> sandboxes, and research jobs.</span> <span class="s" data-k="monorepo-b2-3">Fetched naively, that would be over 600 PB of git traffic per day.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monorepo-b2-0">随着我们的单体仓库变大，它越来越落在 git 那套设计能覆盖的范围之外。</span><span class="s" data-k="monorepo-b2-1">光主分支的历史就接近 100 GB，而一个压缩过的<span class='term' data-term='working-copy'>工作副本</span>也超过 25 GB。</span><span class="s" data-k="monorepo-b2-2">为了持续集成（CI），我们每天要执行约 2,500 万次代码<span class='term' data-term='checkout'>检出</span>，这还没算开发环境、<span class='term' data-term='agent'>智能体</span>沙箱和研究任务。</span><span class="s" data-k="monorepo-b2-3">如果每次都按最朴素的方式拉取，每天会产生超过 600 PB 的 git 流量。</span></p></div></div>
+<div class="row" data-rid="monorepo-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monorepo-b3-0">Git offers tools for working with a slice of a repository, such as <span class='term' data-term='shallow-clone'>shallow clones</span>, <span class='term' data-term='sparse-checkout'>sparse checkouts</span>, and <span class='term' data-term='promisor-remote'>promisor remotes</span>.</span> <span class="s" data-k="monorepo-b3-1">Beyond these, there are standard workarounds for large monorepos, like internal <span class='term' data-term='mirror'>git mirrors</span> and repository snapshots (seeds) kept in <span class='term' data-term='blob'>blob</span> storage.</span> <span class="s" data-k="monorepo-b3-2">We’ve used all of them—at our peak, we operated several hundred internal git mirrors to deal with the load.</span> <span class="s" data-k="monorepo-b3-3">This bought us time, but they became harder to operate as our merge rate increased.</span> <span class="s" data-k="monorepo-b3-4">Seeds fell further from the tip of main between refreshes, and it took more and more care to keep operations that depend on history, like diff and blame, working on partial clones.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monorepo-b3-0">git 提供了一些只处理仓库一部分的工具，例如<span class='term' data-term='shallow-clone'>浅克隆</span>（shallow clone）、<span class='term' data-term='sparse-checkout'>稀疏检出</span>（sparse checkout）和<span class='term' data-term='promisor-remote'>承诺式远程</span>（promisor remote）。</span><span class="s" data-k="monorepo-b3-1">除此之外，大仓库还有一些标准绕行方案：内部 git <span class='term' data-term='mirror'>镜像</span>，以及存放在<span class='term' data-term='blob'>数据块</span>（blob）存储里的仓库快照（seeds）。</span><span class="s" data-k="monorepo-b3-2">这些我们全用过——高峰期我们运维着几百个内部 git 镜像来扛住负载。</span><span class="s" data-k="monorepo-b3-3">这确实给我们争取了时间，但随着合并率上升，它们的运维越来越难。</span><span class="s" data-k="monorepo-b3-4">两次刷新之间，seeds 离主干末端越来越远；要让依赖历史的操作（比如 diff 与 blame）在不完整克隆上继续工作，需要的照顾越来越多。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="git 检出扩容的典型架构"><div class="fig-media"><img class="still" src="media/fig2.png" loading="lazy" decoding="async" alt="The typical setup for scaling git checkouts."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>git 检出扩容的典型架构</b>　正文讲内部 git 镜像与 blob 种子快照时，给出这套扩容架构：作业先经 Packfile cache 进 Per cluster，再到 Mirror replicas 与 Upstream，快照则写进 Blob storage。</p><p class="cap-en">原文图注：The typical setup for scaling git checkouts.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左侧 Jobs 框列着 CI jobs、Agent sandboxes、Research jobs。</li><li>虚线框 Per cluster 内先到 Packfile cache，下一跳是 Mirror replicas。</li><li>Mirror primaries 之后才是 Upstream，镜像链到此为止。</li><li>Mirror replicas 把快照写进 Blob storage，再由 Node seed 分发到节点。</li></ol><p class="takeaway">一句话：镜像、缓存与种子快照层层叠加，复杂度和成本正是 Scion 要替换的。</p></details></figcaption></figure>
+<div class="row" data-rid="monorepo-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="monorepo-b5-0">Taking a step back, we noticed that, like most companies, we were using git as a centralized system with one authoritative copy<sup class='tn' data-note='N2'>2</sup>, but nearly all of our clients were agents and jobs that are online by definition.</span> <span class="s" data-k="monorepo-b5-1">The properties that make git excellent for distributed, offline work were actively undermining our ability to scale as the repo grew.</span> <span class="s" data-k="monorepo-b5-2">So we asked ourselves: if we designed source control with the fact that agents are always online in mind from the start, what would it look like?</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="monorepo-b5-0">退一步看，我们注意到：和大多数公司一样，我们把 git 当成中心化系统在用，只维护一份权威副本<sup class='tn' data-note='N2'>2</sup>；但我们的客户端几乎全是智能体和作业，而它们按定义就是永远在线的。</span><span class="s" data-k="monorepo-b5-1">那些让 git 极其擅长分布式、离线工作的特性，恰恰在仓库变大时侵蚀我们的扩展能力。</span><span class="s" data-k="monorepo-b5-2">于是我们问自己：如果从一开始就以「智能体永远在线」为前提来设计版本控制，它会是什么样子？</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-principles">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Principles for agent-scale source control</span><span class="h-zh">为智能体规模的版本控制定原则</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本节要点（译者所加）：六条原则可以压成一句话——把「离线、完整副本、客户端什么都能干」这三个 git 的前提全部反过来，换成「永远在线、服务端权威、按需取数据」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="principles-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="principles-b0-0">With agentic coding, many common assumptions about how software is developed are evolving.</span> <span class="s" data-k="principles-b0-1">We embraced these changes when building Scion, which allowed us to take a fundamentally different approach than git on several core principles.</span> <span class="s" data-k="principles-b0-2">Source control for huge monorepos has prior art, notably Google’s <a class='lnk' href='https://en.wikipedia.org/wiki/Piper_(source_control_system)' target='_blank' rel='noopener' data-link='L1'>Piper</a> and Meta’s <a class='lnk' href='https://sapling-scm.com/' target='_blank' rel='noopener' data-link='L2'>Sapling</a>,<sup class='fn'>2</sup> so we were able to build Scion with their hard-won lessons in mind.</span> <span class="s" data-k="principles-b0-3">Our principles are:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="principles-b0-0">在智能体编程（agentic coding）之下，关于软件如何开发的许多常见假设都在变化。</span><span class="s" data-k="principles-b0-1">构建 Scion 时我们拥抱了这些变化，因此得以在几个核心原则上采取与 git 根本不同的做法。</span><span class="s" data-k="principles-b0-2">超大单体仓库的版本控制已有先例，尤其是 Google 的 <a class='lnk' href='https://en.wikipedia.org/wiki/Piper_(source_control_system)' target='_blank' rel='noopener' data-link='L1'>Piper</a> 和 Meta 的 <a class='lnk' href='https://sapling-scm.com/' target='_blank' rel='noopener' data-link='L2'>Sapling</a>,<sup class='fn'>2</sup> 所以我们能在吸取它们来之不易的教训之后再动手。</span><span class="s" data-k="principles-b0-3">我们的原则是：</span></p></div></div>
+<div class="row wide principle" data-rid="principles-b1"><div class="principle-box"><span class="lab lab-zh">设计原则 1</span><span class="lab lab-en">Design principle 1</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b1-0"><b>Clients are always online.</b></span> <span class="s" data-k="principles-b1-1">Git assumes that clients work offline and need a complete copy of the repository.</span> <span class="s" data-k="principles-b1-2">Since nearly all of our clients are agents and jobs, we designed Scion’s client and protocols around a server that is always reachable, and have clients fetch data when they need it.</span></div><div class="cell zh"><span class="s" data-k="principles-b1-0"><b>客户端永远在线。</b></span><span class="s" data-k="principles-b1-1">git 假设客户端离线工作，并且需要一份完整的仓库副本。</span><span class="s" data-k="principles-b1-2">既然我们的客户端几乎全是智能体和作业，我们就围绕一台永远可达的服务器来设计 Scion 的客户端与协议，让客户端在需要数据时才去取。</span></div></div></div></div>
+<div class="row wide principle" data-rid="principles-b2"><div class="principle-box"><span class="lab lab-zh">设计原则 2</span><span class="lab lab-en">Design principle 2</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b2-0"><b>Client-server asymmetry.</b></span> <span class="s" data-k="principles-b2-1">In git, every client is capable of being a full-fledged server.</span> <span class="s" data-k="principles-b2-2">In Scion, the server answers questions about file history and blame, creates <span class='term' data-term='commit'>commits</span>, performs merges and <span class='term' data-term='rebase'>rebases</span>, and so on.</span> <span class="s" data-k="principles-b2-3">The client maintains a bounded local object cache, lays out the working copy files on disk, monitors for filesystem changes, and gives users an ergonomic way to work with the server.</span> <span class="s" data-k="principles-b2-4">It can compute very little on its own but, in exchange, it requires much less data locally.</span></div><div class="cell zh"><span class="s" data-k="principles-b2-0"><b>客户端与服务器不对称。</b></span><span class="s" data-k="principles-b2-1">在 git 里，每个客户端都有能力充当一台完整的服务器。</span><span class="s" data-k="principles-b2-2">在 Scion 里，服务器回答关于文件历史和 blame 的问题、创建<span class='term' data-term='commit'>提交</span>、执行合并与<span class='term' data-term='rebase'>变基</span>，等等。</span><span class="s" data-k="principles-b2-3">客户端维护一个有边界的本地对象缓存，把工作副本的文件摆到磁盘上，监测文件系统的变化，并为用户提供一套顺手的方式与服务端交互。</span><span class="s" data-k="principles-b2-4">客户端自己几乎算不了什么，但作为交换，它在本地需要的数据少得多。</span></div></div></div></div>
+<div class="row wide principle" data-rid="principles-b3"><div class="principle-box"><span class="lab lab-zh">设计原则 3</span><span class="lab lab-en">Design principle 3</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b3-0"><b>A comprehensive source control service can power many novel applications.</b></span> <span class="s" data-k="principles-b3-1">With git, a CI job or tool that needs to ask a question about the repository, such as who last changed a line or how two commits are related, has to maintain a local copy of the repo or hope that vendor-specific APIs provide the answer.</span> <span class="s" data-k="principles-b3-2">With Scion, all of the source control queries the client uses are also exposed via API, so in many cases jobs don’t need a local repository at all.</span> <span class="s" data-k="principles-b3-3">Many internal tools, such as our automated <span class='term' data-term='bisect'>bisect</span> and revert pipelines, wouldn’t be practical at scale without this cheap, programmatic access to source control.</span></div><div class="cell zh"><span class="s" data-k="principles-b3-0"><b>一个完整的版本控制服务可以支撑很多新应用。</b></span><span class="s" data-k="principles-b3-1">在 git 里，一个 CI 作业或工具如果想问仓库相关的问题——比如某一行最后是谁改的、两个提交是什么关系——要么自己维护一份本地仓库副本，要么指望厂商提供的专有 API 能给出答案。</span><span class="s" data-k="principles-b3-2">在 Scion 里，客户端用到的所有版本控制查询同时也都通过 API 暴露出来，所以很多情况下作业根本不需要本地仓库。</span><span class="s" data-k="principles-b3-3">许多内部工具——比如我们自动化的 <span class='term' data-term='bisect'>bisect</span>（二分定位）与 revert 流水线——如果没有这种廉价、可编程的版本控制访问，是不可能大规模跑起来的。</span></div></div></div></div>
+<div class="row wide principle" data-rid="principles-b4"><div class="principle-box"><span class="lab lab-zh">设计原则 4</span><span class="lab lab-en">Design principle 4</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b4-0"><b>Everything must be horizontally scalable.</b></span> <span class="s" data-k="principles-b4-1">At our peak, we ran several hundred git mirrors, which significantly strained capacity and no longer scaled once the repo outgrew the mirrors’ disks or memory limits.</span> <span class="s" data-k="principles-b4-2">In Scion, the repository’s data is distributed, and every component is independently scalable; there is no fully materialized copy of the repo anywhere, even on the server.</span> <span class="s" data-k="principles-b4-3">There is no equivalent of <span class='term' data-term='packfile'>packfiles</span> (git’s compressed bundles of objects), so no repository maintenance is needed.<sup class='tn' data-note='N3'>3</sup></span></div><div class="cell zh"><span class="s" data-k="principles-b4-0"><b>所有东西都必须能水平扩展。</b></span><span class="s" data-k="principles-b4-1">高峰时我们跑着几百个 git 镜像，这极大地消耗了容量；当仓库大到超出镜像的磁盘或内存上限后，这套做法就再也扩不动了。</span><span class="s" data-k="principles-b4-2">在 Scion 里，仓库数据是分布式的，每个组件都能独立扩展；仓库在任何地方都没有一份完整物化的副本，服务器上也没有。</span><span class="s" data-k="principles-b4-3">它没有<span class='term' data-term='packfile'>打包文件</span>（packfile，git 把对象压缩成的包）这样的对应物，因此不需要做仓库维护。<sup class='tn' data-note='N3'>3</sup></span></div></div></div></div>
+<div class="row wide principle" data-rid="principles-b5"><div class="principle-box"><span class="lab lab-zh">设计原则 5</span><span class="lab lab-en">Design principle 5</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b5-0"><b>Commits must be cheap, incremental, and lock-free.</b></span> <span class="s" data-k="principles-b5-1">In git, you commit locally and then push to share your work.</span> <span class="s" data-k="principles-b5-2">In Scion, every commit, rebase, or merge happens on the server, so there’s nothing to push, but each of those operations needs to be fast.</span> <span class="s" data-k="principles-b5-3">The cost of creating a commit and updating its downstream data structures has to scale with the size of the change, not the overall size of the repo, or the server can’t keep up.</span> <span class="s" data-k="principles-b5-4">The development lifecycle in Scion discourages <span class='term' data-term='ref'>refs</span> (pointers to commits, such as branches and tags), except for the main ref or release branches, because <i>global</i> state that every server has to agree on is a looming scaling problem.<sup class='tn' data-note='N4'>4</sup></span></div><div class="cell zh"><span class="s" data-k="principles-b5-0"><b>提交必须廉价、增量、无锁。</b></span><span class="s" data-k="principles-b5-1">在 git 里，你先在本地提交，再 push 出去分享。</span><span class="s" data-k="principles-b5-2">在 Scion 里，每一次提交、变基或合并都发生在服务器上，所以没有东西需要 push；但正因如此，这些操作每一个都必须很快。</span><span class="s" data-k="principles-b5-3">创建一个提交、并更新依赖它的那些数据结构的开销，必须随改动的大小增长，而不是随整个仓库的大小增长——否则服务器跟不上。</span><span class="s" data-k="principles-b5-4">Scion 的开发流程不鼓励使用 ref（<span class='term' data-term='ref'>引用</span>，指向提交的指针，比如分支和标签），只有主引用或发布分支例外；因为需要每台服务器达成一致的<i>全局</i>状态，是迟早会爆的扩展性难题。<sup class='tn' data-note='N4'>4</sup></span></div></div></div></div>
+<div class="row wide principle" data-rid="principles-b6"><div class="principle-box"><span class="lab lab-zh">设计原则 6</span><span class="lab lab-en">Design principle 6</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b6-0"><b>The working copy is optional, and sparse by design.</b></span> <span class="s" data-k="principles-b6-1">Because our monorepo is so large, and because we check out code tens of millions of times a day for CI, we wanted to avoid checkouts whenever we could.</span> <span class="s" data-k="principles-b6-2">With Scion, a CI job that needs the diff between a commit and its <span class='term' data-term='merge-base'>merge base</span>, for example, can ask the server for it.</span> <span class="s" data-k="principles-b6-3">The same goes for writes: many write workloads can also skip the checkout and function entirely via API.</span> <span class="s" data-k="principles-b6-4">Scion’s protocol is centered around sparse checkouts, which only contain the directories the client asks for, and <span class='term' data-term='virtualized-checkout'>virtualized checkouts</span>, which materialize files on demand, so when a job does need files on disk, the client only pays for what it actually reads.</span></div><div class="cell zh"><span class="s" data-k="principles-b6-0"><b>工作副本是可选的，而且天生稀疏。</b></span><span class="s" data-k="principles-b6-1">我们的单体仓库太大了，而为了 CI 每天又要检出几千万次代码，所以只要能避免检出，我们就不检出。</span><span class="s" data-k="principles-b6-2">在 Scion 里，比如一个 CI 作业需要某次提交与其<span class='term' data-term='merge-base'>合并基线</span>（merge base）之间的差异，直接向服务器要就行。</span><span class="s" data-k="principles-b6-3">写入也一样：很多写负载同样可以跳过检出，完全通过 API 完成。</span><span class="s" data-k="principles-b6-4">Scion 的协议以稀疏检出（sparse checkout）和<span class='term' data-term='virtualized-checkout'>虚拟化检出</span>（virtualized checkout）为中心：前者只包含客户端要的那些目录，后者按需把文件物化出来。这样当作业确实需要磁盘上的文件时，客户端只为它真正读到的东西付出代价。</span></div></div></div></div>
+<div class="row wide foot" data-rid="principles-b7"><div class="foot-in"><span class="foot-n">脚注 2 · Footnote 2</span><div class="foot-grid"><div class="cell en" lang="en"><span class="s" data-k="principles-b7-0">Specifically, the server component of Sapling, <a class='lnk' href='https://github.com/facebook/sapling/blob/main/eden/mononoke/README.md' target='_blank' rel='noopener' data-link='L5'>Mononoke</a>.</span> <span class="s" data-k="principles-b7-1">It pioneered many of the techniques we use in Scion, in particular the <a class='lnk' href='https://github.com/facebook/sapling/blob/79071c2a3ea20c36ed71332608535e5801101bba/eden/mononoke/mononoke_types/serialization/bonsai.thrift#L50' target='_blank' rel='noopener' data-link='L6'>Bonsai</a> data model.</span></div><div class="cell zh"><span class="s" data-k="principles-b7-0">具体来说，指的是 Sapling 的服务器组件 <a class='lnk' href='https://github.com/facebook/sapling/blob/main/eden/mononoke/README.md' target='_blank' rel='noopener' data-link='L5'>Mononoke</a>。</span><span class="s" data-k="principles-b7-1">它开创了我们用在 Scion 里的许多技术，尤其是 <a class='lnk' href='https://github.com/facebook/sapling/blob/79071c2a3ea20c36ed71332608535e5801101bba/eden/mononoke/mononoke_types/serialization/bonsai.thrift#L50' target='_blank' rel='noopener' data-link='L6'>Bonsai</a> 数据模型。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-how">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">How Scion works</span><span class="h-zh">Scion 是怎么工作的</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本节要点（译者所加）：先讲数据模型（changeset 加派生数据），再讲扩展方式（服务端只是一层可缓存的计算，客户端按需递归取树）。两条都围绕「任何地方都没有一份完整副本」这个前提。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="how-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b0-0">It’s helpful to understand how these principles came together in practice when building Scion.</span> <span class="s" data-k="how-b0-1">These insights can apply to other source control systems or, more broadly, to other stages of the software development lifecycle.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b0-0">看看这些原则在构建 Scion 时是怎么落到实处的，会很有帮助。</span><span class="s" data-k="how-b0-1">这些经验也适用于其他版本控制系统，或者更广泛地说，适用于软件开发生命周期的其他阶段。</span></p></div></div>
+<div class="row h3row wide" id="h-how-b1"><h3><span class='h3-en'>Data structures</span><span class='h3-zh'>数据结构</span></h3></div>
+<div class="row" data-rid="how-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b2-0">In Scion, the unit of work is a “<span class='term' data-term='changeset'>changeset</span>,” an entry in a <span class='term' data-term='write-ahead-log'>write-ahead log</span>.</span> <span class="s" data-k="how-b2-1">A changeset stores most of what you’d expect from a commit in git.</span> <span class="s" data-k="how-b2-2">But where a git commit stores a pointer to the <span class='term' data-term='tree'>tree</span>, a changeset stores a list of the files that changed relative to its first parent<sup class='fn'>1</sup>, along with <span class='term' data-term='content-addressed'>content-addressed</span> pointers to the compressed file contents in blob storage.</span> <span class="s" data-k="how-b2-3">Changesets are created server-side and are available everywhere, instantly.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b2-0">在 Scion 里，工作单元是「<span class='term' data-term='changeset'>变更集</span>（changeset）」，也就是<span class='term' data-term='write-ahead-log'>预写日志</span>（write-ahead log）里的一条记录。</span><span class="s" data-k="how-b2-1">变更集存了你在 git 的提交里预期会有的大部分内容。</span><span class="s" data-k="how-b2-2">但 git 提交存的是指向<span class='term' data-term='tree'>目录树</span>（tree）的指针，变更集存的是「相对第一个父提交发生了改动的文件列表」<sup class='fn'>1</sup>，外加指向数据块（blob）存储中压缩文件内容的<span class='term' data-term='content-addressed'>内容寻址</span>指针。</span><span class="s" data-k="how-b2-3">变更集在服务端创建，随即在任何地方都能拿到。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="Scion 变更集的字段结构"><div class="fig-media"><img class="still" src="media/fig3.png" loading="lazy" decoding="async" alt="The shape of a changeset in Scion."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Scion 变更集的字段结构</b>　对应正文「changeset 存的是相对第一父提交的改动文件列表」：Spanner 存元数据，Cloud Storage 存按哈希寻址的文件内容，虚线框里的 Root tree 与派生数据由服务器计算、不写进 changeset。</p><p class="cap-en">原文图注：The shape of a changeset in Scion.</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>Changeset 表头 id 是 9f2c…7ab0，下面是 author、parents、message 等字段。</li><li>committer、committer_date 与 signature 三行都标 Optional，表示这三个字段可以填、也可以不填。</li><li>文件行分三种标记：Regular file、Deleted、Executable，Deleted 那行不带哈希。</li><li>虚线框是不入库的派生数据：Root tree 5c0e…d1a9、Tree src/ 77f0…e9b4。</li><li>Cloud Storage 里内容 immutable、按哈希去重，地址如 9b07…5d18。</li></ol><p class="takeaway">一句话：changeset 只记改动，树结构与派生数据由服务器算，写入才能高吞吐。</p></details></figcaption></figure>
+<div class="row" data-rid="how-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b4-0">This structure lets us accept changesets with very high throughput because there are no packfiles to accept, no locking or cross-server coordination, and no refs to move around.</span> <span class="s" data-k="how-b4-1">Scion does technically support refs, but since neither creating nor fetching commits involves them, moving one is a <span class='term' data-term='compare-and-swap'>compare-and-swap</span> on a single <span class='term' data-term='spanner'>Spanner</span> row that happens separately from creating changesets.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b4-0">这个结构让我们能以极高吞吐接收变更集：没有打包文件（packfile）要接收，没有加锁或跨服务器协调，也没有 ref 要挪动。</span><span class="s" data-k="how-b4-1">Scion 在技术上确实支持 ref，但由于创建和拉取提交都不涉及它们，移动一个 ref 只是对 <span class='term' data-term='spanner'>Spanner</span> 中单行做一次<span class='term' data-term='compare-and-swap'>比较并交换</span>（compare-and-swap），与创建变更集分开进行。</span></p></div></div>
+<div class="row" data-rid="how-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b5-0">A changeset records only what’s changed, so on its own, it can’t quickly answer questions like who last edited a line or which commits affected a file.</span> <span class="s" data-k="how-b5-1">To answer those, Scion builds additional data structures from the changesets, including dedicated structures for file blame and path history and <span class='term' data-term='skip-list'>skip lists</span> for the commit graph.</span> <span class="s" data-k="how-b5-2">We call everything that isn’t directly part of the changeset “<span class='term' data-term='derived-data'>derived data</span>,” and we compute it all through one generic mechanism.</span> <span class="s" data-k="how-b5-3">Each type of derived data is defined recursively, so its value for a changeset is computed from its values for that changeset’s parents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b5-0">变更集只记录「变了什么」，所以单靠它，没法快速回答「某一行最后是谁改的」「哪些提交影响过某个文件」这类问题。</span><span class="s" data-k="how-b5-1">为了回答这些问题，Scion 会从变更集再构建一些附加的数据结构，包括专门用于文件 blame 与路径历史的结构，以及用于提交图的<span class='term' data-term='skip-list'>跳表</span>（skip list）。</span><span class="s" data-k="how-b5-2">所有不属于变更集本身的东西，我们统称为「<span class='term' data-term='derived-data'>派生数据</span>」，并且全部通过同一套通用机制算出。</span><span class="s" data-k="how-b5-3">每一类派生数据都用递归方式定义：某个变更集上的取值，由它各个父提交上的取值算出来。</span></p></div></div>
+<div class="row" data-rid="how-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b6-0">This mechanism has three benefits.</span> <span class="s" data-k="how-b6-1">First, we can easily add a new type of derived data when a new data structure would make some operation faster.</span> <span class="s" data-k="how-b6-2">Second, for each type, we can choose whether to compute it eagerly or defer the work, so we avoid materializing data we don’t need.</span> <span class="s" data-k="how-b6-3">And third, because the client never sees the internals of these data structures, we can optimize them without changing the client.</span> <span class="s" data-k="how-b6-4">We’ve added new types of derived data many times as the system has grown, such as new indices for performing copy detection or path-based file search.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b6-0">这套机制有三个好处。</span><span class="s" data-k="how-b6-1">第一，当某种新数据结构能让某个操作更快时，我们可以很容易地新增一类派生数据。</span><span class="s" data-k="how-b6-2">第二，对每一类数据，我们可以选择是立即算还是推迟算，从而避免物化那些并不需要的数据。</span><span class="s" data-k="how-b6-3">第三，因为客户端从来看不到这些数据结构的内部，我们可以优化它们而不必改动客户端。</span><span class="s" data-k="how-b6-4">随着系统成长，我们已多次新增派生数据类型，比如用于做复制检测、或基于路径的文件搜索的新索引。</span></p></div></div>
+<div class="row h3row wide" id="h-how-b7"><h3><span class='h3-en'>Scaling Scion</span><span class='h3-zh'>扩展 Scion</span></h3></div>
+<div class="row" data-rid="how-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b8-0">A small fleet of Scion servers provides source control APIs for any operation a client needs, such as getting changesets, computing diffs, finding merge bases, and fetching blobs.</span> <span class="s" data-k="how-b8-1">All source control data is content-addressed, so a piece of data never changes once it’s stored, and any server can cache it without checking with the others.</span> <span class="s" data-k="how-b8-2">As a result, the servers are horizontally scalable and require little coordination.</span> <span class="s" data-k="how-b8-3">They are essentially large caches that can also compute derived data on the fly and write the results back to Spanner.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b8-0">一小群 Scion 服务器为客户端需要的任何操作提供版本控制 API，比如取变更集、算差异、找合并基线、拉取数据块。</span><span class="s" data-k="how-b8-1">所有版本控制数据都是内容寻址的，所以一份数据一旦存下就永不改变，任何服务器都可以缓存它，不需要和其他服务器核对。</span><span class="s" data-k="how-b8-2">因此，这些服务器可以水平扩展，且几乎不需要协调。</span><span class="s" data-k="how-b8-3">它们本质上就是一批大缓存，同时还能即时计算派生数据，并把结果写回 Spanner。</span></p></div></div>
+<div class="row" data-rid="how-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b9-0">Scion’s many consumers no longer need to maintain local repositories of their own.</span> <span class="s" data-k="how-b9-1">Fetching and maintaining the repository used to be a significant maintenance burden for CI jobs or tools that needed to ask source control questions, particularly about commit ancestry and blame.</span> <span class="s" data-k="how-b9-2">Early in the migration, before we had our own client, repo format, or protocols, Scion only answered these “metadata” queries.</span> <span class="s" data-k="how-b9-3">Fetching file contents and materializing working copies are far more data-intensive operations, and they needed a design of their own.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b9-0">Scion 的众多使用方不再需要各自维护本地仓库。</span><span class="s" data-k="how-b9-1">过去，对那些需要向版本控制提问（尤其是问提交祖先关系和 blame）的 CI 作业或工具来说，拉取并维护仓库是一大块维护负担。</span><span class="s" data-k="how-b9-2">迁移早期，在我们还没有自己的客户端、仓库格式和协议之前，Scion 只回答这些「元数据」查询。</span><span class="s" data-k="how-b9-3">而拉取文件内容、物化工作副本是数据密集得多的操作，需要单独设计。</span></p></div></div>
+<div class="row" data-rid="how-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b10-0">Scion’s scn client<sup class='tn' data-note='N5'>5</sup> deviates from git’s fetch protocols in several important ways and, as a result, lends itself to a highly scalable architecture that requires significantly less CPU than git servers.</span> <span class="s" data-k="how-b10-1">Scion’s negotiation doesn’t tell the server what the client already has; instead, it operates exclusively on trees and blobs the client wants.</span> <span class="s" data-k="how-b10-2">Starting from a root tree, the client checks its local store for missing trees and requests them recursively, then repeats the process for blobs.</span> <span class="s" data-k="how-b10-3">Every request is for a specific object that never changes, so any cache can answer it, and the architecture closely resembles traditional tiered caches.</span> <span class="s" data-k="how-b10-4">The process is also efficient and resumable, because there is no single multi-gigabyte packfile response.</span> <span class="s" data-k="how-b10-5">Sparse and even virtualized checkouts don’t need special support, because the client simply doesn’t ask for trees it doesn’t want.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b10-0">Scion 的 scn 客户端<sup class='tn' data-note='N5'>5</sup>在几个重要方面偏离了 git 的 fetch 协议，因此很适合一种高度可扩展的架构，所需的 CPU 也明显少于 git 服务器。</span><span class="s" data-k="how-b10-1">Scion 的协商过程不告诉服务器「客户端已经有什么」；它只围绕客户端想要的那些目录树和数据块进行操作。</span><span class="s" data-k="how-b10-2">客户端从根目录树开始，检查本地存储里缺哪些树，再递归地请求它们，然后对数据块重复同样的过程。</span><span class="s" data-k="how-b10-3">每个请求都是针对一个永不改变的具体对象，所以任何缓存都能应答，整体架构非常像传统的分层缓存。</span><span class="s" data-k="how-b10-4">这个过程还高效、可断点续传，因为它没有一个几 GB 的打包文件响应要一口气传完。</span><span class="s" data-k="how-b10-5">稀疏检出、乃至虚拟化检出都不需要特殊支持，因为客户端压根不会去要它不想要的树。</span></p></div></div>
+<div class="row" data-rid="how-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b11-0">In the fleet, the client talks over a socket to a <span class='term' data-term='daemon'>daemon</span>, scion-daemon, that stores objects for the whole node.</span> <span class="s" data-k="how-b11-1">Most of our nodes need access to the monorepo, and jobs on the same node reuse most of the same objects.</span> <span class="s" data-k="how-b11-2">Each daemon starts from a periodically refreshed snapshot, then talks only to the tree and blob cache servers in its region, called scion-cache.</span> <span class="s" data-k="how-b11-3">These cache servers stream objects directly from memory, in the disk format that the daemon will consume, so they don’t need to spend time computing the client’s missing objects or performing delta compression.</span> <span class="s" data-k="how-b11-4">When a cache is missing an object, it asks the authoritative scion-servers, which read from Spanner or cloud storage as needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b11-0">在这个服务器集群里，客户端通过 socket 与一个<span class='term' data-term='daemon'>守护进程</span>（daemon）对话，它叫 scion-daemon，为整个节点存储对象。</span><span class="s" data-k="how-b11-1">我们大多数节点都需要访问这个单体仓库，而同一节点上的作业复用的是同一批对象中的大部分。</span><span class="s" data-k="how-b11-2">每个守护进程都从一个定期刷新的快照起步，之后只和本区域的树与数据块缓存服务器通信，这些服务器叫 scion-cache。</span><span class="s" data-k="how-b11-3">这些缓存服务器直接从内存里把对象流式发出，用的就是守护进程将要读取的磁盘格式，因此它们不必花时间去算客户端缺哪些对象、也不必做增量压缩。</span><span class="s" data-k="how-b11-4">当某个缓存缺少对象时，它会去问权威的 scion-servers，后者按需从 Spanner 或云存储读取。</span></p></div></div>
+<div class="row" data-rid="how-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b12-0">The scion-daemon, scion-cache, and scion-server all respond to identical <span class='term' data-term='rpc'>RPCs</span> for this protocol, so the client doesn’t need to know the cache topology.</span> <span class="s" data-k="how-b12-1">Any tier could theoretically talk to any other, but we strictly enforce the tiering to isolate failure domains.</span> <span class="s" data-k="how-b12-2">We want to avoid a situation where a failure in a regional scion-cache overwhelms the upstream scion-servers and brings down the entire system.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b12-0">scion-daemon、scion-cache 和 scion-server 对这个协议都能应答同一套<span class='term' data-term='rpc'>远程过程调用</span>（RPC），所以客户端不需要知道缓存拓扑。</span><span class="s" data-k="how-b12-1">理论上任何一层都可以和任何其他层通信，但我们严格强制分层，以隔离故障域。</span><span class="s" data-k="how-b12-2">我们要避免的正是这种情况：某个区域的 scion-cache 出故障，把上游的 scion-servers 压垮，进而拖垮整个系统。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="Scion 三级检出架构"><div class="fig-media"><img class="still" src="media/fig4.png" loading="lazy" decoding="async" alt="Scion’s checkout architecture."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Scion 三级检出架构</b>　正文说客户端经 socket 连 scion-daemon，未命中再问区域 scion-cache：图上 Clients 含 Antique、开发者机器与 CI 作业，控制面直连 scion-server，两处 Misses 逐级回源。</p><p class="cap-en">原文图注：Scion’s checkout architecture.</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>Clients 框含 Antique、Developer machines、CI and cluster jobs。</li><li>控制面标 Branches, history, diffs，客户端直达 scion-server 入 Spanner。</li><li>对象面标 Trees and file contents：开发者机器直连区域 scion-cache。</li><li>CI 作业先经 Per node 的 scion-daemon；两处 Misses 箭头逐级回源。</li><li>Periodic snapshot 通过 Seeds new nodes 给新节点做种子。</li></ol><p class="takeaway">一句话：客户端只就近取对象，未命中才逐级回源，这是 Scion 水平扩展的关键。</p></details></figcaption></figure>
+<div class="row" data-rid="how-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b14-0">Each tier of this system maintains a cache hit rate of over 99% and does not require long-lived state, so it’s easy to scale up if needed.</span> <span class="s" data-k="how-b14-1">Our Scion infrastructure footprint is now 200x smaller than our previous git mirroring infrastructure in terms of CPU and memory requirements.</span> <span class="s" data-k="how-b14-2">CI and research jobs check out code two orders of magnitude faster<sup class='tn' data-note='N6'>6</sup> (in seconds rather than minutes), which frees up a sizable amount of capacity across the fleet; CI alone realized a 25% CPU capacity win.</span> <span class="s" data-k="how-b14-3">Neither clients nor caches need to perform repository maintenance, which simplifies the lifecycle management of our jobs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b14-0">这套系统的每一层缓存命中率都在 99% 以上，也不需要长期存活的状态，所以需要时很容易扩容。</span><span class="s" data-k="how-b14-1">就 CPU 和内存需求而言，我们现在的 Scion 基础设施规模只有之前 git 镜像基础设施的 1/200。</span><span class="s" data-k="how-b14-2">CI 与研究作业检出代码的速度快了两个数量级<sup class='tn' data-note='N6'>6</sup>（从分钟级变成秒级），这在整个集群里释放出相当可观的容量；仅 CI 一项就省出了 25% 的 CPU。</span><span class="s" data-k="how-b14-3">客户端和缓存都不需要做仓库维护，这让我们作业的生命周期管理简单了很多。</span></p></div></div>
+<div class="row wide foot" data-rid="how-b15"><div class="foot-in"><span class="foot-n">脚注 1 · Footnote 1</span><div class="foot-grid"><div class="cell en" lang="en"><span class="s" data-k="how-b15-0">Storing changed files relative to the first parent of a merge is a stylistic choice; in practice, we’ve found that people only care about history or blame for commits on the main line in <span class='term' data-term='trunk-based-development'>trunk-based development</span> in a monorepo.</span></div><div class="cell zh"><span class="s" data-k="how-b15-0">把改动文件按「相对合并的第一个父提交」来存，是一种风格上的选择；实践中我们发现，在单体仓库的<span class='term' data-term='trunk-based-development'>主干开发</span>（trunk-based development）下，人们只关心主线上提交的历史和 blame。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-lessons">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">What we learned building Scion</span><span class="h-zh">建 Scion 学到的几件事</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本节要点（译者所加）：六条讲的是「写代码变便宜之后，团队会怎么变」——人更少、系统被测得更狠、工程师的工作从写代码变成判断和说「不」、运维开始交给智能体盯着。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="lessons-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b0-0">We started building Scion around the same time as <a class='lnk' href='https://www.anthropic.com/claude/mythos' target='_blank' rel='noopener' data-link='L3'>Claude Mythos Preview</a> and <a class='lnk' href='https://www.anthropic.com/news/introducing-claude-tag' target='_blank' rel='noopener' data-link='L4'>Claude Tag</a> became available internally.</span> <span class="s" data-k="lessons-b0-1">Both of these releases simultaneously amplified the need for Scion and meaningfully accelerated how quickly we could build it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b0-0">我们开始构建 Scion 的时间，和 <a class='lnk' href='https://www.anthropic.com/claude/mythos' target='_blank' rel='noopener' data-link='L3'>Claude Mythos Preview</a> 与 <a class='lnk' href='https://www.anthropic.com/news/introducing-claude-tag' target='_blank' rel='noopener' data-link='L4'>Claude Tag</a> 在内部开放的时间差不多。</span><span class="s" data-k="lessons-b0-1">这两个版本同时放大了对 Scion 的需求，也实实在在地加快了我们把它做出来的速度。</span></p></div></div>
+<div class="row" data-rid="lessons-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b1-0">Here’s a particularly striking example.</span> <span class="s" data-k="lessons-b1-1">Earlier in the year, we had largely handwritten the first version of the git-to-Scion <span class='term' data-term='ingestion-pipeline'>ingestion pipeline</span> as a prototype.</span> <span class="s" data-k="lessons-b1-2">We thought it was good—until we got our hands on an early internal snapshot of Claude Mythos Preview.</span> <span class="s" data-k="lessons-b1-3">We asked it to rewrite the whole thing, and with no further instructions, it produced a version that consumed 20x less memory and was 4x faster, while preserving all of the implicit invariants around ingestion ordering and data structures.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b1-0">这里有一个特别扎眼的例子。</span><span class="s" data-k="lessons-b1-1">今年早些时候，我们基本是手写了 git 到 Scion 的<span class='term' data-term='ingestion-pipeline'>摄入流水线</span>（ingestion pipeline）的第一版，作为原型。</span><span class="s" data-k="lessons-b1-2">我们本以为它已经不错了——直到拿到 Claude Mythos Preview 的一个早期内部版本。</span><span class="s" data-k="lessons-b1-3">我们让它把整条流水线重写一遍，没有给更多说明，它交出的版本内存占用降到二十分之一、速度快到原来的四倍，同时保住了摄入顺序和数据结构上所有隐式的不变量。</span></p></div></div>
+<figure class="row wide fig" id="fig5" data-cap="两个代码库的周变更量"><div class="fig-media"><img class="still" src="media/fig5.png" loading="lazy" decoding="async" alt="Merged changes to the Scion and Antique codebases per week, from January to September 2026."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>两个代码库的周变更量</b>　对应正文小团队五个月重建 Scion 的进度：Scion（scm/）与 Antique（antique/）的周变更量，前五个月几乎全是蓝色 Pull requests，6 月后橙色 Antique 变更条成为主力，末周逼近 1,600。</p><p class="cap-en">原文图注：Merged changes to the Scion and Antique codebases per week, from January to September 2026.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>纵轴 0 到 1,600，单位是每周变更次数；蓝条与橙条上下堆叠，不是两条独立曲线。</li><li>1 到 5 月柱子几乎贴零，6 月起橙色快速抬升，7 月底和 8 月中各回落一次。</li><li>左上气泡 12,257 changes since January 是累计值，不等于任何一根柱子的高度。</li><li>最后一周接近 1,600，橙色完全取代蓝色，说明两个代码库都改走 Antique 流程。</li></ol><p class="takeaway">一句话：两个新代码库的周变更量在迁移后陡增，印证了小团队五个月重建的节奏。</p></details></figcaption></figure>
+<div class="row" data-rid="lessons-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b3-0">What we learned building and operating Scion offers some interesting lessons for what building agent-scale software could look like.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b3-0">在构建和运维 Scion 的过程中学到的东西，对「智能体规模的软件工程会是什么样」给出了一些有意思的参考。</span></p></div></div>
+<div class="row wide principle" data-rid="lessons-b4"><div class="principle-box"><span class="lab lab-zh">经验教训 1</span><span class="lab lab-en">Lesson 1</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="lessons-b4-0"><b>Rapid development with a small team will become more common.</b></span> <span class="s" data-k="lessons-b4-1">A team of seven people built both Scion <i>and</i> Antique (our code review tool, which we could easily write a whole other blog post about), not to mention half a dozen related systems, and fully migrated to them in five months.</span> <span class="s" data-k="lessons-b4-2">We did all this while the volume of code merged per day increased by 10x.</span> <span class="s" data-k="lessons-b4-3">In the past, developing and deploying a source control system like this would have taken a company years of iterative migration, with many more engineers.</span> <span class="s" data-k="lessons-b4-4">We think this sort of fast, nimble migration will become more common in the future.</span></div><div class="cell zh"><span class="s" data-k="lessons-b4-0"><b>小团队快速开发会变得更常见。</b></span><span class="s" data-k="lessons-b4-1">一支七个人的团队同时建起了 Scion <i>和</i> Antique（我们的代码评审工具，它本身足够再写一篇博客），还做了另外半打相关系统，并在五个月里完成了完整迁移。</span><span class="s" data-k="lessons-b4-2">而这期间，每天合并的代码量变成了原来的 10 倍。</span><span class="s" data-k="lessons-b4-3">放在过去，开发并部署这样一套版本控制系统，需要一家公司投入几年时间反复迭代迁移，还要多得多的工程师。</span><span class="s" data-k="lessons-b4-4">我们认为，这种快速、轻巧的迁移，未来会越来越常见。</span></div></div></div></div>
+<div class="row wide principle" data-rid="lessons-b5"><div class="principle-box"><span class="lab lab-zh">经验教训 2</span><span class="lab lab-en">Lesson 2</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="lessons-b5-0"><b>Engineers are no less valuable, but their work is changing.</b></span> <span class="s" data-k="lessons-b5-1">All of the engineers who worked on this system would now rate Claude as better at <i>writing</i> code than them.</span> <span class="s" data-k="lessons-b5-2">But our engineers still supplied the invaluable understanding of the high-level inter-system components and the design-level tradeoffs, making informed choices around the problems we wanted to solve and the scale we knew we needed to achieve.</span> <span class="s" data-k="lessons-b5-3">Very often, we found that the role of the engineers was to tell Claude “no.”</span> <span class="s" data-k="lessons-b5-4">Agents will sometimes violate core system constraints to satisfy a pattern that should never have been allowed in the first place.</span> <span class="s" data-k="lessons-b5-5">This was particularly common in our migration.</span> <span class="s" data-k="lessons-b5-6">For example, there were multiple systems that tried to brute force looking up when a change merged to main by linearly reading the commit log instead of asking our code review tool.</span> <span class="s" data-k="lessons-b5-7">Anthropic also makes extensive use of adversarial review, and, while this is incredibly effective in many ways, it can also be myopic, so skilled engineers needed to steer Claude away from over-engineering parts of the system in response to hypothetical concerns.</span> <span class="s" data-k="lessons-b5-8">For example, one such review was overly defensive about trusting another internal service, which resulted in Claude adding excessive validation and complexity.</span> <span class="s" data-k="lessons-b5-9">Our team members still review every change request for the system, but they now examine the <i>intent</i> of the change as opposed to reading every line of code.</span></div><div class="cell zh"><span class="s" data-k="lessons-b5-0"><b>工程师的价值没有下降，但他们的工作在变。</b></span><span class="s" data-k="lessons-b5-1">参与这套系统的所有工程师，现在都会认为 Claude 在<i>写代码</i>上比自己更强。</span><span class="s" data-k="lessons-b5-2">但我们的工程师仍然提供了不可替代的判断：他们清楚各子系统之间怎么衔接、设计上的取舍要付什么代价，并据此为我们想解决的问题和必须达到的规模做出有依据的选择。</span><span class="s" data-k="lessons-b5-3">我们经常发现，工程师的角色是向 Claude 说「不行」。</span><span class="s" data-k="lessons-b5-4">智能体有时为了满足某个本来就不该被允许的模式，会违背系统的核心约束。</span><span class="s" data-k="lessons-b5-5">这在我们迁移过程中尤其常见。</span><span class="s" data-k="lessons-b5-6">举个例子：有好几个系统试图用「线性读提交日志」这种蛮力方式，去查一个改动是什么时候合入主干的，而不是去问我们的代码评审工具。</span><span class="s" data-k="lessons-b5-7">Anthropic 还大量使用对抗式评审；这种方式在很多方面极其有效，但也可能变得短视，所以有经验的工程师需要把 Claude 从「为假设中的担忧过度设计系统某些部分」拉回来。</span><span class="s" data-k="lessons-b5-8">比如，有一次这样的评审对「信任另一个内部服务」过度防御，结果 Claude 加了一堆多余的校验和复杂度。</span><span class="s" data-k="lessons-b5-9">我们的团队成员仍然评审这个系统的每一个变更请求，但他们现在看的是改动的<i>意图</i>，而不是逐行读代码。</span></div></div></div></div>
+<div class="row wide principle" data-rid="lessons-b6"><div class="principle-box"><span class="lab lab-zh">经验教训 3</span><span class="lab lab-en">Lesson 3</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="lessons-b6-0"><b>We were able to substantially improve optimization and quality.</b></span> <span class="s" data-k="lessons-b6-1">By virtue of Claude’s ability to write immense amounts of code much faster than we could ourselves, Scion is among the most well-tested and well-defended codebases we have ever worked on.</span> <span class="s" data-k="lessons-b6-2">Even on our tight timeline, we were able to build <span class='term' data-term='hermetic-simulation'>hermetic simulations</span> of every non-trivial infrastructure and source control interaction we’ve ever encountered, as well as <span class='term' data-term='fuzzing'>fuzzing</span> and sophisticated <span class='term' data-term='rate-limiting'>rate limiting</span>.</span> <span class="s" data-k="lessons-b6-3">Claude also casually found significant optimizations—for example, an algorithmic optimization to ancestry queries that missed one of our indexes—that would have taken an expert days or weeks of analysis and tuning… and then did it all again the next day.</span></div><div class="cell zh"><span class="s" data-k="lessons-b6-0"><b>我们得以大幅提升优化与质量。</b></span><span class="s" data-k="lessons-b6-1">借助 Claude 以远超我们的速度写出海量代码的能力，Scion 成了我们做过的最经得起测试、防御最完备的代码库之一。</span><span class="s" data-k="lessons-b6-2">即便时间很紧，我们仍然为遇到过的每一种非平凡的基础设施与版本控制交互都建了<span class='term' data-term='hermetic-simulation'>封闭式仿真</span>（hermetic simulation），还做了<span class='term' data-term='fuzzing'>模糊测试</span>（fuzzing）和精细的<span class='term' data-term='rate-limiting'>限流</span>。</span><span class="s" data-k="lessons-b6-3">Claude 还顺手找到了一些重要优化——比如针对祖先查询的一处算法优化，它原本漏掉了我们的一个索引——这些如果交给专家，要花几天到几周的分析和调优……而它第二天又照样来了一遍。</span></div></div></div></div>
+<figure class="row wide fig" id="fig6" data-cap="git 与 scn 日常命令耗时"><div class="fig-media"><img class="still" src="media/fig6.png" loading="lazy" decoding="async" alt="Observed performance improvements on native Scion repos."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>git 与 scn 日常命令耗时</b>　正文说 CI 和研究作业的检出是瓶颈，这里按场景拆开对比：开发者环境、智能体环境、每次 change request 总耗时、CI 计算作业四组条形，灰条 git、橙条 scn，右侧 Faster 列给倍数。</p><p class="cap-en">原文图注：Observed performance improvements on native Scion repos.</p><details class="howto" open><summary>这张图怎么看（7 条）</summary><ol><li>四组图的横轴单位不同：s、min、min、s，读之前先看每组自己的 0 刻度。</li><li>开发者环境 Status 从 3.9 s 降到 19 ms，倍数 ×207；Pull latest 是 ×25。</li><li>智能体环境 New worktree 7.1 min 对 5.1 s，倍数是 ×84。</li><li>总耗时 34 min 对 3.7 min（×9.2），折合约 11,000 agent hours a day。</li><li>CI Checkout 175 s 对 22 s（×8.0），CI 作业内 31 s 对 3.5 s（×8.8）。</li><li>口径提醒：正文说 CI 与研究作业检出「快两个数量级、从分钟到秒」；按图上的倍数，两个数量级更接近 New worktree 的 ×84，CI Checkout 是 ×8.0——两者说的不是同一项操作。</li><li>图注与图上标题的措辞不同：图注写 native Scion repos，图上标题是 on the monorepo，指的都是同一批原生 Scion 仓库。</li></ol><p class="takeaway">一句话：多数日常命令 scn 的耗时是 git 的 1/1.3 到 1/207，智能体与 CI 场景的节省最可观。</p></details></figcaption></figure>
+<div class="row wide principle" data-rid="lessons-b8"><div class="principle-box"><span class="lab lab-zh">经验教训 4</span><span class="lab lab-en">Lesson 4</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="lessons-b8-0"><b>We laid the groundwork for new forms of monorepo security.</b></span> <span class="s" data-k="lessons-b8-1">Managing safety, security, and compliance in a massive monorepo is as important as managing the size and scale.</span> <span class="s" data-k="lessons-b8-2">We built Scion with these in mind from the start.</span> <span class="s" data-k="lessons-b8-3">It supports rich access control on repositories, as well as the ability to apply permissions to individual directories in order to protect the most sensitive code without losing the benefits of a monorepo.</span> <span class="s" data-k="lessons-b8-4">Furthermore, the code review tooling we built can express complex semantic constraints on approvals, which lets us differentiate simple things like comment-only changes from sensitive logical changes, so that human reviewers can focus on the most consequential changes.</span></div><div class="cell zh"><span class="s" data-k="lessons-b8-0"><b>我们为单体仓库的安全打下了新基础。</b></span><span class="s" data-k="lessons-b8-1">在一个巨型单体仓库里管理安全、信息安全与合规，和管理它的体量与规模同样重要。</span><span class="s" data-k="lessons-b8-2">我们从一开始就是带着这些考虑来建 Scion 的。</span><span class="s" data-k="lessons-b8-3">它支持丰富的仓库访问控制，也能把权限设到单个目录上，从而在不放弃单体仓库好处的前提下保护最敏感的代码。</span><span class="s" data-k="lessons-b8-4">此外，我们做的代码评审工具可以表达复杂的审批语义约束，从而把「只改了注释」这类简单改动和敏感的逻辑改动区分开，让人工评审把精力集中在影响最大的改动上。</span></div></div></div></div>
+<div class="row wide principle" data-rid="lessons-b9"><div class="principle-box"><span class="lab lab-zh">经验教训 5</span><span class="lab lab-en">Lesson 5</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="lessons-b9-0"><b>A new level of operational excellence is possible.</b></span> <span class="s" data-k="lessons-b9-1">Our team uses Claude Tag heavily, which has helped us monitor each component of the system.</span> <span class="s" data-k="lessons-b9-2">For example, we created Slack channels where we tasked Claude with being obsessively focused on the health of a single component.</span> <span class="s" data-k="lessons-b9-3">We call these Claudes “superfans.”<sup class='tn' data-note='N7'>7</sup></span> <span class="s" data-k="lessons-b9-4">We have a scion-daemon superfan, a scion-cache superfan, an Antique <span class='term' data-term='merge-queue'>merge queue</span> superfan, and so on.</span> <span class="s" data-k="lessons-b9-5">They have access to our telemetry and logs, and act like an experienced engineer who has nothing better to do than to refresh charts and look for anything strange.</span> <span class="s" data-k="lessons-b9-6">We also have traditional alerts for all of our systems, but our superfans can detect subtle and novel issues that make these alerts seem one-dimensional by comparison.</span></div><div class="cell zh"><span class="s" data-k="lessons-b9-0"><b>运维水平可以再上一个台阶。</b></span><span class="s" data-k="lessons-b9-1">我们团队大量使用 Claude Tag，它帮我们监控系统的每个组件。</span><span class="s" data-k="lessons-b9-2">比如，我们建了一些 Slack 频道，让 Claude 只痴迷于某一个组件的健康状况。</span><span class="s" data-k="lessons-b9-3">我们把这些 Claude 叫做「superfans」（超级粉丝）。<sup class='tn' data-note='N7'>7</sup></span><span class="s" data-k="lessons-b9-4">我们有 scion-daemon 的 superfan、scion-cache 的 superfan、Antique <span class='term' data-term='merge-queue'>合并队列</span>的 superfan，等等。</span><span class="s" data-k="lessons-b9-5">它们能访问我们的遥测和日志，表现得像一个经验丰富的工程师，除了刷图表、找异常之外没别的事可做。</span><span class="s" data-k="lessons-b9-6">我们所有系统也都有传统告警，但 superfans 能发现一些细微而新颖的问题，相比之下那些告警显得太单薄了。</span></div></div></div></div>
+<div class="row wide principle" data-rid="lessons-b10"><div class="principle-box"><span class="lab lab-zh">经验教训 6</span><span class="lab lab-en">Lesson 6</span><div class="principle-grid"><div class="cell en" lang="en"><span class="s" data-k="lessons-b10-0"><b>We’re completely rethinking our priors.</b></span> <span class="s" data-k="lessons-b10-1">This project prompted us to take a very hard look at other workflows designed for human scale.</span> <span class="s" data-k="lessons-b10-2">A proper merge queue, for example, doesn’t make much sense at agent scale.</span> <span class="s" data-k="lessons-b10-3">What does CI even mean when hundreds or even thousands of changes can merge while tests are running?</span> <span class="s" data-k="lessons-b10-4">We haven’t been able to effectively replicate the industry standard of a global repository lock on the merge queue, so instead, we’ve invested in post-merge and pre-deploy automated testing.<sup class='tn' data-note='N8'>8</sup></span> <span class="s" data-k="lessons-b10-5">This does mean that concurrent changes can conflict, but Claude can typically fix these conflicts faster than humans can even identify them.</span></div><div class="cell zh"><span class="s" data-k="lessons-b10-0"><b>我们在彻底重想过去的默认做法。</b></span><span class="s" data-k="lessons-b10-1">这个项目促使我们认真重新审视其他为人类规模设计的工作流程。</span><span class="s" data-k="lessons-b10-2">比如，一个正规的合并队列（merge queue）在智能体规模下就不太说得通。</span><span class="s" data-k="lessons-b10-3">当成百上千个改动可以在测试还在跑的时候合入，持续集成到底还意味着什么？</span><span class="s" data-k="lessons-b10-4">业界标准做法是在合并队列上给整个仓库加锁，我们没能有效地复刻它，于是转而投入「合并后、部署前」的自动化测试。<sup class='tn' data-note='N8'>8</sup></span><span class="s" data-k="lessons-b10-5">这确实意味着并发改动可能冲突，但 Claude 修这些冲突的速度，通常比人发现冲突还快。</span></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-ecosystem">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Contributing to the wider ecosystem</span><span class="h-zh">回馈更大的生态</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本节要点（译者所加）：作者明确说 Scion 不是给所有人用的，只适合超大单体仓库；他们更想做的是把思路讲出来，让 git 生态自己吸收——比如「服务端不必和客户端用同一套工作方式」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="ecosystem-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ecosystem-b0-0">We see Scion as just one part of the answer to the scaling concerns that increasingly capable AI agents have raised.</span> <span class="s" data-k="ecosystem-b0-1">We’re sharing these details as an example of how teams can tackle similar challenges, though we don’t expect our solution, or our considerations, to suit every case.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ecosystem-b0-0">越来越强的 AI 智能体带来了扩展性上的担忧，我们认为 Scion 只是这类答案的一部分。</span><span class="s" data-k="ecosystem-b0-1">我们公开这些细节，是把它当作「团队可以怎么应对类似挑战」的一个示例；不过我们并不认为自己的方案或考量适用于所有情况。</span></p></div></div>
+<div class="row" data-rid="ecosystem-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ecosystem-b1-0">Scion is by no means a suitable replacement for git for general use.</span> <span class="s" data-k="ecosystem-b1-1">The concepts we’ve outlined here really only make sense for truly enormous monorepos, with either tens of thousands of engineers or swarms of agents prolifically writing code.</span> <span class="s" data-k="ecosystem-b1-2">Plus, Anthropic is unique in that our ability to spend tokens for internal use far exceeds what any other business would realistically want to spend.</span> <span class="s" data-k="ecosystem-b1-3">We do this both to address our own software development needs, and to test Claude’s capabilities.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ecosystem-b1-0">Scion 绝不是 git 在通用场景下的合适替代品。</span><span class="s" data-k="ecosystem-b1-1">我们在这里讲的概念，只对真正巨大的单体仓库才说得通——要么有几万名工程师，要么有成群结队的智能体在大量写代码。</span><span class="s" data-k="ecosystem-b1-2">而且 Anthropic 有个独特之处：我们能花在内部使用上的 token，远超任何其他企业会真正愿意花的量。</span><span class="s" data-k="ecosystem-b1-3">我们这么做，既是为了解决自己的软件开发需求，也是为了测试 Claude 的能力。</span></p></div></div>
+<div class="row" data-rid="ecosystem-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ecosystem-b2-0">Practically speaking, it’s difficult to offer Scion in a form that would be broadly useful to other organizations.</span> <span class="s" data-k="ecosystem-b2-1">It diverges significantly from git, meaning companies would need to migrate every piece of the development lifecycle, and it requires its own code review, code search, and CI.</span> <span class="s" data-k="ecosystem-b2-2">Our internal versions of these components are highly bespoke, so they would be difficult for other organizations to adopt, and we worry that attempting to build a public version that tries to please everyone wouldn’t actually be very useful.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ecosystem-b2-0">从现实角度说，很难把 Scion 做成一种对其他组织普遍有用的形态。</span><span class="s" data-k="ecosystem-b2-1">它和 git 差异很大，意味着公司得把开发生命周期的每一环都迁过来；而且它需要配套自己的代码评审、代码搜索和持续集成。</span><span class="s" data-k="ecosystem-b2-2">我们这些组件的内部版本高度定制化，其他组织很难直接用；我们也担心，硬做一个想让所有人都满意的公开版本，到头来未必真的有价值。</span></p></div></div>
+<div class="row" data-rid="ecosystem-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ecosystem-b3-0">However, we anticipate that this class of problems will become more commonplace over the next six to 12 months, and it would be an inefficient use of engineering resources for every company using git to face similar challenges alone.</span> <span class="s" data-k="ecosystem-b3-1">Given that, we think the most impactful thing we can do is to share our thinking, so that other developers can apply some of the most successful parts of Scion to git without departing from the overall model.</span> <span class="s" data-k="ecosystem-b3-2">A git server doesn’t have to work the same way as a git client does; novel server architectures exist that provide significant scaling improvements.</span> <span class="s" data-k="ecosystem-b3-3">Git platforms can provide comprehensive server-side RPCs like Scion, perhaps even in a standardized way across forges that the git client can learn to talk to.</span> <span class="s" data-k="ecosystem-b3-4">The negotiation protocol doesn’t have to look exactly like it does today, either, and the various sparse and shallow features in git can be made to compose well.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ecosystem-b3-0">不过我们预计，未来 6 到 12 个月里，这一类问题会越来越常见；如果每家使用 git 的公司都独自面对类似挑战，那是对工程资源的低效使用。</span><span class="s" data-k="ecosystem-b3-1">既然如此，我们认为最有影响的事就是把思路讲出来，让其他开发者能把 Scion 里最成功的部分用到 git 上，而不必离开 git 的整体模式。</span><span class="s" data-k="ecosystem-b3-2">git 服务器不必和 git 客户端用同样的方式工作；已经存在一些新的服务端架构，能带来显著的扩展性提升。</span><span class="s" data-k="ecosystem-b3-3">git 平台可以提供像 Scion 那样完整的服务端远程过程调用（RPC），甚至可以跨托管平台形成标准化，让 git 客户端学着去和它对话。</span><span class="s" data-k="ecosystem-b3-4">协商协议也不必和今天长得分毫不差；git 里各种稀疏、浅层的特性，也可以被设计成能很好地组合使用。</span></p></div></div>
+<div class="row" data-rid="ecosystem-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ecosystem-b4-0">Lastly, we want to acknowledge that the git community has spent nearly two decades scaling the platform for millions of developers.</span> <span class="s" data-k="ecosystem-b4-1">Our contribution is far narrower: sharing our early view into how agentic software development interacts with these systems, so that we can partner with GitHub, GitLab, and the OSS community to support the changing needs of developers.</span> <span class="s" data-k="ecosystem-b4-2">We’re all in it together as the software development lifecycle intersects with the AI exponential.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ecosystem-b4-0">最后，我们想承认一点：git 社区花了近二十年，为几百万开发者扩展这个平台。</span><span class="s" data-k="ecosystem-b4-1">我们的贡献要窄得多：分享我们对于「智能体软件开发如何与这些系统相互作用」的早期观察，从而与 GitHub、GitLab 以及开源社区合作，支持开发者不断变化的需求。</span><span class="s" data-k="ecosystem-b4-2">当软件开发生命周期撞上 AI 的指数曲线时，我们都在同一条船上。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 6 处正文引用，指向 6 个不同链接；另有 6 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>Piper（源码控制系统）</h4><p class="lnk-site">Wikipedia · Piper (source control system)</p><p class="lnk-anchors">正文对应：<em>Piper</em></p><p><b>这是什么：</b>英文维基百科条目，介绍 Google 内部自研的集中式版本控制系统 Piper，它支撑着存放数十亿行代码的单体仓库。</p><p><b>为什么值得点：</b>本文把 Piper 列为超大单体仓库源码控制的先行者，说明 Scion 的设计并非凭空而来；想弄清 Google 这套系统与 Git 的根本差别，从这里入门最直接。</p><p><b>访问说明：</b>链接有效（英文维基条目存在），但本机网络无法解析维基百科域名（DNS 受限），无法直接抓取正文；卡内要点依据条目检索结果与公开资料交叉核对。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这个条目讲的是 Google 的 Piper：当年 Google 找不到能承载单体仓库规模的现成版本控制系统，于是在 Perforce 的思路基础上自研。它先架在 Bigtable 上、后迁到 Spanner，分布在多个数据中心并用 Paxos 保证一致性；配合 CitC，开发者的工作区无需完整克隆，只把改动叠加在全库视图上，代码评审通过后才提交到中央主干。这套「单库 + 虚拟化工作区 + 服务端集中提交」的思路，是后来超大仓库专用 SCM 的重要参照。</p><ul><li>Google 为撑住单体仓库自研 Piper，思路来自对 Perforce 的重写</li><li>早期部署于 Bigtable，后迁移到 Spanner，多数据中心用 Paxos 保证一致性</li><li>与 CitC 配合：工作区不必完整克隆，改动叠加即可看到全库</li><li>提交须经代码评审，之后才进入中央仓库的单一主干</li></ul></details><a class="lnk-open" href="https://en.wikipedia.org/wiki/Piper_(source_control_system)" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>Sapling：可扩展、易用的源码控制系统</h4><p class="lnk-site">sapling-scm.com · Sapling from Meta</p><p class="lnk-anchors">正文对应：<em>Sapling</em></p><p><b>这是什么：</b>Meta 开源的版本控制系统 Sapling 的官网首页，主打可扩展到超大仓库、界面易用，并且兼容 Git。</p><p><b>为什么值得点：</b>本文把 Meta 的 Sapling 与 Google 的 Piper 并列为 Scion 的先行者。点开可看到它的定位：能撑住世界上最大的仓库、界面易用，还能直接读写 Git 仓库——这正是 Scion 想借鉴又想在 agent 时代超越的路线。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Sapling 自称是一个可扩展、易用的源码控制系统，官网强调两点：一是规模，能撑住世界上最大的仓库；二是体验，把常见流程做简单、提供好用的 UI，并省掉分支和 detached HEAD 带来的麻烦。它还支持直接 clone 与操作 Git 仓库，个人开发者可以拿它配合 GitHub 使用。本文脚注补充：Sapling 的服务端组件就是 Mononoke，下文 L5 的 README 正是那个项目。</p><ul><li>可扩展到世界最大级别的仓库，同时提供直观的 UI</li><li>用 stack 管理并行工作，绕开分支与 detached HEAD 的麻烦</li><li>客户端兼容 Git，可直接与 GitHub 等托管服务交互</li><li>官网提供文档入口、GitHub 仓库与 Discord 社区</li></ul></details><a class="lnk-open" href="https://sapling-scm.com/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>Mononoke（Sapling 的服务端）</h4><p class="lnk-site">GitHub · Mononoke</p><p class="lnk-anchors">正文对应：<em>Mononoke</em></p><p><b>这是什么：</b>GitHub 上 Sapling 项目里 Mononoke 组件的 README，说明这个服务端系统是什么、用什么语言写、有哪些限制。</p><p><b>为什么值得点：</b>本文脚注指出 Scion 借鉴的正是 Sapling 的服务端 Mononoke。读 README 能知道它的野心：每小时接收数千次提交、横跨数百万文件、用 Rust 编写——理解它，才能看懂 Scion 在服务端规模上对标的是什么。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Mononoke 是为 Sapling 打造的服务端，目标是在数百万文件、每小时数千次提交的规模下工作，主要用 Rust 编写；开源构建包含 MySQL、SQLite、文件系统与 S3 四种后端。README 明确提醒它仍在开发中，GitHub 版本省略了部分内部功能，比如 Thrift API、MySQL failover 与 CacheLib 缓存。仓库里另附集成测试、packblob 存储和 graph walker 等少数子系统的文档。</p><ul><li>Sapling 的服务端，面向每小时数千次提交、数百万文件的规模</li><li>主要用 Rust 编写，开源版支持 MySQL、SQLite、文件与 S3 后端</li><li>GitHub 版省略了 Thrift API、MySQL failover、CacheLib 等内部功能</li><li>仓库内附集成测试、packblob 存储与 graph walker 的说明文档</li></ul></details><a class="lnk-open" href="https://github.com/facebook/sapling/blob/main/eden/mononoke/README.md" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>BonsaiChangeset：Bonsai 变更集的数据结构</h4><p class="lnk-site">GitHub · BonsaiChangeset (bonsai.thrift)</p><p class="lnk-anchors">正文对应：<em>Bonsai</em></p><p><b>这是什么：</b>Mononoke 的 Bonsai 变更集在 Thrift 里的结构定义，即 BonsaiChangeset 的字段清单与配套注释。</p><p><b>为什么值得点：</b>本文脚注说 Mononoke 首创了 Scion 使用的许多技术，尤其是 Bonsai 数据模型。点开正确定位到第 50 行的 struct BonsaiChangeset，能直观看到一次提交被拆成 parents、author、file_changes、subtree_changes 等字段——这就是 Scion 设计 changeset 时的参照。</p><p><b>访问说明：</b>链接固定到 79071c2 提交并锚定第 50 行，正好是 struct BonsaiChangeset 的定义，后续提交不会让锚点漂移。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>BonsaiChangeset 是 Mononoke 内部表示中的基本提交对象：parents 有序存储并参与哈希，这与 Git 一致，却不同于 Mercurial 与 Sapling 的无序哈希，因此同一个 Sapling 变更集理论上可能对应两个 Mononoke 变更集。字段还包含 author、committer、message、file_changes，以及可选的 snapshot_state、git 相关头和 subtree_changes。注释说明有序 map 与 set 保证序列化确定性，file_changes 不区分新增与修改，子目录变更先应用、文件变更再叠加。</p><ul><li>BonsaiChangeset 是 Mononoke 的基本提交对象，parents 有序且参与哈希</li><li>除 author 与 message 外，还带 snapshot_state、git_extra_headers 等可选字段</li><li>有序 map 与 set 保证序列化确定性，file_changes 不区分新增与修改</li><li>注释里定义了子树变更与文件变更的叠加顺序及路径冲突规则</li></ul></details><a class="lnk-open" href="https://github.com/facebook/sapling/blob/79071c2a3ea20c36ed71332608535e5801101bba/eden/mononoke/mononoke_types/serialization/bonsai.thrift#L50" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>Claude Mythos 5.5（Anthropic 模型页）</h4><p class="lnk-site">anthropic.com · Claude Mythos 5.5</p><p class="lnk-anchors">正文对应：<em>Claude Mythos Preview</em></p><p><b>这是什么：</b>Anthropic 的 Claude Mythos 模型产品页，介绍这款主打网络安全与生物学研究的模型、访问申请渠道与安全措施。</p><p><b>为什么值得点：</b>本文提到用 Claude Mythos Preview 重写 ingest 流水线后，内存降到 1/20、速度快 4 倍，还保留了所有隐含不变量。点开能了解这类模型的定位与访问限制，也就明白为什么源码控制要按 agent 规模重新设计。</p><p><b>访问说明：</b>链接有效且无跳转，但目标页已改版：原文写作时对应的是内部预览版 Claude Mythos Preview，现在打开是 Claude Mythos 5.5 的模型产品页。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>页面现在的主题是 Claude Mythos 5.5：Anthropic 称它是面向网络安全与生物学研究的最强模型类，只通过 Cyber Verification Program 与 Life Sciences Verification Program 开放给受审核机构，定价为每百万输入 token 10 美元、输出 50 美元。页面还列出时间线——2026 年 6 月的 Mythos 5 是 Mythos Preview 的最新更新版，之后迭代到 5.1 与 5.5；使用它默认要接受 30 天数据保留用于安全监控。原文锚指的 Claude Mythos Preview 是更早的内部预览版本，点进来看到的已是现行产品页。</p><ul><li>Mythos 系列定位为网络安全与生物学研究的最强模型，需审核才能访问</li><li>开放渠道：Cyber Verification Program 与 Life Sciences Verification Program</li><li>Mythos 5 于 2026-06-09 成为 Mythos Preview 的最新更新，后续迭代至 5.5</li><li>默认 30 天数据保留用于安全监控；定价 10 美元输入、50 美元输出每百万 token</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/claude/mythos" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span></div><h4>介绍 Claude Tag</h4><p class="lnk-site">anthropic.com · Introducing Claude Tag</p><p class="lnk-anchors">正文对应：<em>Claude Tag</em></p><p><b>这是什么：</b>Anthropic 官方的产品公告，介绍 Claude Tag：把 Claude 作为团队成员拉进 Slack，任何人都能 @ 它分派任务。</p><p><b>为什么值得点：</b>本文说 Claude Tag 与 Mythos 同时面世，既放大了对 Scion 的需求，也加快了构建速度；后文那些盯着单个组件健康的 superfans，正是 Claude Tag 的延伸玩法。点开能看懂这些段落背后的产品是什么。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Claude Tag 让 Claude 以一个团队成员的身份加入 Slack 频道：管理员授予它频道、工具与数据访问权限后，任何人 @Claude 就能分派任务，它会拆解步骤、在 thread 里回报结果。文章强调它 multiplayer、会随频道积累上下文、开启 ambient 模式后能主动提醒并跟进，还能长期自主排期；Anthropic 内部 65% 的产品代码由内部版 Claude Tag 生成。它目前对 Claude Enterprise 与 Team 客户开放 beta，替换原来的 Claude in Slack 应用，底层使用 Opus 4.8。</p><ul><li>@Claude 进 Slack 当队友：分派任务、拆解步骤、在 thread 回报</li><li>多人共享同一个 Claude，会随频道积累上下文并主动提醒跟进</li><li>Anthropic 内部 65% 的产品代码由内部版 Claude Tag 生成</li><li>Product 博客发布于 2026-06-23，beta 面向 Enterprise 与 Team 客户</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/news/introducing-claude-tag" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 38 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">monorepo</span><span class="gl-zh">单体仓库（monorepo）</span></div><p class="gl-def">把公司几乎所有代码放进同一个大仓库统一管理。Anthropic 的仓库光主干历史就有约 100 GB，正是它把 git 逼到了极限。</p><p class="gl-ana">全公司共用一个大文件柜，而不是每人一个抽屉。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">version control</span><span class="gl-zh">版本控制系统</span></div><p class="gl-def">记录代码每次改动、保存历史版本、支持多人协作和回滚的软件系统。Git 是最常见的一种，Scion 是 Anthropic 自研的替代品。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Git</span><span class="gl-zh">Git</span></div><p class="gl-def">目前最主流的版本控制系统，每个克隆都自带完整仓库，可离线算出差异、查看历史。本文里它是被 Scion 取代的旧方案，也是设计的参照。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">commit</span><span class="gl-zh">提交（commit）</span></div><p class="gl-def">把一次改动连同作者、说明和父版本一起记入历史的基本记录。git 的提交在本地生成再推送，Scion 的提交改由服务器生成。</p><p class="gl-ana">像给项目拍一张带说明的快照。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">changeset</span><span class="gl-zh">变更集（changeset）</span></div><p class="gl-def">Scion 的工作单元，是预写日志里的一条记录：只列出相对第一个父提交改了哪些文件，再用内容寻址指针指向压缩后的文件内容。</p><p class="gl-ana">像只记这一版改了什么，而不是整柜照片。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">write-ahead log</span><span class="gl-zh">预写日志（write-ahead log）</span></div><p class="gl-def">一种先追加记录、再按记录执行的日志机制。Scion 把变更集写成这种日志，追加即可、不用加锁，所以能承受很高的写入速度。</p><p class="gl-ana">像先记账再动手，照着账本执行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tree</span><span class="gl-zh">目录树（tree）</span></div><p class="gl-def">git 里表示一层目录结构、指向其下文件和子目录的对象。Scion 的客户端取数据时也从根目录树出发，逐层只请求缺失的部分。</p><p class="gl-ana">像目录骨架，只记名字和层级，不装内容。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">blob</span><span class="gl-zh">数据块（blob）</span></div><p class="gl-def">存放单个文件原始内容的二进制对象，一旦存入就不再改变。Scion 把压缩后的文件内容放在云存储里，用指针引用这些块。</p><p class="gl-ana">像按内容指纹归档的物件，指纹不变内容就不变。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">ref</span><span class="gl-zh">引用（ref）</span></div><p class="gl-def">指向某个提交的可变指针，分支名和标签都是引用。本文中 Scion 有意弱化它，只主分支和发布分支保留，因为全局状态难扩展。</p><p class="gl-ana">像贴在书页上的便利贴，随时能撕下换位置。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">packfile</span><span class="gl-zh">打包文件（packfile）</span></div><p class="gl-def">git 把一批压缩对象合并成的大文件，用来减少传输和存储开销。Scion 没有对应物，因此也不必做这类仓库维护。</p><p class="gl-ana">把一堆小文件打成一个压缩包，省传输。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">content-addressed</span><span class="gl-zh">内容寻址</span></div><p class="gl-def">用内容算出的哈希值来命名和查找数据。内容一变名字就变，所以存下的数据永不改变，任何缓存都能直接信任它。</p><p class="gl-ana">像用内容指纹当文件名，内容一改名字也改。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compare-and-swap</span><span class="gl-zh">比较并交换（CAS）</span></div><p class="gl-def">一种并发更新方式：确认当前值仍等于预期的旧值时才写入新值。Scion 移动引用，就是在 Spanner 的一行数据上做这个原子操作。</p><p class="gl-ana">像只有票面没被换过才允许改签。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Spanner</span><span class="gl-zh">Spanner</span></div><p class="gl-def">Google 的分布式数据库。Scion 用它保存变更集和派生数据，让服务器之间几乎不用互相协调，从而能横向扩展。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">derived data</span><span class="gl-zh">派生数据</span></div><p class="gl-def">不属于变更集本身、而是从变更集递归算出的附加结构，如 blame、路径历史和提交图跳表，用来快速回答历史类问题。</p><p class="gl-ana">像照原始账本另算出的报表，随时能重算。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">skip list</span><span class="gl-zh">跳表</span></div><p class="gl-def">一种带多层索引、能快速跳着查找的数据结构。Scion 用它给提交图建索引，查祖先关系时不必一个提交一个提交地走。</p><p class="gl-ana">像高速路隔几公里一个出口，能整段跳过。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">blame</span><span class="gl-zh">blame（逐行追溯）</span></div><p class="gl-def">逐行查出某行代码最后是谁改的、在哪次改动里改的。它依赖完整历史，所以旧的部分克隆方案也很难让它正常工作。</p><p class="gl-ana">像查每句话是谁写的、哪一稿改的。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">shallow clone</span><span class="gl-zh">浅克隆（shallow clone）</span></div><p class="gl-def">只取最近一段历史、不带全量历史的克隆方式，目的是少传数据。本文说这类 git 手段只买到时间，运维会越来越难。</p><p class="gl-ana">像只买最近几章的书，而不是整套。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">sparse checkout</span><span class="gl-zh">稀疏检出（sparse checkout）</span></div><p class="gl-def">只把仓库里部分目录的文件取到本地，其余不下载。Scion 把它当成常规做法，客户端只为自己真正读到的文件付代价。</p><p class="gl-ana">像只把要用的几层抽屉搬回家。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">promisor remote</span><span class="gl-zh">承诺式远程（promisor remote）</span></div><p class="gl-def">git 的一种按需取数机制：本地缺对象时，再向被指定为承诺方的远程仓库索取。它是 git 应付大仓库的三种手段之一。</p><p class="gl-ana">像先赊账，缺什么再向总店要。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">working copy</span><span class="gl-zh">工作副本</span></div><p class="gl-def">磁盘上那份可以直接编辑的仓库文件副本。Anthropic 压缩后的工作副本仍超过 25 GB，所以 Scion 把它做成可选的。</p><p class="gl-ana">像你桌上那份可以随手涂改的稿子。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">virtualized checkout</span><span class="gl-zh">虚拟化检出（virtualized checkout）</span></div><p class="gl-def">一种按需取文件的检出方式：只有真正被读取的文件才从服务器取下来，CI 任务因此只为自己读过的内容花代价。</p><p class="gl-ana">像按需调阅的图书馆，翻到哪页才取哪页。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">checkout</span><span class="gl-zh">检出（checkout）</span></div><p class="gl-def">把某个版本的代码取到磁盘、变成可读写文件的操作。Anthropic 每天约两千五百万次检出，是压垮旧架构的主要负载。</p><p class="gl-ana">像按指定版本把代码复印到本地。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">merge base</span><span class="gl-zh">合并基线（merge base）</span></div><p class="gl-def">两条分支的历史分叉之前、最后一个共同的提交，也就是分叉点。要算某次改动到底改了什么，往往得先找到它。</p><p class="gl-ana">像两条岔路的最后一个共同路口。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">merge queue</span><span class="gl-zh">合并队列</span></div><p class="gl-def">让待合并的改动排队、逐个验证通过后再合入的机制，用来避免互相干扰。本文认为它按人类规模设计，智能体规模下并不合适。</p><p class="gl-ana">像登机前的排队安检，一个一个过。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rebase</span><span class="gl-zh">变基（rebase）</span></div><p class="gl-def">把一串提交挪到新的起点上重新施加，让历史看起来像顺序叠加。Scion 的变基也在服务器上完成，没有本地提交要推送。</p><p class="gl-ana">像把一串积木整体挪到新底座上。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CI</span><span class="gl-zh">持续集成（CI）</span></div><p class="gl-def">代码一改就自动构建并跑测试的流程。Anthropic 的 CI 每天要检出代码约两千五百万次，旧的 git 架构撑不住这个量。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">code review</span><span class="gl-zh">代码评审</span></div><p class="gl-def">改动合入之前先由人或工具审查的环节。Anthropic 为此自建了 Antique，并能让评审表达更细的审批条件。</p><p class="gl-ana">像发表前先过一遍编辑审稿。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">IAM</span><span class="gl-zh">身份与访问管理（IAM）</span></div><p class="gl-def">管理谁可以对哪些资源做什么的系统。Scion 支持仓库级和目录级权限，好在超大单体仓库里只保护最敏感的那部分代码。</p><p class="gl-ana">像大楼门禁，按人按房间发钥匙。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">bisect</span><span class="gl-zh">bisect（二分定位）</span></div><p class="gl-def">用二分法在历史里找出是哪一次改动引入了问题。Scion 把源码查询都变成 API，自动化二分才可能大规模运行。</p><p class="gl-ana">像对半砍着找出坏掉的那一批。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">hermetic simulation</span><span class="gl-zh">封闭式仿真（hermetic simulation）</span></div><p class="gl-def">把外部依赖彻底隔离、每次运行条件都一致的测试环境。Scion 为各种基础设施和源码交互都建了这种仿真。</p><p class="gl-ana">像隔离在封闭实验室里反复重演。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">fuzzing</span><span class="gl-zh">模糊测试</span></div><p class="gl-def">向程序灌入大量随机或异常输入，以撞出崩溃和漏洞的测试方法。文章把它列为 Scion 的防护手段之一。</p><p class="gl-ana">像不断扔奇怪输入，看它哪下会崩。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">daemon</span><span class="gl-zh">守护进程（daemon）</span></div><p class="gl-def">长期在后台运行、替同一台机器上其他程序服务的进程。Scion 的 scion-daemon 缓存整个节点的对象，供各任务复用。</p><p class="gl-ana">像楼里的常驻管家，随时替各家跑腿。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">RPC</span><span class="gl-zh">远程过程调用（RPC）</span></div><p class="gl-def">让程序像调用本地函数那样调用另一台机器上的功能。Scion 各层响应同一套 RPC，客户端因此不必关心缓存的分层结构。</p><p class="gl-ana">像打内线电话，本地按键让隔壁干活。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">trunk-based development</span><span class="gl-zh">主干开发</span></div><p class="gl-def">大家都向同一条主干分支频繁提交、少开长期分支的做法。文章借此解释为什么人们只关心主干上的历史与 blame。</p><p class="gl-ana">像所有人往同一条大传送带上放零件。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rate limiting</span><span class="gl-zh">限流</span></div><p class="gl-def">限制单位时间内的请求量，防止系统被压垮或滥用。文章把精细的限流列为 Scion 的防护措施之一。</p><p class="gl-ana">像高峰期限流的地铁闸机。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">git mirror</span><span class="gl-zh">镜像（mirror）</span></div><p class="gl-def">仓库的一份完整复制，用来分担读流量。Anthropic 峰值时运行几百个内部 git 镜像，规模一大就难以为继。</p><p class="gl-ana">像同一本书多印几本分担借阅人流。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">ingestion pipeline</span><span class="gl-zh">摄入流水线</span></div><p class="gl-def">把数据成批从旧系统转换、搬进新系统的流程。Anthropic 用一条从 git 到 Scion 的摄入流水线完成迁移。</p><p class="gl-ana">像搬家时把旧家具逐件清点搬进新屋。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体</span></div><p class="gl-def">能自己规划步骤、调用工具、连续执行任务的 AI 程序。Anthropic 绝大多数客户端是智能体，这正是 Scion 的设计前提。</p><p class="gl-ana">像能自己找活干的实习生，而不是等指令的工具。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>Scion 与 Antique 这两个名字</h4><p>Scion 字面是「接穗」——嫁接时从母株上取下的枝条；Antique 字面是「古董」。原文没有解释命名用意，这里只作字面说明，不猜测作者的隐喻。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>「把 git 当中心化系统用」是什么意思</h4><p>git 本身是分布式的：每个克隆都有完整历史。但多数公司实际只维护一个权威副本（比如托管平台上的那个仓库），所有人从它克隆、再推回去。原文指出的矛盾是：你用着分布式的工具，却承担着中心化系统的流量。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>packfile 和「仓库维护」的关系</h4><p>git 会把松散的小对象定期打包成 packfile 以省空间，这个打包与清理过程就是「仓库维护」（gc／repack）。Scion 没有 packfile，因为它从不把整个仓库物化到任何一处，所以也就不需要这类维护。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>refs 为什么是扩展性难题</h4><p>ref 是指向提交的指针，分支和标签都是 ref。git 的每个客户端副本都需要知道分支指向哪里；在每天三万次合并的规模下，「所有服务器都要就同一份全局状态达成一致」会变成瓶颈。Scion 因此只保留主干和发布分支的 ref。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>scn 是什么</h4><p>scn 是 Scion 的命令行客户端，作用类似 git 命令。原文特意说它和 git 的 fetch 协议差异很大，因为它不再以「我手里有完整仓库」为前提。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>「两个数量级」是多少</h4><p>两个数量级就是约 100 倍。原文紧接着给了更直观的说法：从分钟级降到秒级。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>superfans 是内部绰号</h4><p>superfans 字面是「超级粉丝」。在 Anthropic 内部，这是给「只盯一个组件健康状况的 Claude」起的绰号，实际角色更像一个专职监控员。</p></div></div><div class="note-item"><div class="note-n">08</div><div><h4>为什么改成「合并后、部署前」测试</h4><p>传统做法是在合并队列上做全局串行：一次只让一个改动通过，测完再放下一个。如果每天有成千上万个改动、测试又跑得慢，这个队列就会堵死。Anthropic 改成先合并、再在部署前做自动化测试；代价是并发改动可能冲突，但 Claude 修冲突通常比人发现冲突还快。</p></div></div></div></section><footer><p>本页为学习用双语对照版：英文逐字照录原文（仅修复 3 处网页抽取导致的空格与脚注编号问题，逐条记录在项目 SPEC.md），中文由译者翻译；术语卡、图注解读、译注与延伸阅读地图均为译者所加。原文版权归 Anthropic 所有。</p><p>原文：<a href="https://www.anthropic.com/research/redesigning-source-control" target="_blank" rel="noopener">Redesigning source control at Anthropic</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-monorepo"><span class="dot">●</span>让单体仓库长大</a><a class="l2" href="#s-principles"><span class="dot">●</span>为智能体规模的版本控制定原则</a><a class="l2" href="#s-how"><span class="dot">●</span>Scion 是怎么工作的</a><a class="l3" href="#h-how-b1"><span class="dot">●</span>数据结构</a><a class="l3" href="#h-how-b7"><span class="dot">●</span>扩展 Scion</a><a class="l2" href="#s-lessons"><span class="dot">●</span>建 Scion 学到的几件事</a><a class="l2" href="#s-ecosystem"><span class="dot">●</span>回馈更大的生态</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"Piper（源码控制系统）","title_en":"Piper (source control system)","site":"Wikipedia","what_zh":"英文维基百科条目，介绍 Google 内部自研的集中式版本控制系统 Piper，它支撑着存放数十亿行代码的单体仓库。","why_zh":"本文把 Piper 列为超大单体仓库源码控制的先行者，说明 Scion 的设计并非凭空而来；想弄清 Google 这套系统与 Git 的根本差别，从这里入门最直接。","tier":"必读","order":1,"url":"https://en.wikipedia.org/wiki/Piper_(source_control_system)"},"L2":{"title_zh":"Sapling：可扩展、易用的源码控制系统","title_en":"Sapling from Meta","site":"sapling-scm.com","what_zh":"Meta 开源的版本控制系统 Sapling 的官网首页，主打可扩展到超大仓库、界面易用，并且兼容 Git。","why_zh":"本文把 Meta 的 Sapling 与 Google 的 Piper 并列为 Scion 的先行者。点开可看到它的定位：能撑住世界上最大的仓库、界面易用，还能直接读写 Git 仓库——这正是 Scion 想借鉴又想在 agent 时代超越的路线。","tier":"必读","order":2,"url":"https://sapling-scm.com/"},"L5":{"title_zh":"Mononoke（Sapling 的服务端）","title_en":"Mononoke","site":"GitHub","what_zh":"GitHub 上 Sapling 项目里 Mononoke 组件的 README，说明这个服务端系统是什么、用什么语言写、有哪些限制。","why_zh":"本文脚注指出 Scion 借鉴的正是 Sapling 的服务端 Mononoke。读 README 能知道它的野心：每小时接收数千次提交、横跨数百万文件、用 Rust 编写——理解它，才能看懂 Scion 在服务端规模上对标的是什么。","tier":"必读","order":3,"url":"https://github.com/facebook/sapling/blob/main/eden/mononoke/README.md"},"L6":{"title_zh":"BonsaiChangeset：Bonsai 变更集的数据结构","title_en":"BonsaiChangeset (bonsai.thrift)","site":"GitHub","what_zh":"Mononoke 的 Bonsai 变更集在 Thrift 里的结构定义，即 BonsaiChangeset 的字段清单与配套注释。","why_zh":"本文脚注说 Mononoke 首创了 Scion 使用的许多技术，尤其是 Bonsai 数据模型。点开正确定位到第 50 行的 struct BonsaiChangeset，能直观看到一次提交被拆成 parents、author、file_changes、subtree_changes 等字段——这就是 Scion 设计 changeset 时的参照。","tier":"必读","order":4,"url":"https://github.com/facebook/sapling/blob/79071c2a3ea20c36ed71332608535e5801101bba/eden/mononoke/mononoke_types/serialization/bonsai.thrift#L50"},"L3":{"title_zh":"Claude Mythos 5.5（Anthropic 模型页）","title_en":"Claude Mythos 5.5","site":"anthropic.com","what_zh":"Anthropic 的 Claude Mythos 模型产品页，介绍这款主打网络安全与生物学研究的模型、访问申请渠道与安全措施。","why_zh":"本文提到用 Claude Mythos Preview 重写 ingest 流水线后，内存降到 1/20、速度快 4 倍，还保留了所有隐含不变量。点开能了解这类模型的定位与访问限制，也就明白为什么源码控制要按 agent 规模重新设计。","tier":"背景","order":5,"url":"https://www.anthropic.com/claude/mythos"},"L4":{"title_zh":"介绍 Claude Tag","title_en":"Introducing Claude Tag","site":"anthropic.com","what_zh":"Anthropic 官方的产品公告，介绍 Claude Tag：把 Claude 作为团队成员拉进 Slack，任何人都能 @ 它分派任务。","why_zh":"本文说 Claude Tag 与 Mythos 同时面世，既放大了对 Scion 的需求，也加快了构建速度；后文那些盯着单个组件健康的 superfans，正是 Claude Tag 的延伸玩法。点开能看懂这些段落背后的产品是什么。","tier":"背景","order":6,"url":"https://www.anthropic.com/news/introducing-claude-tag"}},"terms":{"monorepo":{"en":"monorepo","zh":"单体仓库（monorepo）","def_zh":"把公司几乎所有代码放进同一个大仓库统一管理。Anthropic 的仓库光主干历史就有约 100 GB，正是它把 git 逼到了极限。","analogy_zh":"全公司共用一个大文件柜，而不是每人一个抽屉。"},"version-control":{"en":"version control","zh":"版本控制系统","def_zh":"记录代码每次改动、保存历史版本、支持多人协作和回滚的软件系统。Git 是最常见的一种，Scion 是 Anthropic 自研的替代品。","analogy_zh":""},"git":{"en":"Git","zh":"Git","def_zh":"目前最主流的版本控制系统，每个克隆都自带完整仓库，可离线算出差异、查看历史。本文里它是被 Scion 取代的旧方案，也是设计的参照。","analogy_zh":""},"commit":{"en":"commit","zh":"提交（commit）","def_zh":"把一次改动连同作者、说明和父版本一起记入历史的基本记录。git 的提交在本地生成再推送，Scion 的提交改由服务器生成。","analogy_zh":"像给项目拍一张带说明的快照。"},"changeset":{"en":"changeset","zh":"变更集（changeset）","def_zh":"Scion 的工作单元，是预写日志里的一条记录：只列出相对第一个父提交改了哪些文件，再用内容寻址指针指向压缩后的文件内容。","analogy_zh":"像只记这一版改了什么，而不是整柜照片。"},"write-ahead-log":{"en":"write-ahead log","zh":"预写日志（write-ahead log）","def_zh":"一种先追加记录、再按记录执行的日志机制。Scion 把变更集写成这种日志，追加即可、不用加锁，所以能承受很高的写入速度。","analogy_zh":"像先记账再动手，照着账本执行。"},"tree":{"en":"tree","zh":"目录树（tree）","def_zh":"git 里表示一层目录结构、指向其下文件和子目录的对象。Scion 的客户端取数据时也从根目录树出发，逐层只请求缺失的部分。","analogy_zh":"像目录骨架，只记名字和层级，不装内容。"},"blob":{"en":"blob","zh":"数据块（blob）","def_zh":"存放单个文件原始内容的二进制对象，一旦存入就不再改变。Scion 把压缩后的文件内容放在云存储里，用指针引用这些块。","analogy_zh":"像按内容指纹归档的物件，指纹不变内容就不变。"},"ref":{"en":"ref","zh":"引用（ref）","def_zh":"指向某个提交的可变指针，分支名和标签都是引用。本文中 Scion 有意弱化它，只主分支和发布分支保留，因为全局状态难扩展。","analogy_zh":"像贴在书页上的便利贴，随时能撕下换位置。"},"packfile":{"en":"packfile","zh":"打包文件（packfile）","def_zh":"git 把一批压缩对象合并成的大文件，用来减少传输和存储开销。Scion 没有对应物，因此也不必做这类仓库维护。","analogy_zh":"把一堆小文件打成一个压缩包，省传输。"},"content-addressed":{"en":"content-addressed","zh":"内容寻址","def_zh":"用内容算出的哈希值来命名和查找数据。内容一变名字就变，所以存下的数据永不改变，任何缓存都能直接信任它。","analogy_zh":"像用内容指纹当文件名，内容一改名字也改。"},"compare-and-swap":{"en":"compare-and-swap","zh":"比较并交换（CAS）","def_zh":"一种并发更新方式：确认当前值仍等于预期的旧值时才写入新值。Scion 移动引用，就是在 Spanner 的一行数据上做这个原子操作。","analogy_zh":"像只有票面没被换过才允许改签。"},"spanner":{"en":"Spanner","zh":"Spanner","def_zh":"Google 的分布式数据库。Scion 用它保存变更集和派生数据，让服务器之间几乎不用互相协调，从而能横向扩展。","analogy_zh":""},"derived-data":{"en":"derived data","zh":"派生数据","def_zh":"不属于变更集本身、而是从变更集递归算出的附加结构，如 blame、路径历史和提交图跳表，用来快速回答历史类问题。","analogy_zh":"像照原始账本另算出的报表，随时能重算。"},"skip-list":{"en":"skip list","zh":"跳表","def_zh":"一种带多层索引、能快速跳着查找的数据结构。Scion 用它给提交图建索引，查祖先关系时不必一个提交一个提交地走。","analogy_zh":"像高速路隔几公里一个出口，能整段跳过。"},"blame":{"en":"blame","zh":"blame（逐行追溯）","def_zh":"逐行查出某行代码最后是谁改的、在哪次改动里改的。它依赖完整历史，所以旧的部分克隆方案也很难让它正常工作。","analogy_zh":"像查每句话是谁写的、哪一稿改的。"},"shallow-clone":{"en":"shallow clone","zh":"浅克隆（shallow clone）","def_zh":"只取最近一段历史、不带全量历史的克隆方式，目的是少传数据。本文说这类 git 手段只买到时间，运维会越来越难。","analogy_zh":"像只买最近几章的书，而不是整套。"},"sparse-checkout":{"en":"sparse checkout","zh":"稀疏检出（sparse checkout）","def_zh":"只把仓库里部分目录的文件取到本地，其余不下载。Scion 把它当成常规做法，客户端只为自己真正读到的文件付代价。","analogy_zh":"像只把要用的几层抽屉搬回家。"},"promisor-remote":{"en":"promisor remote","zh":"承诺式远程（promisor remote）","def_zh":"git 的一种按需取数机制：本地缺对象时，再向被指定为承诺方的远程仓库索取。它是 git 应付大仓库的三种手段之一。","analogy_zh":"像先赊账，缺什么再向总店要。"},"working-copy":{"en":"working copy","zh":"工作副本","def_zh":"磁盘上那份可以直接编辑的仓库文件副本。Anthropic 压缩后的工作副本仍超过 25 GB，所以 Scion 把它做成可选的。","analogy_zh":"像你桌上那份可以随手涂改的稿子。"},"virtualized-checkout":{"en":"virtualized checkout","zh":"虚拟化检出（virtualized checkout）","def_zh":"一种按需取文件的检出方式：只有真正被读取的文件才从服务器取下来，CI 任务因此只为自己读过的内容花代价。","analogy_zh":"像按需调阅的图书馆，翻到哪页才取哪页。"},"checkout":{"en":"checkout","zh":"检出（checkout）","def_zh":"把某个版本的代码取到磁盘、变成可读写文件的操作。Anthropic 每天约两千五百万次检出，是压垮旧架构的主要负载。","analogy_zh":"像按指定版本把代码复印到本地。"},"merge-base":{"en":"merge base","zh":"合并基线（merge base）","def_zh":"两条分支的历史分叉之前、最后一个共同的提交，也就是分叉点。要算某次改动到底改了什么，往往得先找到它。","analogy_zh":"像两条岔路的最后一个共同路口。"},"merge-queue":{"en":"merge queue","zh":"合并队列","def_zh":"让待合并的改动排队、逐个验证通过后再合入的机制，用来避免互相干扰。本文认为它按人类规模设计，智能体规模下并不合适。","analogy_zh":"像登机前的排队安检，一个一个过。"},"rebase":{"en":"rebase","zh":"变基（rebase）","def_zh":"把一串提交挪到新的起点上重新施加，让历史看起来像顺序叠加。Scion 的变基也在服务器上完成，没有本地提交要推送。","analogy_zh":"像把一串积木整体挪到新底座上。"},"ci":{"en":"CI","zh":"持续集成（CI）","def_zh":"代码一改就自动构建并跑测试的流程。Anthropic 的 CI 每天要检出代码约两千五百万次，旧的 git 架构撑不住这个量。","analogy_zh":""},"code-review":{"en":"code review","zh":"代码评审","def_zh":"改动合入之前先由人或工具审查的环节。Anthropic 为此自建了 Antique，并能让评审表达更细的审批条件。","analogy_zh":"像发表前先过一遍编辑审稿。"},"iam":{"en":"IAM","zh":"身份与访问管理（IAM）","def_zh":"管理谁可以对哪些资源做什么的系统。Scion 支持仓库级和目录级权限，好在超大单体仓库里只保护最敏感的那部分代码。","analogy_zh":"像大楼门禁，按人按房间发钥匙。"},"bisect":{"en":"bisect","zh":"bisect（二分定位）","def_zh":"用二分法在历史里找出是哪一次改动引入了问题。Scion 把源码查询都变成 API，自动化二分才可能大规模运行。","analogy_zh":"像对半砍着找出坏掉的那一批。"},"hermetic-simulation":{"en":"hermetic simulation","zh":"封闭式仿真（hermetic simulation）","def_zh":"把外部依赖彻底隔离、每次运行条件都一致的测试环境。Scion 为各种基础设施和源码交互都建了这种仿真。","analogy_zh":"像隔离在封闭实验室里反复重演。"},"fuzzing":{"en":"fuzzing","zh":"模糊测试","def_zh":"向程序灌入大量随机或异常输入，以撞出崩溃和漏洞的测试方法。文章把它列为 Scion 的防护手段之一。","analogy_zh":"像不断扔奇怪输入，看它哪下会崩。"},"daemon":{"en":"daemon","zh":"守护进程（daemon）","def_zh":"长期在后台运行、替同一台机器上其他程序服务的进程。Scion 的 scion-daemon 缓存整个节点的对象，供各任务复用。","analogy_zh":"像楼里的常驻管家，随时替各家跑腿。"},"rpc":{"en":"RPC","zh":"远程过程调用（RPC）","def_zh":"让程序像调用本地函数那样调用另一台机器上的功能。Scion 各层响应同一套 RPC，客户端因此不必关心缓存的分层结构。","analogy_zh":"像打内线电话，本地按键让隔壁干活。"},"trunk-based-development":{"en":"trunk-based development","zh":"主干开发","def_zh":"大家都向同一条主干分支频繁提交、少开长期分支的做法。文章借此解释为什么人们只关心主干上的历史与 blame。","analogy_zh":"像所有人往同一条大传送带上放零件。"},"rate-limiting":{"en":"rate limiting","zh":"限流","def_zh":"限制单位时间内的请求量，防止系统被压垮或滥用。文章把精细的限流列为 Scion 的防护措施之一。","analogy_zh":"像高峰期限流的地铁闸机。"},"mirror":{"en":"git mirror","zh":"镜像（mirror）","def_zh":"仓库的一份完整复制，用来分担读流量。Anthropic 峰值时运行几百个内部 git 镜像，规模一大就难以为继。","analogy_zh":"像同一本书多印几本分担借阅人流。"},"ingestion-pipeline":{"en":"ingestion pipeline","zh":"摄入流水线","def_zh":"把数据成批从旧系统转换、搬进新系统的流程。Anthropic 用一条从 git 到 Scion 的摄入流水线完成迁移。","analogy_zh":"像搬家时把旧家具逐件清点搬进新屋。"},"agent":{"en":"agent","zh":"智能体","def_zh":"能自己规划步骤、调用工具、连续执行任务的 AI 程序。Anthropic 绝大多数客户端是智能体，这正是 Scion 的设计前提。","analogy_zh":"像能自己找活干的实习生，而不是等指令的工具。"}},"notes":{"N1":{"title_zh":"Scion 与 Antique 这两个名字","body_zh":"Scion 字面是「接穗」——嫁接时从母株上取下的枝条；Antique 字面是「古董」。原文没有解释命名用意，这里只作字面说明，不猜测作者的隐喻。"},"N2":{"title_zh":"「把 git 当中心化系统用」是什么意思","body_zh":"git 本身是分布式的：每个克隆都有完整历史。但多数公司实际只维护一个权威副本（比如托管平台上的那个仓库），所有人从它克隆、再推回去。原文指出的矛盾是：你用着分布式的工具，却承担着中心化系统的流量。"},"N3":{"title_zh":"packfile 和「仓库维护」的关系","body_zh":"git 会把松散的小对象定期打包成 packfile 以省空间，这个打包与清理过程就是「仓库维护」（gc／repack）。Scion 没有 packfile，因为它从不把整个仓库物化到任何一处，所以也就不需要这类维护。"},"N4":{"title_zh":"refs 为什么是扩展性难题","body_zh":"ref 是指向提交的指针，分支和标签都是 ref。git 的每个客户端副本都需要知道分支指向哪里；在每天三万次合并的规模下，「所有服务器都要就同一份全局状态达成一致」会变成瓶颈。Scion 因此只保留主干和发布分支的 ref。"},"N5":{"title_zh":"scn 是什么","body_zh":"scn 是 Scion 的命令行客户端，作用类似 git 命令。原文特意说它和 git 的 fetch 协议差异很大，因为它不再以「我手里有完整仓库」为前提。"},"N6":{"title_zh":"「两个数量级」是多少","body_zh":"两个数量级就是约 100 倍。原文紧接着给了更直观的说法：从分钟级降到秒级。"},"N7":{"title_zh":"superfans 是内部绰号","body_zh":"superfans 字面是「超级粉丝」。在 Anthropic 内部，这是给「只盯一个组件健康状况的 Claude」起的绰号，实际角色更像一个专职监控员。"},"N8":{"title_zh":"为什么改成「合并后、部署前」测试","body_zh":"传统做法是在合并队列上做全局串行：一次只让一个改动通过，测完再放下一个。如果每天有成千上万个改动、测试又跑得慢，这个队列就会堵死。Anthropic 改成先合并、再在部署前做自动化测试；代价是并发改动可能冲突，但 Claude 修冲突通常比人发现冲突还快。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

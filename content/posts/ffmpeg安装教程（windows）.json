@@ -1,0 +1,45 @@
+{
+ "slug": "ffmpeg安装教程（windows）",
+ "path": "2026/02/11/ffmpeg安装教程（windows）",
+ "title": "ffmpeg安装教程（windows）",
+ "description": "Windows 下手动安装 ffmpeg 并配好环境变量的完整步骤，附每一步截图。",
+ "date": "2026-02-11",
+ "tags": [
+  "ffmpeg",
+  "windows",
+  "教程"
+ ],
+ "content": "<h2 id=\"前言\">前言</h2><p>写这个文档主要是最近打算批量录制抖音直播视频，使用的仓库来自 <a target=\"_blank\" rel=\"noopener\" href=\"https://github.com/ihmily/DouyinLiveRecorder\">GitHub - ihmily&#x2F;DouyinLiveRecorder</a> ，在运行的时候发现 ffmpeg 无法通过程序运行正常的安装，只能被迫的手动安装。</p>\n<p>文章结构与部分相关图片来自于知乎：<a target=\"_blank\" rel=\"noopener\" href=\"https://zhuanlan.zhihu.com/p/692019886\">如何安装ffmpeg安装教程（windows版），看这篇就够了。</a> </p>\n<h2 id=\"什么是-FFmpeg？\">什么是 FFmpeg？</h2><p>FFmpeg 是一个<strong>免费、开源</strong>的跨平台项目，由一系列的命令行程序和库组成，用于<strong>处理、转换、流式传输、编码和解码</strong>各种格式的<strong>多媒体数据</strong>（包括视频、音频和图像）。</p>\n<h2 id=\"作用\">作用</h2><h4 id=\"1-格式转换（Transcoding）\">1. 格式转换（Transcoding）</h4><p>这是 FFmpeg 最常用、最基本的功能。</p>\n<ul>\n<li><strong>示例：</strong> 将 .mov 文件转换成 .mp4，将 .wav 音频转换成 .mp3，或将视频编码格式从 H.264 转换成 HEVC (H.265)。</li>\n</ul>\n<h4 id=\"2-录制与流媒体处理\">2. 录制与流媒体处理</h4><ul>\n<li><strong>录制：</strong> 可以从各种来源（如摄像头、麦克风、屏幕捕获，或像你遇到的<strong>网络直播流</strong>）捕获数据并保存为文件。</li>\n<li><strong>流媒体：</strong> 它是许多直播平台（包括推流端和接收端）处理和传输音视频流的核心技术。</li>\n</ul>\n<h4 id=\"3-基础编辑和处理\">3. 基础编辑和处理</h4><ul>\n<li><strong>剪辑&#x2F;合并：</strong> 剪切视频片段、合并多个视频文件。</li>\n<li><strong>缩放&#x2F;裁剪：</strong> 改变视频的分辨率（例如将 1080p 缩放为 720p）。</li>\n<li><strong>滤镜&#x2F;效果：</strong> 添加水印、字幕、进行色彩调整等。</li>\n<li><strong>分离&#x2F;混流：</strong> 将视频文件中的音频和视频轨道分离，或将新的音轨&#x2F;字幕混入视频文件。</li>\n</ul>\n<h4 id=\"4-播放器和编解码器基础\">4. 播放器和编解码器基础</h4><p>许多知名的多媒体播放器和软件（如 VLC Media Player、MPlayer 等）的底层都使用了 FFmpeg 的库（libavcodec、libavformat 等）来进行<strong>音视频的解码和编码</strong>。</p>\n<p>对于 DouyinLiveRecorder 这个直播录制工具来说，ffmpeg 的作用是<strong>核心引擎</strong>：</p>\n<ol>\n<li><strong>抓取流数据：</strong> 你的程序负责解析直播间的地址，获取原始的音视频流数据。</li>\n<li><strong>录制和封装：</strong> <strong>ffmpeg</strong> 负责接收这些原始数据流，并将其<strong>实时编码、同步</strong>，最终<strong>封装</strong>成你需要的 .mp4 或其他格式的视频文件并保存到硬盘上。</li>\n</ol>\n<h2 id=\"安装与部署步骤\">安装与部署步骤</h2><h3 id=\"1-官网下载ffmpeg\">1.官网下载ffmpeg</h3><p>进入 <a href=\"https://link.zhihu.com/?target=https://ffmpeg.org/download.html\">Download FFmpeg</a> 网址，点击下载 windows 版 ffmpeg（点击左下第一个绿色的行）</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step1.png\" alt=\"ffmpeg官方下载页面1\"></p>\n<p>在release builds第一个绿框里面选择一个版本下载。</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step2.png\" alt=\"ffmpeg官方下载页面2\"></p>\n<h3 id=\"2-部署\">2. 部署</h3><p>下载完成后，将文件解压到你指定的目录（切记，尽可能不要解压到系统盘，如 C 盘）</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step3.png\" alt=\"ffmpeg官方下载页面3\"></p>\n<p>解压完成后，进入项目文件，进入到 <code>bin</code> 文件夹，并将文件夹路径复制下来<br>打开 <code>电脑设置</code> ，进入到 <code>系统</code> ，拉到最底下，找到 <code>系统信息</code> ，点击 <code>高级系统设置</code>。</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step4.png\" alt=\"ffmpeg官方下载页面4\"></p>\n<p>打开环境变量，在系统变量中找到Path:</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step5.png\" alt=\"ffmpeg官方下载页面5\"></p>\n<p>双击打开，点击新建：</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step6.png\" alt=\"ffmpeg官方下载页面6\"></p>\n<p>再把最开始复制的地址黏贴进来，点击确定：</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step7.png\" alt=\"ffmpeg官方下载页面7\"></p>\n<p>保存完毕后，打开任意shell 输入 <code>ffmpeg -version</code> ，如果正常输出版本号则表示安装成功。</p>\n<p><img loading=\"lazy\" src=\"{{ROOT}}img/ffmpeg/ffmpeg-download-step8.png\" alt=\"ffmpeg官方下载页面8\"></p>",
+ "toc": [
+  {
+   "level": 2,
+   "text": "前言",
+   "id": "前言"
+  },
+  {
+   "level": 2,
+   "text": "什么是 FFmpeg？",
+   "id": "什么是-FFmpeg？"
+  },
+  {
+   "level": 2,
+   "text": "作用",
+   "id": "作用"
+  },
+  {
+   "level": 2,
+   "text": "安装与部署步骤",
+   "id": "安装与部署步骤"
+  },
+  {
+   "level": 3,
+   "text": "1.官网下载ffmpeg",
+   "id": "1-官网下载ffmpeg"
+  },
+  {
+   "level": 3,
+   "text": "2. 部署",
+   "id": "2-部署"
+  }
+ ]
+}

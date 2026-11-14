@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>你的编码智能体，把你变成了管理者｜Your coding agents made you a manager</title>
+<meta name="description" content="你的编码智能体，把你变成了管理者｜Your coding agents made you a manager：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/agent-manager/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="你的编码智能体，把你变成了管理者">
+<meta property="og:description" content="你没有经理头衔，却已经在做管理；这篇把「管理」拆成 12 个可执行的习惯，并指出 6 处「智能体不是初级工程师」的地方">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/agent-manager/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Addy Osmani · Claude Code 团队（Anthropic） · 2026-11-08</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Your coding agents made you a manager</span><span class="h1-zh">你的编码智能体，把你变成了管理者</span></h1><div class="hero-meta"><span>原文 3660 词</span><span>中文 7000 字</span><span>逐句对照 <i>227</i> 句</span><span>预计 14 分钟</span><span><a href="https://x.com/addyosmani/status/2119332146485891501" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 7 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：整天跟编码智能体打交道的人，其实已经在做管理。把「管理」当成一套可以练的技能，比把它当成一个职位更有用。</li><li><b>为什么先读第一节</b>：作者说各节按影响力排序。第一个习惯最狠——给智能体一个能跑出 pass/fail 的验证机制；否则「看起来做完了」就是它唯一的验证，而你就变成了它的测试套件。</li><li><b>结构</b>：12 个小节，每节都是「最佳实践 + 反模式 + 为什么」。前六节讲怎么把一次协作做对（验证、上下文、纠正复利、少用硬约束、先计划、早纠偏）；后六节讲怎么把「不需要你」的运行设计出来（判断不外派、无人值守五问、扩验证不扩注意力、决定不做什么、类比失效、你不需要头衔）。</li><li><b>最反直觉的两条</b>：一是少用强制——prompt、CLAUDE.md、技能是「请求」，钩子、拒绝规则才是「要求」，把偏好写成全大写规则就是新的微管理；二是「两次纠正失败就重开」，第三次纠正基本只是往上下文里堆垃圾。</li><li><b>三个关键词</b>：编排税（作者自造，每多一个智能体，要的注意力比上一个更多）、认知投降（借自沃顿研究：照单接受 AI 的答案，还更自信）、代码盖章（作者自造：tests are green 就批一份大 diff）。</li><li><b>作者自己的量级</b>：大多数日子跑四五个后台智能体加几个本地会话，有些天已经嫌多；<code>/batch</code> 会把一个大改动切成 5 到 30 个任务；沃顿那项研究里，参与者大多数时候接受了 AI 的错误答案（正文语，具体比例见延伸阅读 L2）。</li><li><b>类比失效的地方（第 11 节列了七条）</b>：管人更难且技能不会反向迁移、返工几乎免费、智能体没有经验只有笔记本、又积极又自信、只有一种类型且随模型变、新人的练习机会还得你造；最后一条是别把人的团队挤掉了。</li></ul><div class="compare"><div class="cmp"><h3>常见直觉：智能体 = 更快的初级工程师</h3><ol><li>prompt 写得好，产出自然就好</li><li>让它多写，产出自然多</li><li>它说做完了，就是做完了</li><li>有空就多开几个会话</li><li>出错就再纠正一次</li></ol></div><div class="cmp win"><h3>本文：它需要被管理，但不是人</h3><ol><li>关键不一定是 prompt 技巧，而是 brief：目标、约束、验收标准</li><li>吞吐上限在审查与验证，不在生成</li><li>「看起来做完了」不算证据，要有能跑出 pass/fail 的检查</li><li>数量受「编排税」限制：每多一个，要的注意力比上一个更多</li><li>两次纠正失败就重开，别叠第三次</li></ol></div></div><p class="ov-foot cmp-foot">这张对比卡是译者按正文归纳的，不是原文的表格。原文更强调「管理」是借来的类比，用它的同时要记住它在哪几处不成立。</p><p class="ov-foot">读法建议：先看第一节（验证机制）和第七节（可以派活、不能派判断）——这两节最容易被忽略又最贵；其余各节可以当检查表，用的时候再回来对。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>作者的主张可以压成一句：管理智能体的技能，差不多就是管理团队的技能，而且你不必先有经理头衔。这篇把它拆成 12 个可执行的习惯，每个都配一条反模式和一句「为什么」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0"><i>The <span class='term' data-term='skill'>skills</span> for managing <span class='term' data-term='agent'>agents</span> are pretty much the skills for managing a team, and you don't need to be a manager to learn them.</i></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0"><i>管理<span class='term' data-term='agent'>智能体</span>所需的<span class='term' data-term='skill'>技能</span>，基本就是管理一支团队所需的技能——而且你不需要有经理头衔才能学它。</i></span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">If you're spending all day with a coding agent, you are managing.</span> <span class="s" data-k="intro-b1-1">You're repeatedly selecting tasks, writing instructions, delegating, following up, evaluating results, and deciding what ships.</span> <span class="s" data-k="intro-b1-2">The engineers who get the most out of agents aren't necessarily the ones who are best at prompt engineering.</span> <span class="s" data-k="intro-b1-3">They're the ones who learned how to manage, intentionally or otherwise.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">如果你整天都在跟一个编码智能体打交道，那你就是在做管理。</span><span class="s" data-k="intro-b1-1">你在反复地挑任务、写指令、分派、跟进、评估结果，并决定哪些东西能上线。</span><span class="s" data-k="intro-b1-2">把智能体用得最好的工程师，不一定是提示词写得最漂亮的那批人。</span><span class="s" data-k="intro-b1-3">而是学会了怎么做管理的人——不管是有意还是无意。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">This might be an unwelcome idea.</span> <span class="s" data-k="intro-b2-1">Many of the engineers I admire took an <span class='term' data-term='ic'>individual contributor</span> (IC) career path because they want to stay close to the work.</span> <span class="s" data-k="intro-b2-2">They've seen friends become managers and disappear into their calendars.</span> <span class="s" data-k="intro-b2-3">But I'm not telling you to become a manager like that.</span> <span class="s" data-k="intro-b2-4">I'm using "management" in a specific sense: producing good outcomes by enabling others' work.</span> <span class="s" data-k="intro-b2-5">And I'm certainly not saying agents are a substitute for managers or colleagues.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">这个说法可能不太受欢迎。</span><span class="s" data-k="intro-b2-1">我欣赏的很多工程师走的是<span class='term' data-term='ic'>个人贡献者</span>（IC）这条路，因为他们想离具体工作近一点。</span><span class="s" data-k="intro-b2-2">他们见过朋友当上经理之后，整个人消失在日历里。</span><span class="s" data-k="intro-b2-3">但我不是让你去当那种经理。</span><span class="s" data-k="intro-b2-4">我说的「管理」是一个特定含义：通过让别人把活干成，来产出好结果。</span><span class="s" data-k="intro-b2-5">我也绝不是说智能体能替代经理或同事。</span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">Every gripe you have about bad managers is a bug report for interacting with agents.</span> <span class="s" data-k="intro-b3-1">Think about handoffs.</span> <span class="s" data-k="intro-b3-2">If you’ve experienced a bad one you may have got an ask that felt vague, lacked context or just had expectations shift a lot.</span> <span class="s" data-k="intro-b3-3">The good news for ICs is that since you’ve been on the receiving end of handoffs for years, you might know what a good one looks like.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">你对糟糕经理的每一条抱怨，都是一份「怎么跟智能体打交道」的 bug 报告。</span><span class="s" data-k="intro-b3-1">想想「交接」这件事。</span><span class="s" data-k="intro-b3-2">如果你经历过一次糟糕的交接，你大概收到过一个含糊的任务：缺上下文，或者期望值就是一直在变。</span><span class="s" data-k="intro-b3-3">对个人贡献者来说，好消息是：你已经在「交接的接收端」待了很多年，所以你可能知道一次好的交接长什么样。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">I've written before that <a class='lnk' href='https://addyosmani.com/blog/coding-agents-manager/' target='_blank' rel='noopener' data-link='L1'>your coding agents need a manager</a>.</span> <span class="s" data-k="intro-b4-1">I've also written about the quiet risk of delegation, <a class='lnk' href='https://addyosmani.com/blog/cognitive-surrender/' target='_blank' rel='noopener' data-link='L2'>cognitive surrender</a>.</span> <span class="s" data-k="intro-b4-2">This piece compares good engineering managers' practices with what we've learned from using and creating Claude Code.</span> <span class="s" data-k="intro-b4-3">The sections are roughly ordered by impact, so that the most high-leverage habit comes first.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">我以前写过，<a class='lnk' href='https://addyosmani.com/blog/coding-agents-manager/' target='_blank' rel='noopener' data-link='L1'>你的编码智能体需要一个经理</a>。</span><span class="s" data-k="intro-b4-1">我也写过委派这件事的隐性风险：<a class='lnk' href='https://addyosmani.com/blog/cognitive-surrender/' target='_blank' rel='noopener' data-link='L2'>认知投降</a>。</span><span class="s" data-k="intro-b4-2">这篇把优秀工程经理的做法，跟我们在使用和开发 Claude Code 过程中学到的东西放在一起比较。</span><span class="s" data-k="intro-b4-3">各节大致按影响力排序，最省力见效的那个习惯放在最前面。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-check">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Give it a way to check its work</span><span class="h-zh">给它一个能验证工作的机制</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节的核心：把「看起来做完了」换成「有证据地做完了」。验证机制只需要能给出 yes/no，而跑验证的那条命令，是你能写进 CLAUDE.md 的最有用的一行。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="check-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="check-b0-0"><b>Best practice:</b> Provide the agent with a mechanism to validate its work, like a test suite, build, or screenshot, and have it show you the results as proof.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="check-b0-0"><b>最佳实践：</b>给智能体一个能验证自己工作的机制，比如测试套件、构建，或者截图，并让它把结果拿给你当证据。</span></p></div></div>
+<div class="row" data-rid="check-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="check-b1-0"><b><span class='term' data-term='antipattern'>Anti-pattern</span>:</b> Taking "looks done" as confirmation.</span> <span class="s" data-k="check-b1-1">This forces you to do all the validation, becoming the agent's test suite.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="check-b1-0"><b><span class='term' data-term='antipattern'>反模式</span>：</b>把「看起来做完了」当成确认。</span><span class="s" data-k="check-b1-1">这会逼着你承担全部验证工作，你就变成了智能体的测试套件。</span></p></div></div>
+<div class="row" data-rid="check-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="check-b2-0">Ask an experienced manager how they can be confident their team is producing good work without reading everything, and they'll talk about <span class='term' data-term='guardrail'>guardrails</span>.</span> <span class="s" data-k="check-b2-1">CI, code review, dashboards, on-call, etc.</span> <span class="s" data-k="check-b2-2">Inexperienced managers who don't build guardrails end up validating everything themselves, and within a quarter they're the bottleneck.</span> <span class="s" data-k="check-b2-3">The same is true for agents.</span> <span class="s" data-k="check-b2-4">As the <a class='lnk' href='https://code.claude.com/docs/en/best-practices' target='_blank' rel='noopener' data-link='L3'>Claude Code best-practices guide</a> explains, agents stop when the work looks done.</span> <span class="s" data-k="check-b2-5">If there's no validation, "looks done" is the only validation the agent has.</span> <span class="s" data-k="check-b2-6">Providing a mechanism to validate the work allows the agent to do the work, run the validator, see the failure, and correct it on its own.</span> <span class="s" data-k="check-b2-7">For a UI change, this can mean actually opening the page in a browser and iterating until it works and looks good.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="check-b2-0">你去问一个有经验的经理：不逐条看，怎么确信团队产出是好的？他会跟你聊<span class='term' data-term='guardrail'>护栏</span>。</span><span class="s" data-k="check-b2-1">持续集成（CI）、代码审查、监控仪表盘、值班，诸如此类。</span><span class="s" data-k="check-b2-2">没建护栏的新手经理最终什么都要自己验一遍，一个季度之内就成了瓶颈。</span><span class="s" data-k="check-b2-3">智能体这边是一样的。</span><span class="s" data-k="check-b2-4">正如<a class='lnk' href='https://code.claude.com/docs/en/best-practices' target='_blank' rel='noopener' data-link='L3'>Claude Code 最佳实践指南</a>所说，智能体在「活看起来干完了」的时候就停下。</span><span class="s" data-k="check-b2-5">如果没有验证机制，「看起来做完了」就是智能体唯一的验证。</span><span class="s" data-k="check-b2-6">给它一个验证机制，它就能自己干活、跑验证、看到失败、然后自己改对。</span><span class="s" data-k="check-b2-7">如果是 UI 改动，这就意味着真的在浏览器里打开页面，一轮轮调到能用、好看为止。</span></p></div></div>
+<div class="row" data-rid="check-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="check-b3-0">The validation mechanism can be almost anything, as long as it's something that yields a definitive pass/fail result.</span> <span class="s" data-k="check-b3-1">Think tests, build exit codes, linters, <span class='term' data-term='diff'>diff</span> scripts, and screenshots.</span> <span class="s" data-k="check-b3-2">The guide notes that the command that runs these validations is the single most useful line you can have in your <span class='term' data-term='claudemd'>CLAUDE.md</span>, the instructions file the agent starts each session with.</span> <span class="s" data-k="check-b3-3">Once you have the validation mechanism, here are some ways you can bring it into your workflow:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="check-b3-0">验证机制几乎可以是任何东西，只要能给出明确的通过/不通过结果。</span><span class="s" data-k="check-b3-1">比如测试、构建退出码、linter、diff（<span class='term' data-term='diff'>差异</span>）脚本、截图。</span><span class="s" data-k="check-b3-2">指南里提到：跑这些验证的那条命令，是你能在 <span class='term' data-term='claudemd'>CLAUDE.md</span> 里写的最有用的一行——CLAUDE.md 就是智能体每次开启会话时会先读的指令文件。</span><span class="s" data-k="check-b3-3">有了验证机制之后，有几种把它接进工作流的做法：</span></p></div></div>
+<div class="row" data-rid="check-b4"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="check-b4-0-0"><b>Ask.</b> "Run the auth tests after, and continue until they pass."</span></li><li><span class="s" data-k="check-b4-1-0"><b>Set a goal.</b> With /goal, a separate model runs a condition check after every <span class='term' data-term='turn'>turn</span>, which is most useful when doing long background work.<sup class='tn' data-note='N1'>1</sup></span></li><li><span class="s" data-k="check-b4-2-0"><b>Enforce.</b> A Stop <span class='term' data-term='hook'>hook</span> can prevent the turn from completing until the typecheck passes.</span></li><li><span class="s" data-k="check-b4-3-0"><b>Have it reviewed.</b> /code-review sends the diff to a new <span class='term' data-term='subagent'>subagent</span> (which didn't see your conversation) for review, like how authors don't approve their own PRs.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="check-b4-0-0"><b>直接用嘴说。</b>「改完跑一遍 auth 测试，不过就一直改到过。」</span></li><li><span class="s" data-k="check-b4-1-0"><b>设一个目标。</b>用 /goal 时，每个<span class='term' data-term='turn'>回合</span>结束后会有另一个模型来检查条件是否满足——做长时间后台任务时最有用。<sup class='tn' data-note='N1'>1</sup></span></li><li><span class="s" data-k="check-b4-2-0"><b>强制。</b>Stop <span class='term' data-term='hook'>钩子</span>可以让回合在类型检查通过之前一直无法结束。</span></li><li><span class="s" data-k="check-b4-3-0"><b>让它被审一遍。</b>/code-review 会把差异发给一个新的<span class='term' data-term='subagent'>子智能体</span>来做审查（它没见过你的对话），就像作者不给自己批 PR（向代码平台提交一次改动、请人审阅后合并）一样。</span></li></ul></div></div>
+<div class="row" data-rid="check-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="check-b5-0">You can even control the scope of the review.</span> <span class="s" data-k="check-b5-1">If you ask it to find problems, it will always find something.</span> <span class="s" data-k="check-b5-2">But if you ask it to find correctness issues and ignore style, it will do that.</span> <span class="s" data-k="check-b5-3">This is how good managers learn to ask for feedback, as well.</span> <span class="s" data-k="check-b5-4">Most of the functionality in the Claude Code toolkit is all about tightening this loop.</span> <span class="s" data-k="check-b5-5">Skills, hooks, subagents, and <span class='term' data-term='mcp'>MCP</span> all exist to bridge the gap between doing the work and validating the work, so your focus is only on the things the agent couldn't validate.</span> <span class="s" data-k="check-b5-6">This is what experienced engineering managers do.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="check-b5-0">你甚至可以控制审查的范围。</span><span class="s" data-k="check-b5-1">如果你让它「找问题」，它总能找出点什么。</span><span class="s" data-k="check-b5-2">但如果你让它只找正确性问题、忽略风格，它也会照做。</span><span class="s" data-k="check-b5-3">好的经理也是这样学会要反馈的。</span><span class="s" data-k="check-b5-4">Claude Code 这套工具里的大部分功能，都是在把「干活—验证」这个循环拧得更紧。</span><span class="s" data-k="check-b5-5">技能、钩子、子智能体、<span class='term' data-term='mcp'>MCP</span>，都是用来补上「干活」和「验证」之间的那道缝，这样你的注意力只需要放在智能体验不了的那部分。</span><span class="s" data-k="check-b5-6">有经验的工程经理，干的就是这件事。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-context">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Set clear context</span><span class="h-zh">把上下文交代清楚</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>好 brief 不是写得长，而是只写仓库里没有的东西：目标、为什么重要、约束、不做什么、怎么验收。文中拿「让仪表盘变快」示范了怎么把它改写成 prompt。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="context-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b0-0"><b>Best practice:</b> Provide a clear summary of what the agent can't know by inspecting the repo, including: the task's objective and why it's important, constraints, out-of-scope items, and success criteria.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b0-0"><b>最佳实践：</b>把智能体靠翻仓库看不出、又必须知道的信息，清楚地概括给它：任务目标以及它为什么重要、约束、不在范围内的东西、以及验收标准。</span></p></div></div>
+<div class="row" data-rid="context-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b1-0"><b>Anti-pattern:</b> Passing a one-line task, while the real expectations live in your head, or padding the brief with things the agent would discover by reading the code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b1-0"><b>反模式：</b>丢过去一句话的任务，真正的期望全在你脑子里；或者反过来，把智能体读代码就能知道的东西全塞进 brief。</span></p></div></div>
+<div class="row" data-rid="context-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b2-0">Effective managers provide clear descriptions of the desired outcome, constraints, and objectives.</span> <span class="s" data-k="context-b2-1">They articulate what the work should accomplish, but give the person doing the work the freedom to figure out how to do it.</span> <span class="s" data-k="context-b2-2">In the military, they call it <span class='term' data-term='commanderintent'>commander's intent</span>.</span> <span class="s" data-k="context-b2-3">At Netflix, they call it "context, not control."</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b2-0">有效的经理会把想要的结果、约束和目标讲清楚。</span><span class="s" data-k="context-b2-1">他们说清「这件事要达成什么」，但把「怎么做」的自由留给干活的人。</span><span class="s" data-k="context-b2-2">军队里把这叫「<span class='term' data-term='commanderintent'>指挥官意图</span>」。</span><span class="s" data-k="context-b2-3">Netflix 的说法是「给上下文，别给控制」。</span></p></div></div>
+<div class="row" data-rid="context-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b3-0">The challenge of working with agents is that it's hard to know what context the agent is missing.</span> <span class="s" data-k="context-b3-1">The first thing a coding agent does on every task is read your code.</span> <span class="s" data-k="context-b3-2">Current models are fantastic at picking up on your folder structure, conventions, and test set-up much faster than you could describe them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b3-0">跟智能体协作的难点在于：你很难知道它缺了哪块上下文。</span><span class="s" data-k="context-b3-1">编码智能体接到每个任务，第一件事都是读你的代码。</span><span class="s" data-k="context-b3-2">现在的模型很擅长自己从目录结构、约定和测试配置里读出规律，比你口头描述快得多。</span></p></div></div>
+<div class="row" data-rid="context-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b4-0">Before you write anything down, think about what the agent can figure out on its own.</span> <span class="s" data-k="context-b4-1">If the agent can read it in your code, and it would actually go read it, you don't need to say anything.</span> <span class="s" data-k="context-b4-2">Spend your words on the parts that are not in the repo - e.g. a meeting decision, someone's internal process for deploying, why this task is important, and what it means to be done this time.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b4-0">在动手写之前，先想想哪些东西智能体自己能搞清楚。</span><span class="s" data-k="context-b4-1">凡是它读代码就能读到、而且它真的会去读的，你一个字都不用写。</span><span class="s" data-k="context-b4-2">把话花在仓库里没有的部分上——比如某次会议的决定、某个人内部的部署流程、这个任务为什么重要、以及这次「做完」具体指什么。</span></p></div></div>
+<div class="row" data-rid="context-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b5-0">Let's take the example of a vague task, "make the dashboard faster", and turn it into a prompt.</span> <span class="s" data-k="context-b5-1">The numbers here are just for example.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b5-0">拿一个模糊任务当例子：把「让仪表盘变快」写成一个 prompt。</span><span class="s" data-k="context-b5-1">这里的数字只是举例。</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>示例：把「让 dashboard 变快」写成一个 prompt（英文原文，不译）<span class="code-note">目标、为什么、约束、不做什么、怎么验证——五行正好对应这一节开头那条最佳实践。</span></summary><pre>Get p95 load time for the /team dashboard under 2s for orgs with 10k+ members.
+
+Why: enterprise admins open it daily, and slow loads are their top support ticket.
+
+Constraints: no schema changes; keep the API response shape.
+
+Out of scope: UI changes; caching the whole page.
+Check: run scripts/perf/team.sh and show before and after numbers.</pre></details></div>
+<div class="row" data-rid="context-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b7-0">You don't need to do this for every task.</span> <span class="s" data-k="context-b7-1">If you're doing discovery work, it's totally fine to write a generic prompt.</span> <span class="s" data-k="context-b7-2">You'll just refine a little more as you go.</span> <span class="s" data-k="context-b7-3">If you're not ready to write a prompt, have the agent interview you until it could write the spec, save that spec to a file, and then start a new session with the agent to build from that.</span> <span class="s" data-k="context-b7-4">You can use that spec to review against later.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b7-0">不是每个任务都要这么写。</span><span class="s" data-k="context-b7-1">如果是在探索阶段，写个泛泛的 prompt 完全没问题。</span><span class="s" data-k="context-b7-2">边做边再磨细一点就行。</span><span class="s" data-k="context-b7-3">如果你还没想清楚怎么写，就让智能体反过来采访你，直到它能替你写出这份 spec；把 spec 存成文件，再开一个新的会话来照着它实现。</span><span class="s" data-k="context-b7-4">这份 spec 之后还能拿来当审查的标准。</span></p></div></div>
+<div class="row" data-rid="context-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b8-0">You might also need to give your agent access to other tools, like your issue tracker, error dashboard, or team chat.</span> <span class="s" data-k="context-b8-1">Treat your agent the same way you'd treat a new hire on your team.</span> <span class="s" data-k="context-b8-2">If it's a CLI tool it already knows about, like gh, you often won't need to tell it anything.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b8-0">你可能还需要给智能体开放别的工具，比如 issue 跟踪、错误仪表盘或者团队聊天。</span><span class="s" data-k="context-b8-1">把智能体当成团队里的新同事来对待。</span><span class="s" data-k="context-b8-2">如果是它本来就熟的命令行工具（比如 gh），你通常什么都不用交代。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-compound">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Make every correction compound</span><span class="h-zh">让每次纠正都复利</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>同一件事纠正两次，就该从「口头纠正」升级成「写下来的规则」：CLAUDE.md 或一个共享技能。这一节还列了适合写进去的四类内容。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="compound-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="compound-b0-0"><b>Best practice:</b> When you correct the same thing more than once, document it in the team's <a class='lnk' href='http://claude.md/' target='_blank' rel='noopener' data-link='L4'>CLAUDE.md</a> or turn it into a shared skill.</span> <span class="s" data-k="compound-b0-1">Over time, check if newer models reduce the need for these corrections.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="compound-b0-0"><b>最佳实践：</b>同一件事你纠正了不止一次，就把它写进团队的 <a class='lnk' href='http://claude.md/' target='_blank' rel='noopener' data-link='L4'>CLAUDE.md</a>，或者做成一个共享技能。</span><span class="s" data-k="compound-b0-1">过一段时间回来看看：新模型是不是让这些纠正变少了。</span></p></div></div>
+<div class="row" data-rid="compound-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="compound-b1-0"><b>Anti-pattern:</b> Manually correcting the same thing every session or relying on tacit knowledge that only exists on your own machine.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="compound-b1-0"><b>反模式：</b>每次会话都手工纠正同一件事，或者依赖只存在于你本机上的隐性知识。</span></p></div></div>
+<div class="row" data-rid="compound-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="compound-b2-0">Teams that maximize the value of CLAUDE.md update it <span class='typo' data-typo='0'>semi often</span> and write down lessons learned from mistakes worth preventing.</span> <span class="s" data-k="compound-b2-1">Some teams even mention @claude in code reviews, turning feedback into a permanent policy.</span> <span class="s" data-k="compound-b2-2">Keep CLAUDE.md concise.</span> <span class="s" data-k="compound-b2-3">Here are the types of things that belong in it:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="compound-b2-0">把 CLAUDE.md 用出价值的团队，会隔一阵子就更新它，把「值得防住的错误」里学到的教训写下来。</span><span class="s" data-k="compound-b2-1">有些团队甚至会在代码审查里 @claude，把一次反馈变成长期策略。</span><span class="s" data-k="compound-b2-2">CLAUDE.md 要保持简短。</span><span class="s" data-k="compound-b2-3">适合写进去的东西有这么几类：</span></p></div></div>
+<div class="row" data-rid="compound-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="compound-b3-0-0">How to verify something (exact commands)</span></li><li><span class="s" data-k="compound-b3-1-0">Misleading areas of the code</span></li><li><span class="s" data-k="compound-b3-2-0">Decisions that don't exist in the repo</span></li><li><span class="s" data-k="compound-b3-3-0">Anything you've corrected twice</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="compound-b3-0-0">怎么验证某个东西（具体命令）</span></li><li><span class="s" data-k="compound-b3-1-0">代码里容易误导人的地方</span></li><li><span class="s" data-k="compound-b3-2-0">不写在仓库里的那些决定</span></li><li><span class="s" data-k="compound-b3-3-0">任何你纠正过两次的事</span></li></ul></div></div>
+<div class="row" data-rid="compound-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="compound-b4-0">These are all examples of the compounding nature of written information.</span> <span class="s" data-k="compound-b4-1">It outlasts people changing teams and models getting replaced.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="compound-b4-0">这些都是「写下来的信息会复利」的例子。</span><span class="s" data-k="compound-b4-1">它的寿命比人员换团队、比模型被替换都长。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-enforce">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Let it decide, and enforce only what can't bend</span><span class="h-zh">让它自己决定，只强制那些不能弯的事</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节给了一条特别清楚的界线：prompt、CLAUDE.md、技能是「请求」，模型可以权衡；钩子、拒绝规则、托管设置是「要求」，永远执行。判断标准只有一条——这件事是不是「必须永远做或永远不做」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="enforce-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="enforce-b0-0"><b>Best practice:</b> Let the agent decide by default and only use hard enforcement (e.g. hooks, deny rules) for the few things that must always or never happen.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="enforce-b0-0"><b>最佳实践：</b>默认让智能体自己决定，只对极少数「必须永远做／永远不做」的事才用硬性约束（比如钩子、拒绝规则）。</span></p></div></div>
+<div class="row" data-rid="enforce-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="enforce-b1-0"><b>Anti-pattern:</b> You write rules in ALL CAPS, define hooks for optional preferences, or keep habits from older models long after newer models outgrew them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="enforce-b1-0"><b>反模式：</b>用全大写字母写规则、为可有可无的偏好定义钩子，或者在新模型早就不需要之后还留着旧模型的习惯。</span></p></div></div>
+<div class="row" data-rid="enforce-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="enforce-b2-0">Andy Grove's <i>High Output Management</i> describes this as <span class='term' data-term='taskmaturity'>task-relevant maturity</span>: the level of supervision should depend on a person's history of performance in that specific task, not their overall capability.<sup class='tn' data-note='N2'>2</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="enforce-b2-0">Andy Grove 在《高产出管理》里把这叫「<span class='term' data-term='taskmaturity'>任务相关成熟度</span>」：监督的力度应该取决于这个人在「这件具体任务」上的历史表现，而不是他的总体能力。<sup class='tn' data-note='N2'>2</sup></span></p></div></div>
+<div class="row" data-rid="enforce-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="enforce-b3-0">An old piece of advice for new managers says the same thing: give people a little more latitude than you're comfortable with while backing them up and holding them accountable.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="enforce-b3-0">给新经理的一条老建议说的是同一件事：给别人比你舒服的程度再多一点自由，同时给他支持、也让他担责。</span></p></div></div>
+<div class="row" data-rid="enforce-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="enforce-b4-0">Claude Code takes this and makes it explicit: prompts, CLAUDE.md, and skills are requests that the model can consider and choose to act on; hooks, deny rules, and managed settings are requirements that are always enforced.</span> <span class="s" data-k="enforce-b4-1">In most cases, you want the agent to make the call.</span> <span class="s" data-k="enforce-b4-2">There are often cases where the model, looking at real code, is better placed to judge if a guideline applies than a rule you set ahead of time.</span> <span class="s" data-k="enforce-b4-3">Use enforcement to set hard requirements such as "never edit the generated client" or "always run the license-header script."</span> <span class="s" data-k="enforce-b4-4">In particular, new terminal and VS Code sessions start in auto mode, with a classifier that will filter out unsafe behaviors like deploying to production or force pushing over someone's work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="enforce-b4-0">Claude Code 把这一点显式化了：prompt、CLAUDE.md 和技能是「请求」，模型可以自己权衡要不要照做；钩子、拒绝规则和托管设置是「要求」，永远强制执行。</span><span class="s" data-k="enforce-b4-1">大多数情况下，你希望智能体自己来判断。</span><span class="s" data-k="enforce-b4-2">常常是这样：模型看着真实代码，比你事先定的一条规则更能判断这条准则适不适用。</span><span class="s" data-k="enforce-b4-3">硬性要求才用强制，比如「永远不要手改生成的 client」「永远先跑 license-header 脚本」。</span><span class="s" data-k="enforce-b4-4">另外，新的终端会话和 VS Code 会话默认从 auto 模式开始，里面有个分类器会拦掉不安全的行为，比如往生产环境部署、或者强推覆盖别人的工作。</span></p></div></div>
+<div class="row" data-rid="enforce-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="enforce-b5-0">The guide's advice has two sides.</span> <span class="s" data-k="enforce-b5-1">If you're putting more emphasis on a CLAUDE.md line and the agent still isn't picking it up, it should be a hook.</span> <span class="s" data-k="enforce-b5-2">If a hook is expressing a preference instead of a requirement, it should be removed in favor of letting the agent call the shots.</span> <span class="s" data-k="enforce-b5-3">It's like your team deciding to retire a process that is no longer useful.</span> <span class="s" data-k="enforce-b5-4">This also means adjusting when you have a new model.</span> <span class="s" data-k="enforce-b5-5">The guide keeps a list of habits you can stop: ALL CAPS directions, "think harder" (effort is a setting now), and "don't be lazy."</span> <span class="s" data-k="enforce-b5-6">With current models, these tend to lead to over-enforced rules and overwork.</span> <span class="s" data-k="enforce-b5-7">With agents, over-process is the new micromanagement.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="enforce-b5-0">指南的建议有两个方向。</span><span class="s" data-k="enforce-b5-1">如果某条 CLAUDE.md 你已经反复强调、智能体还是不听，那它就该变成钩子。</span><span class="s" data-k="enforce-b5-2">反过来，如果一个钩子表达的只是偏好而不是要求，就该删掉它，让智能体自己拍板。</span><span class="s" data-k="enforce-b5-3">这就像团队决定退役一个不再有用的流程。</span><span class="s" data-k="enforce-b5-4">这也意味着换新模型时要重新调。</span><span class="s" data-k="enforce-b5-5">指南里列了一份可以停掉的习惯清单：全大写的指令、「想得更深一点」（现在努力程度是个设置项）、以及「别偷懒」。</span><span class="s" data-k="enforce-b5-6">对现在的模型，这些东西往往会变成过度强制的规则和过度劳作。</span><span class="s" data-k="enforce-b5-7">在智能体这儿，过度流程就是微管理的新版本。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-plan">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Plan before it builds</span><span class="h-zh">先定计划，再让它动手</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>计划模式 + 一次「像资深工程师那样读计划」的设计评审，是发现方向跑偏最便宜的地方。任务拆分可以交给 /batch，但你仍要检查切出来的块有没有重叠。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="plan-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b0-0"><b>Best practice:</b> Set an agreed-upon plan before the agent starts coding, read for underlying assumptions, and partition tasks into non-overlapping parallel work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b0-0"><b>最佳实践：</b>在智能体动手写代码之前，先把计划谈定；读的时候留意底层的假设；再把任务切成互不重叠、可以并行的几块。</span></p></div></div>
+<div class="row" data-rid="plan-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b1-0"><b>Anti-pattern:</b> Allowing multiple agents to tackle overlapping tasks simultaneously, then spending the afternoon resolving merge conflicts and duplicated decisions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b1-0"><b>反模式：</b>放几个智能体同时啃有重叠的任务，结果一下午都在解合并冲突、收拾重复做的决定。</span></p></div></div>
+<div class="row" data-rid="plan-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b2-0">A good workflow here is to first enter <span class='term' data-term='planmode'>plan mode</span> and iterate on your plan until you have the right one, then delegate the coding.</span> <span class="s" data-k="plan-b2-1">With a good plan, the model can often build it all in a single pass.</span> <span class="s" data-k="plan-b2-2">For larger tasks, use a second session to look through the plan as a staff engineer would; it's a design review, which is the cheapest place to catch a wrong turn.</span> <span class="s" data-k="plan-b2-3">When reviewing the plan, look for underlying assumptions (in a 1:1 this would be asking, "What are you unsure about?").</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b2-0">这里的好流程是：先进入<span class='term' data-term='planmode'>计划模式</span>，把计划反复改到对为止，然后再把写代码派出去。</span><span class="s" data-k="plan-b2-1">计划足够好，模型常常一遍就能写完。</span><span class="s" data-k="plan-b2-2">任务大一点，就再开一个会话，让它像资深工程师那样把计划过一遍——这是一次设计评审，也是发现方向跑偏最便宜的地方。</span><span class="s" data-k="plan-b2-3">看计划的时候重点找底层假设（如果是一对一沟通，这等于问一句：「你哪里不确定？」）。</span></p></div></div>
+<div class="row" data-rid="plan-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="plan-b3-0">Decomposition is increasingly being delegated to agents.</span> <span class="s" data-k="plan-b3-1">/batch in Claude Code takes a big mechanical change and creates 5 to 30 tasks, displays the plan, executes them in separate <span class='term' data-term='worktree'>worktrees</span> (separate checkouts of the repo), and creates a PR for each one.</span> <span class="s" data-k="plan-b3-2">You no longer need to divide up the work, just check the slices for overlap and make sure shared interfaces land first.</span> <span class="s" data-k="plan-b3-3">Without this, you might get a false level of parallelism.</span> <span class="s" data-k="plan-b3-4">Five agents taking on overlapping tasks won't lead to five times the output, it leads to one merge conflict with five authors.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="plan-b3-0">任务拆分也越来越多地交给智能体。</span><span class="s" data-k="plan-b3-1">/batch 会拿一个大而机械的改动，切出 5 到 30 个任务，先把计划显示出来，然后在各自的<span class='term' data-term='worktree'>工作树</span>（同一仓库的独立检出）里执行，每个任务开一个 PR。</span><span class="s" data-k="plan-b3-2">你不用再自己切活了，只需要检查切出来的块有没有重叠，并确保共享接口先落地。</span><span class="s" data-k="plan-b3-3">不这么做，你得到的可能是一种假的并行。</span><span class="s" data-k="plan-b3-4">五个智能体啃一堆有重叠的任务，不会带来五倍产出，只会带来一个「有五个作者」的合并冲突。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-steer">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Steer early, reset fast</span><span class="h-zh">早点纠偏，快速重开</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>两次纠正失败就换新会话、重写 prompt——第三次纠正基本只是往上下文里堆垃圾。而便宜的回退（/rewind）让「先试一个更大胆的方案」变成低风险选择。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="steer-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steer-b0-0"><b>Best practice:</b> Watch the first minute and steer the agent.</span> <span class="s" data-k="steer-b0-1">As soon as you see it go off course, correct.</span> <span class="s" data-k="steer-b0-2">If you've already made two failed attempts to correct the agent, start anew with a fresh session and better prompt.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steer-b0-0"><b>最佳实践：</b>头一分钟盯着，及时纠偏。</span><span class="s" data-k="steer-b0-1">一看到它跑偏，马上纠正。</span><span class="s" data-k="steer-b0-2">如果你已经纠正失败两次，就换一个新会话、写一个更好的 prompt，重新开始。</span></p></div></div>
+<div class="row" data-rid="steer-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steer-b1-0"><b>Anti-pattern:</b> Adding a third or fourth attempt to correct the agent, instead of correcting the request.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steer-b1-0"><b>反模式：</b>第三次、第四次继续去纠正智能体，而不是回去纠正你提的那个需求。</span></p></div></div>
+<div class="row" data-rid="steer-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steer-b2-0">An experienced manager knows that if a capable person has a miss multiple times, the problem might be upstream with the instructions, context or scope.</span> <span class="s" data-k="steer-b2-1">The agent version is explicit: as soon as the agent goes off course, hit Esc.</span> <span class="s" data-k="steer-b2-2">If you've already made two failed attempts to correct the agent, clear the session and write a better prompt, incorporating the lessons you learned.</span> <span class="s" data-k="steer-b2-3">A third attempt to correct the agent is mostly just more information that the model has to keep re-reading and re-processing (including failed attempts).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steer-b2-0">有经验的经理知道：一个有能力的下属连着搞错几次，问题可能出在上游——指令、上下文或者范围。</span><span class="s" data-k="steer-b2-1">放到智能体身上很明确：它一跑偏，就按 Esc。</span><span class="s" data-k="steer-b2-2">如果已经纠正失败两次，就清掉会话，把学到的教训写进一个更好的 prompt 再重来。</span><span class="s" data-k="steer-b2-3">第三次纠正，基本上只是又往上下文里塞了一堆模型要反复重读、重处理的信息（包括失败的那几次）。</span></p></div></div>
+<div class="row" data-rid="steer-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steer-b3-0">Cheap rollback is also changing the game.</span> <span class="s" data-k="steer-b3-1"><span class='term' data-term='rewind'>/rewind</span> rolls the code and conversation to an earlier point, making it low-risk to try a more ambitious approach first.</span> <span class="s" data-k="steer-b3-2">Good managers do the same with employees: if undoing a mistake is cheap, let them try an ambitious approach.</span> <span class="s" data-k="steer-b3-3">Then run the retro afterwards, and generalize the fix into CLAUDE.md if applicable.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steer-b3-0">便宜的回退也在改变玩法。</span><span class="s" data-k="steer-b3-1">/rewind 能把代码和对话一起退回到之前某个点，所以先试一个更大胆的方案，风险很低。</span><span class="s" data-k="steer-b3-2">好的经理对下属也是这样：如果撤销错误很便宜，就让他们先试大胆的做法。</span><span class="s" data-k="steer-b3-3">做完之后再复盘，能通用的修法就写进 CLAUDE.md。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-judgment">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">Delegate the task, never the judgment</span><span class="h-zh">可以派活，不能派判断</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>作者讲了亲历的一次翻车：把活派出去，差点把决定权也一起派出去。人守的是外层循环——约束、你实际读多少、留什么证据、哪些必须有人签字。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="judgment-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="judgment-b0-0"><b>Best practice:</b> The agent does the work, you decide the important things: product calls, security boundaries, what ships.</span> <span class="s" data-k="judgment-b0-1">Treat every diff like you're going to get paged for it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="judgment-b0-0"><b>最佳实践：</b>活让智能体干，重要的决定由你来做：产品取舍、安全边界、什么东西上线。</span><span class="s" data-k="judgment-b0-1">把每一份差异都当成「出事会把你叫起来」的那种改动来对待。</span></p></div></div>
+<div class="row" data-rid="judgment-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="judgment-b1-0"><b>Anti-pattern:</b> Approving large diffs because the tests are green and the names look reasonable.</span> <span class="s" data-k="judgment-b1-1">This is not code review, this is code ratification.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="judgment-b1-0"><b>反模式：</b>因为测试是绿的、命名看起来也合理，就批了一份大 diff。</span><span class="s" data-k="judgment-b1-1">这不叫代码审查，这叫给代码盖章。</span></p></div></div>
+<div class="row" data-rid="judgment-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="judgment-b2-0">No manager can say "my report shipped that, not me."</span> <span class="s" data-k="judgment-b2-1">The same is true for every agent you run.</span> <span class="s" data-k="judgment-b2-2">I've fallen into this trap myself.</span> <span class="s" data-k="judgment-b2-3">I told an agent to research gaps with competitors and write local PRs to close those gaps.</span> <span class="s" data-k="judgment-b2-4">I read the research, skimmed the code and almost went ahead and pushed changes that added complexity for users for little gain.</span> <span class="s" data-k="judgment-b2-5">I had delegated the work, and almost delegated the decision as well.</span> <span class="s" data-k="judgment-b2-6">It's an easy trap to fall into: it's a 600-line diff, the names look reasonable, the tests are green, approve.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="judgment-b2-0">没有哪个经理能说「那是我下属上线的，不是我」。</span><span class="s" data-k="judgment-b2-1">——你跑的每一个智能体也一样。</span><span class="s" data-k="judgment-b2-2">我自己就掉进过这个坑。</span><span class="s" data-k="judgment-b2-3">我让一个智能体去研究我们和竞品的差距，然后在本地仓库准备好 PR，把这些差距补上。</span><span class="s" data-k="judgment-b2-4">我读了研究报告、扫了一眼代码，差点就顺手推出去——而那个改动给用户添了复杂度，收益却很小。</span><span class="s" data-k="judgment-b2-5">我把活派出去了，还差点把决定权也一起派出去。</span><span class="s" data-k="judgment-b2-6">这个坑太好掉了：600 行的 diff，命名看着还行，测试是绿的，批吧。</span></p></div></div>
+<div class="row" data-rid="judgment-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="judgment-b3-0">It makes sense to split tasks this way: let agents do the style, linting, follow-ups to reviews, typical bugs and unit testing, but let humans handle security boundaries, compliance and product decisions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="judgment-b3-0">这样分工是合理的：风格、lint、审查后的跟进、常见 bug 和单元测试交给智能体；安全边界、合规和产品决策交给人。</span></p></div></div>
+<div class="row" data-rid="judgment-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="judgment-b4-0">Coordination works the same way.</span> <span class="s" data-k="judgment-b4-1">An agent can keep track of handoffs, but deciding between competing requests and getting people to actually commit is still a human job.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="judgment-b4-0">协调也是一样。</span><span class="s" data-k="judgment-b4-1">智能体可以帮你盯交接，但在几个互相竞争的需求之间做取舍、并让人真的承诺下来，仍然是人的活。</span></p></div></div>
+<div class="row" data-rid="judgment-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="judgment-b5-0">You don't need to be in the inner loop of every change.</span> <span class="s" data-k="judgment-b5-1">What you do need to own are the outer loops: what the constraints are, how much of the output you actually read, what evidence you keep, and what a human has to sign off on.</span> <span class="s" data-k="judgment-b5-2">And keep changes small, since the unit of review is the unit of comprehension.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="judgment-b5-0">你不需要待在每个改动的内层循环里。</span><span class="s" data-k="judgment-b5-1">你要负责的是外层循环：约束是什么、产出你实际会读多少、留什么证据、哪些必须有人签字。</span><span class="s" data-k="judgment-b5-2">并且让改动保持小——因为审查的单位就是理解的单位。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-design">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Design the run that doesn't need you</span><span class="h-zh">设计一条不需要你的运行</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>无人值守之前先回答五个问题：它知道「做完」长什么样吗、有自我验证吗、边界在哪、护栏是什么、产出在哪谁批。再补两个管理习惯：先试点，先盯头几次。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="design-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="design-b0-0"><b>Best practice:</b> Before deploying an autonomous task, define done, the self-verification, the boundaries, the guardrails, and the human approval.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="design-b0-0"><b>最佳实践：</b>在放一个自主任务出去之前，把「怎样算做完」、自我验证、边界、护栏和人工批准都定清楚。</span></p></div></div>
+<div class="row" data-rid="design-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="design-b1-0"><b>Anti-pattern:</b> Starting a long-running process before bed, without a definition of done or a stopping point, and waking up the next morning to find out that your model has been working overnight on a faulty premise.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="design-b1-0"><b>反模式：</b>睡前起一个长时间跑的进程，既没定义「做完」也没设停止点，第二天醒来发现模型整夜都在一个错误的前提上干活。</span></p></div></div>
+<div class="row" data-rid="design-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="design-b2-0">Skip-level managers don't manage the work of individual engineers; they manage the work of goals, guardrails, checkpoints, and leads.<sup class='tn' data-note='N3'>3</sup></span> <span class="s" data-k="design-b2-1">AI agents are following a similar trajectory.</span> <span class="s" data-k="design-b2-2">They are already delegating parts of a task to sub-agents, and they can run autonomously on schedules, after CI failures or after new pull requests are opened.</span> <span class="s" data-k="design-b2-3">The frontier is self-governing systems that can autonomously start, self-verify, and only call for human intervention when decisions are needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="design-b2-0">跨级管理者（跳过直接下属、去管下一层的人）不管某个工程师具体写什么；他们管的是目标、护栏、检查点，以及各位组长。<sup class='tn' data-note='N3'>3</sup></span><span class="s" data-k="design-b2-1">AI 智能体走的是相似的轨迹。</span><span class="s" data-k="design-b2-2">它们已经在把任务拆一部分给子智能体；也能按计划自主运行，或者在 CI 失败后、有新 PR 打开后自己跑起来。</span><span class="s" data-k="design-b2-3">前沿是自治系统：能自己启动、自己验证，只在需要做决定的时候才叫人。</span></p></div></div>
+<div class="row" data-rid="design-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="design-b3-0">The role shifts from controlling the session to designing your loops.</span> <span class="s" data-k="design-b3-1">The five questions to ask yourself when designing an unattended run are the same questions a good manager asks before giving a senior engineer a project and going on vacation:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="design-b3-0">角色从「控制这一次会话」变成「设计你的循环」。</span><span class="s" data-k="design-b3-1">设计一次无人值守的运行时要问的五个问题，跟一个好经理把项目交给资深工程师、然后自己去休假之前问的问题，是一样的：</span></p></div></div>
+<div class="row" data-rid="design-b4"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="design-b4-0-0"><b>Does it know what done looks like?</b> (Goal condition, spec file, or a failing test it has to turn green.)</span></li><li><span class="s" data-k="design-b4-1-0"><b>Does it have a self-verification mechanism?</b> (Test suite, Stop hook, or review step.)</span></li><li><span class="s" data-k="design-b4-2-0"><b>What are its boundaries?</b> (Permission controls, <span class='term' data-term='sandbox'>sandbox</span>, worktree, or the one branch it's allowed to push to.)</span></li><li><span class="s" data-k="design-b4-3-0"><b>What are its guardrails?</b> (Turn limit or spend limit.)</span></li><li><span class="s" data-k="design-b4-4-0"><b>Where does it produce output, and who approves it?</b> (A PR or summary, and a human approval of any non-reversible actions.)</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="design-b4-0-0"><b>它知道「做完」长什么样吗？</b>（目标条件、spec 文件，或者一个必须转绿的失败测试。）</span></li><li><span class="s" data-k="design-b4-1-0"><b>它有自我验证的机制吗？</b>（测试套件、Stop 钩子，或者一道审查。）</span></li><li><span class="s" data-k="design-b4-2-0"><b>它的边界在哪？</b>（权限控制、<span class='term' data-term='sandbox'>沙箱</span>、工作树，或者只允许推的那一个分支。）</span></li><li><span class="s" data-k="design-b4-3-0"><b>它的护栏是什么？</b>（回合上限，或者花费上限。）</span></li><li><span class="s" data-k="design-b4-4-0"><b>它在哪儿产出，谁来批？</b>（一个 PR 或一份总结；以及任何不可逆的动作都要有人批。）</span></li></ul></div></div>
+<div class="row" data-rid="design-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="design-b5-0">The guide has two more habits that managers will recognize as good practices: pilot, i.e., get a batch job to run on three files, iterate the prompt, then run the rest; and watch the first few runs of anything new before you trust it unattended.</span> <span class="s" data-k="design-b5-1">Think of it as a probation period.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="design-b5-0">指南里还有两个习惯，做管理的会认出来这是好做法：先试点——让批处理先跑三个文件，把 prompt 磨一磨，再跑剩下的；以及任何新东西先盯着头几次运行，再放心让它无人值守。</span><span class="s" data-k="design-b5-1">把它当成试用期。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-scale">
+<div class="sec-head"><span class="sec-num">09</span><h2><span class="h-en">Scale verification, not attention</span><span class="h-zh">扩验证，别扩注意力</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>「编排税」：过掉最初几个智能体之后，每多一个，要的注意力都比上一个更多。扩数量只能靠「需要盯得更少」，不能靠「盯得更多」；指标要量系统，不是量活动量。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="scale-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scale-b0-0"><b>Best practice:</b> Scale up the use of agents only as fast as checks, goals and fresh reviewers can take over the watching, and measure quality in addition to throughput.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scale-b0-0"><b>最佳实践：</b>只有当检查、目标和带全新上下文的审查者（没见过你这次对话的人）能替你盯住时，才继续加智能体；而且除了吞吐量，也要看质量。</span></p></div></div>
+<div class="row" data-rid="scale-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scale-b1-0"><b>Anti-pattern:</b> Opening more sessions than you can review well, and measuring success by how much code the AI wrote.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scale-b1-0"><b>反模式：</b>开的会话多到自己审不过来，还用「AI 写了多少代码」来衡量成功。</span></p></div></div>
+<div class="row" data-rid="scale-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scale-b2-0">Managers learn their <span class='term' data-term='span'>span of control</span> pretty quickly.</span> <span class="s" data-k="scale-b2-1">Past a certain number of direct reports, everyone gets less of the manager and the quality goes down.</span> <span class="s" data-k="scale-b2-2">The same is true for agents.</span> <span class="s" data-k="scale-b2-3">It's what I call the <span class='term' data-term='orchestrationtax'>orchestration tax</span>: Past the first few agents, each additional agent requires more of your attention than the last.</span> <span class="s" data-k="scale-b2-4">Most days I run four or five background agents and a few local sessions, and some days that's too many.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scale-b2-0">经理很快就摸清自己的<span class='term' data-term='span'>管理幅度</span>。</span><span class="s" data-k="scale-b2-1">直接汇报的人超过某个数，每个人分到的经理就更少，质量也就下来了。</span><span class="s" data-k="scale-b2-2">智能体也是一样。</span><span class="s" data-k="scale-b2-3">我把它叫「<span class='term' data-term='orchestrationtax'>编排税</span>」：过掉最初几个智能体之后，每多一个，要求的注意力都比上一个更多。</span><span class="s" data-k="scale-b2-4">大多数日子我同时跑四五个后台智能体，加几个本地会话；有些天这已经太多了。</span></p></div></div>
+<div class="row" data-rid="scale-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="scale-b3-0">Managing lots of sessions isn't about being super-focused, it's about delegating most of the monitoring to self-evaluation, goals and new-context reviewers and reserving attention for decisions.</span> <span class="s" data-k="scale-b3-1">It also helps to have notifications instead of polling and a centralized view of the background jobs.</span> <span class="s" data-k="scale-b3-2">You can't scale the number of agents by monitoring more, only by needing to monitor less.</span> <span class="s" data-k="scale-b3-3">Then measure the system rather than the activity.</span> <span class="s" data-k="scale-b3-4">Useful metrics include cycle time for PRs, ramp up time for new employees and the frequency of reverts or rework.</span> <span class="s" data-k="scale-b3-5">Measuring the percentage of AI-written code isn't a useful goal, because what you're aiming for is quality and reliability.</span> <span class="s" data-k="scale-b3-6">Grove's rule of measuring with a countermeasure applies here: If you measure the number of PRs merged, then also measure reverts and rework.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="scale-b3-0">管很多会话靠的不是超强专注，而是把大部分盯梢工作交给自我评估、目标和全新上下文的审查者，把注意力留给决定。</span><span class="s" data-k="scale-b3-1">另外也有帮助的是：用通知代替轮询，以及有一个统一的地方看后台任务。</span><span class="s" data-k="scale-b3-2">想扩智能体的数量，不能靠「监看得更多」，只能靠「需要监看得更少」。</span><span class="s" data-k="scale-b3-3">然后，量系统，而不是量活动量。</span><span class="s" data-k="scale-b3-4">有用的指标包括 PR 的周期时间、新人上手时间，以及撤销或返工的频次。</span><span class="s" data-k="scale-b3-5">「AI 写了多少比例的代码」不是个有用的目标，因为你要的是质量和可靠性。</span><span class="s" data-k="scale-b3-6">Grove 那条「测量要配一个反制测量」的规则在这儿适用：如果你量合并了多少 PR，就同时量撤销和返工。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-notbuild">
+<div class="sec-head"><span class="sec-num">10</span><h2><span class="h-en">Decide what not to build</span><span class="h-zh">决定什么不做</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>做起来便宜之后，稀缺资源就变成了审查和验证。所以那些老掉牙的管理问题反而更值钱：谁要的、怎么算成功、什么时候停。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="notbuild-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="notbuild-b0-0"><b>Best practice:</b> Ask who needs it, how you'll know it worked and what would make you stop, and limit <span class='term' data-term='wip'>WIP</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="notbuild-b0-0"><b>最佳实践：</b>先问「谁需要它」「怎么知道它成了」「什么情况下就停」，并且限制<span class='term' data-term='wip'>在制品</span>数量。</span></p></div></div>
+<div class="row" data-rid="notbuild-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="notbuild-b1-0"><b>Anti-pattern:</b> Just throwing every plausible idea into a PR; after all it's cheap to build.</span> <span class="s" data-k="notbuild-b1-1">You'll now have a junk drawer the team needs to review, secure and maintain.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="notbuild-b1-0"><b>反模式：</b>反正做起来便宜，就把每个看起来靠谱的想法都扔进一个 PR。</span><span class="s" data-k="notbuild-b1-1">结果你多了一个杂物抽屉，团队还得去审它、加固它、维护它。</span></p></div></div>
+<div class="row" data-rid="notbuild-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="notbuild-b2-0">The most important word a manager says is often "no."</span> <span class="s" data-k="notbuild-b2-1">With agents, it's harder to say no.</span> <span class="s" data-k="notbuild-b2-2">It's nearly free to start work and you can throw any plausible idea into a PR by lunch.</span> <span class="s" data-k="notbuild-b2-3">But you'll now have a bunch of PRs that the team needs to review, secure, support and maintain.</span> <span class="s" data-k="notbuild-b2-4">Review and validation are the scarce resources now.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="notbuild-b2-0">经理说出口的最重要的一个词，常常是「不」。</span><span class="s" data-k="notbuild-b2-1">到了智能体这儿，「不」反而更难说。</span><span class="s" data-k="notbuild-b2-2">开工几乎不要钱，午饭前就能把任何看着靠谱的想法变成 PR。</span><span class="s" data-k="notbuild-b2-3">但你手上会多出一堆 PR，团队得审、得加固、得支持、得养着。</span><span class="s" data-k="notbuild-b2-4">现在稀缺的是审查和验证。</span></p></div></div>
+<div class="row" data-rid="notbuild-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="notbuild-b3-0">In fact, the old management questions matter now more than they used to.</span> <span class="s" data-k="notbuild-b3-1">Who asked for it?</span> <span class="s" data-k="notbuild-b3-2">How do we measure success?</span> <span class="s" data-k="notbuild-b3-3">How do we know when to stop?</span> <span class="s" data-k="notbuild-b3-4">If it's cheap to build the hard question is not "can we?" but "should we?"</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="notbuild-b3-0">实际上，那些老掉牙的管理问题，现在比以前更重要。</span><span class="s" data-k="notbuild-b3-1">谁要的？</span><span class="s" data-k="notbuild-b3-2">怎么衡量成功？</span><span class="s" data-k="notbuild-b3-3">怎么知道该停了？</span><span class="s" data-k="notbuild-b3-4">如果做起来便宜，那难的问题就不是「能不能做」，而是「该不该做」。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-breaks">
+<div class="sec-head"><span class="sec-num">11</span><h2><span class="h-en">Where the analogy breaks</span><span class="h-zh">类比在哪里失效</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>六条差异，全是「智能体不是初级工程师」的理由：管人更难、返工几乎免费、没有经验只有笔记本、又积极又自信、只有一种类型、新人的练习机会还得你造。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="breaks-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="breaks-b0-0"><b>Best practice:</b> Follow management best practices, but account for the differences in the agent model, like cheap rework, how quick they are to agree, and strengths that shift with every model release.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="breaks-b0-0"><b>最佳实践：</b>照着管理的最佳实践做，但要考虑智能体这种「模型」和人的差异：返工几乎免费、答应得特别快、长处会随每次模型发布而变。</span></p></div></div>
+<div class="row" data-rid="breaks-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="breaks-b1-0"><b>Anti-pattern:</b> Thinking that an agent is just like a junior developer, or that you're prepared to manage five people because you can run five agents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="breaks-b1-0"><b>反模式：</b>觉得智能体就是个初级工程师；或者觉得自己能管五个智能体，就等于能管五个人。</span></p></div></div>
+<div class="row" data-rid="breaks-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="breaks-b2-0">The analogy is a useful but imperfect one, and the best practitioners of this work are aware of where it is imperfect:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="breaks-b2-0">这个类比有用但不完美，这件事做得最好的人清楚它哪里不成立：</span></p></div></div>
+<div class="row" data-rid="breaks-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="breaks-b3-0-0"><b>Managing people is harder, and the skills don't transfer back.</b> You're not prepared to manage five people because you've run five agents.</span> <span class="s" data-k="breaks-b3-0-1">There is no equivalent for motivation, conflict, career development, or months-long trust building.</span></li><li><span class="s" data-k="breaks-b3-1-0"><b>Rework is almost free.</b> You can ask an agent things you would never ask of a person.</span> <span class="s" data-k="breaks-b3-1-1">If a technical debate happens at the whiteboard, the agent can build two or three options and you can compare them.</span></li><li><span class="s" data-k="breaks-b3-2-0"><b>Agents don't have experience, just a notebook.</b> <span class='term' data-term='automemory'>Auto memory</span> only records notes on one machine.</span> <span class="s" data-k="breaks-b3-2-1">They don't transfer to your teammates' sessions.</span> <span class="s" data-k="breaks-b3-2-2">They aren't the experience and judgment you develop over the course of your career, and you need to write those lessons down for the whole team.</span></li><li><span class="s" data-k="breaks-b3-3-0"><b>Agents are eager and confident.</b> If you ask a good engineer to do something wrong, they push back.</span> <span class="s" data-k="breaks-b3-3-1">Agents are more likely to do what you ask, and you're likely to overtrust them.</span> <span class="s" data-k="breaks-b3-3-2">In Wharton research on <span class='term' data-term='cognitivesurrender'>cognitive surrender</span>, participants accepted faulty AI answers most of the time, and grew more confident.<sup class='tn' data-note='N4'>4</sup></span> <span class="s" data-k="breaks-b3-3-3">You can counter the overconfidence by asking the agent to argue against its own answer.</span></li><li><span class="s" data-k="breaks-b3-4-0"><b>You only have one agent archetype, and it changes every few months.</b> Human teams have diverse skills and strengths.</span> <span class="s" data-k="breaks-b3-4-1">All your agents have the same strengths and weaknesses, which shift with each model release.</span></li><li><span class="s" data-k="breaks-b3-5-0"><b>You still have to train your junior devs.</b> When agents take over the starter work junior devs need to learn the fundamentals of the craft, you have to create those reps intentionally as a manager.</span></li><li><span class="s" data-k="breaks-b3-6-0"><b>The human team still matters.</b> Sometimes you can spend a day managing agents without realizing that you've crowded out the time it takes to build a cohesive team.</span> <span class="s" data-k="breaks-b3-6-1">Don't do this.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="breaks-b3-0-0"><b>管人更难，而且技能不会反向迁移。</b>跑过五个智能体，不等于你准备好管五个人了。</span><span class="s" data-k="breaks-b3-0-1">激励、冲突、职业发展、花几个月建立的信任——这些都没有对应物。</span></li><li><span class="s" data-k="breaks-b3-1-0"><b>返工几乎不要钱。</b>有些事你绝不会让一个人去做，但可以让智能体做。</span><span class="s" data-k="breaks-b3-1-1">白板上争不出结果的技术讨论，可以让智能体做两三个方案出来，你放在一起比。</span></li><li><span class="s" data-k="breaks-b3-2-0"><b>智能体没有经验，只有笔记本。</b><span class='term' data-term='automemory'>自动记忆</span>只把笔记记在一台机器上。</span><span class="s" data-k="breaks-b3-2-1">它们不会同步到你同事的会话里。</span><span class="s" data-k="breaks-b3-2-2">它们也不是你在整个职业生涯里长出来的经验和判断力；那些教训你得自己写下来，给整个团队看。</span></li><li><span class="s" data-k="breaks-b3-3-0"><b>智能体又积极又自信。</b>你让一个优秀工程师做一件错事，他会顶回来。</span><span class="s" data-k="breaks-b3-3-1">智能体更可能照你说的做，而你也更容易过度信任它。</span><span class="s" data-k="breaks-b3-3-2">沃顿那项关于「<span class='term' data-term='cognitivesurrender'>认知投降</span>」的研究里，参与者大多数时候接受了 AI 给出的错误答案，而且越用越自信。<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="breaks-b3-3-3">对付这种过度自信，可以让智能体自己反驳自己的答案。</span></li><li><span class="s" data-k="breaks-b3-4-0"><b>你手上的智能体只有一种类型，而且几个月就变一次。</b>人的团队技能和长处是多样的。</span><span class="s" data-k="breaks-b3-4-1">你的所有智能体长处和短板都一样，而且每次模型发布又会变。</span></li><li><span class="s" data-k="breaks-b3-5-0"><b>初级工程师还是得你自己带。</b>当智能体把新人用来打基础的那些入门活接走之后，作为管理者，你得有意识地把这些练习机会造出来。</span></li><li><span class="s" data-k="breaks-b3-6-0"><b>人的团队依然重要。</b>有时候你花一整天管智能体，没意识到已经把「把团队捏合起来」该花的时间挤掉了。</span><span class="s" data-k="breaks-b3-6-1">别这么干。</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-title">
+<div class="sec-head"><span class="sec-num">12</span><h2><span class="h-en">You don't need the title</span><span class="h-zh">你不需要那个头衔</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>收尾把话收回到个人：资深工程师一直在做的事——写设计文档、给上下文、认真审查、让身边人变好——智能体让每个工程师第一天就能做。最后给了六条可以立刻试的做法。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="title-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="title-b0-0"><b>Best practice:</b> Focus your effort on making good software happen: setting the context, defining done, and reviewing well.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="title-b0-0"><b>最佳实践：</b>把力气花在「让好软件发生」上：给上下文、定义「做完」、好好审查。</span></p></div></div>
+<div class="row" data-rid="title-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="title-b1-0"><b>Anti-pattern:</b> Evaluating yourself by lines of code while running under-briefed, unchecked agents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="title-b1-0"><b>反模式：</b>一边跑着没交代清楚、也没设检查的智能体，一边拿代码行数评价自己。</span></p></div></div>
+<div class="row" data-rid="title-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="title-b2-0">Good staff engineers have always been like this.</span> <span class="s" data-k="title-b2-1">They write the design doc.</span> <span class="s" data-k="title-b2-2">They set the context.</span> <span class="s" data-k="title-b2-3">They do a thorough review.</span> <span class="s" data-k="title-b2-4">They make the people around them better.</span> <span class="s" data-k="title-b2-5">Agents let all engineers do this on day one.</span> <span class="s" data-k="title-b2-6">They give you a crash course on management.</span> <span class="s" data-k="title-b2-7">You get feedback in minutes, not quarters.</span> <span class="s" data-k="title-b2-8">You can undo your own mistakes.</span> <span class="s" data-k="title-b2-9">The job is becoming less about writing the code and more about being the reason good code gets written.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="title-b2-0">优秀的资深工程师一直都是这个样子。</span><span class="s" data-k="title-b2-1">他们写设计文档。</span><span class="s" data-k="title-b2-2">他们给上下文。</span><span class="s" data-k="title-b2-3">他们认真做审查。</span><span class="s" data-k="title-b2-4">他们让身边的人变得更好。</span><span class="s" data-k="title-b2-5">智能体让每个工程师第一天就能做到这些。</span><span class="s" data-k="title-b2-6">它们给了你一门管理的速成课。</span><span class="s" data-k="title-b2-7">反馈是几分钟来的，不是按季度来的。</span><span class="s" data-k="title-b2-8">你可以撤销自己的错误。</span><span class="s" data-k="title-b2-9">这份工作越来越不像「写代码」，而更像「成为好代码被写出来的那个原因」。</span></p></div></div>
+<div class="row" data-rid="title-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="title-b3-0">Nobody's born a great manager (or a great engineer).</span> <span class="s" data-k="title-b3-1">You build skills the same way you always have, through practice.</span> <span class="s" data-k="title-b3-2">But with agents, practice is cheap.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="title-b3-0">没有人天生就是好经理（也没有人天生是好工程师）。</span><span class="s" data-k="title-b3-1">技能还是跟以前一样，靠练出来的。</span><span class="s" data-k="title-b3-2">但有智能体之后，练的成本很低。</span></p></div></div>
+<div class="row" data-rid="title-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="title-b4-0">Try these ideas:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="title-b4-0">可以试试这几条：</span></p></div></div>
+<div class="row" data-rid="title-b5"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="title-b5-0-0">Every task needs a check it can run.</span> <span class="s" data-k="title-b5-0-1">Ask for the proof.</span></li><li><span class="s" data-k="title-b5-1-0">Tell the agent what it can't see and leave out what it can.</span></li><li><span class="s" data-k="title-b5-2-0">Talk through the plan before writing the code.</span></li><li><span class="s" data-k="title-b5-3-0">Corrected something twice?</span> <span class="s" data-k="title-b5-3-1">Log it in CLAUDE.md.</span> <span class="s" data-k="title-b5-3-2">Repeated workflows?</span> <span class="s" data-k="title-b5-3-3">Turn them into skills.</span></li><li><span class="s" data-k="title-b5-4-0">Two failed corrections?</span> <span class="s" data-k="title-b5-4-1">Restart and rephrase the prompt.</span></li><li><span class="s" data-k="title-b5-5-0">Review the diff as if you'll get paged for it.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="title-b5-0-0">每个任务都要有一个它能自己跑的检查。</span><span class="s" data-k="title-b5-0-1">要它交出证据。</span></li><li><span class="s" data-k="title-b5-1-0">只告诉智能体它看不见的东西，它能自己看到的不必说。</span></li><li><span class="s" data-k="title-b5-2-0">写代码之前先把计划讲一遍。</span></li><li><span class="s" data-k="title-b5-3-0">同一件事纠正了两次？</span><span class="s" data-k="title-b5-3-1">写进 CLAUDE.md。</span><span class="s" data-k="title-b5-3-2">有反复出现的工作流？</span><span class="s" data-k="title-b5-3-3">把它们做成技能。</span></li><li><span class="s" data-k="title-b5-4-0">纠正失败两次？</span><span class="s" data-k="title-b5-4-1">重开一个会话，重写 prompt。</span></li><li><span class="s" data-k="title-b5-5-0">把这份差异当成「出事会把你叫起来」的那种改动来审。</span></li></ul></div></div>
+<div class="row" data-rid="title-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="title-b6-0">You don't have to want to be a manager.</span> <span class="s" data-k="title-b6-1">But the engineers who do well with agents will have learned to manage along the way.<sup class='tn' data-note='N5'>5</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="title-b6-0">你不必想当经理。</span><span class="s" data-k="title-b6-1">但用智能体用得好的工程师，都会在这一路学会管理。<sup class='tn' data-note='N5'>5</sup></span></p></div></div>
+<figure class="row wide fig" id="figA" data-cap="出处声明：Pangram 的 AI 检测徽章"><div class="fig-media"><img class="still" src="media/figA.png" loading="lazy" decoding="async" alt="Pangram: Human-Written 90%"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>出处声明：Pangram 的 AI 检测徽章</b>　这张图不是架构图，也不是示意图，而是作者在文末附上的一张 AI 检测徽章：Pangram 判定本文 90% 出自人手、AI 占 10%。它只说明作者愿意公开这份检测结论，本身不构成文章任何论点的证据。</p><p class="cap-en">原文图注：Pangram: Human-Written 90%</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>顶部大字「Human-Written」是 Pangram 给出的总体判定：这篇文本被判为「人写的」。</li><li>进度条左侧那一小段深灰约占一成，其余为绿色；绿色部分对应图例里的 Human 90%。</li><li>三个图例数字要一起看：AI 10%、AI-assisted 0%、Human 90%——「AI 辅助」这一档是 0，不是 10。</li><li>最下方那句「Analysis by Pangram suggests that most of this text was written by a human.」用的是 suggests（提示），不是「证明」。</li></ol><p class="takeaway">一句话：它是作者贴的检测结果，不是文章论点的证据，别把它当论据。</p></details></figcaption></figure>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 4 处正文引用，指向 4 个不同链接；另有 1 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>Claude Code 最佳实践</h4><p class="lnk-site">code.claude.com · Best practices for Claude Code</p><p class="lnk-anchors">正文对应：<em>Claude Code 最佳实践指南</em></p><p><b>这是什么：</b>Anthropic 官方文档：把一次会话不顺归成四类原因——缺上下文、没检查、规则靠不住、成本失控，逐条给配置写法。</p><p><b>为什么值得点：</b>补足正文「looks done」这句：文中四档验证（提示、/goal、Stop hook、子智能体审 diff）与 CLAUDE.md 只留验证命令，原文配置都在这一页。</p><p><b>访问说明：</b>直连 200，无需登录；2026-11-09 更新，正文为英文，含可直接抄的 settings.json / SKILL.md 片段。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文档的判断和本文一致：智能体在「看起来做完了」时停下，所以没东西可跑时，你就是它的测试套件。验证强度分四档——写进提示、设成 /goal（每回合由另一个模型判定）、配成 Stop hook（脚本退出码 2 就不许结束这回合）、交给没见过你对话的新子智能体做 /code-review。另一条主线是「确定性 vs 非确定性」：偏好留在 CLAUDE.md 让模型判断，零例外的规则交给 hook、deny 规则与沙箱；CLAUDE.md 宜短，验证命令是它最有价值的一行。</p><ul><li>四档严格度：提示里写、/goal、Stop hook、新鲜子智能体审 diff，越往后越不依赖模型记性。</li><li>CLAUDE.md 只放仓库里查不到的：验证命令、易误读的旧模式、不在代码里的决策；建议控制在 200 行内，其余交给 .claude/rules/ 与 skills。</li><li>Stop hook 示例是 pnpm tsc --noEmit 1&gt;&amp;2 || exit 2；连续八次拦截后 Claude Code 会放行，上限可用 CLAUDE_CODE_STOP_HOOK_BLOCK_CAP 调。</li><li>评审必须限定范围：被要求找问题就一定会找到，所以要求只看正确性、跳过风格，避免为不可能的场景加抽象和测试。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/best-practices" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip bg">背景</span><span class="chip">建议第 1 个读</span></div><h4>你的 AI 编程智能体需要一个管理者</h4><p class="lnk-site">addyosmani.com · Your AI coding agents need a manager</p><p class="lnk-anchors">正文对应：<em>你的编码智能体需要一个经理</em></p><p><b>这是什么：</b>作者 1 月的前作：并行跑多个编程智能体之后，工作重心从写代码变成管理——写清任务、划边界、做验证、异步跟进。</p><p><b>为什么值得点：</b>补足正文第 3 段的「your coding agents need a manager」：本文的管理框架、本地与云端双模式、worktree 边界、WIP 上限，前作都有完整版与作者自述配置。</p><p><b>访问说明：</b>直连 200，无需登录；页脚有作者 O'Reilly 书推广，不影响正文。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>核心论点是瓶颈已经从「智能体会不会写代码」变成「能不能同时管好多个」。作者把工作拆成两种模式：本地高介入用于架构、重构与含糊需求；云端异步用于迁移、测试、文档、依赖升级这类边界清晰的任务。约束靠工具落实——git worktree 隔离、一个智能体一个 PR、共享接口先由人做第一个 PR、WIP 上限与 kill criteria 限制并行规模。他说自己稳定跑四五个后台智能体加三五个本地会话，别把 Boris Cherny 的十个会话当入门标准；文末还给了一个循环：计划、派活、异步巡检、验证、有序合并、复盘更新 AGENTS.md。</p><ul><li>瓶颈从生成代码转向评审与「该不该做」，产出变便宜之后判断力更值钱。</li><li>两种模式并跑：本地高介入用于架构与口味，云端异步用于清晰可验证的任务。</li><li>边界用工具落地：worktree 隔离、一个智能体一个 PR、共享接口先做人写的第一个 PR。</li><li>防过载：WIP 上限加 kill criteria，别照抄十个会话的极端配置。</li></ul></details><a class="lnk-open" href="https://addyosmani.com/blog/coding-agents-manager/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip bg">背景</span><span class="chip">建议第 2 个读</span></div><h4>认知投降</h4><p class="lnk-site">addyosmani.com · Cognitive Surrender</p><p class="lnk-anchors">正文对应：<em>认知投降</em></p><p><b>这是什么：</b>作者 5 月的前作：借 Wharton 论文区分认知卸载与认知投降——前者交出「怎么做」、留下判断，后者连答案都不再自己构造。</p><p><b>为什么值得点：</b>补足正文第 3 段的「cognitive surrender」。本文第 07 节「委托任务而不委托判断」与第 11 节「类比失效之处」，讲的就是这篇里的校准问题与那组实验数据。</p><p><b>访问说明：</b>直连 200，无需登录；正文较长，小标题按「投降出现在哪、理解债、工程师为何更易中招、校准、结构性抵抗」推进。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>引用 Shaw 与 Nave 的论文：三个实验、1372 人，只要 AI 可用，73% 的错误答案被直接接受，而且自信反而上升——借来的是模型的高自信。作者认为这正是「理解债」的累积机制，并指出工程师格外脆弱：生成的代码天然能编译、能过 lint、风格像对的，而吞吐量指标分不出「我理解了」和「我批准了」。对抗办法不是不用工具，而是保持校准：先写自己的预期再看输出、像读下属 PR 那样读 diff、让模型反驳自己、疲劳时停手、每周留一点不带 AI 的写码时间。</p><ul><li>认知卸载交出「怎么做」并保留判断；认知投降连答案都不自己构造，73% 的错误答案被接受、自信还更高。</li><li>理解债是账单：每次投降一笔小额借款，利息在半年后一次故障里付。</li><li>工程师更易中招：代码表面就能「看起来对」，且吞吐量指标区分不出理解与批准。</li><li>解法是校准加结构：先写预期再看输出、小 PR、验证作为硬性退出条件、学习时先问概念再要代码。</li></ul></details><a class="lnk-open" href="https://addyosmani.com/blog/cognitive-surrender/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip">可选</span><span class="chip">建议第 4 个读</span></div><h4>Claude Code 文档 · 概览</h4><p class="lnk-site">claude.md · Overview - Claude Code Docs</p><p class="lnk-anchors">正文对应：<em>CLAUDE.md</em></p><p><b>这是什么：</b>CLAUDE.md 被注册成域名：实测四跳重定向后落到 Claude Code 文档首页，而不是 CLAUDE.md 的说明页。</p><p><b>为什么值得点：</b>补足正文第 44 行「document it in the team's CLAUDE.md」。真要查这文件怎么写，得去 /docs/en/memory；这个短链只配当文档总入口。</p><p><b>访问说明：</b>实测四跳：claude.md → docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview → platform.claude.com 同路径 → code.claude.com/docs → /docs/en/overview。落点是文档首页，不是 CLAUDE.md 说明页；正确去处是 https://code.claude.com/docs/en/memory 。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>落点页只讲 Claude Code 是什么、怎么在终端 / IDE / 桌面端 / 浏览器装起来，以及它能做哪些事，只把 CLAUDE.md 当作可自定义项之一提了一句，正文并不在这里。真正的说明页是 /docs/en/memory（How Claude remembers your project）：CLAUDE.md 每个会话都会加载，建议单个文件 200 行以内，可用 /init 生成初稿、用 /doctor prompt-audit 清理过期指令，路径相关规则放 .claude/rules/，个人偏好放 CLAUDE.local.md，另有 auto memory 与 AGENTS.md 的取舍。</p><ul><li>原链接是重定向短链，四跳终点 code.claude.com/docs/en/overview，即文档首页。</li><li>CLAUDE.md 的正确说明页是 code.claude.com/docs/en/memory，标题为 How Claude remembers your project。</li><li>该页要点：每会话加载、建议 200 行内、/init 生成初稿、.claude/rules/ 按路径生效、auto memory 自动记事。</li></ul></details><a class="lnk-open" href="http://claude.md/" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 22 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体</span></div><p class="gl-def">文章里指能自己读代码、改代码、跑命令的 AI 编程助手；你给它任务，它把活干完，还会自己跑验证。</p><p class="gl-ana">像一位能自己跑腿、还带汇报的同事。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">subagent</span><span class="gl-zh">子智能体</span></div><p class="gl-def">由主智能体派生出来、专门干一件活的智能体；它看不到你原来的对话，所以能给出不带偏见的复查。</p><p class="gl-ana">像临时请来、只看材料不看人脸的第二双眼睛。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">individual contributor</span><span class="gl-zh">个人贡献者</span></div><p class="gl-def">不走管理岗、把时间花在具体工作上的工程师职级路径；作者说这群人其实一直在做类似管理的事。</p><p class="gl-ana">像只想安静写代码、不想进会议的人。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">guardrail</span><span class="gl-zh">护栏</span></div><p class="gl-def">不靠人盯着，而靠 CI、代码评审、仪表盘、值班这类机制自动兜住质量和风险；经验不足的管理者常常缺这一层。</p><p class="gl-ana">像马路护栏：不用交警盯着，也能挡住大部分跑偏。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">anti-pattern</span><span class="gl-zh">反模式</span></div><p class="gl-def">看起来在推进、实际反复制造麻烦的常见做法；文中每节都配一条，提醒你避开。</p><p class="gl-ana">像明知会返工、却每次都顺手用的老习惯。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">hook</span><span class="gl-zh">钩子</span></div><p class="gl-def">在固定时点自动执行的硬性动作，例如类型检查不过就不许这一回合结束；它属于必须照做的「要求」。</p><p class="gl-ana">像门禁：刷卡不过，门就不开。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">skill</span><span class="gl-zh">技能</span></div><p class="gl-def">把重复出现的做法写成可复用的说明，供智能体按需取用；文章说它属于「请求」，模型可以采纳也可以不采纳。</p><p class="gl-ana">像给新同事的 SOP 小册子，照做即可。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Model Context Protocol</span><span class="gl-zh">MCP</span></div><p class="gl-def">MCP 是让智能体调用外部工具与数据的通用接口；文中把它和技能、钩子、子智能体并列，用来接上「干活」和「验证」之间的缺口。</p><p class="gl-ana">像给智能体装的插座，接上外部工具。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CLAUDE.md</span><span class="gl-zh">CLAUDE.md</span></div><p class="gl-def">放在仓库里给智能体看的说明文件，每次开工先读；写清怎么验证、哪里容易踩坑、哪些决定不在代码里。</p><p class="gl-ana">像贴在工位上的团队须知。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">plan mode</span><span class="gl-zh">计划模式</span></div><p class="gl-def">先只出方案、不改代码的工作模式；把计划反复改到位，再让智能体动手写。</p><p class="gl-ana">像装修前先出图纸，定稿再动工。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rewind</span><span class="gl-zh">回退</span></div><p class="gl-def">把代码和对话一起退回之前的某个时间点；回退便宜，才敢先试更大胆的做法。</p><p class="gl-ana">像存档读档，试错不心疼。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">turn</span><span class="gl-zh">回合</span></div><p class="gl-def">智能体从接到指令到停下来的一个完整工作轮次；回合数、花费这类限额都以它为计量单位。</p><p class="gl-ana">像一通电话：接通到挂断算一轮。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">diff</span><span class="gl-zh">差异</span></div><p class="gl-def">一份代码改动的逐行对照，看完才知道究竟改了什么；文中说这一层必须由人亲自审。</p><p class="gl-ana">像合同里的修订模式，改了哪几行一目了然。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">cognitive surrender</span><span class="gl-zh">认知投降</span></div><p class="gl-def">沃顿研究里的说法：人会照单接受 AI 给的答案，哪怕答案是错的，事后还更自信。</p><p class="gl-ana">像导航说左转就左转，哪怕前面是死路。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">task-relevant maturity</span><span class="gl-zh">任务相关成熟度</span></div><p class="gl-def">格鲁夫在《高产出管理》里的说法：该盯多紧，取决于某人在这一件具体任务上的历史表现，而不是整体能力。</p><p class="gl-ana">像带新人：越熟的事越放手。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">span of control</span><span class="gl-zh">管理幅度</span></div><p class="gl-def">一个管理者能直接带好的人数上限；超过这个数，每个人分到的注意力变少，质量就下滑。</p><p class="gl-ana">像一个老师能盯得过来的学生数。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">worktree</span><span class="gl-zh">工作树</span></div><p class="gl-def">同一个仓库的另一份独立检出，改动互不干扰；并行跑多个任务时各占一个，避免抢同一份代码。</p><p class="gl-ana">像同一栋楼里的独立工位，各改各的。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">sandbox</span><span class="gl-zh">沙箱</span></div><p class="gl-def">给智能体划定的隔离范围，限制它能碰什么、能往哪写；文中把它和权限控制、工作树并列，属于「边界」。</p><p class="gl-ana">像给孩子划的活动区，出了圈就不行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">auto memory</span><span class="gl-zh">自动记忆</span></div><p class="gl-def">智能体自己记下的笔记，只存在本机、只对它自己的会话有效；不会自动变成团队共享的经验。</p><p class="gl-ana">像只写在自己本子上的备忘，同事翻不到。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">commander's intent</span><span class="gl-zh">指挥官意图</span></div><p class="gl-def">军队里的说法：讲清目标、约束和为什么重要，至于具体怎么做，留给执行的人自己判断。</p><p class="gl-ana">像说清「拿下那个山头」，路线让队长自己选。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">orchestration tax</span><span class="gl-zh">编排税</span></div><p class="gl-def">作者自造的词：同时跑多个智能体时，每多一个都要多花注意力协调，成本比上一个更高，不是线性增长。</p><p class="gl-ana">像带团队：人越多，沟通成本涨得越快。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">WIP</span><span class="gl-zh">在制品</span></div><p class="gl-def">同时处于进行中的工作量；文中主张给它设上限，否则评审和验证会被一堆半成品堵死。</p><p class="gl-ana">像桌上同时摊开的活，摊太多就都做不完。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>/goal 是什么</h4><p>Claude Code 里把「完成条件」写成目标的用法：每个回合结束后，由另一个模型来判定条件是否满足，所以它适合长时间的后台任务——判定不依赖你一直盯着。四档验证强度的写法，官方文档里有（见文末 L3）。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>格鲁夫与「任务相关成熟度」</h4><p>Andy Grove（安迪·格鲁夫）是英特尔的 CEO，《高产出管理》（High Output Management，1983）是管理学经典。「任务相关成熟度」的意思是：同一个人在不同任务上的成熟度不一样，所以该给多少自主权要按任务看，不按人看——对智能体也一样。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>「跨级管理」是什么</h4><p>skip-level 指经理跳过自己的直接下属去管下一层：不管某个工程师今天具体写什么，而是管目标、护栏、检查点，以及他手下的组长。作者用它类比「无人值守的智能体运行」——你设计的是这层结构，不是每一次会话。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>沃顿那项研究</h4><p>指 Shaw 与 Nave 关于「认知卸载 / 认知投降」的论文（作者在前作《Cognitive Surrender》里详述）：只要 AI 可用，多数错误答案会被直接接受，人的自信反而上升。本页 L2 卡片有这篇前作的摘要。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>文末那张图不是配图</h4><p>它是 Pangram（一个判断文本是否由 AI 生成的检测工具）给出的结果徽章：AI 10% / AI-assisted 0% / Human 90%。它说明的是「这篇被检测为主要是人写的」，不构成文章任何论点的证据。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 1 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>semi often</code><p>「semi often」不是标准英文搭配，是作者的口语写法（意为「隔一阵子」）。照录原文，不改成 semi-often，中文按语意译为「隔一阵子」。</p></div></div></section><footer><p>本页是学习用途的中英对照精读版：英文原文版权归 Addy Osmani 与 Anthropic 所有，中文译文、速览、对比卡、术语卡、图注与译注为译者整理，非官方译文。原文以 X 长文形式发布于 2026-11-08。</p><p>原文：<a href="https://x.com/addyosmani/status/2119332146485891501" target="_blank" rel="noopener">Your coding agents made you a manager</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-check"><span class="dot">●</span>给它一个能验证工作的机制</a><a class="l2" href="#s-context"><span class="dot">●</span>把上下文交代清楚</a><a class="l2" href="#s-compound"><span class="dot">●</span>让每次纠正都复利</a><a class="l2" href="#s-enforce"><span class="dot">●</span>让它自己决定，只强制那些不能弯的事</a><a class="l2" href="#s-plan"><span class="dot">●</span>先定计划，再让它动手</a><a class="l2" href="#s-steer"><span class="dot">●</span>早点纠偏，快速重开</a><a class="l2" href="#s-judgment"><span class="dot">●</span>可以派活，不能派判断</a><a class="l2" href="#s-design"><span class="dot">●</span>设计一条不需要你的运行</a><a class="l2" href="#s-scale"><span class="dot">●</span>扩验证，别扩注意力</a><a class="l2" href="#s-notbuild"><span class="dot">●</span>决定什么不做</a><a class="l2" href="#s-breaks"><span class="dot">●</span>类比在哪里失效</a><a class="l2" href="#s-title"><span class="dot">●</span>你不需要那个头衔</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"你的 AI 编程智能体需要一个管理者","title_en":"Your AI coding agents need a manager","site":"addyosmani.com","what_zh":"作者 1 月的前作：并行跑多个编程智能体之后，工作重心从写代码变成管理——写清任务、划边界、做验证、异步跟进。","why_zh":"补足正文第 3 段的「your coding agents need a manager」：本文的管理框架、本地与云端双模式、worktree 边界、WIP 上限，前作都有完整版与作者自述配置。","tier":"背景","order":1,"url":"https://addyosmani.com/blog/coding-agents-manager/"},"L2":{"title_zh":"认知投降","title_en":"Cognitive Surrender","site":"addyosmani.com","what_zh":"作者 5 月的前作：借 Wharton 论文区分认知卸载与认知投降——前者交出「怎么做」、留下判断，后者连答案都不再自己构造。","why_zh":"补足正文第 3 段的「cognitive surrender」。本文第 07 节「委托任务而不委托判断」与第 11 节「类比失效之处」，讲的就是这篇里的校准问题与那组实验数据。","tier":"背景","order":2,"url":"https://addyosmani.com/blog/cognitive-surrender/"},"L3":{"title_zh":"Claude Code 最佳实践","title_en":"Best practices for Claude Code","site":"code.claude.com","what_zh":"Anthropic 官方文档：把一次会话不顺归成四类原因——缺上下文、没检查、规则靠不住、成本失控，逐条给配置写法。","why_zh":"补足正文「looks done」这句：文中四档验证（提示、/goal、Stop hook、子智能体审 diff）与 CLAUDE.md 只留验证命令，原文配置都在这一页。","tier":"必读","order":3,"url":"https://code.claude.com/docs/en/best-practices"},"L4":{"title_zh":"Claude Code 文档 · 概览","title_en":"Overview - Claude Code Docs","site":"claude.md","what_zh":"CLAUDE.md 被注册成域名：实测四跳重定向后落到 Claude Code 文档首页，而不是 CLAUDE.md 的说明页。","why_zh":"补足正文第 44 行「document it in the team's CLAUDE.md」。真要查这文件怎么写，得去 /docs/en/memory；这个短链只配当文档总入口。","tier":"可选","order":4,"url":"http://claude.md/"}},"terms":{"agent":{"en":"agent","zh":"智能体","def_zh":"文章里指能自己读代码、改代码、跑命令的 AI 编程助手；你给它任务，它把活干完，还会自己跑验证。","analogy_zh":"像一位能自己跑腿、还带汇报的同事。"},"subagent":{"en":"subagent","zh":"子智能体","def_zh":"由主智能体派生出来、专门干一件活的智能体；它看不到你原来的对话，所以能给出不带偏见的复查。","analogy_zh":"像临时请来、只看材料不看人脸的第二双眼睛。"},"ic":{"en":"individual contributor","zh":"个人贡献者","def_zh":"不走管理岗、把时间花在具体工作上的工程师职级路径；作者说这群人其实一直在做类似管理的事。","analogy_zh":"像只想安静写代码、不想进会议的人。"},"guardrail":{"en":"guardrail","zh":"护栏","def_zh":"不靠人盯着，而靠 CI、代码评审、仪表盘、值班这类机制自动兜住质量和风险；经验不足的管理者常常缺这一层。","analogy_zh":"像马路护栏：不用交警盯着，也能挡住大部分跑偏。"},"antipattern":{"en":"anti-pattern","zh":"反模式","def_zh":"看起来在推进、实际反复制造麻烦的常见做法；文中每节都配一条，提醒你避开。","analogy_zh":"像明知会返工、却每次都顺手用的老习惯。"},"hook":{"en":"hook","zh":"钩子","def_zh":"在固定时点自动执行的硬性动作，例如类型检查不过就不许这一回合结束；它属于必须照做的「要求」。","analogy_zh":"像门禁：刷卡不过，门就不开。"},"skill":{"en":"skill","zh":"技能","def_zh":"把重复出现的做法写成可复用的说明，供智能体按需取用；文章说它属于「请求」，模型可以采纳也可以不采纳。","analogy_zh":"像给新同事的 SOP 小册子，照做即可。"},"mcp":{"en":"Model Context Protocol","zh":"MCP","def_zh":"MCP 是让智能体调用外部工具与数据的通用接口；文中把它和技能、钩子、子智能体并列，用来接上「干活」和「验证」之间的缺口。","analogy_zh":"像给智能体装的插座，接上外部工具。"},"claudemd":{"en":"CLAUDE.md","zh":"CLAUDE.md","def_zh":"放在仓库里给智能体看的说明文件，每次开工先读；写清怎么验证、哪里容易踩坑、哪些决定不在代码里。","analogy_zh":"像贴在工位上的团队须知。"},"planmode":{"en":"plan mode","zh":"计划模式","def_zh":"先只出方案、不改代码的工作模式；把计划反复改到位，再让智能体动手写。","analogy_zh":"像装修前先出图纸，定稿再动工。"},"rewind":{"en":"rewind","zh":"回退","def_zh":"把代码和对话一起退回之前的某个时间点；回退便宜，才敢先试更大胆的做法。","analogy_zh":"像存档读档，试错不心疼。"},"turn":{"en":"turn","zh":"回合","def_zh":"智能体从接到指令到停下来的一个完整工作轮次；回合数、花费这类限额都以它为计量单位。","analogy_zh":"像一通电话：接通到挂断算一轮。"},"diff":{"en":"diff","zh":"差异","def_zh":"一份代码改动的逐行对照，看完才知道究竟改了什么；文中说这一层必须由人亲自审。","analogy_zh":"像合同里的修订模式，改了哪几行一目了然。"},"cognitivesurrender":{"en":"cognitive surrender","zh":"认知投降","def_zh":"沃顿研究里的说法：人会照单接受 AI 给的答案，哪怕答案是错的，事后还更自信。","analogy_zh":"像导航说左转就左转，哪怕前面是死路。"},"taskmaturity":{"en":"task-relevant maturity","zh":"任务相关成熟度","def_zh":"格鲁夫在《高产出管理》里的说法：该盯多紧，取决于某人在这一件具体任务上的历史表现，而不是整体能力。","analogy_zh":"像带新人：越熟的事越放手。"},"span":{"en":"span of control","zh":"管理幅度","def_zh":"一个管理者能直接带好的人数上限；超过这个数，每个人分到的注意力变少，质量就下滑。","analogy_zh":"像一个老师能盯得过来的学生数。"},"worktree":{"en":"worktree","zh":"工作树","def_zh":"同一个仓库的另一份独立检出，改动互不干扰；并行跑多个任务时各占一个，避免抢同一份代码。","analogy_zh":"像同一栋楼里的独立工位，各改各的。"},"sandbox":{"en":"sandbox","zh":"沙箱","def_zh":"给智能体划定的隔离范围，限制它能碰什么、能往哪写；文中把它和权限控制、工作树并列，属于「边界」。","analogy_zh":"像给孩子划的活动区，出了圈就不行。"},"automemory":{"en":"auto memory","zh":"自动记忆","def_zh":"智能体自己记下的笔记，只存在本机、只对它自己的会话有效；不会自动变成团队共享的经验。","analogy_zh":"像只写在自己本子上的备忘，同事翻不到。"},"commanderintent":{"en":"commander's intent","zh":"指挥官意图","def_zh":"军队里的说法：讲清目标、约束和为什么重要，至于具体怎么做，留给执行的人自己判断。","analogy_zh":"像说清「拿下那个山头」，路线让队长自己选。"},"orchestrationtax":{"en":"orchestration tax","zh":"编排税","def_zh":"作者自造的词：同时跑多个智能体时，每多一个都要多花注意力协调，成本比上一个更高，不是线性增长。","analogy_zh":"像带团队：人越多，沟通成本涨得越快。"},"wip":{"en":"WIP","zh":"在制品","def_zh":"同时处于进行中的工作量；文中主张给它设上限，否则评审和验证会被一堆半成品堵死。","analogy_zh":"像桌上同时摊开的活，摊太多就都做不完。"}},"notes":{"N1":{"title_zh":"/goal 是什么","body_zh":"Claude Code 里把「完成条件」写成目标的用法：每个回合结束后，由另一个模型来判定条件是否满足，所以它适合长时间的后台任务——判定不依赖你一直盯着。四档验证强度的写法，官方文档里有（见文末 L3）。"},"N2":{"title_zh":"格鲁夫与「任务相关成熟度」","body_zh":"Andy Grove（安迪·格鲁夫）是英特尔的 CEO，《高产出管理》（High Output Management，1983）是管理学经典。「任务相关成熟度」的意思是：同一个人在不同任务上的成熟度不一样，所以该给多少自主权要按任务看，不按人看——对智能体也一样。"},"N3":{"title_zh":"「跨级管理」是什么","body_zh":"skip-level 指经理跳过自己的直接下属去管下一层：不管某个工程师今天具体写什么，而是管目标、护栏、检查点，以及他手下的组长。作者用它类比「无人值守的智能体运行」——你设计的是这层结构，不是每一次会话。"},"N4":{"title_zh":"沃顿那项研究","body_zh":"指 Shaw 与 Nave 关于「认知卸载 / 认知投降」的论文（作者在前作《Cognitive Surrender》里详述）：只要 AI 可用，多数错误答案会被直接接受，人的自信反而上升。本页 L2 卡片有这篇前作的摘要。"},"N5":{"title_zh":"文末那张图不是配图","body_zh":"它是 Pangram（一个判断文本是否由 AI 生成的检测工具）给出的结果徽章：AI 10% / AI-assisted 0% / Human 90%。它说明的是「这篇被检测为主要是人写的」，不构成文章任何论点的证据。"}},"typos":[{"quote_en":"semi often","body_zh":"「semi often」不是标准英文搭配，是作者的口语写法（意为「隔一阵子」）。照录原文，不改成 semi-often，中文按语意译为「隔一阵子」。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

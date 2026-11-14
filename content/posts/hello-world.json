@@ -1,0 +1,39 @@
+{
+ "slug": "hello-world",
+ "path": "2026/02/11/hello-world",
+ "title": "Hello World",
+ "description": "Hexo 的第一篇文章：怎么新建一篇 post，以及这个模板留下的骨架。",
+ "date": "2026-02-11",
+ "tags": [
+  "Hello World",
+  "Hexo"
+ ],
+ "content": "<p>Welcome to <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/\">Hexo</a>! This is your very first post. Check <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/docs/\">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/docs/troubleshooting.html\">troubleshooting</a> or you can ask me on <a target=\"_blank\" rel=\"noopener\" href=\"https://github.com/hexojs/hexo/issues\">GitHub</a>.</p>\n<h2 id=\"Quick-Start\">Quick Start</h2><h3 id=\"Create-a-new-post\">Create a new post</h3><pre><code class=\"language-bash\">$ hexo new &quot;My New Post&quot;</code></pre>\n\n<p>More info: <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/docs/writing.html\">Writing</a></p>\n<h3 id=\"Run-server\">Run server</h3><pre><code class=\"language-bash\">$ hexo server</code></pre>\n\n<p>More info: <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/docs/server.html\">Server</a></p>\n<h3 id=\"Generate-static-files\">Generate static files</h3><pre><code class=\"language-bash\">$ hexo generate</code></pre>\n\n<p>More info: <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/docs/generating.html\">Generating</a></p>\n<h3 id=\"Deploy-to-remote-sites\">Deploy to remote sites</h3><pre><code class=\"language-bash\">$ hexo deploy</code></pre>\n\n<p>More info: <a target=\"_blank\" rel=\"noopener\" href=\"https://hexo.io/docs/one-command-deployment.html\">Deployment</a></p>",
+ "toc": [
+  {
+   "level": 2,
+   "text": "Quick Start",
+   "id": "Quick-Start"
+  },
+  {
+   "level": 3,
+   "text": "Create a new post",
+   "id": "Create-a-new-post"
+  },
+  {
+   "level": 3,
+   "text": "Run server",
+   "id": "Run-server"
+  },
+  {
+   "level": 3,
+   "text": "Generate static files",
+   "id": "Generate-static-files"
+  },
+  {
+   "level": 3,
+   "text": "Deploy to remote sites",
+   "id": "Deploy-to-remote-sites"
+  }
+ ]
+}

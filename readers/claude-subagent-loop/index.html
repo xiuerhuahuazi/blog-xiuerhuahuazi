@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>构建智能体：何时该把子智能体折叠进主智能体循环｜Building agents: When to fold subagents into your main agent loop</title>
+<meta name="description" content="构建智能体：何时该把子智能体折叠进主智能体循环｜Building agents: When to fold subagents into your main agent loop：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-subagent-loop/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="构建智能体：何时该把子智能体折叠进主智能体循环">
+<meta property="og:description" content="Anthropic 应用 AI 团队 · 2026 年 10 月 22 日 · 原文约 2,750 词">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-subagent-loop/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic · Applied AI · 2026-10-22</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Building agents: When to fold subagents into your main agent loop</span><span class="h1-zh">构建智能体：何时该把子智能体折叠进主智能体循环</span></h1><div class="hero-meta"><span>原文 2750 词</span><span>中文 6100 字</span><span>逐句对照 <i>127</i> 句</span><span>预计 14 分钟</span><span><a href="https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 5 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：在企业里，把路由层（router）、规划器、领域子智能体折叠进一个主循环，常常在质量、成本、延迟三方面同时更好——因为子智能体最主要的价值「隔离上下文」，已经被技能（Skills）和工具检索（tool search）这类「渐进披露」手段接管了。</li><li><b>为什么会跑偏</b>：各团队按自己的业务各建一个子智能体，智能体架构就变成了组织架构图的复印件（康威定律）。随之而来的是上下文在来回传递中丢失、几百个重叠的子智能体、每队往系统提示词里加一句的「缝合怪」、以及层层嵌套带来的延迟。</li><li><b>什么时候仍该用子智能体</b>：只有三种情况——单循环因为上下文膨胀已经出现可测量的性能下降；需要并行、且用完即弃的崭新上下文；或者单个智能体已经挑不准工具、指令还互相冲突。</li><li><b>怎么迁</b>：先建一套 10 条黄金样例的端到端评测 → 按「共享上下文」合并同类子智能体 → 把它们当工具调用（主智能体保留对话权）→ 最后逐个拆成「技能 + MCP 工具」，用评测对比「折叠版 vs 保留版」，只留下跑分更好的那个。</li><li><b>组织怎么配合</b>：各团队的所有权从「一个智能体」转成「一些技能和工具」，中央一个小团队守着系统提示词与端到端质量；四个 /claude-api 技能分别负责建评测、清掉写给旧模型的提示、反复迭代提分、降低成本。</li></ul><div class="compare"><div class="cmp"><h3>常见搭法：5 层结构</h3><ol><li>多智能体编排器</li><li>意图分类器</li><li>固定的多步推理流水线</li><li>按用户分群的三个桶</li><li>三条各自独立的推荐分支</li></ol></div><div class="cmp win"><h3>本文建议：1 个循环</h3><ol><li>一份清晰的系统提示词</li><li>4-5 个「瘦」数据工具</li><li>严格约束输出的护栏</li></ol></div></div><p class="ov-foot cmp-foot">左边那套结构，很多是在替模型做它现在已经会做的事。</p><p class="ov-foot">读法建议：只有 10 分钟，先读第一节（失败模式）和第二节（渐进披露为什么成立）；要动手改架构，直接跳到第三节和第五节。页面上所有虚线下划的词都可以悬停看解释，不必点走。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>子智能体有它不可替代的位置，但企业里那种「每个团队一个子智能体」的搭法，常常是在替模型做它已经不需要人替它做的事。本文要回答两件事：什么时候该把路由器、规划器、领域子智能体折叠回主循环，以及怎么一步步折过去。</p></div>
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">If you've built an agent in Claude Platform that includes multiple <span class='term' data-term='subagent'>subagents</span>, see which may make sense to fold into the main <span class='term' data-term='agent-loop'>agent loop</span> using our <a class='lnk' href='https://github.com/anthropics/single-agent-loop-kit' target='_blank' rel='noopener' data-link='L1'>migration kit</a>.</span> <span class="s" data-k="intro-b0-1">It runs a guided workflow to identify your patterns, evaluate alternatives, and verify the best approach.</span> <span class="s" data-k="intro-b0-2">It includes a demo that you can try on a mock system before running on your agent.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">如果你在 Claude 平台上构建过一个包含多个<span class='term' data-term='subagent'>子智能体</span>的智能体，可以借助我们的<a class='lnk' href='https://github.com/anthropics/single-agent-loop-kit' target='_blank' rel='noopener' data-link='L1'>迁移工具包</a>，看看其中哪些子智能体适合折叠进主<span class='term' data-term='agent-loop'>智能体循环</span><sup class='tn' data-note='N1'>1</sup>。</span><span class="s" data-k="intro-b0-1">它会跑一套引导式流程：先识别你现有的模式，再评估不同方案，最后验证哪条路最合适。</span><span class="s" data-k="intro-b0-2">工具包里还带一个演示，可以先在一套模拟系统上试，试完再放到你自己的智能体上跑。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">Subagents – agents with their own <span class='term' data-term='context-window'>context window</span>, <span class='term' data-term='tool'>tools</span>, and instructions, <a class='lnk' href='https://claude.com/resources/articles/multi-agent-coordination-patterns' target='_blank' rel='noopener' data-link='L2'>orchestrated by a coordinator</a> – are a core component of agent design.</span> <span class="s" data-k="intro-b1-1">They are effective at verification, parallel work, and modular permissioning.</span> <span class="s" data-k="intro-b1-2">We use them in many of our own agents that we build using Claude Platform, for example our <a class='lnk' href='https://www.anthropic.com/engineering/multi-agent-research-system' target='_blank' rel='noopener' data-link='L3'>multi-agent research system</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">子智能体是智能体设计的核心构件之一：它们有各自的<span class='term' data-term='context-window'>上下文窗口</span>、<span class='term' data-term='tool'>工具</span>和指令，<a class='lnk' href='https://claude.com/resources/articles/multi-agent-coordination-patterns' target='_blank' rel='noopener' data-link='L2'>由一名协调者（coordinator）统一编排</a>。</span><span class="s" data-k="intro-b1-1">它们在验证、并行工作、模块化授权这三件事上很有效。</span><span class="s" data-k="intro-b1-2">我们自己用 Claude 平台构建的许多智能体都在用它们，比如我们的<a class='lnk' href='https://www.anthropic.com/engineering/multi-agent-research-system' target='_blank' rel='noopener' data-link='L3'>多智能体研究系统</a>。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">However, recently the Applied AI team has found a pattern of enterprise agent deployments that have benefited from folding routers, planners, and domain subagents into the main agent loop.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">不过，应用 AI 团队（Applied AI）最近在企业智能体部署中发现了一类常见情况：把路由层（router，先判断这个请求该交给谁）、规划器和领域子智能体折叠进主循环之后，受益了。</span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">In <a class='lnk' href='https://claude.com/resources/articles/the-anatomy-of-effective-commerce-agents' target='_blank' rel='noopener' data-link='L4'>our comparisons across several enterprise deployments</a>, <a class='lnk' href='https://claude.com/resources/articles/building-agents-with-skills-equipping-agents-for-specialized-work' target='_blank' rel='noopener' data-link='L5'>a single agent with skills</a> frequently outperformed both the one-prompt-for-everything design and the subagent design on quality, and often at a lower cost and latency per task.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">在<a class='lnk' href='https://claude.com/resources/articles/the-anatomy-of-effective-commerce-agents' target='_blank' rel='noopener' data-link='L4'>我们对多个企业部署所做的对比</a>中，<a class='lnk' href='https://claude.com/resources/articles/building-agents-with-skills-equipping-agents-for-specialized-work' target='_blank' rel='noopener' data-link='L5'>一个带技能（skills）的单智能体</a>在质量上经常同时胜过「一个提示词包打天下」的设计和子智能体设计，而且往往每个任务的成本和延迟还更低。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">For example, one company found <span class='typo' data-typo='1'>the dozen of</span> specialist subagents within its customer-facing agent made a consistent on-brand experience difficult to maintain and added latency that hurt the user experience.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">举个例子：一家公司发现，自家面向客户的智能体里那十几个专家子智能体，让「始终保持统一的品牌调性」变得很难维护，同时还额外增加了延迟，损害了用户体验。</span></p></div></div>
+<div class="row" data-rid="intro-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b5-0">We also often see proposed agent designs that follow a familiar progression: an intent classifier, a fixed multi-step reasoning pipeline, user-segment buckets, separate recommendation branches, and a multi-agent <span class='term' data-term='orchestrator'>orchestrator</span> on top.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b5-0">我们还经常看到一类似曾相识的方案，一层层叠上去：一个意图分类器、一条固定的多步推理流水线、按用户分群的几个桶、几条各自独立的推荐分支，最后在最上面盖一个多智能体<span class='term' data-term='orchestrator'>编排器</span>。</span></p></div></div>
+<div class="row" data-rid="intro-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b6-0">In these cases feedback is often that most of this structure was doing work the model no longer needed done for it, and that one clear system prompt, 4-5 thin data tools, and firm output <span class='term' data-term='guardrails'>guardrails</span> would cover most of the use case.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b6-0">这类情况下，我们通常给出的反馈是：这套结构里的大部分，是在替模型做它已经不需要别人替它做的工作；而一份清晰的系统提示词、4-5 个「瘦」数据工具<sup class='tn' data-note='N2'>2</sup>，再加上严格约束输出的<span class='term' data-term='guardrails'>护栏</span>，就能覆盖大多数使用场景。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="常见设计 vs. 本文建议：5 层结构 vs 1 个循环"><div class="fig-media"><img class="still" src="media/fig1-still.png" loading="lazy" decoding="async" alt="subagent design"><img class="anim" src="media/fig1.gif" alt="subagent design" hidden><div class="fig-bar"><button data-act="still" class="on">静帧</button><button data-act="anim">动图</button></div></div><figcaption><p class="cap-zh"><b>常见设计 vs. 本文建议：5 层结构 vs 1 个循环</b>　左栏 COMMON PATTERN（常见模式）：REQUEST 先到多智能体编排器，再经意图分类器、固定五步推理流水线、用户分群和推荐分支，共 5 层。右栏 WHAT WE OFTEN RECOMMEND（常建议）：1 个循环，一份清晰系统提示、4—5 个「瘦」数据工具、硬性输出护栏。</p><p class="cap-en">原文图注：subagent design</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>先看两栏顶部的「5 layers」对「1 loop」：左边是包在模型外的 5 层结构，右边只剩 1 个循环。</li><li>左栏按箭头读：REQUEST 进 Multi-agent orchestrator，再经 Intent classifier 分到三个 User-segment bucket，最后落到 Recommendation branch，每支对应一类用户。</li><li>中段 FIXED MULTI-STEP REASONING PIPELINE 里排着 1—5 五个小格：推理步骤是写死的，正文说这段模型已不需要。</li><li>右栏 Single agent loop 里只有 Model：TOOL CALLS 调 4-5 thin data tools（四个实心方块加一个虚线框），RESULTS 把结果送回同一个 Model，一圈就完。</li><li>最底部 Firm output guardrails 横贯整个循环：结构变简单，硬性输出限制仍保留，呼应正文「「瘦」数据工具加护栏就够」。</li></ol><p class="takeaway">一句话：同样的用例，模型外面堆 5 层结构，不如一个带 4—5 个「瘦」数据工具的循环。</p></details></figcaption></figure>
+<div class="row" data-rid="intro-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b8-0">To be clear, subagents still have their place, including at the research frontier. Use them when:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b8-0">说清楚一点：子智能体仍有它的位置，在探索性研究的前沿尤其如此。下面这些情况就该用它们：</span></p></div></div>
+<div class="row" data-rid="intro-b9"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="intro-b9-0-0">A single agent loop hits measurable performance degradation from <span class='term' data-term='context-bloat'>context bloat</span>, or</span></li><li><span class="s" data-k="intro-b9-1-0">Multiple tasks need to be tackled in parallel with fresh context windows that can be discarded once the task is done, or</span></li><li><span class="s" data-k="intro-b9-2-0">A single agent struggles to select appropriate tools or there are conflicting instructions in the system prompt.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="intro-b9-0-0">单个智能体循环因为<span class='term' data-term='context-bloat'>上下文膨胀</span>，出现了可以测量到的性能下降；或者</span></li><li><span class="s" data-k="intro-b9-1-0">多个任务需要并行推进，而且每个任务都要用全新的上下文窗口，任务做完整个窗口就能丢掉；或者</span></li><li><span class="s" data-k="intro-b9-2-0">单个智能体已经挑不准该用哪个工具，或者系统提示词里存在互相冲突的指令。</span></li></ul></div></div>
+<div class="row" data-rid="intro-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b10-0">But too often we see enterprises give each team or problem type its own subagent, with the agent architecture becoming a copy of their org chart (<span class='term' data-term='conways-law'>Conway's law</span> at work).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b10-0">但我们见得太多了：企业给每个团队、每种问题类型都配一个自己的子智能体，结果智能体架构变成了组织架构图的复印件——这是<span class='term' data-term='conways-law'>康威定律</span><sup class='tn' data-note='N3'>3</sup>在起作用。</span></p></div></div>
+<div class="row" data-rid="intro-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b11-0">This post explains when to consider folding subagents into your main agent loop with best practices we've learned from building agents in large organizations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b11-0">这篇文章讲的就是：什么时候该考虑把子智能体折叠进主循环，以及我们在大组织里做智能体时总结出的最佳实践。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-failures">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Agent building failure modes for large organizations</span><span class="h-zh">大型组织构建智能体的典型失败模式</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>公司想让一个智能体统一多个产品，但每项能力归不同的团队，于是很自然地「各建一个，再盖一个编排器」。这看起来最省事，却会连锁引发五个问题，其中最后一个是延迟——有客户实测，多智能体的耗时约为单循环的两倍。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="failures-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="failures-b0-0">Companies often want to build an agent that unites multiple products and capabilities into a single customer interface.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="failures-b0-0">公司常常想做一个智能体，把多个产品和能力统一到同一个客户界面里。</span></p></div></div>
+<div class="row" data-rid="failures-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="failures-b1-0">Typically, each capability is owned by a separate team, so companies start by letting each individual team build their own agent, then a central platform team builds an orchestrator on top.</span> <span class="s" data-k="failures-b1-1">This can take on several structures including orchestrator-subagent or a single agent with specific agents exposed as <span class='term' data-term='mcp'>MCP</span> tools.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="failures-b1-0">通常每项能力都归一个不同的团队管，于是公司的起点是：让各团队先各自建一个智能体，再由一个中央平台团队在最上面加一个编排器。</span><span class="s" data-k="failures-b1-1">这可以落成好几种结构，比如「编排器 + 子智能体」，或者一个主智能体、把若干特定智能体作为 <span class='term' data-term='mcp'>MCP</span> 工具暴露出来。</span></p></div></div>
+<div class="row" data-rid="failures-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="failures-b2-0">This looks like the simplest solution but introduces immediate complexity around:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="failures-b2-0">这看起来是最省事的做法，但它会立刻在几个方面引入复杂度：</span></p></div></div>
+<div class="row" data-rid="failures-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="failures-b3-0-0"><b>Context management:</b> You need to decide what context is exchanged between agents and often lose details in the back and forth.</span></li><li><span class="s" data-k="failures-b3-1-0"><b>Subagent sprawl</b>: Every team ships its own subagent, so companies end up with hundreds of overlapping subagents with no enforced standards and no specific owner.</span></li><li><span class="s" data-k="failures-b3-2-0"><b>The <span class='term' data-term='frankenprompt'>Frankenprompt</span></b>: Every team adds a sentence to the system prompt, resulting in conflicting rules and no consistent voice.</span></li><li><span class="s" data-k="failures-b3-3-0"><b>Unvetted, overly localized <span class='term' data-term='eval'>evals</span></b>: Everyone adds their own evals that are overly optimized for their subtask.</span> <span class="s" data-k="failures-b3-3-1">No one owns or maintains the whole set, and leadership makes decisions based on watered-down, overly localized scores.</span></li><li><span class="s" data-k="failures-b3-4-0"><b>Latency</b>: Multi-agent architectural complexity adds latency. One customer that evaluated their multi-agent <span class='term' data-term='harness'>harness</span> against a single agent loop saw a roughly 2x faster runtime with the latter.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="failures-b3-0-0"><b>上下文管理</b>：你得决定智能体之间交换哪些上下文，而在来回传递中细节经常会丢。</span></li><li><span class="s" data-k="failures-b3-1-0"><b>子智能体泛滥</b>：每个团队都交付自己的子智能体，于是公司最后攒下几百个功能重叠的子智能体，既没有强制执行的标准，也没有明确的归属人。</span></li><li><span class="s" data-k="failures-b3-2-0"><b>「<span class='term' data-term='frankenprompt'>缝合怪</span>」提示词</b>：每个团队都往系统提示词里加一句，最后规则互相冲突，语气也不统一。</span></li><li><span class="s" data-k="failures-b3-3-0"><b>未经统一把关、过度局部化的<span class='term' data-term='eval'>评测</span></b>：人人都加自己的评测，而且都只为自己那块子任务过度优化。</span><span class="s" data-k="failures-b3-3-1">整套评测既没有负责人也没有维护者，领导层最后只能基于被稀释的、只反映局部情况的分数做决策。</span></li><li><span class="s" data-k="failures-b3-4-0"><b>延迟</b>：多智能体架构的复杂度会带来额外延迟。有个客户拿自己的多智能体框架（<span class='term' data-term='harness'>harness</span>）和单智能体循环做过对比，换成单循环跑同样的任务，大约只要一半时间。</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-progressive">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Using an agent loop with progressive disclosure</span><span class="h-zh">用「渐进披露」的智能体循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>「渐进披露」是本文的技术核心：智能体先只看到技能和工具的简短说明，需要时才把完整内容加载进来。它一次解决三件事——共享上下文让答案更好、按需加载让提示词不必臃肿、模型本身变强让更多决策可以搬进模型。这三条合起来，就是「一个循环就够」的底气。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="progressive-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="progressive-b0-0">The orchestrator-subagent design described above is a reasonable approach to coordinating specialists built across teams, but often a more effective approach can be <b><span class='term' data-term='progressive-disclosure'>progressively disclosing</span> context via <span class='term' data-term='skill'>skills</span></b> and <b>progressively disclosing tools via <span class='term' data-term='tool-search'>tool search</span></b>.</span> <span class="s" data-k="progressive-b0-1">In other words, the agent sees short descriptions of the skills and tools, which are fully loaded only when needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="progressive-b0-0">前面讲的「编排器 + 子智能体」设计，是在跨团队协调专家能力时一种合理的做法；但通常更有效的做法是：<b>通过<span class='term' data-term='skill'>技能</span>（skills）<span class='term' data-term='progressive-disclosure'>渐进披露</span>上下文</b>，以及<b>通过<span class='term' data-term='tool-search'>工具检索</span>（tool search）渐进披露工具</b>。</span><span class="s" data-k="progressive-b0-1">换句话说，智能体一开始只看到这些技能和工具的简短说明，真正需要时才把完整内容加载进来。</span></p></div></div>
+<div class="row" data-rid="progressive-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="progressive-b1-0">There are three reasons why this approach can make sense:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="progressive-b1-0">这个做法之所以成立，有三个原因：</span></p></div></div>
+<div class="row" data-rid="progressive-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="progressive-b2-0-0"><b>Shared context produces better answers:</b> for longer-running agents, we want the context from several different tasks to sit in the main context window.</span> <span class="s" data-k="progressive-b2-0-1">An agent that has seen the result of each earlier step can connect them, which leads to richer outputs and better insights than a set of summaries handed back by subagents.</span> <span class="s" data-k="progressive-b2-0-2">It also means <a class='lnk' href='https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them' target='_blank' rel='noopener' data-link='L6'>fewer context windows and fewer lossy handoffs</a>.</span></li><li><span class="s" data-k="progressive-b2-1-0"><b>Progressive disclosure prevents context bloat:</b> <span class='typo' data-typo='0'>this techniqueallows</span> teams to build single agents that can accomplish a wide variety of tasks without requiring all of the context to be immediately loaded into one long system prompt.</span> <span class="s" data-k="progressive-b2-1-1">This removes the main reason teams previously split work across subagents.</span> <span class="s" data-k="progressive-b2-1-2">In fact, we <a class='lnk' href='https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/' target='_blank' rel='noopener' data-link='L7'>reduced Claude Code's system prompt for more advanced models by over 80%</a> which included cuts related to progressively disclosing skills and tools.</span></li><li><span class="s" data-k="progressive-b2-2-0"><b>Models are more capable:</b> starting with Opus 4.5, models became capable of managing far more in a single loop than most teams expected.</span> <span class="s" data-k="progressive-b2-2-1">You cannot turn off thinking on Opus 5.5, and Fable 5.1, and recent models increasingly narrate their progress and check their work as they go, which makes some harness elements redundant.</span> <span class="s" data-k="progressive-b2-2-2">Each new model lets you move more of the decision-making out of the harness and into the model itself.</span> <span class="s" data-k="progressive-b2-2-3">A simpler loop is also easier to move to the next model; in migrations we have helped customers with, rigid multi-agent structures were often what stopped the new model from doing more of the work.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="progressive-b2-0-0"><b>共享上下文能产出更好的答案</b>：对运行时间较长的智能体来说，我们希望来自好几个不同任务的上下文都留在主上下文窗口里。</span><span class="s" data-k="progressive-b2-0-1">一个亲眼看过前面每一步结果的智能体，才能把这些结果串起来，产出比「由子智能体递回来的一堆摘要」更丰富的内容、更好的判断。</span><span class="s" data-k="progressive-b2-0-2">这也意味着<a class='lnk' href='https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them' target='_blank' rel='noopener' data-link='L6'>更少的上下文窗口、更少的有损交接</a>。</span></li><li><span class="s" data-k="progressive-b2-1-0"><b>渐进披露能防止上下文膨胀</b>：团队因此可以构建单个智能体来完成五花八门的任务，而不必把所有上下文一股脑塞进一条很长的系统提示词里。</span><span class="s" data-k="progressive-b2-1-1">这也消除了团队过去把工作拆给子智能体的主要理由。</span><span class="s" data-k="progressive-b2-1-2">事实上，我们<a class='lnk' href='https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/' target='_blank' rel='noopener' data-link='L7'>针对更强的模型把 Claude Code 的系统提示词减掉了 80% 以上</a>，其中一部分削减正是与「渐进披露技能和工具」相关的。</span></li><li><span class="s" data-k="progressive-b2-2-0"><b>模型本身更强了</b>：从 Opus 4.5 开始，模型能在单个循环里处理的事情，远超大多数团队的预期。</span><span class="s" data-k="progressive-b2-2-1">在 Opus 5.5 和 Fable 5.1<sup class='tn' data-note='N5'>4</sup> 上已经无法关闭「思考」（thinking），而且新近的模型会越来越多地边做边汇报进度、边做边检查自己的工作，这让 harness 里的一些部件变得多余。</span><span class="s" data-k="progressive-b2-2-2">每出一代新模型，你都能把更多决策从 harness 挪进模型自身。</span><span class="s" data-k="progressive-b2-2-3">更简单的循环也更容易迁移到下一代模型；在我们帮客户做的迁移里，卡住新模型、让它做不了更多活的，往往就是那套僵化的多智能体结构。</span></li></ul></div></div>
+<div class="row" data-rid="progressive-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="progressive-b3-0">The single agent loop design requires discipline: a carefully managed system prompt, skill and tool descriptions that trigger at the right times, and deliberate handling of context windows, memory, and note-taking.</span> <span class="s" data-k="progressive-b3-1">This article goes deeper into migration and design considerations in subsequent sections.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="progressive-b3-0">单智能体循环的设计是有纪律要求的：系统提示词要精心维护；技能和工具的说明要在正确的时机被触发；上下文窗口、记忆、记笔记都要有意识地处理。</span><span class="s" data-k="progressive-b3-1">本文后面的小节会更深入地讲迁移和设计上的考量。</span></p></div></div>
+<div class="row" data-rid="progressive-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="progressive-b4-0">One central team should own end-to-end quality and the system prompt, vetting every new tool and eval before it ships.</span> <span class="s" data-k="progressive-b4-1">Keeping that central team small helps iteration move quickly and lowers coordination cost across a large org.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="progressive-b4-0">应当有一个中央团队对端到端质量和系统提示词负责，任何新工具、新评测在交付前都要经过它把关。</span><span class="s" data-k="progressive-b4-1">把这个中央团队保持在小规模，能让迭代跑得更快，也能降低大组织内部的协调成本。</span></p></div></div>
+<div class="row" data-rid="progressive-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="progressive-b5-0">If you go the multi-agent route, start with the simplest pattern (<span class='term' data-term='generator-verifier'>generator-verifier</span>, orchestrator-subagent, or other) that could work.</span> <span class="s" data-k="progressive-b5-1">Decompose boundaries effectively by <b>dividing by context: give each subagent a piece of work that needs little from the rest of the system and have it hand back a compact result</b> (good candidates are independent research paths, separate components with clean interfaces, or black-box verification).</span> <span class="s" data-k="progressive-b5-2">When agents are split by problem type, they engage in a “telephone game,” passing information back and forth with each <span class='term' data-term='handoff'>handoff</span> degrading fidelity.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="progressive-b5-0">如果你还是走多智能体路线，就从「可能奏效的最简单模式」开始——<span class='term' data-term='generator-verifier'>生成器—验证器</span>、编排器—子智能体，或者其他哪种都行。</span><span class="s" data-k="progressive-b5-1">切分边界要切得有效，办法是<b>按上下文来分：给每个子智能体一块「几乎不需要系统其余部分」的工作，让它只递回一个紧凑的结果</b>（合适的候选是各自独立的研究路径、接口干净的独立组件，或者黑箱验证）。</span><span class="s" data-k="progressive-b5-2">如果按「问题类型」去拆智能体，它们就会陷入一场传话游戏<sup class='tn' data-note='N4'>5</sup>：信息来回传递，每<span class='term' data-term='handoff'>交接</span>一次，保真度就掉一档。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="按问题类型拆 vs. 按上下文拆：传话游戏 vs 一个人带着上下文做完"><div class="fig-media"><img class="still" src="media/fig2.png" loading="lazy" decoding="async" alt="subagents split by problem"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>按问题类型拆 vs. 按上下文拆：传话游戏 vs 一个人带着上下文做完</b>　上半 SPLIT BY PROBLEM TYPE（按问题类型拆）：Agent 1 写功能，HANDOFF 交给 Agent 2 写测试，再 HANDOFF 交给 Agent 3 审代码，每交接一次就丢一层上下文。下半 SPLIT BY CONTEXT（按上下文拆）：One agent 自己写完功能和测试，只有 Verifier 单独跑测试，因为它不需要实现上下文。</p><p class="cap-en">原文图注：subagents split by problem</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>先看上半的 SPLIT BY PROBLEM TYPE（按问题类型拆）：Agent 1 写功能，HANDOFF 给 Agent 2 写测试，再 HANDOFF 给 Agent 3 审代码，各管一段。</li><li>数一数 HANDOFF 出现两次：图注说每次交接都丢上下文，写测试的 Agent 不知道实现为什么这么写。</li><li>再看下半 SPLIT BY CONTEXT（按上下文拆）：One agent 一个框就写完功能和测试，下面注着 because it already has the context，因为它本来就有上下文。</li><li>右侧单独的 Verifier 只跑测试、报结果；图注点明它不需要实现上下文，所以才适合被拆出去。</li><li>上下对比的重点不是「拆得越少越好」，而是按上下文边界拆：共享同一份上下文的活别分给两个智能体。</li></ol><p class="takeaway">一句话：按问题类型拆会让信息在 HANDOFF 里越传越少；要按上下文边界拆。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-fold">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">How to fold subagents into the main agent loop</span><span class="h-zh">怎样把子智能体折叠进主循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>说明：原文交替使用 main agent loop 与 single agent loop，指的都是同一个东西，中文统一叫「主循环」或「单循环」，别当成两种架构。单循环长这样：一个模型、一个上下文窗口、一个开放式的工具循环（步骤不写死）；预算和审批闸门设在 harness 里，计划由模型自己写、自己改。落地路径是三步——先建评测，再合并同类，再逐个折叠，每次只动一处，用评测看哪个任务翻转了。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="fold-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b0-0">Many teams already have an orchestrator and a set of specialist agents in production. The following is the single loop design we'd suggest working toward:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b0-0">很多团队的生产环境里已经有了一套编排器加一组专家智能体。下面是建议你逐步靠拢的单循环设计：</span></p></div></div>
+<div class="row" data-rid="fold-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="fold-b1-0-0">One model and one context window running an open-ended tool loop, with limits (turn and cost <span class='term' data-term='task-budget'>budgets</span>, write gates) set in the harness.</span></li><li><span class="s" data-k="fold-b1-1-0">Each turn, the model emits a batch of tool calls. The harness runs them in parallel and returns raw results to the same model, which decides the next step: another batch, a question to the user, or an answer.</span></li><li><span class="s" data-k="fold-b1-2-0">The loop stops when the model answers or hits a <a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/task-budgets' target='_blank' rel='noopener' data-link='L8'>budget</a>. A goal or verifier check can optionally run after the answer.</span></li><li><span class="s" data-k="fold-b1-3-0">The model writes its plan in context on the first turn and revises it as results arrive. This is the main change from the orchestrator and specialist agents setup: the model that writes the plan is also the one carrying it out, so it can change the plan mid-turn.</span></li><li><span class="s" data-k="fold-b1-4-0">Context still gets loaded, and is managed by the agent itself:</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="fold-b1-0-0">一个模型、一个上下文窗口，跑一个开放式的工具循环（步骤不写死，跑几步由模型自己决定）；轮次<span class='term' data-term='task-budget'>预算</span>、成本预算、写入闸门这些限制，都设在 harness 里。</span></li><li><span class="s" data-k="fold-b1-1-0">每一轮，模型发出一批工具调用。harness 并行执行它们，把原始结果交回给<b>同一个</b>模型，由它决定下一步：再来一批调用、向用户提问，还是给出答案。</span></li><li><span class="s" data-k="fold-b1-2-0">模型给出答案、或者用尽<a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/task-budgets' target='_blank' rel='noopener' data-link='L8'>预算</a>时，循环就停。答案之后还可以（可选地）再跑一次目标检查或验证器检查。</span></li><li><span class="s" data-k="fold-b1-3-0">模型在第一轮就把计划写在上下文里，之后随着结果返回不断修订。这是相对「编排器 + 专家智能体」结构最主要的变化：写计划的模型就是执行计划的模型，所以它能在执行途中改计划。</span></li><li><span class="s" data-k="fold-b1-4-0">上下文仍然要加载，只是改由智能体自己来管：</span></li></ul></div></div>
+<div class="row nested" data-rid="fold-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="fold-b2-0-0">A code step that rewrites the plan from a catalog of rules is no longer needed, since the model decides each step.</span></li><li><span class="s" data-k="fold-b2-1-0">Ordering and domain procedure move into <b>skills.</b></span></li><li><span class="s" data-k="fold-b2-2-0">Hard limits (validation, approval gates) and anything else that comes up mid-conversation (e.g. memory lookup) move into the <b>tools.</b></span></li><li><span class="s" data-k="fold-b2-3-0">Code can still be used to load anything cheap and almost always relevant (e.g. an entity resolution step), and to handle any mechanical parts (payload construction, stream parsing, resuming a clarification) inside tools the loop calls.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="fold-b2-0-0">不再需要「用代码照一张规则目录重写计划」这一步，因为每一步都由模型自己决定。</span></li><li><span class="s" data-k="fold-b2-1-0">顺序和领域流程搬进<b>技能（skills）</b>。</span></li><li><span class="s" data-k="fold-b2-2-0">硬性约束（校验、审批闸门），以及对话中途中冒出来的其他需求（比如查记忆），搬进<b>工具</b>。</span></li><li><span class="s" data-k="fold-b2-3-0">代码仍然有用：凡是「加载成本很低、而且几乎总是相关」的东西（比如「实体消歧」这一步：把「张三」「张先生」「老张」认成同一个人），可以用代码加载；循环所调用的工具内部，那些机械性的活儿（拼装请求体、解析流、恢复一次澄清对话）也可以交给代码。</span></li></ul></div></div>
+<div class="row" data-rid="fold-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b3-0">This single loop design also helps with the end state many teams are working toward (an agent that understands a user's high-level goals and acts on their behalf), since it keeps everything the agent has learned in one context.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b3-0">这个单循环设计也有助于抵达很多团队正在追求的终局——一个能理解用户高层目标、并代表用户行动的智能体——因为它把智能体学到的一切都留在了同一个上下文里。</span></p></div></div>
+<div class="row" data-rid="fold-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b4-0">The suggestions below are how a team could get from a multi-agent system to a single agent loop in stages, and how several teams can keep contributing to that agent along the way.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b4-0">下面的建议讲的是：一个团队怎样分阶段从多智能体系统走到单循环，以及在这个过程中，多个团队怎么继续给同一个智能体做贡献。</span></p></div></div>
+<div class="row h3row wide" id="h-fold-b5"><h3><span class='h3-en'>Task-completion evals</span><span class='h3-zh'>任务完成度评测</span></h3></div>
+<div class="row" data-rid="fold-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b6-0">The first step is to create an eval set that can help you determine whether you should fold a subagent into the main agent loop.</span> <span class="s" data-k="fold-b6-1">The eval structure we've seen work is one shared end-to-end set owned by a central team with smaller eval sets shipped with each skill by the team that owns it.</span> <span class="s" data-k="fold-b6-2">Even a set of 10 <span class='term' data-term='golden-examples'>golden examples</span> is enough to start.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b6-0">第一步是建一套评测集，用来判断某个子智能体到底该不该折叠进主循环。</span><span class="s" data-k="fold-b6-1">我们见过行之有效的评测结构是：一套由中央团队负责的共享端到端评测集，加上每个技能各自附带的小评测集——由拥有该技能的团队交付。</span><span class="s" data-k="fold-b6-2">哪怕只有 10 条<span class='term' data-term='golden-examples'>黄金样例</span>（golden examples），也足够起步。</span></p></div></div>
+<div class="row" data-rid="fold-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b7-0">Grading the agent's final message against a <span class='term' data-term='rubric'>rubric</span> is a good starting point for tracking answer quality.</span> <span class="s" data-k="fold-b7-1">While you still have an orchestrator, you should also track routing accuracy (did it pick the right subagent?).</span> <span class="s" data-k="fold-b7-2">Once a subagent is folded in, check instead whether the agent loaded the right skill or called the right tool.</span> <span class="s" data-k="fold-b7-3">Working toward task-completion evals over time is helpful as this matters most when comparing architectures.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b7-0">用一个<span class='term' data-term='rubric'>评分量表</span>（rubric）给智能体最后的回复打分，是跟踪答案质量的好起点。</span><span class="s" data-k="fold-b7-1">只要你还留着编排器，就该同时跟踪路由准确率——它有没有挑对子智能体？</span><span class="s" data-k="fold-b7-2">某个子智能体折叠进来之后，就改为检查：智能体有没有加载正确的技能、或者调用正确的工具。</span><span class="s" data-k="fold-b7-3">逐步转向「任务完成度」评测是有价值的，因为在比较不同架构时，这个指标最要紧。</span></p></div></div>
+<div class="row" data-rid="fold-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b8-0">This can be complex in environments where internal systems are difficult to replay and user engagement is difficult to simulate.</span> <span class="s" data-k="fold-b8-1">One approach that has worked for us internally is to record timestamps on important events, so they can be replayed later to run as targeted evals.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b8-0">在内部系统难以重放、用户互动难以模拟的环境里，这件事会很复杂。</span><span class="s" data-k="fold-b8-1">我们内部有效的一个做法是：给重要事件记上时间戳，之后就能按这些时间点重放，当作有针对性的评测来跑。</span></p></div></div>
+<div class="row h3row wide" id="h-fold-b9"><h3><span class='h3-en'>Reducing subagents over time</span><span class='h3-zh'>逐步减少子智能体</span></h3></div>
+<div class="row" data-rid="fold-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b10-0">Evolving toward a single agent loop involves folding the subagents into tools and skills.</span> <span class="s" data-k="fold-b10-1">This can be done by merging domain subagents, calling them as tools, or replacing them with skills and tools.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b10-0">向单循环演进，就是把子智能体折叠成工具和技能。</span><span class="s" data-k="fold-b10-1">具体有三条路：合并领域子智能体、把它们当工具来调用、或者用技能和工具把它们替掉。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="把子智能体折进主循环的三种做法"><div class="fig-media"><img class="still" src="media/fig3-still.png" loading="lazy" decoding="async" alt="folding in subagents"><img class="anim" src="media/fig3.gif" alt="folding in subagents" hidden><div class="fig-bar"><button data-act="still" class="on">静帧</button><button data-act="anim">动图</button></div></div><figcaption><p class="cap-zh"><b>把子智能体折进主循环的三种做法</b>　三个并列做法：Merge subagents（合并子智能体）把共享上下文的 A、B 合成一个、C、D 合成一个；Call them as tools（当工具调用）让 Main agent 用 TOOL CALLS 调 Subagent，只收一个结果；Fold into skills and tools（折进技能与工具）把提示词变成技能、API 调用变成工具。</p><p class="cap-en">原文图注：folding in subagents</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>从左到右三个标题就是三条路线：Merge subagents、Call them as tools、Fold into skills and tools，对应正文「减少子智能体」一节。</li><li>左栏原来有 A、B、C、D 四个竖框，合并后只剩 A + B 和 C + D，底注说共享上下文的合成一个、数量因此变少。</li><li>中栏 Main agent 下方的 TOOL CALLS 连到两个 Subagent，每个都写着 returns a result：主循环边聊边调，只收结果。</li><li>右栏底注最关键：Their prompts become skills and their API calls become tools，即提示词变技能、接口调用变工具，正是折进主循环那一步。</li><li>三条路线不是互斥的：正文说可以合并子智能体、当工具调用，或替换成技能与工具，逐步把子智能体折进主循环。</li></ol><p class="takeaway">一句话：把子智能体折进主循环有三条路：合并共享上下文的、当工具调用、替换成技能与工具。</p></details></figcaption></figure>
+<div class="row h3row wide" id="h-fold-b12"><h3><span class='h3-en'>Combining domain agents</span><span class='h3-zh'>合并领域智能体</span></h3></div>
+<div class="row" data-rid="fold-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b13-0">Build a small end-to-end eval before the first merge.</span> <span class="s" data-k="fold-b13-1">Then <b>fold in by shared context starting with subagents that have the most use.</b></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b13-0">第一次合并之前，先建一套小的端到端评测。</span><span class="s" data-k="fold-b13-1">然后<b>按共享上下文来折叠，从使用量最大的子智能体开始。</b></span></p></div></div>
+<div class="row" data-rid="fold-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b14-0"><a class='lnk' href='https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them' target='_blank' rel='noopener' data-link='L9'>Merge specialists</a> that chain on each other's output, touch the same data, or are often called together.</span> <span class="s" data-k="fold-b14-1">For example, if a significant share of production traffic is one specialist followed by a second, that is a tightly coupled pair, which makes it a candidate to merge into one domain agent.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b14-0"><a class='lnk' href='https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them' target='_blank' rel='noopener' data-link='L9'>把这样的专家子智能体合并起来</a>：它们一个接一个地串着用对方的输出、读写同一批数据，或者经常被一起调用。</span><span class="s" data-k="fold-b14-1">比如，如果生产流量里有相当一部分是「先一个专家、紧接着另一个专家」，那这就是一对紧耦合的组合，适合合并成一个领域智能体。</span></p></div></div>
+<div class="row h3row wide" id="h-fold-b15"><h3><span class='h3-en'>Subagents called as tools</span><span class='h3-zh'>把子智能体当工具调用</span></h3></div>
+<div class="row" data-rid="fold-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b16-0">When one of the three conditions above applies and you keep a subagent, it can be effective to have the main agent call subagents as tools so it can continue holding the conversation with the user.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b16-0">如果上面那三个条件之一成立、你决定保留某个子智能体，那么让主智能体把子智能体当工具来调用会很有效——这样主智能体可以继续握着和用户的对话。</span></p></div></div>
+<div class="row" data-rid="fold-b17"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b17-0">We'd only recommend a full handoff, where the subagent takes over the conversation, when it needs to talk to the user directly.</span> <span class="s" data-k="fold-b17-1">Everything else can be a skill plus tools in the main loop.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b17-0">我们只建议在子智能体需要直接和用户对话时，才做完全交接——由子智能体接管对话。</span><span class="s" data-k="fold-b17-1">其余所有情况，都可以是主循环里的「一个技能 + 几个工具」。</span></p></div></div>
+<div class="row" data-rid="fold-b18"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b18-0">This will allow you to define a shared response schema for subagents, verify the conclusion against real data with the main agent, and trim the input to any final synthesis step.</span> <span class="s" data-k="fold-b18-1">This is a good first step, as you don't need to <b>rewrite</b> the subagents.</span> <span class="s" data-k="fold-b18-2">It also gives you a <b>baseline</b> on the task-completion eval before deciding to fold any subagents into the main agent.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b18-0">这样做让你可以：为子智能体定义统一的返回结构；由主智能体拿真实数据去核对结论；并收窄送进最后综合步骤的输入。</span><span class="s" data-k="fold-b18-1">这是个不错的起步动作，因为你不需要<b>重写</b>子智能体。</span><span class="s" data-k="fold-b18-2">它还会给你一个任务完成度评测上的<b>基线</b>，供你之后决定要不要把子智能体折叠进主智能体。</span></p></div></div>
+<div class="row" data-rid="fold-b19"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b19-0">However, some failure modes will remain:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b19-0">不过，有些失败模式仍然会存在：</span></p></div></div>
+<div class="row" data-rid="fold-b20"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="fold-b20-0-0">Each specialist has its own prompt, context, owner team, and evals</span></li><li><span class="s" data-k="fold-b20-1-0">Each call still hands back a lossy summary</span></li><li><span class="s" data-k="fold-b20-2-0">Every call is a nested model loop that adds latency</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="fold-b20-0-0">每个专家仍然有自己的提示词、上下文、归属团队和评测；</span></li><li><span class="s" data-k="fold-b20-1-0">每次调用仍然只递回一份有损的摘要；</span></li><li><span class="s" data-k="fold-b20-2-0">每次调用都是一个嵌套的模型循环，都会增加延迟。</span></li></ul></div></div>
+<div class="row h3row wide" id="h-fold-b21"><h3><span class='h3-en'>Folding subagents into the main agent via skills and tools</span><span class='h3-zh'>用技能与工具把子智能体折叠进主智能体</span></h3></div>
+<div class="row" data-rid="fold-b22"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b22-0">Fold subagents into the main agent one at a time by turning each one's prompts into skills and API calls into MCP tools.</span> <span class="s" data-k="fold-b22-1">Compare eval performance with and without the subagent.</span> <span class="s" data-k="fold-b22-2">Then decide which to keep.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b22-0">一次只折叠一个子智能体：把它的提示词变成技能，把它的 API 调用变成 MCP 工具。</span><span class="s" data-k="fold-b22-1">然后比较「有它」和「没它」两种情况下的评测表现。</span><span class="s" data-k="fold-b22-2">再决定留哪个。</span></p></div></div>
+<div class="row" data-rid="fold-b23"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b23-0">When you compare, don't just examine the final score, take a look at which tasks flipped.</span> <span class="s" data-k="fold-b23-1">When we tested this on a sample support agent, folding one subagent into another lowered latency, but also broke a process that had been passing.</span> <span class="s" data-k="fold-b23-2">The main agent was holding the order lookup tool and answering on its own, without asking the shipping specialist for the delivery date.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b23-0">对比的时候别只看总分，要看有哪些任务的通过状态翻转了。</span><span class="s" data-k="fold-b23-1">我们在一个示例客服智能体上测这个时，把一个子智能体折叠进另一个，延迟确实降了，但也弄坏了一条原本能通过的流程。</span><span class="s" data-k="fold-b23-2">原因是：主智能体自己手里就有订单查询工具，于是直接给了答案，没去问物流专家要送达日期。</span></p></div></div>
+<div class="row" data-rid="fold-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="fold-b24-0">Before each change, make sure your eval has a task for every chain of agents that runs together in production and for every rule the agent must not break, and run each task more than once, since a break like this one only showed up in one run out of two.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="fold-b24-0">每次改动之前，要确认你的评测里：生产环境中会串起来跑的每一条智能体链路都有对应任务，每一条「绝对不能破」的规则也都有对应任务；而且每个任务都要跑不止一次——像上面那种崩法，两次里只出现了一次。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-teams">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">How several teams can contribute to a single agent</span><span class="h-zh">多个团队怎样一起为同一个智能体做贡献</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>分权方式换了：团队不再「拥有一个智能体」，而是「拥有一些技能和工具」；系统提示词和端到端质量由一个小型中央团队守。三种载体各管一类东西——要动手做的走 MCP 工具，要懂「我们这行怎么干活」的走技能，偶尔才查一次的参考资料走知识库。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="teams-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b0-0">Domain reasoning can be retrieved from knowledge bases, skills, and MCP tools.</span> <span class="s" data-k="teams-b0-1">Individual teams can shift their ownership from agents to skills and tools, with one small central team keeping ownership of the system prompt and end-to-end quality.</span> <span class="s" data-k="teams-b0-2">This involves vetting new skills, tools, and evals before they ship.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b0-0">领域内的判断与知识，可以从知识库、技能和 MCP 工具里取。</span><span class="s" data-k="teams-b0-1">各个团队可以把所有权从「智能体」转移到「技能和工具」上；系统提示词和端到端质量，由一个小型中央团队继续拥有。</span><span class="s" data-k="teams-b0-2">这也意味着：新的技能、工具和评测，在交付前都要过一遍审核。</span></p></div></div>
+<div class="row h3row wide" id="h-teams-b1"><h3><span class='h3-en'>MCP tools</span><span class='h3-zh'>MCP 工具</span></h3></div>
+<div class="row" data-rid="teams-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b2-0">Tools are the right fit when the agent needs to take an action, read live data from a system, or return a result in a fixed shape.</span> <span class="s" data-k="teams-b2-1">You can also use tools as a way to keep calling subagents while you migrate.</span> <span class="s" data-k="teams-b2-2">We recommend tools grouped by user intent (not one tool per API) because once you exceed 30-50 tool definitions in the system prompt, tool choice tends to degrade.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b2-0">当智能体需要「做一件事」、需要从某个系统里读实时数据、或者需要拿到固定格式的结果时，工具就是对的形态。</span><span class="s" data-k="teams-b2-1">迁移期间，你也可以把工具当作「继续调用子智能体」的手段。</span><span class="s" data-k="teams-b2-2">我们建议按用户意图给工具分组，而不是一个 API 配一个工具——因为系统提示词里的工具定义一旦超过 30-50 个，模型选工具的表现就开始下降。</span></p></div></div>
+<div class="row" data-rid="teams-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b3-0">Use <a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L10'>tool search</a> with deferred loading, limit hard preconditions, and move any needed ones into the tools.</span> <span class="s" data-k="teams-b3-1">For example, if Y needs X's output, Y's tool checks for it and returns an instruction the model can act on.</span> <span class="s" data-k="teams-b3-2">Per-user permissions work the same way.</span> <span class="s" data-k="teams-b3-3">Each tool checks what the calling user may see or do and returns a plain refusal the model can read, so one loop can serve users with different access without a separate agent per permission level.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b3-0">用<a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L10'>工具检索</a>配合延迟加载，尽量少设硬性前置条件；确实需要的，就把它挪进工具内部。</span><span class="s" data-k="teams-b3-1">举个例子：如果 Y 需要 X 的输出，就让 Y 的工具自己去检查，然后返回一条模型能照着做的指示。</span><span class="s" data-k="teams-b3-2">按用户区分的权限也是同样的思路。</span><span class="s" data-k="teams-b3-3">每个工具自己检查调用者能看什么、能做什么；拒绝时返回一句模型读得懂的、平实的拒绝语。这样一个循环就能服务权限不同的用户，不必为每个权限等级单独配一个智能体。</span></p></div></div>
+<div class="row h3row wide" id="h-teams-b4"><h3><span class='h3-en'>Skills</span><span class='h3-zh'>技能</span></h3></div>
+<div class="row" data-rid="teams-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b5-0">Skills are the right fit when the agent needs to know how a team does work, like the steps, rules, and judgment calls a specialist subagent's prompt used to hold.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b5-0">当智能体需要知道「某个团队是怎么干活的」——也就是原本塞在专家子智能体提示词里的那些步骤、规则和判断取舍——技能就是对的形态。</span></p></div></div>
+<div class="row" data-rid="teams-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b6-0">Our approach to growing skill libraries is to give the maintenance work back to the people writing the skills.</span> <span class="s" data-k="teams-b6-1">Claude can do the heavy lifting with skills that can build, test, and prune other skills.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b6-0">我们扩充技能库的思路，是把维护工作交回给写技能的人。</span><span class="s" data-k="teams-b6-1">Claude 可以挑大梁：它可以用一些技能去构建、测试、修剪别的技能。</span></p></div></div>
+<div class="row" data-rid="teams-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b7-0">To prevent <span class='term' data-term='skill-sprawl'>skill sprawl</span>, you can have <span class='term' data-term='dri'>DRIs</span> per team own their skills and make sure they are well crafted, distinct, and shipped with appropriate evals.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b7-0">为了防止<span class='term' data-term='skill-sprawl'>技能泛滥</span>，可以让每个团队各有一名<span class='term' data-term='dri'>直接责任人</span>（DRI）拥有自己的技能，并确保这些技能做得精、彼此不重复、交付时附带相称的评测。</span></p></div></div>
+<div class="row" data-rid="teams-b8"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="teams-b8-0-0"><b>/skill-creator</b> allows you to author new skills that start well-formed, and audit existing ones to trim, deduplicate, and restructure them.</span></li><li><span class="s" data-k="teams-b8-1-0"><b>/skill-doctor</b> allows you to see what each skill in your library costs and how often it's actually used, and delete dead weight.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="teams-b8-0-0"><b>/skill-creator</b>：让你新写的技能从一开始就结构规整；也能把现有技能审一遍，做精简、去重和重构。</span></li><li><span class="s" data-k="teams-b8-1-0"><b>/skill-doctor</b>：让你看到技能库里的每个技能花了多少成本、实际被用的频率有多高，然后把没用的死重删掉。</span></li></ul></div></div>
+<div class="row h3row wide" id="h-teams-b9"><h3><span class='h3-en'>Knowledge bases</span><span class='h3-zh'>知识库</span></h3></div>
+<div class="row" data-rid="teams-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teams-b10-0">Knowledge bases are the right fit for reference material the agent only needs some of the time.</span> <span class="s" data-k="teams-b10-1">Facts and reference material (policies, metric definitions, product specs) can sit behind a search or lookup tool the model calls, or ship as reference files inside a skill.</span> <span class="s" data-k="teams-b10-2">Avoid having <a class='lnk' href='https://claude.com/resources/articles/seeing-like-an-agent' target='_blank' rel='noopener' data-link='L11'>code retrieve and paste this context into prompts</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teams-b10-0">对于那些智能体只是有时候才需要（不是每一轮都要）的参考资料，知识库就是对的地方。</span><span class="s" data-k="teams-b10-1">事实和参考资料（政策、指标口径、产品规格）可以放在检索或查询工具后面，让模型自己去调；也可以作为参考文件，打包在一个技能里。</span><span class="s" data-k="teams-b10-2">不要用<a class='lnk' href='https://claude.com/resources/articles/seeing-like-an-agent' target='_blank' rel='noopener' data-link='L11'>代码把这类上下文捞出来、再贴进提示词里</a>。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-tools">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Tools to accelerate this work</span><span class="h-zh">加速这件事的工具</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>四个 /claude-api 技能把上面的活儿拆开：建评测、查旧提示、迭代提分、降本。但文章的落点不是工具，而是原则——模型会继续变，任何一套具体架构都会过时，只有「测量、一次只改一处、留下有效的」不会过时。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="tools-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tools-b0-0">We recently <a class='lnk' href='https://code.claude.com/docs/en/commands' target='_blank' rel='noopener' data-link='L12'>released</a> a set of Claude API skills that can help with most of the work mentioned above.</span> <span class="s" data-k="tools-b0-1">Our <a class='lnk' href='https://github.com/anthropics/single-agent-loop-kit' target='_blank' rel='noopener' data-link='L1'>migration kit</a> chains these skills together in one guided workflow for assessing and moving multi-agent systems to a single agent loop.</span> <span class="s" data-k="tools-b0-2">It includes a demo you can try before running it on the real thing:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tools-b0-0">我们最近<a class='lnk' href='https://code.claude.com/docs/en/commands' target='_blank' rel='noopener' data-link='L12'>发布</a>了一组 Claude API 技能，上面提到的活儿，它们大多能帮上忙。</span><span class="s" data-k="tools-b0-1">我们的<a class='lnk' href='https://github.com/anthropics/single-agent-loop-kit' target='_blank' rel='noopener' data-link='L1'>迁移工具包</a>把这些技能串成一条引导式工作流，用来评估多智能体系统、并把它迁到单循环。</span><span class="s" data-k="tools-b0-2">它还带一个演示，可以先在演示里试跑，再放到真实系统上跑：</span></p></div></div>
+<div class="row" data-rid="tools-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="tools-b1-0-0"><b>/claude-api build-eval:</b> can help create a first end-to-end set owned by the central team or small evals each team ships with its skill</span></li><li><span class="s" data-k="tools-b1-1-0"><b>/claude-api prompt-audit:</b> can flag instructions written for older models in your prompts, skills, and tool descriptions and propose fixes as a diff.</span> <span class="s" data-k="tools-b1-1-1">This can be run on your system prompts to find any rules that were added for an earlier model and are now making the agent slower or more rigid.</span> <span class="s" data-k="tools-b1-1-2">Each team's DRI can also run it on their own skills and tool descriptions.</span></li><li><span class="s" data-k="tools-b1-2-0"><b>/claude-api hillclimb:</b> can iteratively improve an app against an existing eval.</span> <span class="s" data-k="tools-b1-2-1">This can be used for the "folded in vs kept" comparison (after folding one subagent into a skill plus tools, let it iterate on the skill and tool descriptions and see if the folded version matches or beats the subagent), as well as your system prompt.</span></li><li><span class="s" data-k="tools-b1-3-0"><b>/claude-api cost-optimize:</b> profiles where your calls go and proposes savings from options such as <span class='term' data-term='prompt-caching'>prompt caching</span>, trimming unneeded input and output tokens, effort, and model choice, one change at a time.</span> <span class="s" data-k="tools-b1-3-1">This can help bring cost and latency down on a given design.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="tools-b1-0-0"><b>/claude-api build-eval</b>：帮你建出第一套端到端评测（由中央团队负责），或者帮各团队建出随技能一起交付的小评测。</span></li><li><span class="s" data-k="tools-b1-1-0"><b>/claude-api prompt-audit</b>：能标出你的提示词、技能和工具描述里那些「写给旧模型」的指令，并以 diff 的形式提出修改建议。</span><span class="s" data-k="tools-b1-1-1">它可以跑在你的系统提示词上，找出当年为旧模型加上的、如今只会让智能体更慢更僵的规则。</span><span class="s" data-k="tools-b1-1-2">每个团队的 DRI 也可以拿它跑自己的技能和工具描述。</span></li><li><span class="s" data-k="tools-b1-2-0"><b>/claude-api hillclimb</b>：可以针对一套现成的评测，反复改进一个应用。</span><span class="s" data-k="tools-b1-2-1">它可以用在「折叠版 vs 保留版」的对比上：把一个子智能体折成「技能 + 工具」之后，让它反复打磨技能和工具的说明，看折叠版能否追平、甚至超过原来的子智能体。它也可以用在系统提示词上。</span></li><li><span class="s" data-k="tools-b1-3-0"><b>/claude-api cost-optimize</b>：分析你的调用都花在了哪里，并从<span class='term' data-term='prompt-caching'>提示缓存</span>、裁掉不需要的输入输出 token、思考强度、模型选择这些选项里提出省钱方案，一次只改一处。</span><span class="s" data-k="tools-b1-3-1">在给定设计下，它能帮着把成本和延迟压下来。</span></li></ul></div></div>
+<div class="row" data-rid="tools-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tools-b2-0">As models evolve, our understanding of how to best use them and guidance around best practice evolve as well.</span> <span class="s" data-k="tools-b2-1">That makes any one architecture less important than the principle behind it: measure, change one thing at a time, and keep what holds up.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tools-b2-0">模型在演进，我们对「怎么用才最好」的理解、对最佳实践的指导，也在演进。</span><span class="s" data-k="tools-b2-1">所以任何一套具体架构，都没有它背后的原则重要：去测量，一次只改一处，留下经得起检验的那些。</span></p></div></div>
+<div class="row" data-rid="tools-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tools-b3-0">This is one of those cases.</span> <span class="s" data-k="tools-b3-1">As models get more capable and agents get longer running, more of your subagents can be skills and tools.</span> <span class="s" data-k="tools-b3-2">You don't have to make that move in one step, though.</span> <span class="s" data-k="tools-b3-3">Build a small end-to-end eval, fold in one subagent, and keep it as a subagent only if the folded version scores worse, then rinse and repeat.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tools-b3-0">本文说的情况，正是其中一例。</span><span class="s" data-k="tools-b3-1">模型越强、智能体跑得越久，你就能把越多的子智能体变成技能和工具。</span><span class="s" data-k="tools-b3-2">不过你不必一步到位：</span><span class="s" data-k="tools-b3-3">先建一套小的端到端评测，折叠一个子智能体；只有当折叠版得分更差时，才把它留作子智能体；然后重复这一套。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文的引用合并后指向 12 个不同目的地。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>多智能体协调模式：五种做法与适用场景</h4><p class="lnk-site">claude.com · Multi-agent coordination patterns: Five approaches and when to use them</p><p class="lnk-anchors">正文对应：<em>由一名协调者（coordinator）统一编排</em></p><p><b>这是什么：</b>Anthropic 的方法文章，讲多智能体系统里五种协调模式各自怎么运转、适合什么任务、容易卡在哪里。</p><p><b>为什么值得点：</b>本文用「由协调者编排」一句定义 subagent。这篇把该定义的来龙去脉讲全：五种模式的名字和分工，也点出 orchestrator 会成为信息瓶颈——这正是本文主张合并的伏笔。</p><p><b>访问说明：</b>可直接打开。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章把多智能体协调分成五种模式。Generator-verifier 是生成者出稿、验证者按标准检查，不通过就打回重写。Orchestrator-subagent 是一个主智能体规划、分派、汇总，Claude Code 本身就用它。Agent teams 是协调者拉起多个长期存活的工人，各自从共享队列领任务，重复利用积累下来的上下文。Message bus 是智能体通过发布和订阅事件通信，由路由器分发。Shared state 是没有中心协调者，所有智能体直接读写同一个共享存储。作者建议从能用的最简单模式起步，看它卡在哪再换。每种模式都写了失败方式：验证标准不清会变成橡皮图章，编排者会成为信息瓶颈，agent teams 要求子任务真正独立，消息总线难追踪，共享状态容易出现重复劳动和相互触发的死循环。</p><ul><li>五种模式：Generator-verifier、Orchestrator-subagent、Agent teams、Message bus、Shared state</li><li>选型看三个问题：子任务是否需要长期保留上下文、流程是否可预先写出、智能体是否需要看到彼此的发现</li><li>推荐起点是 orchestrator-subagent，它覆盖的问题最广、协调开销最低</li><li>拆分原则是「按上下文」而不是「按工作类型」；手递手越多，细节丢得越多</li><li>生产系统常混用模式，例如整体用 orchestrator-subagent、某个协作密集的子任务用 shared state</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/multi-agent-coordination-patterns" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>什么时候该用多智能体系统（以及什么时候不该）</h4><p class="lnk-site">claude.com · When to use multi-agent systems (and when not to)</p><p class="lnk-anchors">正文对应：<em>更少的上下文窗口、更少的有损交接</em></p><p><b>这是什么：</b>Anthropic 讲多智能体取舍的文章：列出多智能体真正划算的三种情况，以及按「上下文」而不是「工作类型」拆分的原则。</p><p><b>为什么值得点：</b>本文第 2 条理由——共享上下文产生更好答案、更少交接损失——直接引自这篇。它也给了反例：按角色拆分的智能体把 token 花在协调上，比干活还多。</p><p><b>访问说明：</b>可直接打开。L9 与本条指向同一页面，读的是不同段落。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章先给了三种多智能体真正胜过单智能体的情况：上下文被污染导致质量下降、任务可以并行、专门化能改善工具选择或专注度。除此之外，协调成本通常超过收益。代价是实打实的：多智能体实现通常比单智能体多用 3 到 10 倍 token，因为要复制上下文、来回协调、为交接做摘要。更重要的设计原则是按上下文拆分而不是按问题类型拆分。按工作类型拆（一个写功能、一个写测试、一个评审）会让每次交接都丢上下文，像玩传话游戏；合适的边界是独立的研究路径、接口清晰的独立组件、黑盒验证。</p><ul><li>三种适用情况：上下文污染、可并行、需要专门化</li><li>代价：多智能体通常比单智能体多用 3 到 10 倍 token；并行换来的是覆盖度，不一定是更快</li><li>按上下文拆分，不要按工作类型拆分；按角色拆分常出现 token 花在协调上</li><li>验证型子智能体是少数稳定有效的模式，但要防止它「提前宣布成功」</li><li>工具过多（常 20 个以上）时，先考虑 tool search，而不是拆成多智能体</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>用 Skills 构建智能体：为专门工作配备能力</h4><p class="lnk-site">claude.com · Building agents with Skills: Equipping agents for specialized work</p><p class="lnk-anchors">正文对应：<em>一个带技能（skills）的单智能体</em></p><p><b>这是什么：</b>Anthropic 解释 Agent Skills 的文章：skills 是什么、怎么用渐进披露省上下文，以及他们为什么从「造专门智能体」转向「给通用智能体配 skills」。</p><p><b>为什么值得点：</b>本文的核心替代方案「一个智能体加 skills」就出自这条线。读它能看清分工：skills 装一个团队做事的步骤、规则和判断，subagent 装独立上下文与并行。</p><p><b>访问说明：</b>可直接打开。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章先说结论上的转向：过去以为不同领域要各自造智能体，现在更倾向一个通用智能体（像 Claude Code 那样通过代码做事）加一套 skills。skills 是组织好的文件集合，里面有 SKILL.md、说明文档、脚本，把领域流程、最佳实践和判断标准打包给智能体。关键机制是渐进披露：平时只把 name 和 description 这类元数据给模型，约 50 token；需要时才读完整 SKILL.md，约 500 token；再需要才读 references 里的文件，2000 token 以上。因此一个智能体可以挂几百个 skills 而不撑爆上下文。文章给出四层结构：agent loop 负责推理，runtime 负责执行，MCP servers 负责连接外部，skills library 负责指导。</p><ul><li>为什么转向 skills：通用能力不等于专门经验，skills 把团队的做法、规则、脚本打包给智能体</li><li>渐进披露三层：元数据约 50 token，完整 SKILL.md 约 500 token，参考文件 2000 token 以上</li><li>skills 可以把脚本当工具用：代码不必常驻上下文，还能被模型修改和扩展</li><li>四层架构：agent loop（推理）、runtime（执行）、MCP servers（连接）、skills library（指导）</li><li>生态有三类 skills：foundational、partner、enterprise；Agent Skills 已作为开放标准发布</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/building-agents-with-skills-equipping-agents-for-specialized-work" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>有效电商智能体的结构指南</h4><p class="lnk-site">claude.com · A guide to the anatomy of effective commerce agents</p><p class="lnk-anchors">正文对应：<em>我们对多个企业部署所做的对比</em></p><p><b>这是什么：</b>Anthropic 给电商类智能体写的工程指南，分三部分：架构、延迟与成本、生产运行。架构部分的结论是一个主循环加 skills 加工具。</p><p><b>为什么值得点：</b>本文「带 skills 的单智能体常常胜过多智能体」这个判断的出处就在这篇。它给了对比结论，也解释了原因：电商对话前后高度耦合，子智能体交接会丢状态、加延迟。</p><p><b>访问说明：</b>可直接打开。原链接带 #:~:text= 片段参数，用于跳到「In our comparisons across several enterprise deployments…」那一句，正文内容不受影响。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>指南的主张很直接：一个模型跑在标准智能体循环里，用 skills 装长尾流程、用工具调你已有的系统；前面不要意图路由器，后面不要一堆领域子智能体。理由写在「Skills, not subagents」一节：电商对话是一个跨意图、跨轮次紧耦合的会话，需要大量共享上下文，而每次交接给子智能体都是一次有损的状态转移，还会多花数倍 token、多几秒延迟。作者说，在他们跨多个企业部署的对比里，带 skills 的单智能体在质量上稳定胜过「一个大提示词打天下」和「子智能体」两种设计，而且常常每次任务的成本和延迟更低。子智能体仍有位置：任务窄、自成一体时把它当工具调用（例如深度研究），或某个领域已有独立智能体需要直接面对用户时才做完整交接。</p><ul><li>推荐架构：一个模型加一个标准智能体循环，skills 装长尾，工具调已有系统，无意图路由、无领域子智能体</li><li>对比结论：带 skills 的单智能体在质量上稳定胜出，且常常成本与延迟更低</li><li>子智能体的两个合理场景：被当作工具调用；领域已有独立智能体并需要直接面对用户</li><li>system prompt 还是 skill：按出现频率决定，约占三成以上流量的内容放进 system prompt，其余进 skills</li><li>生产部分覆盖记忆、把安全限制放进 harness、以及如何给非确定性系统做 eval</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/the-anatomy-of-effective-commerce-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip must">必读</span><span class="chip">建议第 5 个读</span></div><h4>我们如何搭出多智能体研究系统</h4><p class="lnk-site">anthropic.com · How we built our multi-agent research system</p><p class="lnk-anchors">正文对应：<em>我们的多智能体研究系统</em></p><p><b>这是什么：</b>Anthropic 工程博客，复盘 Claude 的 Research 功能：一个主研究员带多个并行子智能体检索，最后交给引用智能体标注来源。</p><p><b>为什么值得点：</b>本文把它当作「subagent 仍有价值」的例子。读它能看到多智能体真正擅长的是开放式、可并行的检索任务，也能看到代价：token 消耗和协调复杂度。</p><p><b>访问说明：</b>链接有效：原来的 /engineering/ 地址 302 到 anthropic.com/research/multi-agent-research-system，内容可正常打开。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>系统的骨架是 orchestrator-worker：主研究员先想策略，把计划写进 Memory 以防上下文被截断，再派多个子智能体并行搜索不同侧面。子智能体各自检索、边查边评估结果，然后把结论交回主研究员，由它决定是否继续派工。检索结束后 CitationAgent 负责定位引用位置。文章给出的关键数字：以 Opus 4 为主、Sonnet 4 为子的多智能体系统，在内部研究评测上比单智能体 Opus 4 高 90.2%；多智能体系统约用聊天 15 倍的 token。作者也强调这类架构适合重并行、信息量超过单个上下文窗口、要接很多复杂工具的任务，不适合所有智能体都得共享同一份上下文的领域。</p><ul><li>orchestrator-worker：主研究员做计划、派子智能体并行搜索、再汇总</li><li>内部评测：多智能体（Opus 4 主加 Sonnet 4 子）比单智能体 Opus 4 高 90.2%</li><li>token 账：智能体约为聊天的 4 倍，多智能体约为聊天的 15 倍</li><li>提示词经验：把子任务描述清楚、按查询复杂度分配投入、先宽后窄、工具调用并行化</li><li>评测建议：先拿约 20 条小样本跑、用 LLM 当裁判按 rubric 打分、保留人工测试补盲区</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 6 个读</span></div><h4>单智能体循环迁移工具包（官方仓库）</h4><p class="lnk-site">github.com · anthropics/single-agent-loop-kit</p><p class="lnk-anchors">正文对应：<em>迁移工具包（开头提示框处）</em> <em>迁移工具包（「加速这件事的工具」一节）</em></p><p><b>这是什么：</b>GitHub 上的官方起步仓库：把「路由或调度器加一群专家子智能体」的系统，改成一个循环、按需加载 skill 和工具的智能体。</p><p><b>为什么值得点：</b>本文开头提示框和文末「加速这件事的工具」两处都指向它。它把「怎么迁移」落成可执行步骤：先量化现状，再合并总是一起跑的 subagent，最后逐个折进主循环并用同一套 eval 比较前后。</p><p><b>访问说明：</b>可直接打开。README 注明这是参考实现，不维护、不接受贡献。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>仓库自带一个能跑的小例子：客服台，一个路由加六个 subagent。跟着 RUNBOOK 走，能在十分钟内看它审计这套系统、折进一个 subagent、打印改动前后的数字。它不预设单循环一定更好，每次改动都用同一套 eval 打分，只有数字证明替代方案不差，才删掉 subagent。基本流程三步：Measure（找到并补齐 eval，给现状打分）、Combine（合并总是一起跑的 subagent）、Fold（逐个把 subagent 拆成 skill 和工具，再比较）。落地用法是把仓库里的 skill 拷进自己仓库的 .claude/skills/，在 Claude Code 里说「Run the single-agent-loop skill」。</p><ul><li>三步法：Measure（量化现状）→ Combine（合并常同跑的 subagent）→ Fold（逐个折成 skill 加工具并比较）</li><li>固定停下的节点：审计后、付费运行前、基线后、每次改动后；付费前会给 token 估算</li><li>没有 eval 也能开始：它陪你起草约十个任务，并让你确认每个任务「做对了」指什么</li><li>复用 Claude Code 命令：/claude-api 的 build-eval、hillclimb、prompt-audit、cost-optimize，以及 /skill-creator、/skill-doctor</li><li>README 说明：两份真实运行记录都只是一个人在一个模型上跑的；merge 与 upkeep 两步还没在真实模型上跑过</li></ul></details><a class="lnk-open" href="https://github.com/anthropics/single-agent-loop-kit" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip bg">背景</span><span class="chip">建议第 7 个读</span></div><h4>面向 Claude 5 代模型的上下文工程新规则</h4><p class="lnk-site">claude.dev · The new rules of context engineering for Claude 5 generation models</p><p class="lnk-anchors">正文对应：<em>针对更强的模型把 Claude Code 的系统提示词减掉了 80% 以上</em></p><p><b>这是什么：</b>Anthropic 工程博客，讲他们如何把 Claude Code 的系统提示词删掉 80% 以上、编码评测却没有可测损失，并列出六组「旧规则到新规则」。</p><p><b>为什么值得点：</b>本文用它证明渐进披露有效：提示词能大幅削减，部分原因就是把 skills 和工具改成按需加载。读它能理解「给判断、别给死规则」的思路。</p><p><b>访问说明：</b>可直接打开。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章的核心事实：他们为 Opus 5、Fable 5 这类新模型删掉了 Claude Code 系统提示词的 80% 以上，编码评测没有可测的损失。原因是模型判断力变强，很多过去为防最坏情况写下的硬规则反而互相冲突，例如系统提示说「适当保留注释」、某个 skill 说「不要加注释」、用户说「照旧的来」。文章列了六条被推翻的旧规则：给规则改为给判断；给例子改为设计接口；一次全塞进去改为渐进披露；重复强调改为简洁的工具描述；把记忆写进 CLAUDE.md 改为自动记忆；简单规格改为更丰富的参考，例如 HTML 产物、测试套件、代码、rubric。</p><ul><li>删掉 Claude Code 系统提示词 80% 以上，编码评测没有可测损失</li><li>六组旧到新：规则到判断、例子到接口设计、全量前置到渐进披露、重复到简洁工具描述、CLAUDE.md 记忆到自动记忆、简单规格到丰富参考</li><li>工具描述可以极简：用参数类型和枚举表达用法，例如 Todo 工具只留三个状态</li><li>验证与代码评审被移进按需调用的 skills；部分工具改为延迟加载，用 ToolSearch 现查现用</li><li>建议用 /doctor 检查 skills 与 CLAUDE.md 是否过度约束</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>什么时候该用多智能体系统（以及什么时候不该）</h4><p class="lnk-site">claude.com · When to use multi-agent systems (and when not to)</p><p class="lnk-anchors">正文对应：<em>把这样的专家子智能体合并起来</em></p><p><b>这是什么：</b>与 L6 同一页的 Anthropic 文章：讲多智能体的适用条件与代价，以及按上下文拆分工作的原则。</p><p><b>为什么值得点：</b>这里引它是为了「合并」这一步：把互相串联、共用数据、经常一起被调用的专家子智能体合成一个领域智能体。读的时候重点看「按上下文拆分」那一节。</p><p><b>访问说明：</b>可直接打开；与 L6 同址，锚文本不同、在文中的用途也不同。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>同一个链接，读的时候只需看与「合并」相关的部分。文章主张按上下文边界而不是工作类型拆分：互相前后串联、读同一份数据、经常一起出现的子智能体，实际上是紧耦合，应该合进同一个智能体。它还给了反例：在一次按软件开发角色（规划、实现、测试、评审）拆分的实验里，子智能体花在协调上的 token 比花在实际工作上还多。</p><ul><li>互相串联、共用数据、经常一起被调用的子智能体，应该合并成一个领域智能体</li><li>好的拆分边界：独立研究路径、接口干净的独立组件、黑盒验证</li><li>差的拆分边界：同一件事的先后阶段（规划到实现到测试）、紧耦合组件、需要共享状态的工作</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span><span class="chip">本区域受限</span></div><h4>工具检索（Tool search）文档</h4><p class="lnk-site">platform.claude.com · Tool search tool</p><p class="lnk-anchors">正文对应：<em>工具检索</em></p><p><b>这是什么：</b>Claude 平台关于 tool search 的文档：工具定义不一次性放进上下文，而是让模型按需搜索，只加载用得上的几个。本区域打不开。</p><p><b>为什么值得点：</b>本文把「用 tool search 做工具的渐进披露」列为单智能体能处理大量任务的第二个理由。想知道工具很多时怎么不撑爆上下文，看这页。</p><p><b>访问说明：</b>链接有效，本区域打不开：302 到 claude.com/app-unavailable-in-region。标题取自官方文档索引 platform.claude.com/llms.txt。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>原页在本区域打不开，未读到正文。以下要点来自同一功能可访问的官方文档（code.claude.com/docs/en/agent-sdk/tool-search）：工具定义默认不进上下文，模型先拿到一份工具清单摘要，需要时再搜索，默认加载最相关的 5 个工具，之后一直可用，直到上下文压缩。工具越多个数越伤选择准确率：加载 30 到 50 个以上时开始下降，50 个工具定义可能占 10 到 20K token。工具少于约 10 个时，全部预先加载通常更快。代价是每次搜索多一个来回。</p><ul><li>工具定义不预先塞进上下文，模型先看清单摘要，需要时再搜索加载</li><li>默认加载最相关的 5 个工具，上下文压缩后需要重新搜索</li><li>工具超过 30 到 50 个时选择准确率下降；50 个工具定义可占 10 到 20K token</li><li>少于约 10 个工具时，全部预先加载通常更快</li><li>每次搜索多一个来回；Agent SDK 默认开启，可按配置关闭</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip bg">背景</span><span class="chip">建议第 10 个读</span></div><h4>像智能体一样看：我们如何在 Claude Code 里设计工具</h4><p class="lnk-site">claude.com · Seeing like an agent: how we design tools in Claude Code</p><p class="lnk-anchors">正文对应：<em>代码把这类上下文捞出来、再贴进提示词里</em></p><p><b>这是什么：</b>Claude Code 团队讲工具设计的文章：工具该多还是该少、什么时候该删，以及「让模型自己找上下文」为什么比把上下文塞给它更好。</p><p><b>为什么值得点：</b>本文在「知识库」一节引它作反例：不要用代码检索再粘进提示词。读它能看到更根本的理由——上下文该由模型自己搜索、逐层发现。</p><p><b>访问说明：</b>链接有效：原 claude.com 地址跳转到 claude.dev/blog/seeing-like-an-agent/，内容可正常打开。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章讲 Claude Code 怎么从「把上下文递给模型」转向「让模型自己找上下文」。早期他们用 RAG：向量库预先索引代码，harness 在每次回答前把相关片段塞给 Claude。这种做法要维护索引、跨环境容易坏，而且上下文是被给的，不是模型自己找的。后来给 Claude 一个 Grep 工具，让它自己搜；再后来 Agent Skills 把渐进披露形式化：模型读一个 skill 文件，文件再指向别的文件，逐层读到需要的为止。文章还给了两个工具演进例子：先做 TodoWrite 并定时提醒，后来换成 Task 工具，因为任务要能在子智能体之间共享；为了让 Claude 能回答关于 Claude Code 自己的问题，他们做了一个文档检索子智能体，搜索在子智能体自己的上下文里完成，只把答案交回来。</p><ul><li>早期用 RAG 预先索引再塞片段；后来改成给 Grep，让模型自己搜索、自己搭上下文</li><li>渐进披露被 skills 形式化：文件引用文件，模型逐层读到需要的为止</li><li>TodoWrite 换成 Task：模型变强后待办清单反而限制它，任务工具支持依赖和子智能体共享</li><li>文档检索做成了子智能体，只回传答案，主上下文保持干净</li><li>Claude Code 目前约 20 个工具；加新工具的门槛很高，删工具同样重要</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/seeing-like-an-agent" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip">可选</span><span class="chip">建议第 11 个读</span><span class="chip">本区域受限</span></div><h4>任务预算（beta）</h4><p class="lnk-site">platform.claude.com · Task budgets (beta)</p><p class="lnk-anchors">正文对应：<em>预算</em></p><p><b>这是什么：</b>Claude 平台文档的一页，讲如何给一次任务设置预算（beta 功能）。本区域打不开，未能读取正文。</p><p><b>为什么值得点：</b>本文说循环在模型给出答案或「撞到预算」时停止。这页就是那个停止条件的官方说明；它也解释了为什么要把上限放进 harness，而不是写进提示词。</p><p><b>访问说明：</b>链接有效，本区域打不开：302 到 claude.com/app-unavailable-in-region。标题取自官方文档索引 platform.claude.com/llms.txt。请在有权限的网络里看。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>原页在本区域无法读取，未转述正文细节。从本文的用法看，它对应循环的停止条件之一：除了模型给出答案，达到预算也会停。</p></details><a class="lnk-open" href="https://platform.claude.com/docs/en/build-with-claude/task-budgets" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip">可选</span><span class="chip">建议第 12 个读</span></div><h4>Claude Code 命令文档</h4><p class="lnk-site">code.claude.com · Commands - Claude Code Docs</p><p class="lnk-anchors">正文对应：<em>发布</em></p><p><b>这是什么：</b>Claude Code 的斜杠命令参考页：列出所有命令和用途，并标明哪些条目其实是一个内置 skill。</p><p><b>为什么值得点：</b>本文说「最近发布了一组 Claude API skills」，链接到这里。看了才明白：这些 /claude-api 技能在 Claude Code 里就是斜杠命令，可以在会话里直接调用。</p><p><b>访问说明：</b>可直接打开。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这页是 Claude Code 的命令清单。开头就说明命令用来在会话里控制 Claude Code：切换模型、管权限、清上下文、跑工作流。命令只在消息开头被识别，后面的文字作为参数；一条消息里最多可以串联 6 个 skills。本文提到的 /claude-api 在这里被标为内置 Skill，子命令包括 migrate、upgrade、prompt-audit、cost-optimize、build-eval、hillclimb 等，和文中用法对得上。/skill-doctor 也在表里，用来查看每个 skill 占多少上下文、多久被用一次。</p><ul><li>命令只在消息开头识别，后面的文字作为参数；一条消息最多串 6 个 skills</li><li>/claude-api 是内置 Skill，子命令含 build-eval、prompt-audit、hillclimb、cost-optimize</li><li>/skill-doctor 显示每个 skill 的上下文成本与使用频率，需要 v2.1.252 或更新版本</li><li>文档区分两类条目：内置 Skill 与内置 Workflow，例如 /deep-research</li><li>命令是否出现取决于平台、套餐和环境</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/commands" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 24 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">agent loop</span><span class="gl-zh">智能体循环</span></div><p class="gl-def">模型反复「调用工具、看结果、再决定下一步」，直到给出答案或撞上预算，这个循环就叫 agent loop。</p><p class="gl-ana">像做菜边尝边调味，而不是照着菜谱一口气做完。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">subagent</span><span class="gl-zh">子智能体</span></div><p class="gl-def">有自己独立的上下文窗口、工具和指令，由协调者调度的一类智能体，擅长校验、并行和按模块划分权限。</p><p class="gl-ana">像外包给另一个小组的一整件事，对方有自己的资料和工具。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">orchestrator</span><span class="gl-zh">编排器（orchestrator）</span></div><p class="gl-def">把大任务拆给多个子智能体、再把结果收上来的上层组件；本文也指公司中心团队搭的那一层。</p><p class="gl-ana">像项目经理：分派工作，再汇总结果。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口</span></div><p class="gl-def">模型一次能同时「看见」的文字总量上限，系统提示、对话历史和工具返回的结果都算在里面。</p><p class="gl-ana">像一张书桌，一次只摊得开这么多材料。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context engineering</span><span class="gl-zh">上下文工程</span></div><p class="gl-def">决定每一轮往上下文窗口里放什么、什么时候按需加载的工程实践，本文的技能与工具检索都属此列。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context bloat</span><span class="gl-zh">上下文膨胀</span></div><p class="gl-def">上下文里堆了太多用不上或重复的内容，既挤占窗口空间，也让模型更难抓住重点、变慢变贵。</p><p class="gl-ana">像书桌堆满用不上的纸，真正要用的反而找不着。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">progressive disclosure</span><span class="gl-zh">渐进披露（progressive disclosure）</span></div><p class="gl-def">先只让模型看见技能和工具的简短描述，等确实需要时再加载全文，避免一上来就把上下文塞满。</p><p class="gl-ana">像先看目录，需要时再翻那一章。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">skill</span><span class="gl-zh">技能</span></div><p class="gl-def">一份教模型「这个团队是怎么干这类活」的说明书，包含步骤、规则和判断标准，需要时才加载进上下文。</p><p class="gl-ana">像交接时留下的操作手册，不用每次都口头讲一遍。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tool</span><span class="gl-zh">工具</span></div><p class="gl-def">模型可以调用的一个具体动作接口，用来读实时数据、执行操作，或按固定格式把结果交回来。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tool search</span><span class="gl-zh">工具检索（tool search）</span></div><p class="gl-def">一种按需加载工具的机制：系统提示里先只放工具名和短描述，模型需要时再检索出完整定义。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">MCP</span><span class="gl-zh">MCP（模型上下文协议）</span></div><p class="gl-def">一套让模型连接外部系统和数据的通用协议；本文建议把子智能体的 API 调用改写成 MCP 工具。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">eval</span><span class="gl-zh">评测（eval）</span></div><p class="gl-def">一组固定任务加上判分办法，用来反复测智能体答得好不好、改动之后有没有变差。</p><p class="gl-ana">像考试的题库和评分表，改完一次就重考一次。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rubric</span><span class="gl-zh">评分量表（rubric）</span></div><p class="gl-def">把「什么叫答得好」拆成一条条具体要求的打分表，用来给智能体的最终回答判分。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">harness（运行框架）</span></div><p class="gl-def">包在模型外面、负责跑循环、管预算、调工具的那层代码；模型本身之外的事基本都由它做。</p><p class="gl-ana">像汽车底盘：发动机是模型，跑起来还得靠它。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">handoff</span><span class="gl-zh">交接（handoff）</span></div><p class="gl-def">把任务和已有信息从一个智能体转交给另一个；每转一次，细节就可能丢失或走样。</p><p class="gl-ana">就是传话游戏：每传一手，话就走样一点。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">generator-verifier</span><span class="gl-zh">生成器—验证器（generator-verifier）</span></div><p class="gl-def">最简单的多智能体分工之一：一个智能体负责产出，另一个只负责检查它做得对不对。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">task budget</span><span class="gl-zh">任务预算</span></div><p class="gl-def">给一次任务设的预算上限，比如轮数或花费，用完循环就停，防止智能体无休止地跑下去。</p><p class="gl-ana">像给任务配的倒计时和油表。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">guardrails</span><span class="gl-zh">护栏（guardrails）</span></div><p class="gl-def">在模型动手前后设的硬性限制，比如数据校验、审批闸门；不合规的动作或输出不放行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">prompt caching</span><span class="gl-zh">提示缓存（prompt caching）</span></div><p class="gl-def">把反复用到的提示前缀缓存下来，下次直接复用，从而省掉重复计算的钱和时间。</p><p class="gl-ana">像把每次都要说的开场白背下来，不用每次重说。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Conway's law</span><span class="gl-zh">康威定律（Conway's law）</span></div><p class="gl-def">一种组织规律：系统结构往往长得像做它的团队结构；本文提醒别让智能体架构变成组织架构的复制品。</p><p class="gl-ana">像照镜子：系统结构映出团队结构。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Frankenprompt</span><span class="gl-zh">「缝合怪」提示词（Frankenprompt）</span></div><p class="gl-def">每个团队都往同一份系统提示里加一句，最后规则互相冲突、声音也不统一的那种提示词。</p><p class="gl-ana">像一份被所有人各改一句、最后互相打架的文档。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">skill sprawl</span><span class="gl-zh">技能泛滥（skill sprawl）</span></div><p class="gl-def">技能越建越多、彼此重复又没人维护，导致选不准该加载哪个、质量也没人兜底。</p><p class="gl-ana">像抽屉里塞满重复又没人整理的说明书。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">golden examples</span><span class="gl-zh">黄金样例（golden examples）</span></div><p class="gl-def">一小批被人工确认「这样答就是好」的示例，用来当评测的起点；本文说十个就够开始。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">DRI</span><span class="gl-zh">直接责任人（DRI）</span></div><p class="gl-def">对某件事负最终责任的那个人；本文指每个团队里负责把自家技能做对、做精的负责人。</p><p class="gl-ana">像每件事只写一个名字，没法互相踢皮球。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>「折叠（fold）」是个比喻</h4><p>「折叠」不是「合并删除」，而是把原本独立在外面跑的智能体收进主循环内部，变成主循环随时可用的技能和工具——像把折好的纸收进口袋。原文用的是 fold，全篇的迁移路径都围绕这个动作展开：合并同类（merge）、当工具调（call as tools）、拆成技能与工具（fold into skills and tools）。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>「thin（薄）工具」是什么意思</h4><p>原文的 thin data tools 指「只做一件事、输入输出都很简单」的数据工具，比如「查订单状态」「查库存」这种单一查询，而不是一个包罗万象的大工具。工具越薄，模型越容易挑对，参数也越不容易填错。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>康威定律（Conway's law）</h4><p>1968 年 Melvin Conway 提出的观察：一个组织设计出来的系统，结构上会长得像这个组织自己的沟通结构。作者在这里的意思是——公司有 12 个团队，智能体就会长出 12 个子智能体；不是因为技术上需要 12 个，而是因为组织上有 12 个。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>原文这一句有语法歧义</h4><p>原文写作 You cannot turn off thinking on Opus 5.5, and Fable 5.1。这个逗号位置让它可以被读成两种意思。结合上下文（说的是新模型更强、思考不再能关掉），这里按「在 Opus 5.5 与 Fable 5.1 上无法关闭思考功能」来理解。这不是翻译的自由发挥，是原文本身写得含糊，特此标出。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>传话游戏（telephone game）</h4><p>一种儿童游戏：一排人依次口耳相传一句话，传到最后往往面目全非。这里指智能体之间反复「转述」信息——每转一手就丢一点上下文，最后接手的那个智能体已经不知道前面为什么这么做了。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 4 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>this techniqueallows teams to build single agents</code><p>原文此处漏了一个空格，应为 this technique allows。中文按正常语义翻译，英文照录原文。</p></div><div class="typo-item"><code>one company found the dozen of specialist subagents</code><p>原文此处语法不规范，规范说法应为 a dozen specialist subagents（十几个专家子智能体）。中文按「十几个」处理。</p></div><div class="typo-item"><code>how to migrate the into your main loop</code><p>这句出现在网页的 meta description（摘要元数据）里，the 应为 them。正文没有这句，仅作记录。</p></div><div class="typo-item"><code>they engage in a "telephone game,"passing information</code><p>原文此处逗号后漏了一个空格（game,"passing）。这是全篇唯一一处我在英文列做了改动的地方：中文照常翻译，英文补上空格以便阅读。若你要逐字核对原文，此处即差异点，特此备案。</p></div></div></section><footer><p>本页为英文原文的中文对照阅读版，正文译文逐句对应原文。导读、本节要点、术语解释、图片解读、延伸阅读地图与译注均为译者所加，用不同底色与原文区分。原文版权归 Anthropic 所有。</p><p>原文：<a href="https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop" target="_blank" rel="noopener">Building agents: When to fold subagents into your main agent loop</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-failures"><span class="dot">●</span>大型组织构建智能体的典型失败模式</a><a class="l2" href="#s-progressive"><span class="dot">●</span>用「渐进披露」的智能体循环</a><a class="l2" href="#s-fold"><span class="dot">●</span>怎样把子智能体折叠进主循环</a><a class="l3" href="#h-fold-b5"><span class="dot">●</span>任务完成度评测</a><a class="l3" href="#h-fold-b9"><span class="dot">●</span>逐步减少子智能体</a><a class="l3" href="#h-fold-b12"><span class="dot">●</span>合并领域智能体</a><a class="l3" href="#h-fold-b15"><span class="dot">●</span>把子智能体当工具调用</a><a class="l3" href="#h-fold-b21"><span class="dot">●</span>用技能与工具把子智能体折叠进主智能体</a><a class="l2" href="#s-teams"><span class="dot">●</span>多个团队怎样一起为同一个智能体做贡献</a><a class="l3" href="#h-teams-b1"><span class="dot">●</span>MCP 工具</a><a class="l3" href="#h-teams-b4"><span class="dot">●</span>技能</a><a class="l3" href="#h-teams-b9"><span class="dot">●</span>知识库</a><a class="l2" href="#s-tools"><span class="dot">●</span>加速这件事的工具</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"单智能体循环迁移工具包（官方仓库）","title_en":"anthropics/single-agent-loop-kit","site":"github.com","what_zh":"GitHub 上的官方起步仓库：把「路由或调度器加一群专家子智能体」的系统，改成一个循环、按需加载 skill 和工具的智能体。","why_zh":"本文开头提示框和文末「加速这件事的工具」两处都指向它。它把「怎么迁移」落成可执行步骤：先量化现状，再合并总是一起跑的 subagent，最后逐个折进主循环并用同一套 eval 比较前后。","tier":"必读","order":6,"url":"https://github.com/anthropics/single-agent-loop-kit"},"L2":{"title_zh":"多智能体协调模式：五种做法与适用场景","title_en":"Multi-agent coordination patterns: Five approaches and when to use them","site":"claude.com","what_zh":"Anthropic 的方法文章，讲多智能体系统里五种协调模式各自怎么运转、适合什么任务、容易卡在哪里。","why_zh":"本文用「由协调者编排」一句定义 subagent。这篇把该定义的来龙去脉讲全：五种模式的名字和分工，也点出 orchestrator 会成为信息瓶颈——这正是本文主张合并的伏笔。","tier":"必读","order":1,"url":"https://claude.com/resources/articles/multi-agent-coordination-patterns"},"L3":{"title_zh":"我们如何搭出多智能体研究系统","title_en":"How we built our multi-agent research system","site":"anthropic.com","what_zh":"Anthropic 工程博客，复盘 Claude 的 Research 功能：一个主研究员带多个并行子智能体检索，最后交给引用智能体标注来源。","why_zh":"本文把它当作「subagent 仍有价值」的例子。读它能看到多智能体真正擅长的是开放式、可并行的检索任务，也能看到代价：token 消耗和协调复杂度。","tier":"必读","order":5,"url":"https://www.anthropic.com/engineering/multi-agent-research-system"},"L4":{"title_zh":"有效电商智能体的结构指南","title_en":"A guide to the anatomy of effective commerce agents","site":"claude.com","what_zh":"Anthropic 给电商类智能体写的工程指南，分三部分：架构、延迟与成本、生产运行。架构部分的结论是一个主循环加 skills 加工具。","why_zh":"本文「带 skills 的单智能体常常胜过多智能体」这个判断的出处就在这篇。它给了对比结论，也解释了原因：电商对话前后高度耦合，子智能体交接会丢状态、加延迟。","tier":"必读","order":4,"url":"https://claude.com/resources/articles/the-anatomy-of-effective-commerce-agents"},"L5":{"title_zh":"用 Skills 构建智能体：为专门工作配备能力","title_en":"Building agents with Skills: Equipping agents for specialized work","site":"claude.com","what_zh":"Anthropic 解释 Agent Skills 的文章：skills 是什么、怎么用渐进披露省上下文，以及他们为什么从「造专门智能体」转向「给通用智能体配 skills」。","why_zh":"本文的核心替代方案「一个智能体加 skills」就出自这条线。读它能看清分工：skills 装一个团队做事的步骤、规则和判断，subagent 装独立上下文与并行。","tier":"必读","order":3,"url":"https://claude.com/resources/articles/building-agents-with-skills-equipping-agents-for-specialized-work"},"L6":{"title_zh":"什么时候该用多智能体系统（以及什么时候不该）","title_en":"When to use multi-agent systems (and when not to)","site":"claude.com","what_zh":"Anthropic 讲多智能体取舍的文章：列出多智能体真正划算的三种情况，以及按「上下文」而不是「工作类型」拆分的原则。","why_zh":"本文第 2 条理由——共享上下文产生更好答案、更少交接损失——直接引自这篇。它也给了反例：按角色拆分的智能体把 token 花在协调上，比干活还多。","tier":"必读","order":2,"url":"https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them"},"L7":{"title_zh":"面向 Claude 5 代模型的上下文工程新规则","title_en":"The new rules of context engineering for Claude 5 generation models","site":"claude.dev","what_zh":"Anthropic 工程博客，讲他们如何把 Claude Code 的系统提示词删掉 80% 以上、编码评测却没有可测损失，并列出六组「旧规则到新规则」。","why_zh":"本文用它证明渐进披露有效：提示词能大幅削减，部分原因就是把 skills 和工具改成按需加载。读它能理解「给判断、别给死规则」的思路。","tier":"背景","order":7,"url":"https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/"},"L8":{"title_zh":"任务预算（beta）","title_en":"Task budgets (beta)","site":"platform.claude.com","what_zh":"Claude 平台文档的一页，讲如何给一次任务设置预算（beta 功能）。本区域打不开，未能读取正文。","why_zh":"本文说循环在模型给出答案或「撞到预算」时停止。这页就是那个停止条件的官方说明；它也解释了为什么要把上限放进 harness，而不是写进提示词。","tier":"可选","order":11,"url":"https://platform.claude.com/docs/en/build-with-claude/task-budgets"},"L9":{"title_zh":"什么时候该用多智能体系统（以及什么时候不该）","title_en":"When to use multi-agent systems (and when not to)","site":"claude.com","what_zh":"与 L6 同一页的 Anthropic 文章：讲多智能体的适用条件与代价，以及按上下文拆分工作的原则。","why_zh":"这里引它是为了「合并」这一步：把互相串联、共用数据、经常一起被调用的专家子智能体合成一个领域智能体。读的时候重点看「按上下文拆分」那一节。","tier":"背景","order":8,"url":"https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them"},"L10":{"title_zh":"工具检索（Tool search）文档","title_en":"Tool search tool","site":"platform.claude.com","what_zh":"Claude 平台关于 tool search 的文档：工具定义不一次性放进上下文，而是让模型按需搜索，只加载用得上的几个。本区域打不开。","why_zh":"本文把「用 tool search 做工具的渐进披露」列为单智能体能处理大量任务的第二个理由。想知道工具很多时怎么不撑爆上下文，看这页。","tier":"背景","order":9,"url":"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool"},"L11":{"title_zh":"像智能体一样看：我们如何在 Claude Code 里设计工具","title_en":"Seeing like an agent: how we design tools in Claude Code","site":"claude.com","what_zh":"Claude Code 团队讲工具设计的文章：工具该多还是该少、什么时候该删，以及「让模型自己找上下文」为什么比把上下文塞给它更好。","why_zh":"本文在「知识库」一节引它作反例：不要用代码检索再粘进提示词。读它能看到更根本的理由——上下文该由模型自己搜索、逐层发现。","tier":"背景","order":10,"url":"https://claude.com/resources/articles/seeing-like-an-agent"},"L12":{"title_zh":"Claude Code 命令文档","title_en":"Commands - Claude Code Docs","site":"code.claude.com","what_zh":"Claude Code 的斜杠命令参考页：列出所有命令和用途，并标明哪些条目其实是一个内置 skill。","why_zh":"本文说「最近发布了一组 Claude API skills」，链接到这里。看了才明白：这些 /claude-api 技能在 Claude Code 里就是斜杠命令，可以在会话里直接调用。","tier":"可选","order":12,"url":"https://code.claude.com/docs/en/commands"}},"terms":{"agent-loop":{"en":"agent loop","zh":"智能体循环","def_zh":"模型反复「调用工具、看结果、再决定下一步」，直到给出答案或撞上预算，这个循环就叫 agent loop。","analogy_zh":"像做菜边尝边调味，而不是照着菜谱一口气做完。"},"subagent":{"en":"subagent","zh":"子智能体","def_zh":"有自己独立的上下文窗口、工具和指令，由协调者调度的一类智能体，擅长校验、并行和按模块划分权限。","analogy_zh":"像外包给另一个小组的一整件事，对方有自己的资料和工具。"},"orchestrator":{"en":"orchestrator","zh":"编排器（orchestrator）","def_zh":"把大任务拆给多个子智能体、再把结果收上来的上层组件；本文也指公司中心团队搭的那一层。","analogy_zh":"像项目经理：分派工作，再汇总结果。"},"context-window":{"en":"context window","zh":"上下文窗口","def_zh":"模型一次能同时「看见」的文字总量上限，系统提示、对话历史和工具返回的结果都算在里面。","analogy_zh":"像一张书桌，一次只摊得开这么多材料。"},"context-engineering":{"en":"context engineering","zh":"上下文工程","def_zh":"决定每一轮往上下文窗口里放什么、什么时候按需加载的工程实践，本文的技能与工具检索都属此列。","analogy_zh":""},"context-bloat":{"en":"context bloat","zh":"上下文膨胀","def_zh":"上下文里堆了太多用不上或重复的内容，既挤占窗口空间，也让模型更难抓住重点、变慢变贵。","analogy_zh":"像书桌堆满用不上的纸，真正要用的反而找不着。"},"progressive-disclosure":{"en":"progressive disclosure","zh":"渐进披露（progressive disclosure）","def_zh":"先只让模型看见技能和工具的简短描述，等确实需要时再加载全文，避免一上来就把上下文塞满。","analogy_zh":"像先看目录，需要时再翻那一章。"},"skill":{"en":"skill","zh":"技能","def_zh":"一份教模型「这个团队是怎么干这类活」的说明书，包含步骤、规则和判断标准，需要时才加载进上下文。","analogy_zh":"像交接时留下的操作手册，不用每次都口头讲一遍。"},"tool":{"en":"tool","zh":"工具","def_zh":"模型可以调用的一个具体动作接口，用来读实时数据、执行操作，或按固定格式把结果交回来。","analogy_zh":""},"tool-search":{"en":"tool search","zh":"工具检索（tool search）","def_zh":"一种按需加载工具的机制：系统提示里先只放工具名和短描述，模型需要时再检索出完整定义。","analogy_zh":""},"mcp":{"en":"MCP","zh":"MCP（模型上下文协议）","def_zh":"一套让模型连接外部系统和数据的通用协议；本文建议把子智能体的 API 调用改写成 MCP 工具。","analogy_zh":""},"eval":{"en":"eval","zh":"评测（eval）","def_zh":"一组固定任务加上判分办法，用来反复测智能体答得好不好、改动之后有没有变差。","analogy_zh":"像考试的题库和评分表，改完一次就重考一次。"},"rubric":{"en":"rubric","zh":"评分量表（rubric）","def_zh":"把「什么叫答得好」拆成一条条具体要求的打分表，用来给智能体的最终回答判分。","analogy_zh":""},"harness":{"en":"harness","zh":"harness（运行框架）","def_zh":"包在模型外面、负责跑循环、管预算、调工具的那层代码；模型本身之外的事基本都由它做。","analogy_zh":"像汽车底盘：发动机是模型，跑起来还得靠它。"},"handoff":{"en":"handoff","zh":"交接（handoff）","def_zh":"把任务和已有信息从一个智能体转交给另一个；每转一次，细节就可能丢失或走样。","analogy_zh":"就是传话游戏：每传一手，话就走样一点。"},"generator-verifier":{"en":"generator-verifier","zh":"生成器—验证器（generator-verifier）","def_zh":"最简单的多智能体分工之一：一个智能体负责产出，另一个只负责检查它做得对不对。","analogy_zh":""},"task-budget":{"en":"task budget","zh":"任务预算","def_zh":"给一次任务设的预算上限，比如轮数或花费，用完循环就停，防止智能体无休止地跑下去。","analogy_zh":"像给任务配的倒计时和油表。"},"guardrails":{"en":"guardrails","zh":"护栏（guardrails）","def_zh":"在模型动手前后设的硬性限制，比如数据校验、审批闸门；不合规的动作或输出不放行。","analogy_zh":""},"prompt-caching":{"en":"prompt caching","zh":"提示缓存（prompt caching）","def_zh":"把反复用到的提示前缀缓存下来，下次直接复用，从而省掉重复计算的钱和时间。","analogy_zh":"像把每次都要说的开场白背下来，不用每次重说。"},"conways-law":{"en":"Conway's law","zh":"康威定律（Conway's law）","def_zh":"一种组织规律：系统结构往往长得像做它的团队结构；本文提醒别让智能体架构变成组织架构的复制品。","analogy_zh":"像照镜子：系统结构映出团队结构。"},"frankenprompt":{"en":"Frankenprompt","zh":"「缝合怪」提示词（Frankenprompt）","def_zh":"每个团队都往同一份系统提示里加一句，最后规则互相冲突、声音也不统一的那种提示词。","analogy_zh":"像一份被所有人各改一句、最后互相打架的文档。"},"skill-sprawl":{"en":"skill sprawl","zh":"技能泛滥（skill sprawl）","def_zh":"技能越建越多、彼此重复又没人维护，导致选不准该加载哪个、质量也没人兜底。","analogy_zh":"像抽屉里塞满重复又没人整理的说明书。"},"golden-examples":{"en":"golden examples","zh":"黄金样例（golden examples）","def_zh":"一小批被人工确认「这样答就是好」的示例，用来当评测的起点；本文说十个就够开始。","analogy_zh":""},"dri":{"en":"DRI","zh":"直接责任人（DRI）","def_zh":"对某件事负最终责任的那个人；本文指每个团队里负责把自家技能做对、做精的负责人。","analogy_zh":"像每件事只写一个名字，没法互相踢皮球。"}},"notes":{"N1":{"title_zh":"「折叠（fold）」是个比喻","body_zh":"「折叠」不是「合并删除」，而是把原本独立在外面跑的智能体收进主循环内部，变成主循环随时可用的技能和工具——像把折好的纸收进口袋。原文用的是 fold，全篇的迁移路径都围绕这个动作展开：合并同类（merge）、当工具调（call as tools）、拆成技能与工具（fold into skills and tools）。"},"N2":{"title_zh":"「thin（薄）工具」是什么意思","body_zh":"原文的 thin data tools 指「只做一件事、输入输出都很简单」的数据工具，比如「查订单状态」「查库存」这种单一查询，而不是一个包罗万象的大工具。工具越薄，模型越容易挑对，参数也越不容易填错。"},"N3":{"title_zh":"康威定律（Conway's law）","body_zh":"1968 年 Melvin Conway 提出的观察：一个组织设计出来的系统，结构上会长得像这个组织自己的沟通结构。作者在这里的意思是——公司有 12 个团队，智能体就会长出 12 个子智能体；不是因为技术上需要 12 个，而是因为组织上有 12 个。"},"N5":{"title_zh":"原文这一句有语法歧义","body_zh":"原文写作 You cannot turn off thinking on Opus 5.5, and Fable 5.1。这个逗号位置让它可以被读成两种意思。结合上下文（说的是新模型更强、思考不再能关掉），这里按「在 Opus 5.5 与 Fable 5.1 上无法关闭思考功能」来理解。这不是翻译的自由发挥，是原文本身写得含糊，特此标出。"},"N4":{"title_zh":"传话游戏（telephone game）","body_zh":"一种儿童游戏：一排人依次口耳相传一句话，传到最后往往面目全非。这里指智能体之间反复「转述」信息——每转一手就丢一点上下文，最后接手的那个智能体已经不知道前面为什么这么做了。"}},"typos":[{"quote_en":"this techniqueallows teams to build single agents","body_zh":"原文此处漏了一个空格，应为 this technique allows。中文按正常语义翻译，英文照录原文。"},{"quote_en":"one company found the dozen of specialist subagents","body_zh":"原文此处语法不规范，规范说法应为 a dozen specialist subagents（十几个专家子智能体）。中文按「十几个」处理。"},{"quote_en":"how to migrate the into your main loop","body_zh":"这句出现在网页的 meta description（摘要元数据）里，the 应为 them。正文没有这句，仅作记录。"},{"quote_en":"they engage in a \"telephone game,\"passing information","body_zh":"原文此处逗号后漏了一个空格（game,\"passing）。这是全篇唯一一处我在英文列做了改动的地方：中文照常翻译，英文补上空格以便阅读。若你要逐字核对原文，此处即差异点，特此备案。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

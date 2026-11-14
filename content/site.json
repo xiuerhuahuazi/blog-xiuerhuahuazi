@@ -1,0 +1,47 @@
+{
+ "name": "xiuerhuahuazi",
+ "title": "xiuerhuahuazi · 双语精读与技术手记",
+ "tagline": "把值得读的文章，读透。",
+ "description": "英文原文与中文译文逐句对照的精读页，加上平日的技术手记。",
+ "url": "https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/",
+ "lang": "zh-CN",
+ "author": "xiuerhuahuazi",
+ "github": "https://github.com/xiuerhuahuazi",
+ "repo": "https://github.com/xiuerhuahuazi/blog-xiuerhuahuazi",
+ "nav": [
+  {
+   "label": "双语书架",
+   "href": "readers/"
+  },
+  {
+   "label": "技术手记",
+   "href": "notes/"
+  },
+  {
+   "label": "关于",
+   "href": "about/"
+  }
+ ],
+ "about": {
+  "lead": "我是 xiuerhuahuazi。写代码，也读长文。",
+  "paras": [
+   "这个站点放两样东西：一是把英文长文做成「左英右中、逐句联动」的双语精读页；二是平日折腾系统、模型和工具时留下的技术手记。",
+   "精读页不是机翻。每一句都由人过一遍，配术语卡、译者注、图注解读和延伸阅读；读不懂的地方，点一下就能看到上下文。",
+   "手记写的都是踩过的坑：命令、报错、为什么这么修。能复现的才写下来。"
+  ],
+  "facts": [
+   {
+    "k": "这个站点",
+    "v": "纯静态页面，Python 生成，零外部请求，可直接离线打开"
+   },
+   {
+    "k": "双语精读",
+    "v": "单篇 40–850 句对，术语卡与译注按篇定制"
+   },
+   {
+    "k": "代码",
+    "v": "生成器与内容都在 GitHub 上"
+   }
+  ]
+ }
+}

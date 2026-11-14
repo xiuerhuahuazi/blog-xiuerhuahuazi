@@ -1,175 +1,216 @@
-<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>个人博客 - 记录生活与技术</title><meta name="author" content="xiuerhuahuazi"><meta name="copyright" content="xiuerhuahuazi"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="分享个人心得、技术笔记和生活感悟">
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xiuerhuahuazi · 双语精读与技术手记</title>
+<meta name="description" content="英文原文与中文译文逐句对照的精读页，加上平日的技术手记。">
+<meta name="author" content="xiuerhuahuazi">
+<meta name="theme-color" content="#fbf8f3">
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/">
+<link rel="icon" href="img/favicon.ico" sizes="any">
 <meta property="og:type" content="website">
-<meta property="og:title" content="个人博客">
-<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/index.html">
-<meta property="og:site_name" content="个人博客">
-<meta property="og:description" content="分享个人心得、技术笔记和生活感悟">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="xiuerhuahuazi · 双语精读与技术手记">
+<meta property="og:description" content="英文原文与中文译文逐句对照的精读页，加上平日的技术手记。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/img/avatar.jpg">
-<meta property="article:author" content="xiuerhuahuazi">
-<meta property="article:tag" content="博客,技术,生活,个人">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/blog-xiuerhuahuazi/img/favicon.png"><link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/blog-xiuerhuahuazi/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
-    (() => {
-      
-    const saveToLocal = {
-      set: (key, value, ttl) => {
-        if (!ttl) return
-        const expiry = Date.now() + ttl * 86400000
-        localStorage.setItem(key, JSON.stringify({ value, expiry }))
-      },
-      get: key => {
-        const itemStr = localStorage.getItem(key)
-        if (!itemStr) return undefined
-        const { value, expiry } = JSON.parse(itemStr)
-        if (Date.now() > expiry) {
-          localStorage.removeItem(key)
-          return undefined
-        }
-        return value
-      }
-    }
+<meta property="og:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/super-agent-design/media/cover.jpg">
+<meta property="og:image:alt" content="">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/site.css">
+<script>(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.dataset.theme='dark'}}catch(e){}})();</script>
 
-    window.btf = {
-      saveToLocal,
-      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
-        const script = document.createElement('script')
-        script.src = url
-        script.async = true
-        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
-        script.onload = script.onreadystatechange = () => {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
-        }
-        script.onerror = reject
-        document.head.appendChild(script)
-      }),
-      getCSS: (url, id) => new Promise((resolve, reject) => {
-        const link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = url
-        if (id) link.id = id
-        link.onload = link.onreadystatechange = () => {
-          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
-        }
-        link.onerror = reject
-        document.head.appendChild(link)
-      }),
-      addGlobalFn: (key, fn, name = false, parent = window) => {
-        if (!false && key.startsWith('pjax')) return
-        const globalFn = parent.globalFn || {}
-        globalFn[key] = globalFn[key] || {}
-        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
-        parent.globalFn = globalFn
-      }
-    }
-  
-      
-      const activateDarkMode = () => {
-        document.documentElement.setAttribute('data-theme', 'dark')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
-        }
-      }
-      const activateLightMode = () => {
-        document.documentElement.setAttribute('data-theme', 'light')
-        if (document.querySelector('meta[name="theme-color"]') !== null) {
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
-        }
-      }
+</head>
+<body class="">
+<a class="skip" href="#main">跳到正文</a>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="" aria-label="回到首页">
+      <span class="brand-mark" aria-hidden="true">x</span>
+      <span class="brand-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="nav" aria-label="主导航"><a href="readers/">双语书架</a><a href="notes/">技术手记</a><a href="about/">关于</a></nav>
+    <button class="theme-btn" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+<main id="main">
 
-      btf.activateDarkMode = activateDarkMode
-      btf.activateLightMode = activateLightMode
-
-      const theme = saveToLocal.get('theme')
-    
-          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
-        
-      
-      const asideStatus = saveToLocal.get('aside-status')
-      if (asideStatus !== undefined) {
-        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
-      }
-    
-      
-    const detectApple = () => {
-      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
-        document.documentElement.classList.add('apple')
-      }
-    }
-    detectApple()
-  
-    })()
-  </script><script>const GLOBAL_CONFIG = {
-  root: '/blog-xiuerhuahuazi/',
-  algolia: undefined,
-  localSearch: undefined,
-  translate: undefined,
-  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
-  copy: {
-    success: '复制成功',
-    error: '复制失败',
-    noSupport: '浏览器不支持'
-  },
-  relativeDate: {
-    homepage: false,
-    post: false
-  },
-  runtime: '',
-  dateSuffix: {
-    just: '刚刚',
-    min: '分钟前',
-    hour: '小时前',
-    day: '天前',
-    month: '个月前'
-  },
-  copyright: undefined,
-  lightbox: 'null',
-  Snackbar: undefined,
-  infinitegrid: {
-    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
-    buttonText: '加载更多'
-  },
-  isPhotoFigcaption: false,
-  islazyloadPlugin: false,
-  isAnchor: false,
-  percent: {
-    toc: true,
-    rightside: false,
-  },
-  autoDarkmode: false
-}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
-  title: '个人博客',
-  isHighlightShrink: false,
-  isToc: false,
-  pageType: 'home'
-}</script><meta name="generator" content="Hexo 8.1.1"></head><body><div class="page" id="body-wrap"><header class="full_page" id="page-header" style="background-image: url(/blog-xiuerhuahuazi/img/header-bg.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/blog-xiuerhuahuazi/"><span class="site-name">个人博客</span></a></span><div id="menus"></div></nav><div id="site-info"><h1 id="site-title">个人博客</h1><div id="site_social_icons"><a class="social-icon" href="https://github.com/xiuerhuahuazi" target="_blank" title="GitHub"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:your-email@example.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div id="scroll-down"><i class="fas fa-angle-down scroll-down-effects"></i></div></header><main class="layout" id="content-inner"><div class="recent-posts nc" id="recent-posts"><div class="recent-post-items">
-<div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/blog-xiuerhuahuazi/2026/07/27/SSH-Docker-Alias-简化Hermes启动命令/" title="SSH 连接 Docker 容器太麻烦？一招用 alias 把命令缩短到 5 个字符">SSH 连接 Docker 容器太麻烦？一招用 alias 把命令缩短到 5 个字符</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-07-27T08:21:20.000Z" title="发表于 2026-07-27 08:21:20">2026-07-27</time></span></div><div class="content">每次 SSH 进 NAS，再 sudo docker exec -it hermes-hermes-1 hermes chat 一长串，是不是很烦？</div></div></div>
-<div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/blog-xiuerhuahuazi/2026/07/26/Hermes-Agent-DeepSeek-V4-模型名弃用问题的排查与修复/" title="Hermes Agent 接入 DeepSeek V4：模型名弃用问题的排查与修复">Hermes Agent 接入 DeepSeek V4：模型名弃用问题的排查与修复</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-07-26T01:30:00.000Z" title="发表于 2026-07-26 09:30:00">2026-07-26</time></span></div><div class="content">在 UGREEN NAS 上部署 Hermes Agent 接入 DeepSeek V4 时，遇到了模型名弃用导致的 400 错误。本文记录了完整的排查过程与修复方法。</div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/blog-xiuerhuahuazi/2026/02/11/ffmpeg%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B%EF%BC%88windows%EF%BC%89/" title="ffmpeg安装教程（windows）">ffmpeg安装教程（windows）</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-02-11T09:26:40.000Z" title="发表于 2026-02-11 17:26:40">2026-02-11</time></span></div><div class="content">前言写这个文档主要是最近打算批量录制抖音直播视频，使用的仓库来自 GitHub - ihmily&#x2F;DouyinLiveRecorder ，在运行的时候发现 ffmpeg 无法通过程序运行正常的安装，只能被迫的手动安装。 文章结构与部分相关图片来自于知乎：如何安装ffmpeg安装教程（windows版），看这篇就够了。  什么是 FFmpeg？FFmpeg 是一个免费、开源的跨平台项目，由一系列的命令行程序和库组成，用于处理、转换、流式传输、编码和解码各种格式的多媒体数据（包括视频、音频和图像）。 作用1. 格式转换（Transcoding）这是 FFmpeg 最常用、最基本的功能。  示例： 将 .mov 文件转换成 .mp4，将 .wav 音频转换成 .mp3，或将视频编码格式从 H.264 转换成 HEVC (H.265)。  2. 录制与流媒体处理 录制： 可以从各种来源（如摄像头、麦克风、屏幕捕获，或像你遇到的网络直播流）捕获数据并保存为文件。 流媒体： 它是许多直播平台（包括推流端和接收端）处理和传输音视频流的核心技术。  3. 基础编辑和处理 剪辑&#x2F...</div></div></div><div class="recent-post-item"><div class="post_cover right"><a href="/blog-xiuerhuahuazi/2026/02/11/%E6%AC%A2%E8%BF%8E%E6%9D%A5%E5%88%B0%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2/" title="欢迎来到我的博客"><img class="post-bg" src="/blog-xiuerhuahuazi/img/cover.jpg" onerror="this.onerror=null;this.src='/blog-xiuerhuahuazi/img/404.jpg'" alt="欢迎来到我的博客"></a></div><div class="recent-post-info"><a class="article-title" href="/blog-xiuerhuahuazi/2026/02/11/%E6%AC%A2%E8%BF%8E%E6%9D%A5%E5%88%B0%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2/" title="欢迎来到我的博客">欢迎来到我的博客</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-02-11T03:16:54.000Z" title="发表于 2026-02-11 11:16:54">2026-02-11</time></span><span class="article-meta"><span class="article-meta-separator">|</span><i class="fas fa-inbox"></i><a class="article-meta__categories" href="/blog-xiuerhuahuazi/categories/%E7%94%9F%E6%B4%BB/">生活</a></span></div><div class="content">欢迎来到我的博客很高兴您能访问我的个人博客！这是我在网络世界的小天地，我将在这里分享我的学习心得、技术笔记和生活感悟。 博客内容在这个博客中，您可以期待看到以下内容：  技术分享：前端开发、后端技术、工具使用等方面的学习笔记和经验分享 生活感悟：日常思考、读书心得、旅行记录等 学习资源：优质书籍、教程、工具的推荐  为什么创建这个博客 记录成长：通过写作记录自己的学习和成长过程 分享价值：希望我的经验和思考能对他人有所帮助 交流学习：与志同道合的朋友交流，共同进步  关于我我是一名热爱技术和生活的开发者，专注于前端开发领域。我喜欢探索新技术，解决问题，也喜欢读书、旅行和摄影。 如果您对博客内容有任何建议或想法，欢迎通过联系方式与我交流！ 谢谢阅读，希望您在我的博客中有所收获。 </div></div></div><div class="recent-post-item"><div class="recent-post-info no-cover"><a class="article-title" href="/blog-xiuerhuahuazi/2026/02/11/hello-world/" title="Hello World">Hello World</a><div class="article-meta-wrap"><span class="post-meta-date"><i class="far fa-calendar-alt"></i><span class="article-meta-label">发表于</span><time datetime="2026-02-11T03:14:35.139Z" title="发表于 2026-02-11 11:14:35">2026-02-11</time></span></div><div class="content">Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick StartCreate a new post1$ hexo new &quot;My New Post&quot;  More info: Writing Run server1$ hexo server  More info: Server Generate static files1$ hexo generate  More info: Generating Deploy to remote sites1$ hexo deploy  More info: Deployment </div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/blog-xiuerhuahuazi/img/avatar.jpg" onerror="this.onerror=null;this.src='/blog-xiuerhuahuazi/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">xiuerhuahuazi</div><div class="author-info-description">分享个人心得、技术笔记和生活感悟</div><div class="site-data"><a href="/blog-xiuerhuahuazi/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/blog-xiuerhuahuazi/tags/"><div class="headline">标签</div><div class="length-num">11</div></a><a href="/blog-xiuerhuahuazi/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xiuerhuahuazi"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/xiuerhuahuazi" target="_blank" title="GitHub"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:your-email@example.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list">
-        <div class="aside-list-item no-cover"><div class="content"><a class="title" href="/blog-xiuerhuahuazi/2026/07/27/SSH-Docker-Alias-简化Hermes启动命令/" title="SSH 连接 Docker 容器太麻烦？一招用 alias 把命令缩短到 5 个字符">SSH 连接 Docker 容器太麻烦？一招用 alias 把命令缩短到 5 个字符</a><time datetime="2026-07-27T08:21:20.000Z" title="发表于 2026-07-27 08:21:20">2026-07-27</time></div></div>
-        <div class="aside-list-item no-cover"><div class="content"><a class="title" href="/blog-xiuerhuahuazi/2026/07/26/Hermes-Agent-DeepSeek-V4-模型名弃用问题的排查与修复/" title="Hermes Agent 接入 DeepSeek V4：模型名弃用问题的排查与修复">Hermes Agent 接入 DeepSeek V4：模型名弃用问题的排查与修复</a><time datetime="2026-07-26T01:30:00.000Z" title="发表于 2026-07-26 09:30:00">2026-07-26</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/blog-xiuerhuahuazi/2026/02/11/ffmpeg%E5%AE%89%E8%A3%85%E6%95%99%E7%A8%8B%EF%BC%88windows%EF%BC%89/" title="ffmpeg安装教程（windows）">ffmpeg安装教程（windows）</a><time datetime="2026-02-11T09:26:40.000Z" title="发表于 2026-02-11 17:26:40">2026-02-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/blog-xiuerhuahuazi/2026/02/11/%E6%AC%A2%E8%BF%8E%E6%9D%A5%E5%88%B0%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2/" title="欢迎来到我的博客"><img src="/blog-xiuerhuahuazi/img/cover.jpg" onerror="this.onerror=null;this.src='/blog-xiuerhuahuazi/img/404.jpg'" alt="欢迎来到我的博客"/></a><div class="content"><a class="title" href="/blog-xiuerhuahuazi/2026/02/11/%E6%AC%A2%E8%BF%8E%E6%9D%A5%E5%88%B0%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2/" title="欢迎来到我的博客">欢迎来到我的博客</a><time datetime="2026-02-11T03:16:54.000Z" title="发表于 2026-02-11 11:16:54">2026-02-11</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/blog-xiuerhuahuazi/2026/02/11/hello-world/" title="Hello World">Hello World</a><time datetime="2026-02-11T03:14:35.139Z" title="发表于 2026-02-11 11:14:35">2026-02-11</time></div></div></div></div><div class="card-widget card-categories"><div class="item-headline">
-            <i class="fas fa-folder-open"></i>
-            <span>分类</span>
-            
-          </div>
-          <ul class="card-category-list" id="aside-cat-list">
-            <li class="card-category-list-item "><a class="card-category-list-link" href="/blog-xiuerhuahuazi/categories/%E7%94%9F%E6%B4%BB/"><span class="card-category-list-name">生活</span><span class="card-category-list-count">1</span></a></li>
-          </ul></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/blog-xiuerhuahuazi/tags/windows/" style="font-size: 1.1em; color: #999">windows</a> <a href="/blog-xiuerhuahuazi/tags/%E5%AE%89%E8%A3%85/" style="font-size: 1.1em; color: #999">安装</a> <a href="/blog-xiuerhuahuazi/tags/ffmpeg/" style="font-size: 1.1em; color: #999">ffmpeg</a> <a href="/blog-xiuerhuahuazi/tags/%E5%8D%9A%E5%AE%A2/" style="font-size: 1.1em; color: #999">博客</a> <a href="/blog-xiuerhuahuazi/tags/%E4%BB%8B%E7%BB%8D/" style="font-size: 1.1em; color: #999">介绍</a> <a href="/blog-xiuerhuahuazi/tags/%E6%95%99%E7%A8%8B/" style="font-size: 1.1em; color: #999">教程</a> <a href="/blog-xiuerhuahuazi/tags/deepseek/" style="font-size: 1.1em; color: #999">deepseek</a> <a href="/blog-xiuerhuahuazi/tags/hermes-agent/" style="font-size: 1.1em; color: #999">hermes-agent</a> <a href="/blog-xiuerhuahuazi/tags/LLM/" style="font-size: 1.1em; color: #999">LLM</a> <a href="/blog-xiuerhuahuazi/tags/troubleshooting/" style="font-size: 1.1em; color: #999">troubleshooting</a> <a href="/blog-xiuerhuahuazi/tags/NAS/" style="font-size: 1.1em; color: #999">NAS</a> <a href="/blog-xiuerhuahuazi/tags/nas/" style="font-size: 1.1em; color: #999">nas</a></div></div><div class="card-widget card-archives">
-    <div class="item-headline">
-      <i class="fas fa-archive"></i>
-      <span>归档</span>
-      
+<section class="hero">
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="eyebrow">Bilingual Reader · Notes</p>
+      <h1>把值得读的文章，<br><em>读透</em>。</h1>
+      <p class="lede">英文原文与中文译文逐句对照，配术语卡、译者注和图注解读；下面是平日的技术手记。不是机翻，每一句都过了一遍。</p>
+      <dl class="stats">
+        <div><dt>双语精读</dt><dd>10<small>篇</small></dd></div>
+        <div><dt>逐句对照</dt><dd>2,508<small>句</small></dd></div>
+        <div><dt>术语卡</dt><dd>271<small>张</small></dd></div>
+        <div><dt>技术手记</dt><dd>5<small>篇</small></dd></div>
+      </dl>
     </div>
-  
-    <ul class="card-archive-list">
-      
-        <li class="card-archive-list-item">
-          <a class="card-archive-list-link" href="/blog-xiuerhuahuazi/archives/2026/02/">
-            <span class="card-archive-list-date">
-              二月 2026
-            </span>
-            <span class="card-archive-list-count">5</span>
-          </a>
-        </li>
-      
-    </ul>
-  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">5</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总浏览量 :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastPushDate="2026-07-27T08:21:20.000Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2026 By xiuerhuahuazi</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.1</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.4</a></span></div><div class="footer_custom_text">记录生活与技术</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/blog-xiuerhuahuazi/js/utils.js?v=5.5.4"></script><script src="/blog-xiuerhuahuazi/js/main.js?v=5.5.4"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
+    <div class="specimen">
+      <div class="specimen-head"><span>逐句对照</span><span class="specimen-src">EN / 中</span></div>
+      <div class="spec-pair">
+        <span class="spec-no">01</span>
+        <p class="spec-en" lang="en">Review becomes spelling-check-as-you-write, not the gate at the end of the road.</p>
+        <p class="spec-zh">review 不再是路尽头的闸门，而是写代码时的拼写检查。</p>
+      </div>
+      <div class="spec-pair">
+        <span class="spec-no">02</span>
+        <p class="spec-en" lang="en">When you have several agents writing code, you are managing.</p>
+        <p class="spec-zh">当有好几个智能体在写代码时，你其实已经在做管理。</p>
+      </div>
+      <p class="specimen-foot">悬停任一句，另一侧同步高亮 · <span>阅读器里的真实交互</span></p>
+    </div>
+  </div>
+</section>
+
+<section class="feature-wrap">
+  <div class="wrap">
+    <a class="feature" href="readers/super-agent-design/">
+      <div class="feature-media"><img src="readers/super-agent-design/media/cover.jpg" alt="" loading="lazy"></div>
+      <div class="feature-body">
+        <p class="kicker">本期精读 · 2026.11.01</p>
+        <h2 class="feature-title">探索超级智能体的设计：走向更自主的智能体系统</h2>
+        <p class="feature-en" lang="en">Exploring Super-agent Design: Towards a More Autonomous Agent System</p>
+        <p class="feature-blurb">路由层 + 工作层、事件驱动、算存分离、外部看门狗：为什么「一个会话 + 一个人盯着」撑不起整个团队。</p>
+        <div class="feature-meta"><div class="row-meta-in"><span class="chip">智能体架构</span><span class="row-stats">344 句对 · 23 术语 · 33 分钟</span></div></div>
+        <span class="cta">进入阅读 <span aria-hidden="true">→</span></span>
+      </div>
+    </a>
+  </div>
+</section>
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head"><h2 class="sec-title">双语精读<span class="sec-count">10</span></h2><a class="sec-more" href="readers/">全部 10 篇 <span aria-hidden="true">→</span></a></div>
+    <div class="read-list"><article class="read-row">
+  <span class="row-num" aria-hidden="true">01</span>
+  <div class="row-main">
+    <h3 class="row-title"><a href="readers/fable-multi-agent/">安全地把多智能体团队扩到 1,000 个：Claude Fable 5.2 的一次玩具实验</a></h3>
+    <p class="row-en" lang="en">Safely scaling multi-agent teams with Claude Fable 5.2</p>
+    <p class="row-blurb">1,000 个智能体、28.7 小时、一个费马大定理的形式化证明：一篇关于「扩到多大才安全」的实验报告。</p>
+  </div>
+  <div class="row-meta">
+    <div class="row-meta-in"><span class="chip">智能体架构</span><span class="row-stats">144 句对 · 24 术语 · 16 分钟</span></div>
+    <span class="row-date">2026.11.09</span>
+    <span class="row-go" aria-hidden="true">↗</span>
+  </div>
+</article><article class="read-row">
+  <span class="row-num" aria-hidden="true">02</span>
+  <div class="row-main">
+    <h3 class="row-title"><a href="readers/agent-manager/">你的编码智能体，把你变成了管理者</a></h3>
+    <p class="row-en" lang="en">Your coding agents made you a manager</p>
+    <p class="row-blurb">写代码的智能体一多，你就成了项目经理。文章把这件事拆成 12 个可执行的习惯，也点明智能体和初级工程师的 6 处不同。</p>
+  </div>
+  <div class="row-meta">
+    <div class="row-meta-in"><span class="chip">智能体协作</span><span class="row-stats">227 句对 · 22 术语 · 14 分钟</span></div>
+    <span class="row-date">2026.11.08</span>
+    <span class="row-go" aria-hidden="true">↗</span>
+  </div>
+</article><article class="read-row">
+  <span class="row-num" aria-hidden="true">03</span>
+  <div class="row-main">
+    <h3 class="row-title"><a href="readers/claude-code-review/">Claude Code 团队怎么做代码审查</a></h3>
+    <p class="row-en" lang="en">How the Claude Code team does code review</p>
+    <p class="row-blurb">当 Claude 写掉约 90% 的代码，review 不再是路尽头的闸门，而是写代码时的拼写检查。</p>
+  </div>
+  <div class="row-meta">
+    <div class="row-meta-in"><span class="chip">工程实践</span><span class="row-stats">225 句对 · 25 术语 · 14 分钟</span></div>
+    <span class="row-date">2026.10.26</span>
+    <span class="row-go" aria-hidden="true">↗</span>
+  </div>
+</article><article class="read-row">
+  <span class="row-num" aria-hidden="true">04</span>
+  <div class="row-main">
+    <h3 class="row-title"><a href="readers/claude-subagent-loop/">构建智能体：何时该把子智能体折叠进主智能体循环</a></h3>
+    <p class="row-en" lang="en">Building agents: When to fold subagents into your main agent loop</p>
+    <p class="row-blurb">什么时候该把子智能体折叠回主循环？答案取决于上下文隔离、工具数量与成本，而不是「多一层更专业」。</p>
+  </div>
+  <div class="row-meta">
+    <div class="row-meta-in"><span class="chip">智能体架构</span><span class="row-stats">127 句对 · 24 术语 · 14 分钟</span></div>
+    <span class="row-date">2026.10.22</span>
+    <span class="row-go" aria-hidden="true">↗</span>
+  </div>
+</article><article class="read-row">
+  <span class="row-num" aria-hidden="true">05</span>
+  <div class="row-main">
+    <h3 class="row-title"><a href="readers/anthropic-scm/">在 Anthropic 重新设计版本控制</a></h3>
+    <p class="row-en" lang="en">Redesigning source control at Anthropic</p>
+    <p class="row-blurb">合并量五个月涨十倍，git 撑不住了：7 个人、5 个月自研版本控制系统 Scion，把内部 monorepo 全量迁了过去。</p>
+  </div>
+  <div class="row-meta">
+    <div class="row-meta-in"><span class="chip">工程基建</span><span class="row-stats">165 句对 · 38 术语 · 18 分钟</span></div>
+    <span class="row-date">2026.10.13</span>
+    <span class="row-go" aria-hidden="true">↗</span>
+  </div>
+</article></div>
+    <a class="more-link" href="readers/">看完剩下 5 篇 <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head"><h2 class="sec-title">技术手记<span class="sec-count">5</span></h2><a class="sec-more" href="notes/">全部 <span aria-hidden="true">→</span></a></div>
+    <div class="note-list"><article class="note-row">
+  <time datetime="2026-07-27">2026.07.27</time>
+  <div class="note-main">
+    <h3 class="note-title"><a href="2026/07/27/SSH-Docker-Alias-简化Hermes启动命令/">SSH 连接 Docker 容器太麻烦？一招用 alias 把命令缩短到 5 个字符</a></h3>
+    <p>一条 alias 把「ssh 进 NAS + docker exec + 进容器」缩成 5 个字符。</p>
+  </div>
+  <div class="note-tags"><span class="tag">hermes-agent</span><span class="tag">docker</span><span class="tag">ssh</span></div>
+</article><article class="note-row">
+  <time datetime="2026-07-26">2026.07.26</time>
+  <div class="note-main">
+    <h3 class="note-title"><a href="2026/07/26/Hermes-Agent-DeepSeek-V4-模型名弃用问题的排查与修复/">Hermes Agent 接入 DeepSeek V4：模型名弃用问题的排查与修复</a></h3>
+    <p>接入 DeepSeek V4 时被模型名弃用卡住：从报错、配置文件到最终可用配置的排查过程。</p>
+  </div>
+  <div class="note-tags"><span class="tag">hermes-agent</span><span class="tag">deepseek</span><span class="tag">排查</span></div>
+</article><article class="note-row">
+  <time datetime="2026-02-11">2026.02.11</time>
+  <div class="note-main">
+    <h3 class="note-title"><a href="2026/02/11/欢迎来到我的博客/">欢迎来到我的博客</a></h3>
+    <p>开张说明：这个博客打算写什么。</p>
+  </div>
+  <div class="note-tags"><span class="tag">随笔</span><span class="tag">博客</span></div>
+</article><article class="note-row">
+  <time datetime="2026-02-11">2026.02.11</time>
+  <div class="note-main">
+    <h3 class="note-title"><a href="2026/02/11/hello-world/">Hello World</a></h3>
+    <p>Hexo 的第一篇文章：怎么新建一篇 post，以及这个模板留下的骨架。</p>
+  </div>
+  <div class="note-tags"><span class="tag">Hello World</span><span class="tag">Hexo</span></div>
+</article></div>
+  </div>
+</section>
+
+<section class="block about-strip">
+  <div class="wrap about-strip-in">
+    <div class="about-portrait"><img src="img/avatar.jpg" alt="xiuerhuahuazi" width="88" height="88" loading="lazy"></div>
+    <div>
+      <h2 class="about-strip-title">关于这个站点</h2>
+      <p>这里放两样东西：逐句对照的双语精读页，和折腾系统、模型、工具时留下的技术手记。都是自己读完、踩完之后写的。</p>
+      <a class="text-link" href="about/">读完这段介绍 <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <span class="brand-mark" aria-hidden="true">x</span>
+      <div>
+        <p class="foot-name">xiuerhuahuazi</p>
+        <p class="foot-line">把值得读的文章，读透。</p>
+      </div>
+    </div>
+    <nav class="foot-nav" aria-label="页脚导航"><a href="readers/">双语书架</a><a href="notes/">技术手记</a><a href="about/">关于</a></nav>
+    <p class="foot-meta">© 2026 · 纯静态页面 · 无第三方脚本与统计</p>
+  </div>
+</footer>
+<script src="assets/site.js" defer></script>
+</body>
+</html>

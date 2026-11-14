@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Code 团队怎么做代码审查｜How the Claude Code team does code review</title>
+<meta name="description" content="Claude Code 团队怎么做代码审查｜How the Claude Code team does code review：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-code-review/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="Claude Code 团队怎么做代码审查">
+<meta property="og:description" content="当 Claude 写掉了约 90% 的代码，review 就不再是路尽头的闸门，而是写代码时的拼写检查">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-code-review/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Addy Osmani · Claude Code 团队（Anthropic） · 2026-10-26</p><h1 class="h1-wrap"><span class="h1-en" lang="en">How the Claude Code team does code review</span><span class="h1-zh">Claude Code 团队怎么做代码审查</span></h1><div class="hero-meta"><span>原文 3430 词</span><span>中文 7200 字</span><span>逐句对照 <i>225</i> 句</span><span>预计 14 分钟</span><span><a href="https://x.com/addyosmani/status/2114604912520921136" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 7 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：Claude 写了 Claude Code 约 90% 的代码，团队的应对不是「把 review 做得更快」，而是把「读代码」这件事的大部分交给机器，再把人的注意力按风险重新分配。</li><li><b>为什么非改不可</b>：6 月到 9 月，合并进 Claude Code 的 PR 翻了一倍多，撤销比例反而降了 40% 以上。但人的时间是双向成本——省下审查时间、却没减少修 bug 的时间，等于没省。</li><li><b>流程长什么样</b>：一次改动要过验证前置 → 每个 PR 的 AI 审查 → 能阻断合并的安全审查 → CI → 按风险分级的人审 → 合并队列加功能开关 → 快速回滚兜底。正文说「六层」，编号却到第 7 项——第 7 项就是回滚。</li><li><b>审查者怎么变好</b>：把历史事故做成评测集天天跑；用「人怎么处理这条评论」衡量噪音；给审查过程加上轮次上限和「只看新增 diff」。</li><li><b>一条数字链</b>：一晚循环 50+ 轮 → git blame 显示被反复指出的 59% 是老代码 → 收敛后平均轮次 2.08→1.32、需要 5 轮以上的从 8.9% 降到 1.5%、一轮就过的从 65% 升到 78%。</li><li><b>人还剩什么</b>：决定该不该做、审危险代码、定架构、验证证据、对结果负责。</li><li><b>最大的观念转变</b>：「有没有人读过代码」是个不精确的代理指标；真问题是「这个改动可能出什么问题，该由哪道检查来抓住它」。</li></ul><div class="compare"><div class="cmp"><h3>常见做法：路尽头的一道闸门</h3><ol><li>代码写完了，PR 提上来，等人来读</li><li>质量保证 = 有人逐行读过</li><li>审查越仔细越好，默认多跑几轮</li><li>出了问题靠事后回滚，外加找人追责</li><li>度量看「review 做得多细」</li></ol></div><div class="cmp win"><h3>本文做法：分层 + 会收敛的审查</h3><ol><li>大部分「读」发生在 PR 存在之前：验证前置 + 新上下文的子智能体审 diff</li><li>六层检查，一层漏了还有下一层，回滚是托底的底座</li><li>人的注意力按风险档位投放，批准只对那一次提交有效</li><li>度量看「每 PR 人工批准数 + 等人时长」，护栏是撤销率与事故率</li><li>目标不是零缺陷，而是「快发现、快纠正」，并让审查过程收敛</li></ol></div></div><p class="ov-foot cmp-foot">这张对比卡是译者按正文归纳的，不是原文的表格。原文更强调后者是同一目标下换了一套时序与度量，而不是「一个更严格、一个更宽松」。</p><p class="ov-foot">读法建议：先看图 A（一次改动的旅程）和图 B（层，不是一道闸门）建立整体结构，再顺着 1–7 的编号读正文；第 4 节「How we make the reviewer better」和第 9 节「How to implement」是两处可以整段拿去用的部分。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>这篇要回答的问题很具体：当 Claude 写了 90% 的代码，代码审查还剩下什么、该由谁做。作者给的不是口号，而是他们团队实际在跑的流程和一组前后对比数字。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">We previously mentioned that Claude writes about 90 percent of the code for Claude Code.</span> <span class="s" data-k="intro-b0-1">So how do we do <span class='term' data-term='codereview'>code review</span> at this scale?</span> <span class="s" data-k="intro-b0-2">Who reads code anyway?</span> <span class="s" data-k="intro-b0-3">What happens if code goes wrong?</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">我们此前提到过，Claude Code 的代码里约有 90% 是 Claude 自己写的。</span><span class="s" data-k="intro-b0-1">那么在这个体量上，我们怎么做<span class='term' data-term='codereview'>代码审查</span>？</span><span class="s" data-k="intro-b0-2">再说，究竟是谁在读代码？</span><span class="s" data-k="intro-b0-3">代码出了问题又会怎样？</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">This post describes our team's code review process at Claude Code and how we have improved it.</span> <span class="s" data-k="intro-b1-1">Between June and September, we saw more than double the number of <span class='term' data-term='pr'>pull requests</span> that were merged to the codebase for Claude Code, while the share of pull requests that had to be <span class='term' data-term='revert'>reverted</span> fell by more than 40 percent.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">本文讲的是我们团队在 Claude Code 上的代码审查流程，以及我们是怎么改进它的。</span><span class="s" data-k="intro-b1-1">从 6 月到 9 月，合并进 Claude Code 代码库的<span class='term' data-term='pr'>拉取请求</span>数量翻了一倍多，而不得不<span class='term' data-term='revert'>撤销</span>的拉取请求占比下降了 40% 以上。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">We didn't stop doing code review.</span> <span class="s" data-k="intro-b2-1">Instead, we've automated the majority of reading and tuned it to optimize for human time and effort.</span> <span class="s" data-k="intro-b2-2">We've also made significant investments into improving the speed and ease of reverting mistakes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">我们并没有放弃代码审查。</span><span class="s" data-k="intro-b2-1">我们做的是把大部分「阅读」工作自动化，并围绕人的时间和精力去调优。</span><span class="s" data-k="intro-b2-2">我们还投入了大量精力，让撤销错误变得更快、更容易。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-rethink">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Rethinking the goal of code review</span><span class="h-zh">重想代码审查的目的</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>审查的目的被重新定义了：不是问「有没有人读过」，而是问「这个改动可能出什么问题、该由哪道检查抓住」。同时它从「事后关卡」变成了「写的时候就顺手做」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="rethink-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b0-0">With <span class='term' data-term='agent'>agents</span> writing code, the volume of changes increases rapidly.</span> <span class="s" data-k="rethink-b0-1">In our <span class='term' data-term='monorepo'>monorepo</span>, we went from approximately 2,500 changes merging each day in May to over <a class='lnk' href='https://www.anthropic.com/engineering/redesigning-source-control' target='_blank' rel='noopener' data-link='L1'>30,000</a> in September of this year.<sup class='tn' data-note='N1'>1</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b0-0">随着<span class='term' data-term='agent'>智能体</span>（agent）开始写代码，改动的数量增长得极快。</span><span class="s" data-k="rethink-b0-1">在我们的<span class='term' data-term='monorepo'>单仓</span>（monorepo）里，5 月时每天大约有 2,500 个改动合并进来，到今年 9 月已经超过 <a class='lnk' href='https://www.anthropic.com/engineering/redesigning-source-control' target='_blank' rel='noopener' data-link='L1'>30,000</a> 个。<sup class='tn' data-note='N1'>1</sup></span></p></div></div>
+<div class="row" data-rid="rethink-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b1-0">While Claude Code is not in our monorepo, it has a lot of pressure on it as well.</span> <span class="s" data-k="rethink-b1-1">When you're moving fast like that, it becomes increasingly hard, if not impossible, to do code review manually, line by line.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b1-0">Claude Code 本身并不在这个单仓里，但它承受的压力同样很大。</span><span class="s" data-k="rethink-b1-1">当你以这种速度往前推时，逐行人工做代码审查会变得越来越难，甚至根本做不到。</span></p></div></div>
+<div class="row" data-rid="rethink-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b2-0">Code review serves two purposes:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b2-0">代码审查有两个目的：</span></p></div></div>
+<div class="row" data-rid="rethink-b3"><div class="cell en" lang="en"><ol class='para'><li><span class="s" data-k="rethink-b3-0-0">Detect and correct bugs before they ship</span></li><li><span class="s" data-k="rethink-b3-1-0">Develop a shared understanding of the codebase</span></li></ol></div><div class="cell zh"><ol class='para'><li><span class="s" data-k="rethink-b3-0-0">在 bug 上线之前发现并纠正它</span></li><li><span class="s" data-k="rethink-b3-1-0">形成对代码库的共同理解</span></li></ol></div></div>
+<div class="row" data-rid="rethink-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b4-0">While this article focuses primarily on the first goal, we'll discuss the second goal toward the end of the post.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b4-0">本文主要谈第一个目的，第二个目的留到文末再说。</span></p></div></div>
+<div class="row" data-rid="rethink-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b5-0">We view "did someone read the code?" as an imprecise measure of "what could go wrong with this change, and what check - automated or human - is the right one to catch it?"</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b5-0">在我们看来，「有人读过这段代码吗」只是对「这个改动可能出什么问题、该由哪道检查——自动的还是人工的——来抓住它」的一个不精确的衡量标准。</span></p></div></div>
+<div class="row" data-rid="rethink-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b6-0">This question also changed the timing of code review.</span> <span class="s" data-k="rethink-b6-1">Traditionally, code review was a check performed after the fact, when the code was written, the PR was filed, and someone waited for someone else to take a look.</span> <span class="s" data-k="rethink-b6-2">Instead, we've integrated code review into the workflow.</span> <span class="s" data-k="rethink-b6-3">It's more like a spellcheck that you continuously do while writing.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b6-0">这个问题也改变了代码审查发生的时机。</span><span class="s" data-k="rethink-b6-1">传统上，代码审查是事后的一道关卡：代码写完了、PR 提交了，然后一个人等着另一个人来看。</span><span class="s" data-k="rethink-b6-2">而我们反过来，把代码审查嵌进了工作流。</span><span class="s" data-k="rethink-b6-3">它更像拼写检查——你在写的过程中就一直顺手在做。</span></p></div></div>
+<div class="row" data-rid="rethink-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="rethink-b7-0">The majority of changes have already been reviewed and corrected by Claude, at least once, before a human is asked to take a look.</span> <span class="s" data-k="rethink-b7-1">In this way, we catch most of the routine bugs and reserve human attention for more high-level considerations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="rethink-b7-0">大多数改动在被要求人工过目之前，已经至少被 Claude 审过、改过一次。</span><span class="s" data-k="rethink-b7-1">这样一来，我们就把大部分常规 bug 拦了下来，把人的注意力留给更高层面的判断。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-time">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Human time and attention</span><span class="h-zh">人的时间与注意力</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节给出全文的度量骨架：人的时间是双向成本（审查的时间 + 修 bug 的时间），所以指标要看人工批准数和等人时长，护栏是撤销率与事故率。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="time-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="time-b0-0">We want to reserve human time and attention for things only humans can handle, while making sure we have enough automation to cover the rest.</span> <span class="s" data-k="time-b0-1">Even at our current pace, there is still an incredible amount of work for humans to do, and our team is encountering new and novel challenges almost every day.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="time-b0-0">我们想把人的时间和注意力留给只有人能处理的事，同时确保其余部分有足够的自动化覆盖。</span><span class="s" data-k="time-b0-1">即便按现在的节奏，人要做的事仍然多得惊人，我们团队几乎每天都会碰到新的、没见过的问题。</span></p></div></div>
+<div class="row" data-rid="time-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="time-b1-0">For this reason, human time is a dual-sided cost.</span> <span class="s" data-k="time-b1-1">Not only do we count the time people spend doing code review, but also the time that they spend fixing bugs that are introduced by bad code.</span> <span class="s" data-k="time-b1-2">If we reduce the first without reducing the second, we're not really saving human time.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="time-b1-0">正因如此，人的时间是一笔双向成本。</span><span class="s" data-k="time-b1-1">我们要算的不只是人花在代码审查上的时间，还有人花在修复坏代码引入的 bug 上的时间。</span><span class="s" data-k="time-b1-2">如果只压低了前者、没压住后者，我们其实并没有节省人的时间。</span></p></div></div>
+<div class="row" data-rid="time-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="time-b2-0">So, our goal is that the majority of pull requests in our Claude Code repos (the CLI, the desktop and web apps, and the mobile apps) should merge with a maximum of one person in the loop (who could be the author) without an increase in reverts or <span class='term' data-term='incident'>incidents</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="time-b2-0">所以我们的目标是：Claude Code 各仓库（CLI、桌面端与 Web 应用、移动端应用）里的大多数拉取请求，在最多一个人（可以是作者本人）经手的情况下就能合并，同时撤销率和<span class='term' data-term='incident'>事故</span>率不上升。</span></p></div></div>
+<div class="row" data-rid="time-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="time-b3-0">We track our human time in terms of median human approvals per PR (along with the 95th percentile), the number of human comments, and how long a PR waits on a person.</span> <span class="s" data-k="time-b3-1">We use the revert and incident rates as a <span class='term' data-term='guardrail'>guardrail</span>: if these metrics increase, we haven't reduced human time, just relocated it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="time-b3-0">我们这样衡量人的时间：每个 PR 的人工批准数中位数（以及第 95 百分位）、人工评论数，以及一个 PR 要等人等多久。</span><span class="s" data-k="time-b3-1">我们把撤销率和事故率当作<span class='term' data-term='guardrail'>护栏</span>（guardrail）：这两项一旦上升，就说明我们并没有减少人的时间，只是把它挪了个地方。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-journey">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">What's the journey of a change?</span><span class="h-zh">一次改动要走过哪些环节？</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>从这里开始逐层拆解一次改动：验证前置 → AI 审查 → 安全审查 → 阻断式 CI → 按风险分级的人审 → 合并队列与功能开关 → 快速回滚。注意「六层」与编号到第 7 项的口径差。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="journey-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b0-0">A typical change, whether it's from an engineer's laptop or a Claude session in Slack, goes through multiple layers of review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b0-0">一次典型的改动，不管起点是工程师的笔记本，还是 Slack 里的一个 Claude 会话，都要经过多层审查。</span></p></div></div>
+<figure class="row wide fig" id="figA" data-cap="一次改动的完整旅程"><div class="fig-media"><img class="still" src="media/figA.jpg" loading="lazy" decoding="async" alt="FIG A: The life of a change"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>一次改动的完整旅程</b>　一次典型的 Claude Code 改动，从作者机器走到用户：开 PR 前先跑通验证，每个 PR 都过 CI、AI 审查与安全审查，按风险决定要不要真人批准，再进合并队列，最后靠功能开关、分阶段发布和值班盯守兜底。</p><p class="cap-en">原文图注：FIG A: The life of a change</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>四段大写标题串起全图，MERGING 那格只有 Merge queue，全图共 9 个节点。</li><li>开 PR 前只有一步：Claude 跑 tests、build、linter；另一个智能体用新上下文看 diff。</li><li>每个 PR 上依次是 Required CI、Claude code review、Security review——图上按流水线实际发生的顺序排；正文按章节编号讲，先讲 AI 审查再讲 CI，两处顺序不同不是笔误。</li><li>唯一橙色菱形是 Risk-based approval，图例写 a person decides，只这一步由人定档。</li><li>之后 Behind a flag → Gradual release，坏了就 fix forward 或回退。</li></ol><p class="takeaway">一句话：人只在橙色菱形那一步出现，其余交给自动检查与快速回退。</p></details></figcaption></figure>
+<div class="row" data-rid="journey-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b2-0">Above is the typical Claude Code change, from the author's environment to production.</span> <span class="s" data-k="journey-b2-1">Most of this process is automated, with human attention focused on the risky part.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b2-0">上图就是 Claude Code 里一次典型改动的路径：从作者的环境一直到生产环境。</span><span class="s" data-k="journey-b2-1">这个过程大部分是自动化的，人的注意力集中在有风险的那一段。</span></p></div></div>
+<div class="row" data-rid="journey-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b3-0">We have six layers of checks with a <span class='term' data-term='rollback'>rollback</span> mechanism to handle any issues that get through.<sup class='tn' data-note='N2'>2</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b3-0">我们有六层检查，外加一套<span class='term' data-term='rollback'>回滚</span>（rollback）机制，用来兜住漏过去的问题。<sup class='tn' data-note='N2'>2</sup></span></p></div></div>
+<figure class="row wide fig" id="figB" data-cap="是层层设防，不是一道闸门"><div class="fig-media"><img class="still" src="media/figB.jpg" loading="lazy" decoding="async" alt="FIG B: Layers, not one gate"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>是层层设防，不是一道闸门</b>　六层检查画成六块带孔的板子：每层都有漏洞，但漏洞位置各不相同，所以很少有改动能一路漏到底。漏下去的问题被最底下那道 fast rollback 弧线接住。副标题也点明口径：六层检查，回滚在它们之下。</p><p class="cap-en">原文图注：FIG B: Layers, not one gate</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>六块灰板，左上 problems in：橙点是问题，白椭圆是每层不同的漏点。</li><li>问题有的在 required CI 就被拦下，有的要一路漏到最底才被弧线接住。</li><li>右侧标签自上而下：verification、required CI、AI review、security review；</li><li>再往下是 human approval、merge queue + flags，最底是那道弧线 fast rollback。</li><li>副标题说 Six layers of checks，rollback 在六层之下，不是第七层。</li></ol><p class="takeaway">一句话：每层都会漏，关键不是找万无一失的闸门，而是漏了能快速接住。</p></details></figcaption></figure>
+<div class="row" data-rid="journey-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b5-0">Each layer catches some bugs while missing others.</span> <span class="s" data-k="journey-b5-1">Few bugs get through all of the layers, and if some do, we have a rollback mechanism in place.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b5-0">每一层都能抓住一些 bug，也都会漏掉另一些。</span><span class="s" data-k="journey-b5-1">很少有 bug 能穿过所有层；万一真有，我们还有一套回滚机制兜底。</span></p></div></div>
+<div class="row h3row wide" id="h-journey-b6"><h3><span class='h3-en'>1. Pre-PR verification:</span><span class='h3-zh'>1. PR 之前的验证：</span></h3></div>
+<div class="row" data-rid="journey-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b7-0">Most of our review is done before we create a PR.</span> <span class="s" data-k="journey-b7-1">We ask Claude to do something runnable, such as running tests, the build, or comparing a screenshot to the design.</span> <span class="s" data-k="journey-b7-2">Instead of saying the task is done, we ask it to show us the result.</span> <span class="s" data-k="journey-b7-3">Then, a <span class='term' data-term='subagent'>subagent</span> reviews the <span class='term' data-term='diff'>diff</span> with fresh context.</span> <span class="s" data-k="journey-b7-4">Both these strategies are part of our <a class='lnk' href='https://code.claude.com/docs/en/best-practices' target='_blank' rel='noopener' data-link='L2'>guide to best practices</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b7-0">我们的大部分审查，发生在创建 PR 之前。</span><span class="s" data-k="journey-b7-1">我们会要求 Claude 做一件能跑起来的事，比如跑测试、跑构建，或者把截图和设计稿比一比。</span><span class="s" data-k="journey-b7-2">我们不会让它说「任务完成了」，而是让它把结果拿给我们看。</span><span class="s" data-k="journey-b7-3">然后，由一个<span class='term' data-term='subagent'>子智能体</span>（subagent）在全新的上下文里审查这份<span class='term' data-term='diff'>差异</span>（diff）。</span><span class="s" data-k="journey-b7-4">这两种做法都写进了我们的<a class='lnk' href='https://code.claude.com/docs/en/best-practices' target='_blank' rel='noopener' data-link='L2'>最佳实践指南</a>。</span></p></div></div>
+<div class="row" data-rid="journey-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b8-0">Before opening a PR, many of us also run a handful of internal skills -- bug hunting, diff reduction, end-to-end validation, and checking our UI changes against our design guidelines.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b8-0">在开 PR 之前，我们当中很多人还会跑几个内部技能（skill）——找 bug、把 diff 缩小、端到端验证，以及拿 UI 改动去对照设计规范。</span></p></div></div>
+<div class="row" data-rid="journey-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b9-0">According to Boris Cherny, who created Claude Code, equipping Claude with a <a class='lnk' href='https://x.com/bcherny/status/2007179861115511237' target='_blank' rel='noopener' data-link='L3'>verification process</a> is probably the biggest key to higher quality outcomes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b9-0">据 Claude Code 的创建者 Boris Cherny 说，给 Claude 配上一套<a class='lnk' href='https://x.com/bcherny/status/2007179861115511237' target='_blank' rel='noopener' data-link='L3'>验证流程</a>，很可能是拿到更高质量结果最关键的一环。</span></p></div></div>
+<div class="row" data-rid="journey-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b10-0">He estimates that a verification process improves the quality of Claude's output by a factor of two to three.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b10-0">他估计，一套验证流程能把 Claude 产出的质量提高到原来的两到三倍。</span></p></div></div>
+<div class="row" data-rid="journey-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b11-0">The verification process for any given domain can be very different:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b11-0">不同领域的验证流程可以很不一样：</span></p></div></div>
+<div class="row" data-rid="journey-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b12-0">Sometimes it's as simple as running a bash command.</span> <span class="s" data-k="journey-b12-1">Sometimes it's running a test suite.</span> <span class="s" data-k="journey-b12-2">Sometimes it's testing the app in a browser or phone simulator.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b12-0">有时简单到跑一条 bash 命令。</span><span class="s" data-k="journey-b12-1">有时是跑一整套测试。</span><span class="s" data-k="journey-b12-2">有时是在浏览器或手机模拟器里把应用跑起来试。</span></p></div></div>
+<div class="row" data-rid="journey-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="journey-b13-0">If the automated reviewer is consistently flagging the same issue, we fix it at the source -- via the skill itself, a <span class='term' data-term='lint'>lint</span> rule, or updating documentation files like:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="journey-b13-0">如果自动审查器反复报同一个问题，我们就从源头修——改那个技能本身、加一条 lint 规则，或者更新这类文档文件：</span></p></div></div>
+<div class="row" data-rid="journey-b14"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="journey-b14-0-0">CLAUDE.md -- The project description file that you can use to give Claude context about the project (technology stack, conventions, goals, non-goals).</span> <span class="s" data-k="journey-b14-0-1">Claude Code pulls this file in for every single review, so we keep it brief for large codebases and reference the rest of the documentation here.</span> <span class="s" data-k="journey-b14-0-2">When code breaks a convention in this file, or an update makes something in it out of date, the reviewer flags it.</span></li><li><span class="s" data-k="journey-b14-1-0">REVIEW.md -- The file where <span class='term' data-term='codeowner'>code owners</span> tell the reviewer what matters in their part of the code.</span> <span class="s" data-k="journey-b14-1-1">We separately verify whether the reviewer is actually following these guidelines.</span> <span class="s" data-k="journey-b14-1-2">Good ones are brief and focus on:</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="journey-b14-0-0">CLAUDE.md——项目描述文件。你可以用它给 Claude 交代项目背景（技术栈、约定、目标、非目标）。</span><span class="s" data-k="journey-b14-0-1">Claude Code 每一次审查都会把这份文件读进来，所以在大型代码库里我们把它写得简短，其余内容在这里用链接指到别的文档。</span><span class="s" data-k="journey-b14-0-2">当代码违反了这个文件里的约定，或者某次更新让它过时了，审查器就会把它标出来。</span></li><li><span class="s" data-k="journey-b14-1-0">REVIEW.md——<span class='term' data-term='codeowner'>代码所有者</span>告诉审查器「我这个部分什么最重要」的那份文件。</span><span class="s" data-k="journey-b14-1-1">我们会另外验证：审查器是否真的在遵守这些指引。</span><span class="s" data-k="journey-b14-1-2">好的 REVIEW.md 都很短，聚焦在：</span></li></ul></div></div>
+<div class="row nested" data-rid="journey-b15"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="journey-b15-0-0">Defining project failure (the docs should not lie; the config should not misroute)</span></li><li><span class="s" data-k="journey-b15-1-0">Limiting <span class='term' data-term='nit'>nitpicking</span></span></li><li><span class="s" data-k="journey-b15-2-0">Defining ignored paths</span></li><li><span class="s" data-k="journey-b15-3-0">Requiring file + line reference, not guessing filenames</span></li><li><span class="s" data-k="journey-b15-4-0">Requiring top-level summary including count and clear statement of "no issues"</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="journey-b15-0-0">界定什么算项目失败（文档不能撒谎，配置不能把请求导错地方）</span></li><li><span class="s" data-k="journey-b15-1-0">限制吹毛求疵</span></li><li><span class="s" data-k="journey-b15-2-0">界定哪些路径忽略不看</span></li><li><span class="s" data-k="journey-b15-3-0">要求给出文件 + 行号，不能靠猜文件名</span></li><li><span class="s" data-k="journey-b15-4-0">要求给出顶层总结，包含问题数量，并明确写出「没有问题」</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-layers2">
+<div class="gist"><span class="gist-label">导读</span><p>接着讲第 2–4 层：AI 审查的发现怎么被多个智能体投票过滤、安全审查如何硬阻断合并、以及「标准检查」里到底包含什么。</p></div>
+<div class="reader-body">
+<div class="row h3row wide" id="h-layers2-b0"><h3><span class='h3-en'>2. AI review on every pull request</span><span class='h3-zh'>2. 每个拉取请求上的 AI 审查</span></h3></div>
+<div class="row" data-rid="layers2-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b1-0">Every PR receives a Claude review before a human review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b1-0">每个 PR 在人工审查之前，都会先收到一次 Claude 的审查。</span></p></div></div>
+<div class="row" data-rid="layers2-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b2-0">The diff is analyzed against the entire codebase and the intent of the PR as stated by the PR author.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b2-0">它会拿这份 diff 去对照整个代码库，以及 PR 作者写明的意图。</span></p></div></div>
+<div class="row" data-rid="layers2-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b3-0">It checks that:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b3-0">它检查的是：</span></p></div></div>
+<div class="row nested" data-rid="layers2-b4"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="layers2-b4-0-0">the change actually addresses the issue</span></li><li><span class="s" data-k="layers2-b4-1-0">the change fits into the larger system</span></li><li><span class="s" data-k="layers2-b4-2-0">the change does not break other parts of the codebase</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="layers2-b4-0-0">这个改动是否真的解决了那个问题</span></li><li><span class="s" data-k="layers2-b4-1-0">这个改动是否嵌得进更大的系统</span></li><li><span class="s" data-k="layers2-b4-2-0">这个改动是否会弄坏代码库的其它部分</span></li></ul></div></div>
+<div class="row" data-rid="layers2-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b5-0">When reviewing a bug fix, the bot tries to find the root cause.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b5-0">审查 bug 修复时，机器人会试着找根因。</span></p></div></div>
+<div class="row" data-rid="layers2-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b6-0">Our public product, <a class='lnk' href='https://code.claude.com/docs/en/code-review' target='_blank' rel='noopener' data-link='L4'>Code Review for Claude Code</a>, is now available to all Team and Enterprise customers.</span> <span class="s" data-k="layers2-b6-1">There is a lighter version for local use as well -- /code-review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b6-0">我们的公开产品 <a class='lnk' href='https://code.claude.com/docs/en/code-review' target='_blank' rel='noopener' data-link='L4'>Code Review for Claude Code</a> 现在面向所有 Team 与 Enterprise 客户开放。</span><span class="s" data-k="layers2-b6-1">也有更轻量的版本可以本地用——/code-review。</span></p></div></div>
+<div class="row" data-rid="layers2-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b7-0">Since we released the research preview, the share of our internal PRs getting substantive review comments has gone from 16% to 54%.</span> <span class="s" data-k="layers2-b7-1">Code Review detects issues on the majority of PRs with more than 1,000 lines and returns clean results on most smaller PRs.</span> <span class="s" data-k="layers2-b7-2">Repos can be configured by admins to use Quick, Standard, or Deep modes.</span> <span class="s" data-k="layers2-b7-3">Deep is useful in cases where the cost of missing a single bug is higher than the time spent reviewing code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b7-0">自从研究预览版发布以来，我们内部 PR 拿到实质性审查意见的比例从 16% 升到了 54%。</span><span class="s" data-k="layers2-b7-1">对于超过 1,000 行的 PR，Code Review 能在大多数情况下发现问题；对更小的 PR，它多数时候给出的是干净结论。</span><span class="s" data-k="layers2-b7-2">仓库管理员可以配置使用 Quick、Standard 或 Deep 模式。</span><span class="s" data-k="layers2-b7-3">在「漏掉一个 bug 的代价高于多花时间审代码」的场合，Deep 模式很有用。</span></p></div></div>
+<div class="row" data-rid="layers2-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b8-0">Findings are vetted by multiple other agents before human review:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b8-0">在人看之前，这些发现会先经过多个其它智能体筛一遍：</span></p></div></div>
+<div class="row" data-rid="layers2-b9"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="layers2-b9-0-0">Multiple agents run in parallel to hunt for bugs</span></li><li><span class="s" data-k="layers2-b9-1-0">A separate vote decides if a finding is valid or a <span class='term' data-term='falsepositive'>false positive</span>, only confirming the findings that have enough votes</span></li><li><span class="s" data-k="layers2-b9-2-0">Findings that are only style/diagnostics/cleanup related are filtered out (we A/B tested these filters on our own PRs before rolling them out)</span></li><li><span class="s" data-k="layers2-b9-3-0">The remaining findings are presented as inline comments, ordered by severity level and marked as:</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="layers2-b9-0-0">多个智能体并行寻找 bug</span></li><li><span class="s" data-k="layers2-b9-1-0">另有一次独立投票，判断一条发现是真问题还是<span class='term' data-term='falsepositive'>误报</span>（false positive），只有票数够的发现才会被确认</span></li><li><span class="s" data-k="layers2-b9-2-0">只涉及风格/诊断/清理的发现会被过滤掉（这些过滤器我们在自己的 PR 上做过 A/B 测试，然后才推出去）</span></li><li><span class="s" data-k="layers2-b9-3-0">剩下的发现以行内评论的形式给出，按严重程度排序，并标记为：</span></li></ul></div></div>
+<div class="row nested" data-rid="layers2-b10"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="layers2-b10-0-0">Important</span></li><li><span class="s" data-k="layers2-b10-1-0">Nit</span></li><li><span class="s" data-k="layers2-b10-2-0">Pre-existing (so we don't unfairly penalize the author for bugs that were not introduced by the PR)</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="layers2-b10-0-0">Important（重要）</span></li><li><span class="s" data-k="layers2-b10-1-0">Nit（小意见）</span></li><li><span class="s" data-k="layers2-b10-2-0">Pre-existing（先前就存在——这样不会因为不是这个 PR 引入的 bug 而冤枉作者）</span></li></ul></div></div>
+<div class="row" data-rid="layers2-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b11-0">All findings must be addressed -- fixed or the thread is resolved with a reason.</span> <span class="s" data-k="layers2-b11-1">In many cases, an agent will fix the problem overnight so the author returns to a PR that's already been through another review pass.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b11-0">所有发现都必须被处理——要么修掉，要么在评论串里给出理由后关闭。</span><span class="s" data-k="layers2-b11-1">很多时候，智能体会在夜里把问题修掉，作者第二天回来，看到的是一个已经过了另一轮审查的 PR。</span></p></div></div>
+<div class="row h3row wide" id="h-layers2-b12"><h3><span class='h3-en'>3. Security review that can block</span><span class='h3-zh'>3. 能阻断合并的安全审查</span></h3></div>
+<div class="row" data-rid="layers2-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b13-0">We also run an automated security review.</span> <span class="s" data-k="layers2-b13-1">No PR can be merged while there is still an open finding (either from the code review or the security review).</span> <span class="s" data-k="layers2-b13-2">The author can either fix the issue or close the thread with a short reason (how we deal with a false positive).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b13-0">我们还会跑一次自动化的安全审查。</span><span class="s" data-k="layers2-b13-1">只要还有未关闭的发现（无论是来自代码审查还是安全审查），PR 就不能合并。</span><span class="s" data-k="layers2-b13-2">作者可以自己修掉问题，也可以给一个简短理由把评论串关掉（我们就是这样处理误报的）。</span></p></div></div>
+<div class="row" data-rid="layers2-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b14-0">A finding will be auto-closed if a subsequent commit addresses the problem.</span> <span class="s" data-k="layers2-b14-1">You can set up the same thing with the open-source security review GitHub Action, or the /security-review command.</span> <span class="s" data-k="layers2-b14-2"><span class='typo' data-typo='2'>See automated security reviews in Claude Code</span> for a guide on how to set this up.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b14-0">如果后续某次提交解决了问题，这条发现会被自动关闭。</span><span class="s" data-k="layers2-b14-1">你可以用开源的安全审查 GitHub Action，或者 /security-review 命令，搭出同样的效果。</span><span class="s" data-k="layers2-b14-2">具体怎么配，见 Claude Code 里的「自动化安全审查」指南。</span></p></div></div>
+<div class="row h3row wide" id="h-layers2-b15"><h3><span class='h3-en'>4. Automated checks that block</span><span class='h3-zh'>4. 会阻断合并的自动检查</span></h3></div>
+<div class="row" data-rid="layers2-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers2-b16-0">Standard checks: lint, type checks, tests on all platforms, build. (We wrote about how we scaled <span class='term' data-term='ci'>CI</span> <span class='typo' data-typo='1'>here</span>.) A typical CLI PR can have dozens of checks run before anyone looks at it.</span> <span class="s" data-k="layers2-b16-1">The PR template has questions about how the change was tested and how to revert it.</span> <span class="s" data-k="layers2-b16-2">Claude can answer those for you, but the author is responsible for reviewing them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers2-b16-0">标准检查：lint、类型检查、全平台测试、构建。（我们此前写过自己是怎么把 CI 扩起来的。）一个典型的 CLI PR，在人看之前就可能跑过几十项检查。</span><span class="s" data-k="layers2-b16-1">PR 模板里有几个问题：这个改动是怎么测的，出了问题怎么撤销。</span><span class="s" data-k="layers2-b16-2">Claude 可以替你回答这些问题，但复核这些答案的责任在作者。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-layers3">
+<div class="gist"><span class="gist-label">导读</span><p>第 5–7 项讲人的位置、合并的机制和最后一道防线：风险档位决定几个人批、批准只绑那一次提交、合并队列与功能开关怎么用，末端是回滚。</p></div>
+<div class="reader-body">
+<div class="row h3row wide" id="h-layers3-b0"><h3><span class='h3-en'>5. Human approval, scaled by risk</span><span class='h3-zh'>5. 按风险分级的批准</span></h3></div>
+<div class="row" data-rid="layers3-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b1-0">Some changes are more risky than others (e.g. a docs fix vs. an auto-updater change), so they require different levels of review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b1-0">有些改动比另一些更有风险（比如改文档 vs. 改自动更新器），所以需要的审查程度也不同。</span></p></div></div>
+<figure class="row wide fig" id="figC" data-cap="按风险档位决定几个人批"><div class="fig-media"><img class="still" src="media/figC.jpg" loading="lazy" decoding="async" alt="FIG C"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>按风险档位决定几个人批</b>　原文这张图只有代号 FIG C，没有标题也没有图注。内容是三行表格 RISK / EXAMPLES / HUMAN APPROVALS：改动分 Low、Medium、High 三档，对应 0、1、2 个真人批准。</p><p class="cap-en">原文图注：FIG C</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>表头三列 RISK / EXAMPLES / HUMAN APPROVALS：风险档、典型例子、要几个真人批准。</li><li>Low 的例子是 Docs、copy、internal-only features 和藏在开关后的增量改动。</li><li>Low 要 0 人：自动审查与安全检查都 green 之后才能合。</li><li>Medium 含 caching、auto-updater、system prompts，要 One person 批。</li><li>High 是最危险代码加一小撮总要两人批的路径，批准数 Two people。</li></ol><p class="takeaway">一句话：低风险可以零人批、高风险要两人，批准数由档位算，不由头衔算。</p></details></figcaption></figure>
+<div class="row" data-rid="layers3-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b3-0">The <span class='term' data-term='tier'>tier</span> is determined by the change, not the author.</span> <span class="s" data-k="layers3-b3-1">A <span class='term' data-term='classifier'>classifier</span> determines the risk level based on the change.</span> <span class="s" data-k="layers3-b3-2">Another classifier determines if a particular change actually requires another approval, even if the tier does not say it does.</span> <span class="s" data-k="layers3-b3-3">Some paths always require another approval -- anything marked as sensitive by owners, and any CI workflow file.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b3-0"><span class='term' data-term='tier'>风险档位</span>（tier）由改动本身决定，不由作者决定。</span><span class="s" data-k="layers3-b3-1">一个<span class='term' data-term='classifier'>分类器</span>根据改动内容判定风险等级。</span><span class="s" data-k="layers3-b3-2">还有另一个分类器判断：某次改动是否实际需要再一个人批准，即使档位上说不需要。</span><span class="s" data-k="layers3-b3-3">有些路径永远需要再一个人批准——所有被所有者标记为敏感的路径，以及任何 CI 工作流文件。</span></p></div></div>
+<div class="row" data-rid="layers3-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b4-0">Only authors on the repo's <span class='term' data-term='trusted'>trusted list</span> receive relaxed review requirements, and that's generally the team that owns the repo.</span> <span class="s" data-k="layers3-b4-1">All others require a second person to approve.</span> <span class="s" data-k="layers3-b4-2">Agent approvals don't count as human approvals.</span> <span class="s" data-k="layers3-b4-3">Automated review can clear a low-risk change, but it can't stand in for a human when one is required.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b4-0">只有仓库<span class='term' data-term='trusted'>信任名单</span>（trusted list）上的作者才能享受放宽的审查要求，这个名单基本上就是拥有这个仓库的团队。</span><span class="s" data-k="layers3-b4-1">其它所有人都需要第二个人来批准。</span><span class="s" data-k="layers3-b4-2">智能体的批准不算人工批准。</span><span class="s" data-k="layers3-b4-3">自动审查可以为一个低风险改动放行，但需要人来批的时候，它顶替不了人。</span></p></div></div>
+<div class="row" data-rid="layers3-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b5-0">The author of the change is responsible for it, so if an agent authors a PR the operator of the agent is always counted as one of the required reviewers.<sup class='tn' data-note='N3'>3</sup></span> <span class="s" data-k="layers3-b5-1">A PR approval is only good for one commit.</span> <span class="s" data-k="layers3-b5-2">If a new commit lands that can't be trusted (e.g. an agent pushed something, or someone resolved a merge by hand), the PR must be reapproved.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b5-0">改动的作者对它负责，所以如果 PR 是智能体写的，智能体的操作者始终算作必需的审查人之一。<sup class='tn' data-note='N3'>3</sup></span><span class="s" data-k="layers3-b5-1">一次 PR 批准只对一次提交有效。</span><span class="s" data-k="layers3-b5-2">如果之后落进来一个不可信的提交（比如智能体推了东西上来，或者有人手工解决了一次合并），这个 PR 就必须重新批准。</span></p></div></div>
+<div class="row h3row wide" id="h-layers3-b6"><h3><span class='h3-en'>6. Merge queue, feature flags and staged rollouts</span><span class='h3-zh'>6. 合并队列、功能开关与分阶段发布</span></h3></div>
+<div class="row" data-rid="layers3-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b7-0">The <span class='term' data-term='mergequeue'>merge queue</span> ensures that all the checks run on main with the change applied.</span> <span class="s" data-k="layers3-b7-1">This prevents merging two successful PRs into a broken main.</span> <span class="s" data-k="layers3-b7-2">Typically, new features are <span class='term' data-term='rollout'>rolled out</span> behind a <span class='term' data-term='featureflag'>feature flag</span>, with Anthropic employees getting access first.</span> <span class="s" data-k="layers3-b7-3">Because we use the product extensively, we often notice regressions before our users do.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b7-0"><span class='term' data-term='mergequeue'>合并队列</span>（merge queue）保证所有检查都在「把这次改动应用上去的」最新 main 上重跑一遍。</span><span class="s" data-k="layers3-b7-1">这样就避免了「两个各自都通过的 PR 合到一起，却把 main 弄坏」的情况。</span><span class="s" data-k="layers3-b7-2">通常，新功能会挂在一个<span class='term' data-term='featureflag'>功能开关</span>（feature flag）后面<span class='term' data-term='rollout'>分阶段发布</span>，Anthropic 员工先拿到访问权限。</span><span class="s" data-k="layers3-b7-3">因为我们在大量使用自己的产品，所以常常在用户之前就发现回归问题。</span></p></div></div>
+<div class="row" data-rid="layers3-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b8-0">When we roll out publicly, changes go to the latest channel first, and the stable channel trails behind.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b8-0">对外发布时，改动先进 latest 通道，stable 通道跟在后面。</span></p></div></div>
+<div class="row h3row wide" id="h-layers3-b9"><h3><span class='h3-en'>7. Fast feedback and rollback</span><span class='h3-zh'>7. 快速反馈与回滚</span></h3></div>
+<div class="row" data-rid="layers3-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b10-0">Some bad merges will inevitably make it through.</span> <span class="s" data-k="layers3-b10-1">This is our last line of defense, focused on identifying these as quickly as possible.</span> <span class="s" data-k="layers3-b10-2">Changes behind feature flags can be disabled without deploying.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b10-0">有些坏合并终究会漏过去。</span><span class="s" data-k="layers3-b10-1">这是我们的最后一道防线，重点是尽快把它们识别出来。</span><span class="s" data-k="layers3-b10-2">挂在功能开关后面的改动，不用部署就能关掉。</span></p></div></div>
+<div class="row" data-rid="layers3-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b11-0">Claude Code runs a weekly <span class='term' data-term='oncall'>on-call</span> rotation and any incident reviews involve looking back to see what layer should have caught the problem.</span> <span class="s" data-k="layers3-b11-1">It's still up to the author and on-call to notice bad merges, in addition to monitoring the revert and incident dashboards.</span> <span class="s" data-k="layers3-b11-2">We don't yet have circuit breaker mechanisms that adjust approval requirements based on these, but it's something we're looking into as we're making progress toward less human intervention in merging.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b11-0">Claude Code 有每周轮换的 on-call <span class='term' data-term='oncall'>值班</span>，任何事故复盘都会往回看：本该是哪一层抓住这个问题。</span><span class="s" data-k="layers3-b11-1">除了盯着撤销与事故看板之外，发现坏合并仍然要靠作者和值班的人。</span><span class="s" data-k="layers3-b11-2">我们还没有那种「据此调整批准要求」的熔断机制，但随着我们朝着「合并需要的人工介入更少」推进，这件事我们正在研究。</span></p></div></div>
+<div class="row" data-rid="layers3-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layers3-b12-0">One team member noted that slowing down and reducing output can actually improve accuracy, but that's mostly because the amount of work being done decreases overall.</span> <span class="s" data-k="layers3-b12-1">Our priority is really on improving our ability to identify and correct issues quickly.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layers3-b12-0">有位团队成员指出，放慢速度、减少产出其实能提高准确率，但这主要是因为单位时间里做的工作总量变少了。</span><span class="s" data-k="layers3-b12-1">我们的优先级，确实是把「快速发现问题并修正」的能力提高。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-reviewer">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">How we make the reviewer better</span><span class="h-zh">我们怎样把审查者越调越好</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节讲方法论：用事故做评测集、用人的反应衡量噪音、用轮次上限和「只看新增 diff」让审查收敛——那组从 2.08 降到 1.32 的数字就出自这里。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="reviewer-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b0-0">Our code review process is an ongoing cycle of improvement:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b0-0">我们的代码审查流程，是一个持续改进的循环：</span></p></div></div>
+<div class="row" data-rid="reviewer-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b1-0">We use incidents as an <span class='term' data-term='eval'>evaluation</span> metric.</span> <span class="s" data-k="reviewer-b1-1">The team collected incident-causing PRs, their fix-forwards and reverts, and had the engineers who understand the codebase verify the location and correctness of each bug.</span> <span class="s" data-k="reviewer-b1-2">The review system is evaluated daily against this collection.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b1-0">我们把事故当成一项<span class='term' data-term='eval'>评测</span>指标。</span><span class="s" data-k="reviewer-b1-1">团队收集了那些引发事故的 PR、它们后续的修复（fix-forward）与撤销，并请真正懂这块代码库的工程师逐条确认每个 bug 的位置和判断是否正确。</span><span class="s" data-k="reviewer-b1-2">审查系统每天都会拿这个集合跑一遍评分。</span></p></div></div>
+<figure class="row wide fig" id="figD" data-cap="用事故做评测题库"><div class="fig-media"><img class="still" src="media/figD.jpg" loading="lazy" decoding="async" alt="FIG D: Our incidents are the eval"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>用事故做评测题库</b>　图分上下两条链：上面把每次事故或撤销变成专家核对过的用例、收进题库；下面改动审查系统后每天拿整个题库重跑，分数涨了就留下、不涨就丢掉，再进入下一次改动，闭合成一个循环。</p><p class="cap-en">原文图注：FIG D: Our incidents are the eval</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>Incident or revert → Expert-checked case → Added to the set。</li><li>小字说前者是 a change that broke something，每条事故加一个用例。</li><li>下半：Change the reviewer → Daily eval run，逐条用例打分。</li><li>Daily eval run 是橙点，后面 Score went up? 决定 keep it / drop it。</li><li>底部箭头 next change 回到起点；Added to the set 有条线汇进 Daily eval run。</li></ol><p class="takeaway">一句话：每次事故都变成一道考题，改一次审查系统就重考一次，让分数说话。</p></details></figcaption></figure>
+<div class="row" data-rid="reviewer-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b3-0">Every incident adds to the collection and every change to the review system is evaluated against the entire collection.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b3-0">每出一次事故，就往集合里加一条；审查系统的每一次改动，都要拿整个集合来评测。</span></p></div></div>
+<div class="row" data-rid="reviewer-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b4-0">To measure noise, we observe how humans react to the review comments.</span> <span class="s" data-k="reviewer-b4-1">It's easy to improve our bug-finding rate if we're okay with reporting lots of non-bugs, so this needs to be regulated.</span> <span class="s" data-k="reviewer-b4-2">We categorize each review comment into how the person on the PR handled it: fixed the issue, rejected it, clarified it as intentional, or decided it didn't matter.</span> <span class="s" data-k="reviewer-b4-3">Additionally, we run the review system on PRs we know to be clean and observe how often the system reports something that would have resulted in a harmful change.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b4-0">为了衡量噪音，我们观察人对审查评论的反应。</span><span class="s" data-k="reviewer-b4-1">如果我们不在乎多报一堆不是 bug 的东西，把「能找出多少真 bug」这个数字做上去是很容易的——所以这一点必须被约束。</span><span class="s" data-k="reviewer-b4-2">我们把每条审查评论按「PR 上的人怎么处理它」分类：修掉了、驳回了、说明这是有意为之、还是判定它不重要。</span><span class="s" data-k="reviewer-b4-3">另外，我们还会拿已知是干净的 PR 去跑审查系统，看它多频繁地报出一条问题——而照着那条去改，反而会把代码改坏。</span></p></div></div>
+<div class="row" data-rid="reviewer-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b5-0">Our stated priorities are first, detecting real bugs, and second, reducing the number of review cycles.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b5-0">我们公开声明的优先级是：第一，发现真 bug；第二，减少审查轮次。</span></p></div></div>
+<div class="row" data-rid="reviewer-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b6-0">It's more costly for an author to have to deal with a review comment when they're an agent.</span> <span class="s" data-k="reviewer-b6-1">It only takes a second for a human to dismiss a nit, but when an agent has to address it, this results in another commit, and another cycle of review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b6-0">当作者是智能体时，处理一条审查评论的代价更高。</span><span class="s" data-k="reviewer-b6-1">人打发一条小意见（nit）只要一秒钟，但轮到智能体去处理，就会多出一次提交，进而多一轮审查。</span></p></div></div>
+<div class="row" data-rid="reviewer-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b7-0">The review process must converge.</span> <span class="s" data-k="reviewer-b7-1">It's possible for an agent author and an agent reviewer to cycle forever.</span> <span class="s" data-k="reviewer-b7-2">We observed one PR in our CLI project cycle more than fifty times overnight, due to the back-and-forth between the agent author and the agent reviewer.</span> <span class="s" data-k="reviewer-b7-3">This cycle was stopped manually, but it could have gone on indefinitely.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b7-0">审查过程必须收敛。</span><span class="s" data-k="reviewer-b7-1">智能体作者和智能体审查者是可以无限循环下去的。</span><span class="s" data-k="reviewer-b7-2">我们在 CLI 项目里见过一个 PR，因为智能体作者和智能体审查者来回拉扯，一夜之间循环了五十多次。</span><span class="s" data-k="reviewer-b7-3">这个循环是被人工叫停的，但它本来可以一直转下去。</span></p></div></div>
+<div class="row" data-rid="reviewer-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b8-0">When we ran git blame on what the review system kept flagging, ~59% of it was code that had been there since its first pass.<sup class='tn' data-note='N4'>4</sup></span> <span class="s" data-k="reviewer-b8-1">Essentially, the review system was rarely finding new bugs, but finding a few more old ones on each cycle.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b8-0">我们对审查系统反复指出的内容跑了 git blame，发现其中约 59% 是第一次审查时就已经存在的老代码。<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="reviewer-b8-1">也就是说，审查系统很少在发现新 bug，每一轮只是多找出几个老问题。</span></p></div></div>
+<div class="row" data-rid="reviewer-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b9-0">We made this worse because we had gotten into the habit of running several review cycles by default, because each cycle can find a different bug.</span> <span class="s" data-k="reviewer-b9-1">While it can be useful to iterate through several review cycles for a high-risk change, it's not needed for every PR.</span> <span class="s" data-k="reviewer-b9-2">Our team started tracking the number of cycles-to-pass in addition to recall, and updated re-review to:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b9-0">我们还把这件事弄得更糟了——因为已经养成了默认跑好几轮审查的习惯，理由是每一轮都可能发现不同的 bug。</span><span class="s" data-k="reviewer-b9-1">对高风险改动，多迭代几轮可能有用，但每个 PR 都这么做没有必要。</span><span class="s" data-k="reviewer-b9-2">团队开始在召回率之外，也跟踪「通过所需的轮次数」，并把重新审查改成：</span></p></div></div>
+<div class="row" data-rid="reviewer-b10"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="reviewer-b10-0-0">Limit the number of cycles.</span> <span class="s" data-k="reviewer-b10-0-1">The review system asks the author to re-evaluate the approach after three cycles.</span></li><li><span class="s" data-k="reviewer-b10-1-0">Limit re-review to just diff after the initial cycles.</span></li><li><span class="s" data-k="reviewer-b10-2-0">Specify the class of bugs, so the author can correct all of them, not just one line.</span></li><li><span class="s" data-k="reviewer-b10-3-0">Avoid re-reporting issues already observed.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="reviewer-b10-0-0">限制轮次上限。</span><span class="s" data-k="reviewer-b10-0-1">三轮之后，审查系统会要求作者重新评估方案本身。</span></li><li><span class="s" data-k="reviewer-b10-1-0">初始几轮之后，重新审查只看这次新增的 diff。</span></li><li><span class="s" data-k="reviewer-b10-2-0">指定 bug 的类别，好让作者一次把这一类全改掉，而不是只改某一行。</span></li><li><span class="s" data-k="reviewer-b10-3-0">已经指出过的问题不要重复上报。</span></li></ul></div></div>
+<div class="row" data-rid="reviewer-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b11-0">The review agents are also run on the current codebase overnight, helping us identify historical bugs before they propagate.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b11-0">审查智能体也会在夜间对当前代码库跑一遍，帮我们在老 bug 扩散之前把它们找出来。</span></p></div></div>
+<figure class="row wide fig" id="figE" data-cap="会收敛的审查"><div class="fig-media"><img class="still" src="media/figE.jpg" loading="lazy" decoding="async" alt="FIG E: Review that converges"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>会收敛的审查</b>　三组横条比较收敛改造前后的内部拉取请求：一轮就过从 65% 升到 78%，要五轮以上从 8.9% 降到 1.5%，平均轮数从 2.08 降到 1.32；灰条 before，橙条 after。</p><p class="cap-en">原文图注：FIG E: Review that converges</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>灰条是 before、橙条是 after the convergence work；数字直接标在条尾，图上没有坐标轴。</li><li>Pass after one review and fix round：65% → 78%，一轮就过的比例明显变高。</li><li>Need five or more rounds：8.9% → 1.5%，长尾被压到原来的六分之一左右。</li><li>Mean reviews to pass：2.08 → 1.32，平均要审的次数也降下来了。</li><li>副标题限定口径是 Internal pull requests，不是全部 PR，读数字时别扩大范围。</li></ol><p class="takeaway">一句话：收敛的目标不是审得更狠，而是让审查更快停下来。</p></details></figcaption></figure>
+<div class="row" data-rid="reviewer-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="reviewer-b13-0">Reduction in the average number of review rounds per internal pull request after Convergence.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="reviewer-b13-0">收敛之后，内部拉取请求平均审查轮次的下降情况。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-humans">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Humans in the loop</span><span class="h-zh">留在环里的人</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>自动化再强，也有五件事得由人做：要不要做、危险代码、架构、验证证据、承担责任。作者逐条给了理由。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="humans-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="humans-b0-0">Having a senior engineer stop working to review a common error is an expensive process compared to automating that process.</span> <span class="s" data-k="humans-b0-1">Human reviewers are still essential for some tasks:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="humans-b0-0">让一位资深工程师停下手里的活去看一个常见错误，相比把这件事自动化，代价很高。</span><span class="s" data-k="humans-b0-1">但对有些任务，人审仍然不可替代：</span></p></div></div>
+<div class="row" data-rid="humans-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="humans-b1-0-0">Should we even build this?</span> <span class="s" data-k="humans-b1-0-1">Deciding whether or not to build something, setting the vision, taste, and goals for the product.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="humans-b1-0-0">这东西到底该不该做？</span><span class="s" data-k="humans-b1-0-1">决定要不要做某个东西、为产品定方向、定品味、定目标。</span></li></ul></div></div>
+<div class="row nested" data-rid="humans-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="humans-b2-0-0">One team that claims they have solved the bottleneck of code review still performs human review for changes from outside the team to ensure that it is the right thing to build.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="humans-b2-0-0">有一个团队声称自己已经解决了代码审查的瓶颈，但对来自团队外部的改动仍然保留人审，以确保要建的是对的东西。</span></li></ul></div></div>
+<div class="row" data-rid="humans-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="humans-b3-0-0">Auditing dangerous code (billing, auto-updater, CI workflows).</span></li><li><span class="s" data-k="humans-b3-1-0">Architecture review, because those choices set the conventions others follow.</span></li><li><span class="s" data-k="humans-b3-2-0">Verifying proofs (test output, commands run, screenshots, reviewer comments).</span> <span class="s" data-k="humans-b3-2-1">If you can't describe what the checks would miss, don't ask for a 👍, you need a real review!</span></li><li><span class="s" data-k="humans-b3-3-0">Taking responsibility.</span> <span class="s" data-k="humans-b3-3-1">A person answers for every change that ships, whoever typed it.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="humans-b3-0-0">审计危险代码（计费、自动更新器、CI 工作流）。</span></li><li><span class="s" data-k="humans-b3-1-0">架构审查，因为这些选择会成为别人遵循的约定。</span></li><li><span class="s" data-k="humans-b3-2-0">验证证据（测试输出、跑过的命令、截图、审查者评论）。</span><span class="s" data-k="humans-b3-2-1">如果你说不清这些检查会漏掉什么，就别只求一个 👍，你需要一次真正的审查！</span></li><li><span class="s" data-k="humans-b3-3-0">承担责任。</span><span class="s" data-k="humans-b3-3-1">每一个上线的改动都由一个人负责，不管是谁敲的代码。</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-context">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Team context</span><span class="h-zh">团队语境：机器读了，人怎么学代码</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>大部分人不再逐行读 diff 之后，「靠读 diff 学代码」这条路就断了。他们的替代方案是：让 Claude 就你要改的那一小块写一份讲解。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="context-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b0-0">Code review has always served the dual purpose of communicating codebase changes.</span> <span class="s" data-k="context-b0-1">Reading the diff of a colleague's change is how people usually understand what has changed, and how the codebase works.</span> <span class="s" data-k="context-b0-2">If the bulk of the reading is done by machines, what becomes the way to learn the codebase?</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b0-0">代码审查一直还承担着另一个作用：让代码库的改动被传达出去。</span><span class="s" data-k="context-b0-1">读同事这次改动的 diff，是人们平常理解「改了什么」「代码库怎么运转」的方式。</span><span class="s" data-k="context-b0-2">如果大部分阅读都交给机器做了，那学习代码库的途径变成了什么？</span></p></div></div>
+<div class="row" data-rid="context-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b1-0">We don't have any formal mechanism for this.</span> <span class="s" data-k="context-b1-1">No member of the team has a full mental model of Claude Code in their head, nor do we think anyone needs to.</span> <span class="s" data-k="context-b1-2">Rather, when anyone wants to learn about a piece of the codebase, they ask Claude to generate an explainer about that exact slice.</span> <span class="s" data-k="context-b1-3">It only takes a few minutes and the explainer is always up to date.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b1-0">对此我们没有任何正式机制。</span><span class="s" data-k="context-b1-1">团队里没有人脑子里装着 Claude Code 的完整心智模型，我们也不认为有谁需要这样。</span><span class="s" data-k="context-b1-2">而是说，谁想了解代码库的某一块，就让 Claude 就着那一小块生成一份讲解（explainer）。</span><span class="s" data-k="context-b1-3">只需要几分钟，而且讲解总是与当前代码同步。</span></p></div></div>
+<figure class="row wide fig" id="figF" data-cap="机器读代码，人怎么学代码"><div class="fig-media"><img class="still" src="media/figF.jpg" loading="lazy" decoding="async" alt="FIG F: If machines do most of the reading, how does anyone learn the code?"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>机器读代码，人怎么学代码</b>　当大部分阅读由机器完成，团队改用「就这一块去问 Claude」来学习：点选代码库里的一个小切片，让它几分钟内写出一份贴合当下代码的讲解；有人更进一步，让它做个小工具把这块可视化出来。图底对比了两种学法的价值。</p><p class="cap-en">原文图注：FIG F: If machines do most of the reading, how does anyone learn the code?</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>The codebase 一片方格，只有 2×2 四块橙色点亮，标注 managed settings。</li><li>中间：Ask Claude about exactly that slice，例子问 managed settings。</li><li>右上 Claude writes an explainer：几分钟产出，反映当下的代码。</li><li>虚线标 SOME GO A STEP FURTHER：Claude builds a small artifact。</li><li>读琐碎 diff teaches you almost nothing，模块讲解 teaches you a lot。</li></ol><p class="takeaway">一句话：学代码的入口从读别人的 diff，换成让 Claude 讲你要改的那一块。</p></details></figcaption></figure>
+<div class="row" data-rid="context-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b3-0">For some of us, we go the extra step and have Claude generate a mini artifact that visualizes this area and teaches it in our preferred style.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b3-0">我们当中有些人还会多走一步，让 Claude 生成一个小 artifact（可交互的小作品），把这块代码可视化出来，并按自己习惯的方式讲。</span></p></div></div>
+<div class="row" data-rid="context-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b4-0">This is a better way to focus our human attention than reading trivial diffs line by line, which teaches you very little (e.g. a one-line copy change).</span> <span class="s" data-k="context-b4-1">Creating an explainer about the module you're going to change teaches you a lot.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b4-0">这比逐行读那些无关紧要的 diff 更能聚焦人的注意力——后者教给你的东西很少（比如改一行文案）。</span><span class="s" data-k="context-b4-1">而为你要改的那个模块做一份讲解，能让你学到很多。</span></p></div></div>
+<div class="row" data-rid="context-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="context-b5-0">Plus, we're generally open by default, working in open Slack channels, and seeing what others are building as they build it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="context-b5-0">另外，我们默认是开放的：在公开的 Slack 频道里工作，别人一边建一边就能看见。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-own">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">"You land it, you own it"</span><span class="h-zh">「你合的，你负责」</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这不是一句文化口号，而是一组让责任不至于失控的设计：小改动、可撤销、影响半径、遥测、不追责。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="own-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="own-b0-0">If you merge a small or medium change, and something still goes wrong, the general expectation is that you usually fix it yourself.</span> <span class="s" data-k="own-b0-1">There are a few reasons why this doesn't spiral out of control:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="own-b0-0">如果你合并了一个小改动或中等改动，后来还是出了问题，一般预期是你自己把它修好。</span><span class="s" data-k="own-b0-1">有几个原因让这件事不会失控：</span></p></div></div>
+<div class="row" data-rid="own-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="own-b1-0-0">Small changes that are easy to review, debug, and revert.</span></li><li><span class="s" data-k="own-b1-1-0">Everything can be reverted.</span> <span class="s" data-k="own-b1-1-1">Feature flags, reverts, and staged rollouts can reverse most mistakes in minutes.</span></li><li><span class="s" data-k="own-b1-2-0"><span class='term' data-term='blast'>Blast radius</span> sets the bar.</span> <span class="s" data-k="own-b1-2-1">More expensive code gets more eyes and validation.</span></li><li><span class="s" data-k="own-b1-3-0">Regressions are surfaced quickly by <span class='term' data-term='telemetry'>telemetry</span> and internal usage.</span></li><li><span class="s" data-k="own-b1-4-0">It's not a blame game.</span> <span class="s" data-k="own-b1-4-1">The person who fixes the issue owns it because they have the most context.</span> <span class="s" data-k="own-b1-4-2">Incident reviews consider the system.</span></li><li><span class="s" data-k="own-b1-5-0">Plus, much of the team shares responsibilities by working in open channels.</span> <span class="s" data-k="own-b1-5-1">Anyone can see what others are building, join in on the conversation, or have Claude look for gaps.</span> <span class="s" data-k="own-b1-5-2">Feedback also comes from non-code owners.</span> <span class="s" data-k="own-b1-5-3">That openness is a big part of why quality stays high without a gate on every line.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="own-b1-0-0">小改动容易被审、被调试，也容易被撤销。</span></li><li><span class="s" data-k="own-b1-1-0">任何改动都可以撤销。</span><span class="s" data-k="own-b1-1-1">功能开关、撤销、分阶段发布，能在几分钟内把大部分错误逆转回来。</span></li><li><span class="s" data-k="own-b1-2-0"><span class='term' data-term='blast'>影响半径</span>（blast radius）决定门槛。</span><span class="s" data-k="own-b1-2-1">代价越高的代码，看的人越多、做的验证也越多。</span></li><li><span class="s" data-k="own-b1-3-0">回归问题会被<span class='term' data-term='telemetry'>遥测</span>和内部使用很快暴露出来。</span></li><li><span class="s" data-k="own-b1-4-0">这不是追责游戏。</span><span class="s" data-k="own-b1-4-1">谁把问题修好，这件事就归谁负责——因为他手上的上下文最多。</span><span class="s" data-k="own-b1-4-2">事故复盘看的是系统，不是人。</span></li><li><span class="s" data-k="own-b1-5-0">再加上，团队里很多责任是靠公开频道分担的。</span><span class="s" data-k="own-b1-5-1">谁都能看到别人在建什么，可以加入讨论，也可以让 Claude 去找漏洞。</span><span class="s" data-k="own-b1-5-2">反馈也来自非代码所有者。</span><span class="s" data-k="own-b1-5-3">这种开放，是质量能在不给每一行都设关卡的情况下依然保持在高位的重要原因。</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-course">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Changing course</span><span class="h-zh">掉头</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>有了智能体之后，开一件新活很便宜，于是「及时关掉一个 PR」反而更值钱；关键是在讨论串早期掉头，而不是最后给阻塞意见。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="course-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="course-b0-0">With agents, it is cheap to start new work, but sometimes you shouldn't.</span> <span class="s" data-k="course-b0-1">This typically arises when someone in the channel calls out the proposed change as an invalid path (citing previous decisions or suggesting a better path), and the author either closes the PR or changes the implementation.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="course-b0-0">有智能体之后，开一件新活很便宜，但有时候你不该开。</span><span class="s" data-k="course-b0-1">通常是这样：频道里有人说这个提议的方向不对（引用以前的决定，或者提出更好的路子），于是作者要么关掉 PR，要么改实现。</span></p></div></div>
+<div class="row" data-rid="course-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="course-b1-0">Because it was easy to write the code in the first place, it doesn't feel like a loss to close the PR.</span> <span class="s" data-k="course-b1-1">The key is to pivot early in the thread, instead of waiting until the end to make a blocking comment on a finalized PR.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="course-b1-0">因为写这份代码本来就很容易，关掉 PR 并不让人觉得可惜。</span><span class="s" data-k="course-b1-1">关键在于尽早改道——在讨论串里就转弯，而不是等到最后，对一个已经定稿的 PR 提阻塞性意见。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-implement">
+<div class="sec-head"><span class="sec-num">09</span><h2><span class="h-en">How to implement</span><span class="h-zh">怎么落地</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节是可以直接抄走的部分：PR 之前做什么、每个 PR 上做什么。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="implement-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="implement-b0-0">Most of the components of this approach are already available to your team.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="implement-b0-0">这套做法的多数组件，你的团队现在就能用起来。</span></p></div></div>
+<div class="row h3row wide" id="h-implement-b1"><h3><span class='h3-en'>Before the pull request</span><span class='h3-zh'>PR 之前</span></h3></div>
+<div class="row" data-rid="implement-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="implement-b2-0-0">Give the agent a checklist of checks it can run.</span> <span class="s" data-k="implement-b2-0-1">List these checks in a short CLAUDE.md file</span></li><li><span class="s" data-k="implement-b2-1-0">Set up the agent to call formatters and linters via hooks</span></li><li><span class="s" data-k="implement-b2-2-0">Run /code-review and /security-review locally or have a new-context subagent review the changes</span></li><li><span class="s" data-k="implement-b2-3-0">Create a REVIEW.md, and use it to track recurring review issues</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="implement-b2-0-0">给智能体一份它能自己跑的检查清单。</span><span class="s" data-k="implement-b2-0-1">把这些检查写进一个简短的 CLAUDE.md 文件</span></li><li><span class="s" data-k="implement-b2-1-0">让智能体通过 hooks 调用格式化和 lint 工具</span></li><li><span class="s" data-k="implement-b2-2-0">在本地跑 /code-review 和 /security-review，或者让一个全新上下文的子智能体来审这些改动</span></li><li><span class="s" data-k="implement-b2-3-0">建一个 REVIEW.md，用它来跟踪反复出现的审查问题</span></li></ul></div></div>
+<div class="row h3row wide" id="h-implement-b3"><h3><span class='h3-en'>On every pull request</span><span class='h3-zh'>每个拉取请求上</span></h3></div>
+<div class="row" data-rid="implement-b4"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="implement-b4-0-0">Enforce CI</span></li><li><span class="s" data-k="implement-b4-1-0">Update your PR template with "Testing", "Risk" and "How to revert"</span></li><li><span class="s" data-k="implement-b4-2-0">On one repo, add an AI reviewer (Code Review for Claude Code, or the Claude Code GitHub Action), and iterate on your REVIEW.md for a few weeks before rolling it out to more repos.</span></li><li><span class="s" data-k="implement-b4-3-0">Add an automated security review</span></li><li><span class="s" data-k="implement-b4-4-0">Require that all review threads be resolved before merging</span></li><li><span class="s" data-k="implement-b4-5-0">Apply review rigor according to risk: a quick pass for routine changes, and a thorough review for high-risk areas (where bugs are expensive).</span> <span class="s" data-k="implement-b4-5-1">Code Review has Quick, Standard and Deep levels.</span></li><li><span class="s" data-k="implement-b4-6-0">Limit the number of review rounds, and after a few rounds, just review the new diff.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="implement-b4-0-0">强制 CI</span></li><li><span class="s" data-k="implement-b4-1-0">在 PR 模板里加上「怎么测的」「风险」「怎么撤销」三项</span></li><li><span class="s" data-k="implement-b4-2-0">先在一个仓库上加 AI 审查者（Code Review for Claude Code，或者 Claude Code GitHub Action），用几周时间迭代你的 REVIEW.md，再推广到更多仓库。</span></li><li><span class="s" data-k="implement-b4-3-0">加一道自动化安全审查</span></li><li><span class="s" data-k="implement-b4-4-0">要求所有审查评论串在合并前都被解决</span></li><li><span class="s" data-k="implement-b4-5-0">按风险施加审查强度：常规改动快速过一遍，高风险区域（bug 代价很高的地方）做彻底审查。</span><span class="s" data-k="implement-b4-5-1">Code Review 有 Quick、Standard、Deep 三档。</span></li><li><span class="s" data-k="implement-b4-6-0">限制审查轮次，几轮之后只看新增的 diff。</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-implement2">
+<div class="gist"><span class="gist-label">导读</span><p>落地清单的后半：批准规则怎么定、合并与合并之后配什么。和上一节合起来是一份完整清单。</p></div>
+<div class="reader-body">
+<div class="row h3row wide" id="h-implement2-b0"><h3><span class='h3-en'>Approval</span><span class='h3-zh'>批准</span></h3></div>
+<div class="row" data-rid="implement2-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="implement2-b1-0-0">Define risk levels, which are set based on the change, not the author.</span> <span class="s" data-k="implement2-b1-0-1">Start strict, and progressively relax as you see evidence.</span></li><li><span class="s" data-k="implement2-b1-1-0">Reserve lenient approval paths for trusted authors.</span></li><li><span class="s" data-k="implement2-b1-2-0">Bot approvals cannot be used to satisfy a required approval.</span> <span class="s" data-k="implement2-b1-2-1">Dismiss any approvals when new commits are pushed.</span></li><li><span class="s" data-k="implement2-b1-3-0">Designate humans as the approvers for code and policies controlling auth, billing, CI, and release workflows, as well as installers.</span> <span class="s" data-k="implement2-b1-3-1">Use CODEOWNERS and branch protection for this.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="implement2-b1-0-0">定义风险等级，按改动而不是按作者来定。</span><span class="s" data-k="implement2-b1-0-1">一开始从严，看到证据再逐步放宽。</span></li><li><span class="s" data-k="implement2-b1-1-0">对可信作者保留从宽的批准路径。</span></li><li><span class="s" data-k="implement2-b1-2-0">机器人批准不能用来满足「必须有人批准」的要求。</span><span class="s" data-k="implement2-b1-2-1">有新提交推上来时，撤销所有已给的批准。</span></li><li><span class="s" data-k="implement2-b1-3-0">把掌管认证（auth）、计费、CI、发布流程的代码与策略，以及安装程序，都指定由人来批准。</span><span class="s" data-k="implement2-b1-3-1">用 CODEOWNERS 和分支保护来做这件事。</span></li></ul></div></div>
+<div class="row h3row wide" id="h-implement2-b2"><h3><span class='h3-en'>Merging and post-merge</span><span class='h3-zh'>合并与合并之后</span></h3></div>
+<div class="row" data-rid="implement2-b3"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="implement2-b3-0-0">Set up a merge queue</span></li><li><span class="s" data-k="implement2-b3-1-0">Experiment with feature flags</span></li><li><span class="s" data-k="implement2-b3-2-0">Launch to internal users first</span></li><li><span class="s" data-k="implement2-b3-3-0">Roll out in stages</span></li><li><span class="s" data-k="implement2-b3-4-0">Create a one-step revert mechanism</span></li><li><span class="s" data-k="implement2-b3-5-0">Build a set of evals by logging incidents and reverts</span></li><li><span class="s" data-k="implement2-b3-6-0">Rescore the reviewer any time you change its prompts, tools or model</span></li><li><span class="s" data-k="implement2-b3-7-0">Track human effort, using reverts and incident rates as guardrails</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="implement2-b3-0-0">配上合并队列</span></li><li><span class="s" data-k="implement2-b3-1-0">试一试功能开关</span></li><li><span class="s" data-k="implement2-b3-2-0">先对内发布</span></li><li><span class="s" data-k="implement2-b3-3-0">分阶段发布</span></li><li><span class="s" data-k="implement2-b3-4-0">做一个一步撤销机制</span></li><li><span class="s" data-k="implement2-b3-5-0">通过记录事故和撤销，攒出一套评测集</span></li><li><span class="s" data-k="implement2-b3-6-0">每次改提示词、工具或模型，都重新给审查者打分</span></li><li><span class="s" data-k="implement2-b3-7-0">跟踪人的投入，把撤销率和事故率当作护栏</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-headed">
+<div class="sec-head"><span class="sec-num">10</span><h2><span class="h-en">Where this is headed</span><span class="h-zh">接下来往哪走</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>收尾给出边界：产品本身只贴出发现、不替人做批准决定；而在他们自己的仓库里，低风险改动已经可以在自动检查通过后自动合并，这条边界还会继续移动。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="headed-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="headed-b0-0">Code Review was announced with the intention that the final approval decision would still be made by a human.</span> <span class="s" data-k="headed-b0-1">All the product does is post its findings.</span> <span class="s" data-k="headed-b0-2">But in our own repos, we are going further: Owners are deciding which low-risk changes can be merged automatically when the automated checks pass.</span> <span class="s" data-k="headed-b0-3">And this boundary will continue to evolve.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="headed-b0-0">Code Review 发布时的设想是：最终的批准决定仍然由人来做。</span><span class="s" data-k="headed-b0-1">这个产品做的事，只是把它的发现贴出来。</span><span class="s" data-k="headed-b0-2">但在我们自己的仓库里，我们走得更远：所有者正在决定哪些低风险改动可以在自动检查通过后自动合并。</span><span class="s" data-k="headed-b0-3">而且这条边界还会继续变。</span></p></div></div>
+<div class="row" data-rid="headed-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="headed-b1-0">So whenever our reviewers miss something, we ask ourselves what wasn't in the model's context, and turn that into a CLAUDE.md file, a skill or a new check.</span> <span class="s" data-k="headed-b1-1">And we haven't changed our goal: To reduce the amount of human effort per change while keeping our revert rate no higher than it is now.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="headed-b1-0">所以每当审查者漏了什么，我们就会问自己：模型的上下文里缺了什么？然后把它变成一份 CLAUDE.md、一个技能或一道新检查。</span><span class="s" data-k="headed-b1-1">我们的目标一直没变：减少每个改动所需的人力，同时让撤销率不高于现在。</span></p></div></div>
+<div class="row" data-rid="headed-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="headed-b2-0">So if you also allow agents to create pull requests, please let us know what checks you've automated, what requires a human, and what we're getting wrong.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="headed-b2-0">所以如果你也让智能体创建拉取请求，欢迎告诉我们：你自动化了哪些检查、哪些还需要人、我们哪里做错了。</span></p></div></div>
+<div class="row" data-rid="headed-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="headed-b3-0">A rewrite of our original <a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L5'>article</a> and checked with Pangram.<sup class='tn' data-note='N5'>5</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="headed-b3-0">本文是对我们那篇<a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L5'>原文</a>的改写，并用 Pangram 做了检查。<sup class='tn' data-note='N5'>5</sup></span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 5 处正文引用，指向 5 个不同链接；另有 6 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>Claude Code 最佳实践</h4><p class="lnk-site">code.claude.com · Best practices for Claude Code</p><p class="lnk-anchors">正文对应：<em>最佳实践指南</em></p><p><b>这是什么：</b>Claude Code 最佳实践：用 CLAUDE.md 补上下文、给 Claude 可跑的检查、用 hook 兜底。</p><p><b>为什么值得点：</b>正文说「给 Claude 可运行的东西、再让子智能体 用全新上下文审 diff」两条都出自这份指南；它给出验证循环的四档严格度。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>核心是给 Claude 一个能返回 pass/fail 的检查：测试、构建退出码、linter、截图对比都行，有了它 Claude 才能自己闭环。文档给出四档严格度，从写在 prompt 里到用 Stop hook 强制，并建议向 Claude 要证据（命令与输出）。另一条是让没参与写代码的子智能体 审 diff，或用 /code-review 在全新上下文里审。</p><ul><li>最有用的一行 CLAUDE.md 是跑检查的命令；检查可以是测试、构建退出码、linter 或截图对比。</li><li>严格度四档：写进 prompt、设为 /goal、用 Stop hook 强制、交给没写代码的子智能体 审。</li><li>子智能体 买到的是并行与「没见过代码怎么写成」的新鲜视角，模型不一定更强，成本主要是 token。</li><li>reviewer 子智能体 只给 Read/Grep/Glob，限制由运行框架（harness）强制，而不是靠 prompt 请求。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/best-practices" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>Claude Code 团队怎么做代码审查</h4><p class="lnk-site">claude.dev · How the Claude Code team does code review</p><p class="lnk-anchors">正文对应：<em>原文</em></p><p><b>这是什么：</b>本文的博客原版：Addy Osmani 等三人合写的 14 分钟长文，讲团队如何把大部分代码阅读交给机器。</p><p><b>为什么值得点：</b>X 版是这篇的改写；原版更长、配图完整，并保留三位作者署名，适合读完译文后再看一遍完整论证与过渡。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>博客版发表于 2026-10-15，作者是 Addy Osmani、Morgan Westlee Lunt、Qing Wang；讲 Claude Code 团队如何在 agent 产出量下重新设计 code review。核心结论：从 6 月到 9 月，合并 PR 翻倍多，回滚比例下降 40% 以上；大多数 PR 最多一个人在环（可以是作者），回滚与事故率作为护栏。文章把流程逐层拆开，并给出团队落地清单。</p><ul><li>2026-10-15 发布，14 分钟读完；X 版 10-26 发布，晚 11 天。</li><li>6–9 月合并 PR 翻倍多，回滚比例下降 40% 以上。</li><li>流程逐层：PR 前验证、每 PR 的 AI review、安全审查、CI、按风险人工批准、merge queue/flags、快速回滚。</li><li>文末落地清单：CLAUDE.md、REVIEW.md、AI reviewer、merge queue、把 incident/revert 变成 eval。</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/solving-code-review-at-anthropic/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip bg">背景</span><span class="chip">建议第 3 个读</span></div><h4>重新设计 Anthropic 的版本控制</h4><p class="lnk-site">anthropic.com · Redesigning source control at Anthropic</p><p class="lnk-anchors">正文对应：<em>30,000</em></p><p><b>这是什么：</b>Anthropic 工程博客：合并量涨到日均 3 万次后，团队为何自建版本控制系统 Scion 并迁出 git。</p><p><b>为什么值得点：</b>本文开头的「30,000」就出自这篇：它交代了 5 月到 9 月合并量的十倍增长、迁移代价，以及为 agent 规模重建设施的完整背景。</p><p><b>访问说明：</b>实测 HTTP 308 永久重定向到 /research/redesigning-source-control，跟随重定向后返回 200；内容可正常读取。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Anthropic 的 monorepo 合并量从 2026 年 5 月的日均约 2,500 次涨到 9 月的 30,000 次以上，主分支历史近 100 GB。为此团队自建版本控制系统 Scion，五个月内把 monorepo 从 git 全量迁移，同时自建代码审查工具 Antique。Scion 假设客户端始终在线、计算放在服务端、不保留完整仓库副本；基础设施占用比旧 git 镜像方案小 200 倍，CI 检出从分钟级降到秒级。</p><ul><li>5 月日均约 2,500 次合并，9 月超过 30,000 次；主分支历史近 100 GB，压缩工作副本超 25 GB。</li><li>Scion 把提交、rebase、merge 放到服务端，客户端只保留有界缓存与稀疏/虚拟检出。</li><li>迁移后基础设施 CPU/内存占用缩到 1/200，CI 与研究会话检出快两个数量级，CI 省下 25% CPU。</li><li>七人团队五个月建成 Scion 与 Antique，同期每日合并量还涨了 10 倍。</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/engineering/redesigning-source-control" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 4 个读</span></div><h4>代码审查（Code Review）</h4><p class="lnk-site">code.claude.com · Code Review</p><p class="lnk-anchors">正文对应：<em>Code Review for Claude Code</em></p><p><b>这是什么：</b>Claude Code 官方 Code Review 文档：多 agent 找 bug、验证过滤误报、按严重度留评论。</p><p><b>为什么值得点：</b>正文说 Code Review 已向 Team 和 Enterprise 客户开放；这里能看到四阶段流程、三档深度，以及「只发 findings、不批准合并」的边界。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Code Review 在 GitHub PR 上并行跑多个 agent 找逻辑错误、安全漏洞和边界问题，再由验证步骤对照代码过滤误报，按严重度发 inline comment 和 summary。它只发 findings，不批准也不阻止合并；运行在 Anthropic 基础设施上，对仓库只读、不 push commit。面向 Team 与 Enterprise 计划，分 Quick / Standard / Deep 三档，本地另可用 /code-review。</p><ul><li>四阶段：Find（多 agent 并行）→ Verify（对照代码剔除误报）→ Rank（去重并按严重度排序）→ Post（inline comment + summary + check run）。</li><li>review 不批准也不阻止 PR，合并决定仍归团队；check run 不会以 failure 结束。</li><li>分 Quick / Standard / Deep 三档；组织选默认档，单个仓库可覆盖。</li><li>需要 Team 或 Enterprise 计划；本地用 /code-review，任意计划即可。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/code-review" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip">可选</span><span class="chip">建议第 5 个读</span></div><h4>最后一条建议：给 Claude 一条验证自己工作的路径</h4><p class="lnk-site">x.com · A final tip: give Claude a way to verify its work</p><p class="lnk-anchors">正文对应：<em>验证流程</em></p><p><b>这是什么：</b>Boris Cherny 线程第 13 条：给 Claude 一条能验证自己工作的反馈回路，最终质量可提升 2–3 倍。</p><p><b>为什么值得点：</b>正文「verification process 能让输出质量提高两到三倍」的原始出处；原话还有「每个领域验证方式不同」和用 Chrome 扩展实测 UI 的例子。</p><p><b>访问说明：</b>x.com 会挡掉自动化请求（curl 返回 000、node fetch 超时），浏览器里直接打开正常。这里的正文、作者与发布时间经 api.fxtwitter.com 取得。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Boris Cherny 说，让 Claude Code 产出好结果最重要的一件事，是给它验证自己工作的办法；有反馈回路，最终质量能提升 2–3 倍。他举的例子包括跑 bash 命令、跑测试套件，以及在浏览器或手机模拟器里测应用；他本人用 Claude Chrome 扩展让 Claude 打开浏览器测 UI，直到代码能用。推文还链到 Chrome 扩展文档。</p><ul><li>推文编号 13/，2026-01-02 发布，作者是 Claude Code 创建者 Boris Cherny。</li><li>原话估计：有验证回路时，最终结果的质量能到 2–3 倍。</li><li>验证方式按领域不同：bash 命令、测试套件、浏览器或手机模拟器。</li><li>附链接指向 code.claude.com/docs/en/chrome（Claude Code 的 Chrome 扩展）。</li></ul></details><a class="lnk-open" href="https://x.com/bcherny/status/2007179861115511237" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 25 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体</span></div><p class="gl-def">能自己读代码、改文件、跑测试的 AI 程序。本文里它既当作者写 PR，也当审阅者挑毛病。</p><p class="gl-ana">像一个能自己动手的新同事，你给目标和检查清单，它自己跑。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">subagent</span><span class="gl-zh">子智能体</span></div><p class="gl-def">由主智能体临时派出、只干一件小事的 AI。它拿的是全新上下文，所以审 diff 时没有先入为主的印象。</p><p class="gl-ana">像另请一位没看过你草稿的同事，只读最终稿挑错。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">pull request</span><span class="gl-zh">拉取请求</span></div><p class="gl-def">把一份改动提交给仓库、请求并入主干的提案。差异、说明和各项检查结果都挂在这里，评审也在这里发生。</p><p class="gl-ana">像把改好的稿子交上去，附上改了什么、为什么改。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">code review</span><span class="gl-zh">代码审查</span></div><p class="gl-def">改动合并前检查它对不对的过程。本文把它拆成开 PR 前自查、AI 审查、安全审查、人工批准等几层。</p><p class="gl-ana">像交稿前先自查一遍，再请不同的人分头把关。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">diff</span><span class="gl-zh">差异</span></div><p class="gl-def">两个版本代码之间的逐行增减，评审看的正是它。本文里「之后只审新增的 diff」是限制复审轮数的手段之一。</p><p class="gl-ana">像文稿的修订模式：只标出加了哪行、删了哪行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CI</span><span class="gl-zh">持续集成</span></div><p class="gl-def">每次提交后自动在服务器上跑测试、类型检查、多平台构建的流水线；不通过的检查会挡住合并。</p><p class="gl-ana">像每交一次稿就自动排版、查错、试印一遍，错了当场退回。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">lint</span><span class="gl-zh">静态检查</span></div><p class="gl-def">不运行程序、只按规则扫源码的工具，抓格式问题和可疑写法。反复被指出的问题可以直接写成一条 lint 规则。</p><p class="gl-ana">像拼写检查：不改你的意思，只标出不合规矩的地方。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">classifier</span><span class="gl-zh">分类器</span></div><p class="gl-def">专门做判断的模型：一个读改动、定它的风险档位，另一个判断这次改动是否还需要额外的一个人批准。</p><p class="gl-ana">像分诊台的护士，先看病情把你分到普通号还是专家号。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tier</span><span class="gl-zh">风险档位</span></div><p class="gl-def">按改动本身的风险分出的等级（本文分低、中、高三档），决定要几个真人批准。档位看改动，不看作者。</p><p class="gl-ana">像托运的保价等级：贵重件走更严的流程，跟寄件人是谁无关。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">merge queue</span><span class="gl-zh">合并队列</span></div><p class="gl-def">待合并 PR 排的队：先把改动接到最新主干上重跑全部检查，避免两个各自通过的 PR 合出坏主干。</p><p class="gl-ana">像登机前的二次安检，所有人都要重新过一遍才放行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">feature flag</span><span class="gl-zh">功能开关</span></div><p class="gl-def">代码已合入、已发布，但功能可以被这枚开关关着。出问题时不用重新部署，关掉就回到旧行为。</p><p class="gl-ana">像给新功能装一个灯开关，先开着给内部看，随时能关。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rollout</span><span class="gl-zh">分阶段发布</span></div><p class="gl-def">不一次放给所有人：先内部员工，再到 latest 频道，stable 频道跟在最后。出问题只影响一小撮人。</p><p class="gl-ana">像新菜先让店员试吃，再上菜单，最后才全天供应。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">revert</span><span class="gl-zh">撤销</span></div><p class="gl-def">把某次已合入的改动整体撤掉，通常再提一个提交把它反做一遍。撤的是这一次提交，不是线上版本。</p><p class="gl-ana">像撤回一条发错的消息：聊天记录里还是能看到它曾经发过。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rollback</span><span class="gl-zh">回滚</span></div><p class="gl-def">让已上线的版本退回上一个可用状态，靠关功能开关或切回旧版，不必改代码。与 revert 不同：它退的是线上状态，不是某次提交。</p><p class="gl-ana">像整栋楼切回备用电源：不用修发电机，先恢复供电再说。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">incident</span><span class="gl-zh">事故</span></div><p class="gl-def">上线后真正造成影响的故障。本文拿它当护栏指标——它不升高才算真的省了人时——也拿它当评测题的来源。</p><p class="gl-ana">像餐厅的投诉记录：投诉没变少，说明省下的只是把活推后了。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">guardrail</span><span class="gl-zh">护栏</span></div><p class="gl-def">本文里指「省了人时，却没把风险转移出去」的校验指标：撤销率与事故率。它不是准入门槛，而是兜底——一旦升高，就说明省下的时间只是被挪到了别处，并没有真的省下来。</p><p class="gl-ana">像路边的护栏：不决定你能不能开车，只在你开歪时兜住你。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">on-call</span><span class="gl-zh">值班</span></div><p class="gl-def">团队里轮流当「出事第一个找你」的那个人。本文里值班和作者一起盯坏合并，也参与事故复盘。</p><p class="gl-ana">像小区夜班保安：谁都要轮，出事第一个到场。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">telemetry</span><span class="gl-zh">遥测</span></div><p class="gl-def">产品自动回传的使用与报错数据。本文里回归会被遥测和内部使用很快暴露，不必靠人逐行读 diff 才发现。</p><p class="gl-ana">像汽车仪表盘的故障灯，不用拆开发动机就知道哪儿不对。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">trusted list</span><span class="gl-zh">信任名单</span></div><p class="gl-def">仓库维护的一份名单，通常就是拥有该仓库的团队。名单上的作者可以少一个人批，其他人仍要第二人批准。</p><p class="gl-ana">像机场的快速通道：常客走快线，其他人照常规排队。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">eval</span><span class="gl-zh">评测</span></div><p class="gl-def">用一套固定题目反复给审查系统打分。本文的题目由事故和撤销样本组成，每天跑一次，改了提示词、工具或模型就重跑。</p><p class="gl-ana">像考试题库：每次改教法就重考一遍，看分数有没有升。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">false positive</span><span class="gl-zh">误报</span></div><p class="gl-def">审查说这里有问题、实际没有的判断。本文用多个智能体投票过滤它，作者也可以写一句理由关掉这条讨论。</p><p class="gl-ana">像烟雾报警器被蒸汽触发：响了，但其实没着火。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">nit</span><span class="gl-zh">小意见</span></div><p class="gl-def">不影响对错的小挑刺，比如措辞、命名。对人一秒就忽略，智能体作者却要为它再提交一次、再多走一轮审查。</p><p class="gl-ana">像老师改作文时圈的标点，不圈也过得去。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">blast radius</span><span class="gl-zh">影响半径</span></div><p class="gl-def">一处改动可能波及多大范围。半径越大，需要的评审和验证越多——本文说影响半径设定门槛。</p><p class="gl-ana">像往水里扔石头：水花越大，得站得越远。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">monorepo</span><span class="gl-zh">单仓</span></div><p class="gl-def">把很多项目放在同一个代码仓库里。本文提到 Anthropic 的单仓每天合并的改动，从约 2500 次涨到三万多次。</p><p class="gl-ana">像一栋楼里所有部门共用同一套门禁和快递间。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">code owner</span><span class="gl-zh">代码所有者</span></div><p class="gl-def">对某一片代码负责的人或团队。他们在 REVIEW.md 里写下这部分什么算问题，也是敏感路径必须点头的批准人。</p><p class="gl-ana">像房东：这片归他管，要改结构得他签字。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>这个 30,000 不是 Claude Code 的量</h4><p>文中的 2,500 → 30,000 是 Anthropic 整个单仓（monorepo）每天落地的改动数。紧接着下一句作者就声明：Claude Code 并不在这个单仓里。所以别拿这个数字去论证「Claude Code 团队的 PR 量级」。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>六层，还是七层？</h4><p>正文写「六层检查」，随后却编号到第 7 项，因为第 7 项「快速反馈与回滚」在图 B 里被画成托住六层的那道底座，不算一层。两种口径都出自原文，引用时说清用的是哪一种，否则数字对不上。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>为什么批准只管一次提交</h4><p>批准绑定在具体那一次提交上：只要又推上来一个新提交，之前的批准就作废，需要重新批。要防的是「被批准的是一个版本，实际合进去的是另一个」——尤其是智能体在你批准后又推了东西的场景。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>git blame 在这一句里做了什么</h4><p>git blame 会逐行显示代码最后一次是被哪次提交、谁改动的。作者用它来判断：审查器反复指出的那批问题，到底是这次改动引入的新 bug，还是本来就躺在仓库里的老代码。结论是约 59% 属于后者。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>Pangram 是什么</h4><p>Pangram 是一个判断文本是否由 AI 生成的检测工具。这句话是出处声明：你现在读的这篇 X 长文，是作者对自己博客原版文章的改写，并用它做过检测。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 4 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>1.Pre-PR verification:</code><p>原文此处缺一个空格（1. 与 Pre-PR 之间）。本页按常规排版写成「1. Pre-PR verification:」，这是全篇唯一被改动的字符；正文英文句子一律照录。</p></div><div class="typo-item"><code>(We wrote about how we scaled CI here.)</code><p>这句里的 here 在 X 版中没有超链接指向任何文章（博客原版是有链接的）。照录原文，不补链接，卡在这里的读者可以去看文末延伸阅读里的博客原版。</p></div><div class="typo-item"><code>See automated security reviews in Claude Code for a guide on how to set this up.</code><p>同样，X 版里这句话没有超链接，指不到「Claude Code 里的自动化安全审查」那篇文档。照录原文。</p></div><div class="typo-item"><code>FIG C</code><p>这张配图在原文里的图注只有代号 FIG C，没有描述性文字，正文也没给。本页的图注与「怎么看」由译者按图上的真实标签补写。</p></div></div></section><footer><p>本页是学习用途的中英对照精读版：英文原文版权归 Addy Osmani 与 Anthropic 所有，中文译文、速览、对比卡、术语卡、图注与译注为译者整理，非官方译文。原文以 X 长文形式发布于 2026-10-26，是作者博客文（claude.dev）的改写版。</p><p>原文：<a href="https://x.com/addyosmani/status/2114604912520921136" target="_blank" rel="noopener">How the Claude Code team does code review</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-rethink"><span class="dot">●</span>重想代码审查的目的</a><a class="l2" href="#s-time"><span class="dot">●</span>人的时间与注意力</a><a class="l2" href="#s-journey"><span class="dot">●</span>一次改动要走过哪些环节？</a><a class="l3" href="#h-journey-b6"><span class="dot">●</span>1. PR 之前的验证：</a><a class="l3" href="#h-layers2-b0"><span class="dot">●</span>2. 每个拉取请求上的 AI 审查</a><a class="l3" href="#h-layers2-b12"><span class="dot">●</span>3. 能阻断合并的安全审查</a><a class="l3" href="#h-layers2-b15"><span class="dot">●</span>4. 会阻断合并的自动检查</a><a class="l3" href="#h-layers3-b0"><span class="dot">●</span>5. 按风险分级的批准</a><a class="l3" href="#h-layers3-b6"><span class="dot">●</span>6. 合并队列、功能开关与分阶段发布</a><a class="l3" href="#h-layers3-b9"><span class="dot">●</span>7. 快速反馈与回滚</a><a class="l2" href="#s-reviewer"><span class="dot">●</span>我们怎样把审查者越调越好</a><a class="l2" href="#s-humans"><span class="dot">●</span>留在环里的人</a><a class="l2" href="#s-context"><span class="dot">●</span>团队语境：机器读了，人怎么学代码</a><a class="l2" href="#s-own"><span class="dot">●</span>「你合的，你负责」</a><a class="l2" href="#s-course"><span class="dot">●</span>掉头</a><a class="l2" href="#s-implement"><span class="dot">●</span>怎么落地</a><a class="l3" href="#h-implement-b1"><span class="dot">●</span>PR 之前</a><a class="l3" href="#h-implement-b3"><span class="dot">●</span>每个拉取请求上</a><a class="l3" href="#h-implement2-b0"><span class="dot">●</span>批准</a><a class="l3" href="#h-implement2-b2"><span class="dot">●</span>合并与合并之后</a><a class="l2" href="#s-headed"><span class="dot">●</span>接下来往哪走</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L2":{"title_zh":"Claude Code 最佳实践","title_en":"Best practices for Claude Code","site":"code.claude.com","what_zh":"Claude Code 最佳实践：用 CLAUDE.md 补上下文、给 Claude 可跑的检查、用 hook 兜底。","why_zh":"正文说「给 Claude 可运行的东西、再让子智能体 用全新上下文审 diff」两条都出自这份指南；它给出验证循环的四档严格度。","tier":"必读","order":1,"url":"https://code.claude.com/docs/en/best-practices"},"L5":{"title_zh":"Claude Code 团队怎么做代码审查","title_en":"How the Claude Code team does code review","site":"claude.dev","what_zh":"本文的博客原版：Addy Osmani 等三人合写的 14 分钟长文，讲团队如何把大部分代码阅读交给机器。","why_zh":"X 版是这篇的改写；原版更长、配图完整，并保留三位作者署名，适合读完译文后再看一遍完整论证与过渡。","tier":"必读","order":2,"url":"https://claude.dev/blog/solving-code-review-at-anthropic/"},"L1":{"title_zh":"重新设计 Anthropic 的版本控制","title_en":"Redesigning source control at Anthropic","site":"anthropic.com","what_zh":"Anthropic 工程博客：合并量涨到日均 3 万次后，团队为何自建版本控制系统 Scion 并迁出 git。","why_zh":"本文开头的「30,000」就出自这篇：它交代了 5 月到 9 月合并量的十倍增长、迁移代价，以及为 agent 规模重建设施的完整背景。","tier":"背景","order":3,"url":"https://www.anthropic.com/engineering/redesigning-source-control"},"L4":{"title_zh":"代码审查（Code Review）","title_en":"Code Review","site":"code.claude.com","what_zh":"Claude Code 官方 Code Review 文档：多 agent 找 bug、验证过滤误报、按严重度留评论。","why_zh":"正文说 Code Review 已向 Team 和 Enterprise 客户开放；这里能看到四阶段流程、三档深度，以及「只发 findings、不批准合并」的边界。","tier":"背景","order":4,"url":"https://code.claude.com/docs/en/code-review"},"L3":{"title_zh":"最后一条建议：给 Claude 一条验证自己工作的路径","title_en":"A final tip: give Claude a way to verify its work","site":"x.com","what_zh":"Boris Cherny 线程第 13 条：给 Claude 一条能验证自己工作的反馈回路，最终质量可提升 2–3 倍。","why_zh":"正文「verification process 能让输出质量提高两到三倍」的原始出处；原话还有「每个领域验证方式不同」和用 Chrome 扩展实测 UI 的例子。","tier":"可选","order":5,"url":"https://x.com/bcherny/status/2007179861115511237"}},"terms":{"agent":{"en":"agent","zh":"智能体","def_zh":"能自己读代码、改文件、跑测试的 AI 程序。本文里它既当作者写 PR，也当审阅者挑毛病。","analogy_zh":"像一个能自己动手的新同事，你给目标和检查清单，它自己跑。"},"subagent":{"en":"subagent","zh":"子智能体","def_zh":"由主智能体临时派出、只干一件小事的 AI。它拿的是全新上下文，所以审 diff 时没有先入为主的印象。","analogy_zh":"像另请一位没看过你草稿的同事，只读最终稿挑错。"},"pr":{"en":"pull request","zh":"拉取请求","def_zh":"把一份改动提交给仓库、请求并入主干的提案。差异、说明和各项检查结果都挂在这里，评审也在这里发生。","analogy_zh":"像把改好的稿子交上去，附上改了什么、为什么改。"},"codereview":{"en":"code review","zh":"代码审查","def_zh":"改动合并前检查它对不对的过程。本文把它拆成开 PR 前自查、AI 审查、安全审查、人工批准等几层。","analogy_zh":"像交稿前先自查一遍，再请不同的人分头把关。"},"diff":{"en":"diff","zh":"差异","def_zh":"两个版本代码之间的逐行增减，评审看的正是它。本文里「之后只审新增的 diff」是限制复审轮数的手段之一。","analogy_zh":"像文稿的修订模式：只标出加了哪行、删了哪行。"},"ci":{"en":"CI","zh":"持续集成","def_zh":"每次提交后自动在服务器上跑测试、类型检查、多平台构建的流水线；不通过的检查会挡住合并。","analogy_zh":"像每交一次稿就自动排版、查错、试印一遍，错了当场退回。"},"lint":{"en":"lint","zh":"静态检查","def_zh":"不运行程序、只按规则扫源码的工具，抓格式问题和可疑写法。反复被指出的问题可以直接写成一条 lint 规则。","analogy_zh":"像拼写检查：不改你的意思，只标出不合规矩的地方。"},"classifier":{"en":"classifier","zh":"分类器","def_zh":"专门做判断的模型：一个读改动、定它的风险档位，另一个判断这次改动是否还需要额外的一个人批准。","analogy_zh":"像分诊台的护士，先看病情把你分到普通号还是专家号。"},"tier":{"en":"tier","zh":"风险档位","def_zh":"按改动本身的风险分出的等级（本文分低、中、高三档），决定要几个真人批准。档位看改动，不看作者。","analogy_zh":"像托运的保价等级：贵重件走更严的流程，跟寄件人是谁无关。"},"mergequeue":{"en":"merge queue","zh":"合并队列","def_zh":"待合并 PR 排的队：先把改动接到最新主干上重跑全部检查，避免两个各自通过的 PR 合出坏主干。","analogy_zh":"像登机前的二次安检，所有人都要重新过一遍才放行。"},"featureflag":{"en":"feature flag","zh":"功能开关","def_zh":"代码已合入、已发布，但功能可以被这枚开关关着。出问题时不用重新部署，关掉就回到旧行为。","analogy_zh":"像给新功能装一个灯开关，先开着给内部看，随时能关。"},"rollout":{"en":"rollout","zh":"分阶段发布","def_zh":"不一次放给所有人：先内部员工，再到 latest 频道，stable 频道跟在最后。出问题只影响一小撮人。","analogy_zh":"像新菜先让店员试吃，再上菜单，最后才全天供应。"},"revert":{"en":"revert","zh":"撤销","def_zh":"把某次已合入的改动整体撤掉，通常再提一个提交把它反做一遍。撤的是这一次提交，不是线上版本。","analogy_zh":"像撤回一条发错的消息：聊天记录里还是能看到它曾经发过。"},"rollback":{"en":"rollback","zh":"回滚","def_zh":"让已上线的版本退回上一个可用状态，靠关功能开关或切回旧版，不必改代码。与 revert 不同：它退的是线上状态，不是某次提交。","analogy_zh":"像整栋楼切回备用电源：不用修发电机，先恢复供电再说。"},"incident":{"en":"incident","zh":"事故","def_zh":"上线后真正造成影响的故障。本文拿它当护栏指标——它不升高才算真的省了人时——也拿它当评测题的来源。","analogy_zh":"像餐厅的投诉记录：投诉没变少，说明省下的只是把活推后了。"},"guardrail":{"en":"guardrail","zh":"护栏","def_zh":"本文里指「省了人时，却没把风险转移出去」的校验指标：撤销率与事故率。它不是准入门槛，而是兜底——一旦升高，就说明省下的时间只是被挪到了别处，并没有真的省下来。","analogy_zh":"像路边的护栏：不决定你能不能开车，只在你开歪时兜住你。"},"oncall":{"en":"on-call","zh":"值班","def_zh":"团队里轮流当「出事第一个找你」的那个人。本文里值班和作者一起盯坏合并，也参与事故复盘。","analogy_zh":"像小区夜班保安：谁都要轮，出事第一个到场。"},"telemetry":{"en":"telemetry","zh":"遥测","def_zh":"产品自动回传的使用与报错数据。本文里回归会被遥测和内部使用很快暴露，不必靠人逐行读 diff 才发现。","analogy_zh":"像汽车仪表盘的故障灯，不用拆开发动机就知道哪儿不对。"},"trusted":{"en":"trusted list","zh":"信任名单","def_zh":"仓库维护的一份名单，通常就是拥有该仓库的团队。名单上的作者可以少一个人批，其他人仍要第二人批准。","analogy_zh":"像机场的快速通道：常客走快线，其他人照常规排队。"},"eval":{"en":"eval","zh":"评测","def_zh":"用一套固定题目反复给审查系统打分。本文的题目由事故和撤销样本组成，每天跑一次，改了提示词、工具或模型就重跑。","analogy_zh":"像考试题库：每次改教法就重考一遍，看分数有没有升。"},"falsepositive":{"en":"false positive","zh":"误报","def_zh":"审查说这里有问题、实际没有的判断。本文用多个智能体投票过滤它，作者也可以写一句理由关掉这条讨论。","analogy_zh":"像烟雾报警器被蒸汽触发：响了，但其实没着火。"},"nit":{"en":"nit","zh":"小意见","def_zh":"不影响对错的小挑刺，比如措辞、命名。对人一秒就忽略，智能体作者却要为它再提交一次、再多走一轮审查。","analogy_zh":"像老师改作文时圈的标点，不圈也过得去。"},"blast":{"en":"blast radius","zh":"影响半径","def_zh":"一处改动可能波及多大范围。半径越大，需要的评审和验证越多——本文说影响半径设定门槛。","analogy_zh":"像往水里扔石头：水花越大，得站得越远。"},"monorepo":{"en":"monorepo","zh":"单仓","def_zh":"把很多项目放在同一个代码仓库里。本文提到 Anthropic 的单仓每天合并的改动，从约 2500 次涨到三万多次。","analogy_zh":"像一栋楼里所有部门共用同一套门禁和快递间。"},"codeowner":{"en":"code owner","zh":"代码所有者","def_zh":"对某一片代码负责的人或团队。他们在 REVIEW.md 里写下这部分什么算问题，也是敏感路径必须点头的批准人。","analogy_zh":"像房东：这片归他管，要改结构得他签字。"}},"notes":{"N1":{"title_zh":"这个 30,000 不是 Claude Code 的量","body_zh":"文中的 2,500 → 30,000 是 Anthropic 整个单仓（monorepo）每天落地的改动数。紧接着下一句作者就声明：Claude Code 并不在这个单仓里。所以别拿这个数字去论证「Claude Code 团队的 PR 量级」。"},"N2":{"title_zh":"六层，还是七层？","body_zh":"正文写「六层检查」，随后却编号到第 7 项，因为第 7 项「快速反馈与回滚」在图 B 里被画成托住六层的那道底座，不算一层。两种口径都出自原文，引用时说清用的是哪一种，否则数字对不上。"},"N3":{"title_zh":"为什么批准只管一次提交","body_zh":"批准绑定在具体那一次提交上：只要又推上来一个新提交，之前的批准就作废，需要重新批。要防的是「被批准的是一个版本，实际合进去的是另一个」——尤其是智能体在你批准后又推了东西的场景。"},"N4":{"title_zh":"git blame 在这一句里做了什么","body_zh":"git blame 会逐行显示代码最后一次是被哪次提交、谁改动的。作者用它来判断：审查器反复指出的那批问题，到底是这次改动引入的新 bug，还是本来就躺在仓库里的老代码。结论是约 59% 属于后者。"},"N5":{"title_zh":"Pangram 是什么","body_zh":"Pangram 是一个判断文本是否由 AI 生成的检测工具。这句话是出处声明：你现在读的这篇 X 长文，是作者对自己博客原版文章的改写，并用它做过检测。"}},"typos":[{"quote_en":"1.Pre-PR verification:","body_zh":"原文此处缺一个空格（1. 与 Pre-PR 之间）。本页按常规排版写成「1. Pre-PR verification:」，这是全篇唯一被改动的字符；正文英文句子一律照录。"},{"quote_en":"(We wrote about how we scaled CI here.)","body_zh":"这句里的 here 在 X 版中没有超链接指向任何文章（博客原版是有链接的）。照录原文，不补链接，卡在这里的读者可以去看文末延伸阅读里的博客原版。"},{"quote_en":"See automated security reviews in Claude Code for a guide on how to set this up.","body_zh":"同样，X 版里这句话没有超链接，指不到「Claude Code 里的自动化安全审查」那篇文档。照录原文。"},{"quote_en":"FIG C","body_zh":"这张配图在原文里的图注只有代号 FIG C，没有描述性文字，正文也没给。本页的图注与「怎么看」由译者按图上的真实标签补写。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
