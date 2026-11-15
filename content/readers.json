@@ -1,6 +1,24 @@
 {
  "readers": [
   {
+   "slug": "always-on-agents",
+   "title_zh": "构建常驻智能体：五个原语，让智能体自己醒来",
+   "title_en": "Building always-on agents",
+   "source_url": "https://claude.com/resources/articles/building-always-on-agents",
+   "org": "Anthropic · Claude 官方博客",
+   "published": "2026-11-13",
+   "read_min": 13,
+   "category": "智能体架构",
+   "blurb": "常驻智能体不是更聪明的循环，而是五件基础设施围着同一个循环：事件收件箱、定时器、记忆、权限、发件箱。",
+   "pairs": 135,
+   "words": 2190,
+   "chars": 4300,
+   "terms": 13,
+   "figures": 7,
+   "cover": "",
+   "featured": true
+  },
+  {
    "slug": "fable-multi-agent",
    "title_zh": "安全地把多智能体团队扩到 1,000 个：Claude Fable 5.2 的一次玩具实验",
    "title_en": "Safely scaling multi-agent teams with Claude Fable 5.2",
@@ -52,7 +70,7 @@
    "terms": 23,
    "figures": 13,
    "cover": "media/cover.jpg",
-   "featured": true
+   "featured": false
   },
   {
    "slug": "claude-code-review",
@@ -123,6 +141,24 @@
    "chars": 33400,
    "terms": 42,
    "figures": 1,
+   "cover": "media/cover.jpg",
+   "featured": false
+  },
+  {
+   "slug": "loops-graphs",
+   "title_zh": "循环与图：别再盯着每一步，只批最后一步",
+   "title_en": "Loops and Graphs: how to stop babysitting agents and only approve the last step (full course)",
+   "source_url": "https://x.com/hanakoxbt/status/2091515787366306154",
+   "org": "Hanako（@hanakoxbt）· X Article",
+   "published": "2026-08-23",
+   "read_min": 10,
+   "category": "智能体架构",
+   "blurb": "循环让一个工作单元自己检查到通过，图决定有哪些单元、谁等谁；两条回传路径，加上按影响半径开的闸门。",
+   "pairs": 129,
+   "words": 1690,
+   "chars": 3300,
+   "terms": 14,
+   "figures": 4,
    "cover": "media/cover.jpg",
    "featured": false
   },

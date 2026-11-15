@@ -1,0 +1,26 @@
+{
+ "slug": "12-claude-motion-repos",
+ "path": "2026/11/15/12-claude-motion-repos",
+ "title": "12 个让 Claude 做动效的仓库：清单、实测 star 与选型",
+ "description": "一条 X 帖列了 12 个「Claude + 动效」仓库。我逐个核了 star、仓库状态与真实用途，并给出按任务选的三条路径。",
+ "date": "2026-11-15",
+ "tags": [
+  "motion",
+  "claude",
+  "资源",
+  "视频"
+ ],
+ "content": "<p>Y0urDumble 在 X 上发了一条清单：fable 5.2 + 12 个仓库，把「一个想法」变成「一支片子」。原帖我放在文末。</p>\n<p>这类清单最容易虚标 star。我把 12 个仓库逐个用 GitHub API 核了一遍（2026-11-15），<strong>全部存在、都没有归档，star 数与原帖基本对得上</strong>（原帖是四舍五入到 K）。下面按原帖顺序列出，括号里是实测值。</p>\n<h2 id=\"清单\">清单</h2>\n<ol><li><strong>hyperframes</strong>（<a href=\"https://github.com/heygen-com/hyperframes\" target=\"_blank\" rel=\"noopener\">https://github.com/heygen-com/hyperframes</a>）——写 HTML，直接出视频；实测 84,504 ★（原帖 83K）。HeyGen 出品，适合把网页动效渲染成片子。</li><li><strong>remotion-skills</strong>（<a href=\"https://github.com/remotion-dev/skills\" target=\"_blank\" rel=\"noopener\">https://github.com/remotion-dev/skills</a>）——Remotion 官方给的 React 视频技能；7,189 ★（6.8K）。做「用代码写视频」的正路。</li><li><strong>blender-mcp</strong>（<a href=\"https://github.com/ahujasid/mcp-for-blender\" target=\"_blank\" rel=\"noopener\">https://github.com/ahujasid/mcp-for-blender</a>）——让 Claude 直接驱动 Blender；34,480 ★（34K）。3D 场景与渲染的入口。</li><li><strong>gsap-skills</strong>（<a href=\"https://github.com/greensock/gsap-skills\" target=\"_blank\" rel=\"noopener\">https://github.com/greensock/gsap-skills</a>）——GSAP 官方的缓动与时间线技能；18,474 ★（18K）。网页动效的底座。</li><li><strong>anatomy</strong>（<a href=\"https://github.com/wheresryan22/anatomy\" target=\"_blank\" rel=\"noopener\">https://github.com/wheresryan22/anatomy</a>）——把任何想法变成可用的 3D 物体；27,395 ★（27K）。偏资产生成。</li><li><strong>pixelfx</strong>（<a href=\"https://github.com/patch-gg/pixelfx\" target=\"_blank\" rel=\"noopener\">https://github.com/patch-gg/pixelfx</a>）——244 个代码实现的像素特效；7,523 ★（7.1K）。做复古/故障感时翻。</li><li><strong>video-shotcraft</strong>（<a href=\"https://github.com/Vincentwei1021/video-shotcraft\" target=\"_blank\" rel=\"noopener\">https://github.com/Vincentwei1021/video-shotcraft</a>）——电影感产品宣传片；19,793 ★（19K）。偏分镜与镜头语言。</li><li><strong>openmotion</strong>（<a href=\"https://github.com/nexu-io/openmotion\" target=\"_blank\" rel=\"noopener\">https://github.com/nexu-io/openmotion</a>）——全栈动态视频工作台；9,976 ★（9.6K）。想把「生成—编辑—导出」放一条流水线时看。</li><li><strong>opencreator</strong>（<a href=\"https://github.com/krillinai/OpenCreator\" target=\"_blank\" rel=\"noopener\">https://github.com/krillinai/OpenCreator</a>）——把视频配音成 120+ 种语言；14,367 ★（14K）。后期本地化。</li><li><strong>impeccable</strong>（<a href=\"https://github.com/pbakaus/impeccable\" target=\"_blank\" rel=\"noopener\">https://github.com/pbakaus/impeccable</a>）——清掉 UI 里的「AI 味」；110,438 ★（108K）。不是动效工具，但做画面质感时最实用。</li><li><strong>garden-skills</strong>（<a href=\"https://github.com/ConardLi/garden-skills\" target=\"_blank\" rel=\"noopener\">https://github.com/ConardLi/garden-skills</a>）——动效 showreel 与视频 deck；15,195 ★（15K）。做作品集与提案时用。</li><li><strong>anthropic-skills</strong>（<a href=\"https://github.com/anthropics/skills\" target=\"_blank\" rel=\"noopener\">https://github.com/anthropics/skills</a>）——官方前端与 canvas 设计技能；194,934 ★（193K）。底座型仓库，先装它再谈别的。</li></ol>\n<h2 id=\"怎么选-按任务-不按-star\">怎么选：按任务，不按 star</h2>\n<p><strong>路径 A：我要「一个网页变成一支视频」。</strong> 先 hyperframes，再 remotion-skills。前者最快出片，后者可控性更强；两个都吃 HTML/React 的底子。</p>\n<p><strong>路径 B：我要「3D 场景/产品动画」。</strong> blender-mcp + anatomy。前者负责让 Claude 操作 Blender，后者负责把想法变成可用的 3D 物体；pixelfx 只在需要像素风时加。</p>\n<p><strong>路径 C：我要「画面更高级，但不想学新工具」。</strong> impeccable + anthropic-skills + gsap-skills。先把 UI 的「AI 味」清掉，再谈动效；gsap 负责网页里的节奏。</p>\n<p><strong>三个提醒：</strong></p>\n<ul><li><strong>star 不等于质量。</strong> 这份清单里 star 最高的两个（anthropic-skills、impeccable）都不是「动效工具」，而是底座与审美修正；真正出片的仓库 star 反而低。</li><li><strong>「skill」不是「app」。</strong> remotion-skills、gsap-skills、garden-skills 这类是给 Claude 的技能包/示例集，装完要自己接流程，不是双击出片。</li><li><strong>模型名与版本会漂。</strong> 原帖写的是 fable 5.2；仓库本身与模型无关，换成别的模型也能用，别被版本号吓住。</li></ul>\n<p>原文：Y0urDumble（X，2026-11-14）：<a href=\"https://x.com/Y0urDumble/status/2121609152233382255\" target=\"_blank\" rel=\"noopener\">https://x.com/Y0urDumble/status/2121609152233382255</a></p>",
+ "toc": [
+  {
+   "level": 2,
+   "text": "清单",
+   "id": "清单"
+  },
+  {
+   "level": 2,
+   "text": "怎么选：按任务，不按 star",
+   "id": "怎么选-按任务-不按-star"
+  }
+ ]
+}

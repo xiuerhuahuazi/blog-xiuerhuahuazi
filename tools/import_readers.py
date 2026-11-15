@@ -38,6 +38,10 @@ CURATED = {
         "1,000 个智能体、28.7 小时、一个费马大定理的形式化证明：一篇关于「扩到多大才安全」的实验报告。"),
     "harness-reader": ("智能体架构",
         "把主观设计变成可评分项，让生成与评估两个智能体互相制衡：长程自主编程的流水线长什么样。"),
+    "always-on-agents": ("智能体架构",
+        "常驻智能体不是更聪明的循环，而是五件基础设施围着同一个循环：事件收件箱、定时器、记忆、权限、发件箱。"),
+    "loops-graphs": ("智能体架构",
+        "循环让一个工作单元自己检查到通过，图决定有哪些单元、谁等谁；两条回传路径，加上按影响半径开的闸门。"),
     "loop-engineering": ("智能体架构",
         "四层循环：干活的智能体循环、打分的验证循环、被事件触发的事件循环、用 trace 自我改进的爬坡循环。前三层自动化工作，第四层自动化改进。"),
     "robotics-engineer-6mo": ("学习路线",
@@ -48,7 +52,7 @@ CURATED = {
         "把「每次上传文件」换成「先编译成 Wiki，再提问」：把 Karpathy 的 LLM Wiki 讲成四步流程。"),
 }
 
-FEATURED = "super-agent-design"
+FEATURED = "always-on-agents"
 
 NAV_MARK = "<!-- site-nav -->"
 NAV_STYLE = """<style id="site-nav-style">

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>构建常驻智能体：五个原语，让智能体自己醒来｜Building always-on agents</title>
+<meta name="description" content="构建常驻智能体：五个原语，让智能体自己醒来｜Building always-on agents：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/always-on-agents/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="构建常驻智能体：五个原语，让智能体自己醒来">
+<meta property="og:description" content="Anthropic 把常驻智能体拆成五件基础设施：事件收件箱、定时器、记忆、权限、发件箱。它们围着的仍是同一个智能体循环，变的只是「何时醒、带什么、能做什么、话怎么送到」。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/always-on-agents/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic · Claude 官方博客 · 2026-11-13</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Building always-on agents</span><span class="h1-zh">构建常驻智能体：五个原语，让智能体自己醒来</span></h1><div class="hero-meta"><span>原文 2190 词</span><span>中文 4300 字</span><span>逐句对照 <i>135</i> 句</span><span>预计 13 分钟</span><span><a href="https://claude.com/resources/articles/building-always-on-agents" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：常驻智能体不是一个更聪明的循环，而是五件基础设施围着同一个循环转。</li><li><b>常驻的真相</b>：它大部分时间在睡，被事件叫醒，干活，把发生了什么写回状态，然后再睡。</li><li><b>五个原语</b>：事件收件箱（谁叫醒它）、定时器（未来的事件）、记忆（跨运行带什么）、权限（无人时能做什么）、发件箱（话怎么送到）。</li><li><b>关键闭环</b>：用户的回答本身也是一个事件，从收件箱回来；defer 让「问人」不再卡住当前这次运行。</li><li><b>代价与边界</b>：收件箱要能对事件去重、让工作进程崩溃后重试，权限要逐次审查工具调用；压缩与重开会话都会丢细节，重要状态要写进记忆。</li><li><b>读法建议</b>：先读第 3 节的收件箱与发件箱——收件箱支持事件重试，需要控制消息节奏或支持错误恢复时可引入发件箱；再回头看记忆与权限的取舍。</li></ul><div class="compare"><div class="cmp"><h3>直接触发时的潜在问题</h3><ol><li>每个事件源直接调用智能体，没有统一入口</li><li>两个事件同时到达，可能启动互相竞争的运行</li><li>进程崩溃，事件可能整个丢掉</li><li>上下文越滚越长，压缩或重开会话都会丢细节</li><li>消息直接发出，发送节奏与失败恢复都难控制</li></ol></div><div class="cmp win"><h3>本文建议：五个原语围着一个循环</h3><ol><li>事件先进收件箱，同一时刻只有一个活跃工作进程</li><li>定时器保存未来触发记录，调度器在到期时向收件箱投递事件</li><li>记忆按读取频率分层：每次读 / 按需读</li><li>权限逐次判断：自行执行、阻止、或等用户批准</li><li>需要控制节奏或错误恢复时，再加正式发件箱</li></ol></div></div><p class="ov-foot cmp-foot">左右两栏是译者按正文归纳，不是原文。</p><p class="ov-foot">速览与对比卡是译者按正文压缩的，不是原文；正文里带虚线下划线的词可以悬停看术语卡，上标数字是译者注。原文 2026-11-13 发布于 Anthropic 的 Claude 博客，作者 William Hu。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Over the past few months, we’ve seen a resurgence of <span class='term' data-term='always-on'>always-on agents</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">过去几个月，我们看到<span class='term' data-term='always-on'>常驻智能体</span>再度兴起。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">Always-on agents are <span class='term' data-term='stateful'>stateful</span> and proactive, meaning they manage context across <span class='term' data-term='session'>sessions</span> and take actions without direct supervision.</span> <span class="s" data-k="intro-b1-1">Underneath, they <span class='term' data-term='run'>run</span> on the same <a class='lnk' href='https://www.anthropic.com/research/building-effective-agents' target='_blank' rel='noopener' data-link='L1'>core loop</a> as other agents.</span> <span class="s" data-k="intro-b1-2">The difference is the surrounding architecture, which is built from <span class='term' data-term='primitive'>primitives</span> that control when the agents wake up, what carries over between runs, and how their work reaches the user.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">常驻智能体是<span class='term' data-term='stateful'>有状态</span>的，并且会主动行动，也就是说，它们能够跨<span class='term' data-term='session'>会话</span>管理上下文，并在没有直接监督的情况下采取行动。</span><span class="s" data-k="intro-b1-1">在底层，它们与其他智能体一样，<span class='term' data-term='run'>运行</span>着相同的<a class='lnk' href='https://www.anthropic.com/research/building-effective-agents' target='_blank' rel='noopener' data-link='L1'>核心循环</a>。</span><span class="s" data-k="intro-b1-2">区别在于外围架构：它由一组<span class='term' data-term='primitive'>原语</span>构成，这些原语控制智能体何时唤醒、哪些信息会在各次运行之间保留，以及工作成果如何送达用户。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">The resurgence is largely due to recent model advancements, which have made always-on agents more practical to run.</span> <span class="s" data-k="intro-b2-1">First, the latest models have better judgment: they’re more reliable at understanding user intent and knowing when to check in.</span> <span class="s" data-k="intro-b2-2">Second, intelligence is becoming cheaper, with long-horizon tasks benefiting the most.</span> <span class="s" data-k="intro-b2-3">For example, on <a class='lnk' href='https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence' target='_blank' rel='noopener' data-link='L2'>one long-horizon coding benchmark</a>, Opus 5.5 cost 78% less per solved task than Opus 5, compared with 40% less on typical workloads.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">这股复兴浪潮主要得益于近期模型的进步，这些进步让运行常驻智能体变得更加切实可行。</span><span class="s" data-k="intro-b2-1">首先，最新模型的判断力更强：它们能更可靠地理解用户意图，并判断何时需要向用户确认或汇报。</span><span class="s" data-k="intro-b2-2">其次，智能的成本正在降低，耗时较长的任务受益最大。</span><span class="s" data-k="intro-b2-3">例如，在<a class='lnk' href='https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence' target='_blank' rel='noopener' data-link='L2'>一项长时程编程基准测试</a>中，Opus 5.5 每解决一项任务的成本比 Opus 5 低 78%，而在典型工作负载中，成本降幅为 40%。</span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">Customers have started to ask us how to integrate this type of experience into their own products.</span> <span class="s" data-k="intro-b3-1">Some companies want to make their existing agents more proactive, while others are looking to build them from the ground up.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">客户已经开始询问我们，如何将这类体验融入他们自己的产品。</span><span class="s" data-k="intro-b3-1">一些公司希望让现有智能体更主动，另一些则希望从零开始构建。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">This post breaks down the primitives behind always-on agents and walks through how they fit together.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">本文将拆解常驻智能体背后的原语，并逐步介绍它们如何协同工作。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-the-cycle-behind-the-always-on-agent">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">The cycle behind the always-on agent</span><span class="h-zh">常驻智能体的循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>一次运行 = 事件到达 → 会话开始 → 循环干活 → 写回状态，然后回到睡眠。图 1 把这条时间轴画了出来。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="the-cycle-behind-the-always-on-agent-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-cycle-behind-the-always-on-agent-b0-0">An always-on agent is not actually “always on.” This is just a description of the user experience.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-cycle-behind-the-always-on-agent-b0-0">常驻智能体实际上并非“一直在线”。这只是对用户体验的描述。</span></p></div></div>
+<div class="row" data-rid="the-cycle-behind-the-always-on-agent-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-0">In reality, the agent spends most of its time asleep, waking up periodically to do work.</span> <span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-1">Each stretch of work is called a <b>run</b>: the agent receives an event, completes its task, and then saves information about what happened.</span> <span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-2">A run works inside a <b>session</b>, which is the transcript of messages and <span class='term' data-term='tool-call'>tool calls</span>.</span> <span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-3">Once the run is finished, the agent goes back to sleep, and the cycle repeats indefinitely.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-0">实际上，智能体大部分时间都处于休眠状态，间歇醒来执行工作。</span><span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-1">每一段工作过程称为<b>一次运行</b>：智能体接收一个事件，完成任务，然后保存有关所发生情况的信息。</span><span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-2">运行在<b>会话</b>中进行，会话是消息和<span class='term' data-term='tool-call'>工具调用</span>的记录。</span><span class="s" data-k="the-cycle-behind-the-always-on-agent-b1-3">运行结束后，智能体会重新进入休眠状态，如此循环往复，不断重复。</span></p></div></div>
+<figure class="row wide fig has-video" id="fig1" data-cap="一次运行的四步，和它周围漫长的休眠"><div class="fig-media has-video"><img class="video-poster" src="media/img1-still.png" alt="Animated diagram of an always-on agent’s timeline: long stretches asleep with no tokens spent, broken by brief runs. Each run has four steps: an event arrives, a session starts, the agent loop runs, and the run writes back to stored state that carries over between runs." loading="lazy"><button class="video-play" type="button" data-video="fig1" data-src="media/img1.mp4"><b>▶ 播放视频</b><small>0.2 MB · 按需加载</small></button><div class="fig-bar"><span class="vtag">视频按需加载 · 支持拖动</span></div></div><figcaption><p class="cap-zh"><b>一次运行的四步，和它周围漫长的休眠</b>　时间轴上大部分是「Asleep，不消耗 token」；事件到达时短暂醒来，走完四步：事件到达 → 会话开始 → 智能体循环运行 → 写回状态。</p><p class="cap-en">原文图注：Animated diagram of an always-on agent’s timeline: long stretches asleep with no tokens spent, broken by brief runs. Each run has four steps: an event arrives, a session starts, the agent loop runs, and the run writes back to stored state that carries over between runs.</p><p class="cap-video">▶ 视频按需加载（0.2 MB，浏览器 Range 请求，点击后才下载）。</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>先看灰色长条：Asleep 段才是常驻智能体的大部分时间</li><li>橙色「A webhook arrives」把时间轴切成睡眠与运行两段</li><li>下方 Run 卡片里编号 1–4 是四步；注意 2 的 read 与 4 的 write 都指向 Stored state</li></ol><p class="takeaway">一句话：常驻不是一直算，而是被事件切成一短短的运行。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-the-core-primitives">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">The core primitives</span><span class="h-zh">五个核心原语</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>五个原语逐个拆：收件箱负责排队与去重，定时器负责「未来的事件」，记忆负责跨运行携带信息，权限负责无人时的边界，发件箱负责送达。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="the-core-primitives-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b0-0">The surrounding architecture of an always-on agent has five core primitives: an <span class='term' data-term='inbox'>event inbox</span>, <span class='term' data-term='timers'>timers</span>, <span class='term' data-term='memory'>memory</span>, <span class='term' data-term='permissions'>permissions</span>, and an <span class='term' data-term='outbox'>outbox</span>.</span> <span class="s" data-k="the-core-primitives-b0-1">Let’s take a look at each.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b0-0">常驻智能体的外围架构包含五个核心原语：<span class='term' data-term='inbox'>事件收件箱</span>、<span class='term' data-term='timers'>定时器</span>、<span class='term' data-term='memory'>记忆</span>、<span class='term' data-term='permissions'>权限</span>和<span class='term' data-term='outbox'>发件箱</span>。</span><span class="s" data-k="the-core-primitives-b0-1">下面逐一介绍。</span></p></div></div>
+<div class="row h3row wide" id="h-the-core-primitives-b1"><h3><span class='h3-en'>Event inbox</span><span class='h3-zh'>事件收件箱</span></h3></div>
+<div class="row" data-rid="the-core-primitives-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b2-0">Most AI agents only run when the user sends a message.</span> <span class="s" data-k="the-core-primitives-b2-1">In contrast, always-on agents can be triggered by many types of events, including webhooks, scheduled tasks, and background jobs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b2-0">大多数 AI 智能体只有在用户发送消息时才会运行。</span><span class="s" data-k="the-core-primitives-b2-1">相比之下，常驻智能体可以由多种类型的事件触发，包括 webhook、计划任务和后台作业。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b3-0">One tempting approach is to have each event source call the agent directly, but that has a few failure modes.</span> <span class="s" data-k="the-core-primitives-b3-1">For example, two events arriving at the same time can start competing runs, and a crash can lose an event entirely.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b3-0">一种很容易想到的做法是让每个事件源直接调用智能体，但这种做法存在几种故障情形。</span><span class="s" data-k="the-core-primitives-b3-1">例如，两个同时到达的事件可能会启动相互竞争的运行，而一次崩溃就可能导致某个事件彻底丢失。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b4-0">This is where the event inbox comes in.</span> <span class="s" data-k="the-core-primitives-b4-1">Instead of calling the agent, every source sends an event to an inbox, where a worker picks it up.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b4-0">这时，事件收件箱就派上用场了。</span><span class="s" data-k="the-core-primitives-b4-1">各个事件源将事件发送到收件箱，由工作进程从中取出事件，而不是直接调用智能体。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b5-0">The simplest version has three components:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b5-0">最简单的版本包含三个组件：</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b6"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="the-core-primitives-b6-0-0">A durable list of events, usually a database table;</span></li><li><span class="s" data-k="the-core-primitives-b6-1-0">A <span class='term' data-term='handler'>handler</span>, usually an HTTP endpoint, that writes events to the list; and</span></li><li><span class="s" data-k="the-core-primitives-b6-2-0">A worker, usually a background service, that reads from the list.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="the-core-primitives-b6-0-0">一个持久化的事件列表，通常是一张数据库表；</span></li><li><span class="s" data-k="the-core-primitives-b6-1-0">一个将事件写入列表的<span class='term' data-term='handler'>处理器</span>，通常是一个 HTTP 端点；以及</span></li><li><span class="s" data-k="the-core-primitives-b6-2-0">一个从列表中读取事件的工作进程，通常是一个后台服务。</span></li></ul></div></div>
+<div class="row" data-rid="the-core-primitives-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b7-0">The inbox should track the status of each event, and events can be deduplicated based on unique identifiers from the source.</span> <span class="s" data-k="the-core-primitives-b7-1">A relational database works well for the inbox, with every event appended as a new row.</span> <span class="s" data-k="the-core-primitives-b7-2">We recommend starting with one inbox per user, but you can split this further if you need more parallelism.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b7-0">收件箱应跟踪每个事件的状态，还可以根据事件源提供的唯一标识符对事件进行去重。</span><span class="s" data-k="the-core-primitives-b7-1">关系型数据库很适合用作收件箱，每个事件都作为新的一行追加进去。</span><span class="s" data-k="the-core-primitives-b7-2">我们建议一开始为每个用户设置一个收件箱，但如果需要更高的并行度，也可以进一步细分。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="事件收件箱：先登记，再干活"><div class="fig-media"><img class="still" src="media/img2.png" loading="lazy" decoding="async" alt="Diagram of the event inbox. A handler (an HTTP endpoint) writes each event to the inbox, a database table that tracks status and drops duplicates, and wakes the worker. The worker reads what’s pending, starts the run, waits for it to finish, and marks the events done."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>事件收件箱：先登记，再干活</b>　Handler 把事件写进数据库表；Worker 读 pending、启动 Run、等它结束再标 done；重复事件按 ID 丢弃。</p><p class="cap-en">原文图注：Diagram of the event inbox. A handler (an HTTP endpoint) writes each event to the inbox, a database table that tracks status and drops duplicates, and wakes the worker. The worker reads what’s pending, starts the run, waits for it to finish, and marks the events done.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>沿橙色编号 1→6 读：写事件、叫醒 worker、读 pending、启动 run、等结束、标 done</li><li>表里两行 pending 的 Session 列都是 Chat ID：同一个会话可以排队多个事件</li><li>虚线那行「Delivered twice, same ID」被标成 dropped，是去重的证据</li></ol><p class="takeaway">一句话：收件箱把「谁叫醒智能体」变成可去重、可重试的记录。</p></details></figcaption></figure>
+<div class="row" data-rid="the-core-primitives-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b9-0">When a new event comes in, the handler writes the event to the inbox and wakes the worker.</span> <span class="s" data-k="the-core-primitives-b9-1">The worker reads whatever is pending and starts a run.</span> <span class="s" data-k="the-core-primitives-b9-2">Events that continue earlier work, such as a reply from the user, resume an existing session, while everything else starts a new session.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b9-0">新事件到达时，处理器会将事件写入收件箱，并唤醒工作进程。</span><span class="s" data-k="the-core-primitives-b9-1">工作进程会读取所有待处理的事件，并启动一次运行。</span><span class="s" data-k="the-core-primitives-b9-2">延续先前工作的事件（例如用户的回复）会恢复已有会话，而其他所有事件都会开启新会话。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b10-0">From there, the worker passes the events to the agent loop, waits for the run to finish, and marks the corresponding events as done.</span> <span class="s" data-k="the-core-primitives-b10-1">The implementation details can get tricky, so here are a few best practices:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b10-0">随后，工作进程会将这些事件传给智能体循环，等待运行结束，再将相应事件标记为已完成。</span><span class="s" data-k="the-core-primitives-b10-1">实现细节可能比较棘手，因此这里给出一些最佳实践：</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b11"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="the-core-primitives-b11-0-0"><b>The handler should acknowledge events quickly</b>.</span> <span class="s" data-k="the-core-primitives-b11-0-1">Some sources, such as webhook providers, treat slow responses as failures.</span> <span class="s" data-k="the-core-primitives-b11-0-2">The handler can still run lightweight checks, but any deeper verification, such as checking for prompt injection, should be done during the run.</span></li><li><span class="s" data-k="the-core-primitives-b11-1-0"><b>The inbox should be the source of truth</b>.</span> <span class="s" data-k="the-core-primitives-b11-1-1">When the worker is woken up, it should pull the latest events from the inbox first.</span> <span class="s" data-k="the-core-primitives-b11-1-2">That way, if the worker dies mid-run, a new one can pick up the same event and retry.</span></li><li><span class="s" data-k="the-core-primitives-b11-2-0"><b>An inbox should only have one active worker at a time</b>.</span> <span class="s" data-k="the-core-primitives-b11-2-1">This prevents two runs from duplicating work or overwriting each other.</span> <span class="s" data-k="the-core-primitives-b11-2-2">When a new event shows up mid-run, you can either push it to the next run, fold it into the current run, or interrupt and restart.</span></li><li><span class="s" data-k="the-core-primitives-b11-3-0"><b>The worker should batch pending events together.</b> For example, if the user sends several messages in a row, the worker can merge them into a single run, so the agent only needs to reply once.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="the-core-primitives-b11-0-0"><b>处理器应迅速确认收到事件</b>。</span><span class="s" data-k="the-core-primitives-b11-0-1">某些事件来源（例如 webhook 提供方）会将响应缓慢视为失败。</span><span class="s" data-k="the-core-primitives-b11-0-2">处理器仍然可以执行轻量检查，但任何更深入的验证（例如检查提示词注入）都应在运行期间进行。</span></li><li><span class="s" data-k="the-core-primitives-b11-1-0"><b>收件箱应作为事实依据</b>。</span><span class="s" data-k="the-core-primitives-b11-1-1">工作进程被唤醒时，应先从收件箱拉取最新事件。</span><span class="s" data-k="the-core-primitives-b11-1-2">这样，即使工作进程在运行途中崩溃，新的工作进程也能接手同一个事件并重试。</span></li><li><span class="s" data-k="the-core-primitives-b11-2-0"><b>一个收件箱在同一时间只能有一个活跃的工作进程</b>。</span><span class="s" data-k="the-core-primitives-b11-2-1">这可以防止两次运行重复执行工作或相互覆盖结果。</span><span class="s" data-k="the-core-primitives-b11-2-2">如果新事件在运行途中出现，可以将其留到下一次运行处理，纳入当前运行，或中断运行并重新启动。</span></li><li><span class="s" data-k="the-core-primitives-b11-3-0"><b>工作进程应将待处理事件合并成批处理。</b>例如，如果用户连续发送多条消息，工作进程可以将这些消息合并到一次运行中，这样智能体只需回复一次。</span></li></ul></div></div>
+<div class="row h3row wide" id="h-the-core-primitives-b12"><h3><span class='h3-en'>Timers</span><span class='h3-zh'>定时器</span></h3></div>
+<div class="row" data-rid="the-core-primitives-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b13-0">Together with the event inbox, timers let always-on agents be proactive.</span> <span class="s" data-k="the-core-primitives-b13-1">Timers generally fall into one of two categories: follow-ups or schedules.</span> <span class="s" data-k="the-core-primitives-b13-2">A follow-up is a deadline that the agent sets for itself, such as checking in on a reply.</span> <span class="s" data-k="the-core-primitives-b13-3">A schedule, on the other hand, is a recurring task that happens on a known cadence, such as a daily newsletter.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b13-0">定时器与事件收件箱配合，让常驻智能体能够主动采取行动。</span><span class="s" data-k="the-core-primitives-b13-1">定时器通常分为两类：后续跟进和定期任务。</span><span class="s" data-k="the-core-primitives-b13-2">后续跟进是智能体为自己设定的一个截止时间，例如到时查看是否收到回复。</span><span class="s" data-k="the-core-primitives-b13-3">而定期任务则是按已知周期重复执行的任务，例如每日简报。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b14-0">Timers live in their own durable store, usually another database table, separate from the inbox.</span> <span class="s" data-k="the-core-primitives-b14-1">The inbox should only hold events that are ready to be worked on.</span> <span class="s" data-k="the-core-primitives-b14-2">A follow-up and a schedule can share a similar schema, but a schedule needs to track its recurrence as well.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b14-0">定时器保存在独立于收件箱的持久化存储中，通常是另一张数据库表。</span><span class="s" data-k="the-core-primitives-b14-1">收件箱应只存放已准备好处理的事件。</span><span class="s" data-k="the-core-primitives-b14-2">后续跟进和定期任务可以采用类似的数据结构，但定期任务还需要记录其重复执行规则。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="定时器：两种到点叫醒"><div class="fig-media"><img class="still" src="media/img3.jpg" loading="lazy" decoding="async" alt="Diagram of timers. A run sets a timer in a database table, either a follow-up set by the agent or a schedule set by the user. A scheduler finds what’s due and adds an event to the event inbox, which starts the next run."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>定时器：两种到点叫醒</b>　Run 往表里写一条定时器（智能体设的跟进 / 用户设的日程）；Scheduler 找到到点的记录，往事件收件箱加一个事件，从而启动下一次运行。</p><p class="cap-en">原文图注：Diagram of timers. A run sets a timer in a database table, either a follow-up set by the agent or a schedule set by the user. A scheduler finds what’s due and adds an event to the event inbox, which starts the next run.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>左卡 Thu 18:00 Follow-up，Set by the agent；右卡 Fri 09:00 Daily newsletter，Set by the user</li><li>沿 1→4 看闭环：设 timer → scheduler 找到期 → 加事件 → 启动 run</li><li>定时器只保存「未来触发」的记录；真正往收件箱投事件的是调度器 Scheduler</li></ol><p class="takeaway">一句话：定时器是「未来的一个事件」，不是「一个后台任务」。</p></details></figcaption></figure>
+<div class="row" data-rid="the-core-primitives-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b16-0">A timer doesn’t initiate a run on its own.</span> <span class="s" data-k="the-core-primitives-b16-1">Instead, a scheduler, usually a background service, polls the store at a fixed interval and fires anything that’s due.</span> <span class="s" data-k="the-core-primitives-b16-2">On each pass, the scheduler:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b16-0">定时器本身不会启动一次运行。</span><span class="s" data-k="the-core-primitives-b16-1">相反，调度器（通常是一个后台服务）会按固定间隔轮询存储，并触发所有已到期的定时器。</span><span class="s" data-k="the-core-primitives-b16-2">每轮轮询中，调度器会：</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b17"><div class="cell en" lang="en"><ol class='para'><li><span class="s" data-k="the-core-primitives-b17-0-0">Scans the store and finds timers that are due.</span></li><li><span class="s" data-k="the-core-primitives-b17-1-0">Updates each timer based on its category.</span> <span class="s" data-k="the-core-primitives-b17-1-1">A follow-up should be marked as done.</span> <span class="s" data-k="the-core-primitives-b17-1-2">A schedule should get its due time updated to the next occurrence.</span></li><li><span class="s" data-k="the-core-primitives-b17-2-0">Adds an event to the inbox and wakes the worker.</span></li></ol></div><div class="cell zh"><ol class='para'><li><span class="s" data-k="the-core-primitives-b17-0-0">调度器扫描存储，找出已到期的定时器。</span></li><li><span class="s" data-k="the-core-primitives-b17-1-0">然后按类别更新每个定时器。</span><span class="s" data-k="the-core-primitives-b17-1-1">跟进任务应标记为已完成。</span><span class="s" data-k="the-core-primitives-b17-1-2">定期计划应把到期时间更新为下一次触发。</span></li><li><span class="s" data-k="the-core-primitives-b17-2-0">最后向收件箱添加一个事件，并唤醒工作进程。</span></li></ol></div></div>
+<div class="row" data-rid="the-core-primitives-b18"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b18-0">For the scheduler, you can either build your own service or use a durable execution engine.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b18-0">对于调度器，你可以自行构建服务，也可以使用持久执行引擎。</span></p></div></div>
+<div class="row h3row wide" id="h-the-core-primitives-b19"><h3><span class='h3-en'>Memory</span><span class='h3-zh'>记忆</span></h3></div>
+<div class="row" data-rid="the-core-primitives-b20"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b20-0">Always-on agents work across many disjointed runs and rely on memory to maintain continuity.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b20-0">常驻智能体会经历多次彼此独立的运行，并依靠记忆来保持连续性。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b21"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b21-0">Similar to the event inbox and timers, memory should have its own store.</span> <span class="s" data-k="the-core-primitives-b21-1">In our products, such as Claude Code’s <a class='lnk' href='https://code.claude.com/docs/en/memory' target='_blank' rel='noopener' data-link='L3'>auto memory</a> and the Messages API’s <a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool' target='_blank' rel='noopener' data-link='L4'>memory tool</a>, this is implemented as a directory of files.</span> <span class="s" data-k="the-core-primitives-b21-2">For an always-on agent, the directories should map to durable storage, usually a database or an object store.</span> <span class="s" data-k="the-core-primitives-b21-3">This way memories outlive the worker.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b21-0">与事件收件箱和定时器类似，记忆也应有自己的存储。</span><span class="s" data-k="the-core-primitives-b21-1">在我们的产品中，例如 Claude Code 的<a class='lnk' href='https://code.claude.com/docs/en/memory' target='_blank' rel='noopener' data-link='L3'>自动记忆</a>和 Messages API 的<a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool' target='_blank' rel='noopener' data-link='L4'>记忆工具</a>，记忆以文件目录的形式实现。</span><span class="s" data-k="the-core-primitives-b21-2">对于常驻智能体，这些目录应映射到持久存储，通常是数据库或对象存储。</span><span class="s" data-k="the-core-primitives-b21-3">这样，即使工作进程结束，记忆仍然存在。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b22"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b22-0">As a rule of thumb, memory should only hold what the agent can’t look up again.</span> <span class="s" data-k="the-core-primitives-b22-1">If something already lives in another system, such as an issue tracker, you should save a pointer instead.</span> <span class="s" data-k="the-core-primitives-b22-2">Here is a breakdown of the types of memory an always-on agent should store:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b22-0">一条经验法则是，记忆只应保存智能体无法再次查到的信息。</span><span class="s" data-k="the-core-primitives-b22-1">如果某项信息已经存在于另一个系统中，例如问题跟踪系统，就应保存指向它的引用。</span><span class="s" data-k="the-core-primitives-b22-2">以下是常驻智能体应存储的记忆类型：</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b23"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="the-core-primitives-b23-0-0"><b>User instructions:</b> Any instructions from the user about agent behavior should be saved in their own file and loaded at the start of every run.</span> <span class="s" data-k="the-core-primitives-b23-0-1">The user won’t always be around to steer the agent, so the instructions have to carry over between runs.</span></li><li><span class="s" data-k="the-core-primitives-b23-1-0"><b>User notes:</b> The agent should save what it’s learned about the user, such as their role, their preferences, or any corrections they’ve given.</span> <span class="s" data-k="the-core-primitives-b23-1-1">You can start with one file and move to several small files as the notes grow.</span> <span class="s" data-k="the-core-primitives-b23-1-2">In the latter case, only an index is loaded at the start of each run, but the agent can pull the individual files into context when it needs more details.</span></li><li><span class="s" data-k="the-core-primitives-b23-2-0"><b>Past messages:</b> The agent should keep track of what it’s already told the user so nothing is repeated.</span> <span class="s" data-k="the-core-primitives-b23-2-1">It can either store this in a separate file that’s loaded at the start of each run, or have the worker load the agent’s last few messages with the user.</span></li><li><span class="s" data-k="the-core-primitives-b23-3-0"><b>Task progress:</b> For each ongoing task, the agent should keep a progress file that covers what’s been done and what’s left.</span> <span class="s" data-k="the-core-primitives-b23-3-1">Any new run can then read that file and pick up where the previous run left off.</span> <span class="s" data-k="the-core-primitives-b23-3-2">Similar to user notes, only an index is loaded at the start of each run, but the agent can pull the individual files into context when it needs more details.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="the-core-primitives-b23-0-0"><b>用户指令：</b>用户对智能体行为提出的任何指令，都应保存在单独的文件中，并在每次运行开始时加载。</span><span class="s" data-k="the-core-primitives-b23-0-1">用户不会一直在旁引导智能体，因此这些指令必须在不同运行之间保留下来。</span></li><li><span class="s" data-k="the-core-primitives-b23-1-0"><b>用户笔记：</b>智能体应保存它了解到的用户信息，例如用户的角色、偏好或提出过的纠正意见。</span><span class="s" data-k="the-core-primitives-b23-1-1">你可以从一个文件开始，随着笔记增多，再改用多个小文件。</span><span class="s" data-k="the-core-primitives-b23-1-2">在后一种情况下，每次运行开始时只加载索引，但当智能体需要更多细节时，可以将各个文件载入上下文。</span></li><li><span class="s" data-k="the-core-primitives-b23-2-0"><b>历史消息：</b>智能体应记录已经对用户说过的内容，以免重复。</span><span class="s" data-k="the-core-primitives-b23-2-1">它可以将这些内容存储在一个单独的文件中，在每次运行开始时加载；也可以让工作进程加载智能体与用户交流时最近的几条消息。</span></li><li><span class="s" data-k="the-core-primitives-b23-3-0"><b>任务进度：</b>对于每个进行中的任务，智能体都应维护一个进度文件，记录已完成的工作和尚待完成的工作。</span><span class="s" data-k="the-core-primitives-b23-3-1">这样，任何一次新的运行都可以读取该文件，接着上一次运行的进度继续。</span><span class="s" data-k="the-core-primitives-b23-3-2">与用户笔记类似，每次运行开始时只加载索引，但当智能体需要更多细节时，可以将各个文件载入上下文。</span></li></ul></div></div>
+<div class="row" data-rid="the-core-primitives-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b24-0">The diagram below shows one example setup.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b24-0">下图展示了一种配置示例。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="记忆：每次读什么、何时读"><div class="fig-media"><img class="still" src="media/img4.jpg" loading="lazy" decoding="async" alt="Diagram of an example memory setup as a directory of files. instructions.md, index.md, and reported.md are loaded at the start of every run, while the notes/ and progress/ folders are read when needed. The agent writes to memory during the run."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>记忆：每次读什么、何时读</b>　目录里 instructions.md、index.md、reported.md 每次运行都读；notes/ 与 progress/ 按需读；运行中可以往记忆里写。</p><p class="cap-en">原文图注：Diagram of an example memory setup as a directory of files. instructions.md, index.md, and reported.md are loaded at the start of every run, while the notes/ and progress/ folders are read when needed. The agent writes to memory during the run.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看 Read 列：前三行 Every run，后两行 When needed</li><li>notes/ 小而聚焦，记「学到了用户什么」；progress/ 一个任务一个文件</li><li>左侧三条箭头分别对应加载、写入、按需读取</li></ol><p class="takeaway">一句话：这个示例按读取频率组织记忆文件：常用信息每次加载，详细笔记与任务进度按需读取。</p></details></figcaption></figure>
+<div class="row" data-rid="the-core-primitives-b26"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b26-0">All of the above describes memory that’s saved during a run.</span> <span class="s" data-k="the-core-primitives-b26-1">You can also add dreaming, which reviews past sessions to curate memories.</span> <span class="s" data-k="the-core-primitives-b26-2">Dreaming can replace outdated entries and find patterns that only show up across many runs.</span> <span class="s" data-k="the-core-primitives-b26-3">If you’re interested in learning more, our <a class='lnk' href='https://www.anthropic.com/research/components-of-agent-memory' target='_blank' rel='noopener' data-link='L5'>post on agent memory</a> covers this in more detail.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b26-0">以上描述的都是在运行过程中保存的记忆。</span><span class="s" data-k="the-core-primitives-b26-1">你还可以加入做梦机制，通过回顾过去的会话来整理记忆。</span><span class="s" data-k="the-core-primitives-b26-2">做梦机制可以替换过时的条目，并发现只有在多次运行中才会显现的模式。</span><span class="s" data-k="the-core-primitives-b26-3">如果你想了解更多，我们<a class='lnk' href='https://www.anthropic.com/research/components-of-agent-memory' target='_blank' rel='noopener' data-link='L5'>关于智能体记忆的文章</a>对此有更详细的介绍。</span></p></div></div>
+<div class="row h3row wide" id="h-the-core-primitives-b27"><h3><span class='h3-en'>Inside the context window</span><span class='h3-zh'>上下文窗口内部</span></h3></div>
+<div class="row" data-rid="the-core-primitives-b28"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b28-0">Before doing any work, the agent loads the system prompt, tool definitions, and memory files.</span> <span class="s" data-k="the-core-primitives-b28-1">This initial context “overhead” is included in every run, so we recommend keeping it lean and using <a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/prompt-caching' target='_blank' rel='noopener' data-link='L6'>prompt caching</a> to lower costs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b28-0">在开展任何工作之前，智能体会加载系统提示词、工具定义和记忆文件。</span><span class="s" data-k="the-core-primitives-b28-1">每次运行都包含这部分初始上下文“开销”，因此我们建议尽量精简它，并使用<a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/prompt-caching' target='_blank' rel='noopener' data-link='L6'>提示词缓存</a>来降低成本。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b29"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b29-0">A new session starts only with this context overhead and the events that triggered the run.</span> <span class="s" data-k="the-core-primitives-b29-1">An existing session, on the other hand, brings back the messages and tool calls from its earlier runs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b29-0">新会话开始时，只有这部分上下文开销和触发本次运行的事件。</span><span class="s" data-k="the-core-primitives-b29-1">而已有会话则会恢复此前各次运行中的消息和工具调用。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b30"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b30-0">If a session becomes too long, you can either <a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction' target='_blank' rel='noopener' data-link='L7'>compact the older messages</a> or start a new session.</span> <span class="s" data-k="the-core-primitives-b30-1">Both approaches lose detail, so anything that needs to persist should be saved to memory along the way.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b30-0">如果会话变得太长，你可以<a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction' target='_blank' rel='noopener' data-link='L7'>压缩较早的消息</a>，也可以开始一个新会话。</span><span class="s" data-k="the-core-primitives-b30-1">这两种方式都会丢失细节，因此，需要持久保留的内容都应在过程中存入记忆。</span></p></div></div>
+<figure class="row wide fig has-video" id="fig5" data-cap="上下文随时间增长，直到压缩"><div class="fig-media has-video"><img class="video-poster" src="media/img5-still.png" alt="Animated chart of context used over time. A fixed band for the system prompt, tools, and memory is present on every run. An existing session brings back its whole transcript and grows until compaction turns the older transcript into a summary." loading="lazy"><button class="video-play" type="button" data-video="fig5" data-src="media/img5.mp4"><b>▶ 播放视频</b><small>0.1 MB · 按需加载</small></button><div class="fig-bar"><span class="vtag">视频按需加载 · 支持拖动</span></div></div><figcaption><p class="cap-zh"><b>上下文随时间增长，直到压缩</b>　每次运行都带固定的系统提示/工具/记忆；已有会话整段带回，越滚越大，直到压缩把旧记录变成摘要；之后可以开新会话，只带最近几条。</p><p class="cap-en">原文图注：Animated chart of context used over time. A fixed band for the system prompt, tools, and memory is present on every run. An existing session brings back its whole transcript and grows until compaction turns the older transcript into a summary.</p><p class="cap-video">▶ 视频按需加载（0.1 MB，浏览器 Range 请求，点击后才下载）。</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看底部浅灰带 On every run：它每次都在，不随会话增长</li><li>橙色折线两次上升，中间那次垂直下落就是 Compaction</li><li>图右 New session 的箭头写着 last few messages，和 Existing session 的 whole transcript 对照</li></ol><p class="takeaway">一句话：压缩与重开会话，是控制上下文的两个阀门。</p></details></figcaption></figure>
+<div class="row h3row wide" id="h-the-core-primitives-b32"><h3><span class='h3-en'>Permissions</span><span class='h3-zh'>权限</span></h3></div>
+<div class="row" data-rid="the-core-primitives-b33"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b33-0">Permissions are where always-on agents carry the most risk.</span> <span class="s" data-k="the-core-primitives-b33-1">A run holds the user’s access and, by design, operates unattended.</span> <span class="s" data-k="the-core-primitives-b33-2">For each tool call, the agent needs to decide whether to proceed on its own, block it, or wait for approval.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b33-0">权限是常驻智能体风险最大的环节。</span><span class="s" data-k="the-core-primitives-b33-1">一次运行持有用户的访问权限，并且按设计会在无人值守的情况下工作。</span><span class="s" data-k="the-core-primitives-b33-2">对于每次工具调用，智能体都需要决定是自行继续、阻止调用，还是等待批准。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b34"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b34-0">The components for permissions are the same ones other agents use:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b34-0">权限相关的组件与其他智能体使用的相同：</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b35"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="the-core-primitives-b35-0-0"><b>Credential store:</b> Always-on agents often need sensitive user credentials like passwords or access tokens to be useful.</span> <span class="s" data-k="the-core-primitives-b35-0-1">The <a class='lnk' href='https://code.claude.com/docs/en/agent-sdk/secure-deployment#credential-management' target='_blank' rel='noopener' data-link='L8'>recommended pattern</a> is a proxy outside the agent’s environment that adds credentials to outgoing requests.</span> <span class="s" data-k="the-core-primitives-b35-0-2">The agent sends requests without credentials, and the proxy injects the real credentials before forwarding.</span></li><li><span class="s" data-k="the-core-primitives-b35-1-0"><b>Auto mode:</b> An always-on agent should be able to work without constant user input.</span> <span class="s" data-k="the-core-primitives-b35-1-1">We’ve already tackled a version of this problem with <a class='lnk' href='https://www.anthropic.com/research/claude-code-auto-mode' target='_blank' rel='noopener' data-link='L9'>auto mode</a> in Claude Code.</span> <span class="s" data-k="the-core-primitives-b35-1-2">Auto mode uses classifiers to review higher-risk actions and block the ones they identify as dangerous so Claude can find a safer approach.</span> <span class="s" data-k="the-core-primitives-b35-1-3">User review, however, is still necessary for the most important decisions.</span></li><li><span class="s" data-k="the-core-primitives-b35-2-0"><b>Deferred tool calls:</b> In Claude Code, <a class='lnk' href='https://code.claude.com/docs/en/hooks#defer-a-tool-call-for-later' target='_blank' rel='noopener' data-link='L10'>a hook can defer a tool call</a> and wait for additional input from the user.</span> <span class="s" data-k="the-core-primitives-b35-2-1">The same pattern applies to always-on agents, which may need clarification or approval before taking certain actions.</span> <span class="s" data-k="the-core-primitives-b35-2-2">When a call is deferred, the run ends and the session is saved mid-call.</span> <span class="s" data-k="the-core-primitives-b35-2-3">The request is shown to the user (e.g., through an interactive card built with <a class='lnk' href='https://modelcontextprotocol.io/extensions/apps/overview' target='_blank' rel='noopener' data-link='L11'>MCP Apps</a>), and their answer comes back as an event in the inbox.</span> <span class="s" data-k="the-core-primitives-b35-2-4">That event starts a new run, which resumes the saved session with the user’s input.</span> <span class="s" data-k="the-core-primitives-b35-2-5">While the deferred call waits for a response, the worker can pick up other events, so the agent isn’t blocked.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="the-core-primitives-b35-0-0"><b>凭据存储：</b>常驻智能体往往需要密码或访问令牌等敏感的用户凭据，才能发挥作用。</span><span class="s" data-k="the-core-primitives-b35-0-1"><a class='lnk' href='https://code.claude.com/docs/en/agent-sdk/secure-deployment#credential-management' target='_blank' rel='noopener' data-link='L8'>推荐的做法</a>是在智能体环境之外设置一个代理，由它为发出的请求添加凭据。</span><span class="s" data-k="the-core-primitives-b35-0-2">智能体发送不带凭据的请求，代理在转发前注入真实凭据。</span></li><li><span class="s" data-k="the-core-primitives-b35-1-0"><b>自动模式：</b>常驻智能体应该能够在无需用户不断输入的情况下工作。</span><span class="s" data-k="the-core-primitives-b35-1-1">我们已经通过 Claude Code 中的<a class='lnk' href='https://www.anthropic.com/research/claude-code-auto-mode' target='_blank' rel='noopener' data-link='L9'>自动模式</a>，解决了这个问题的一种情形。</span><span class="s" data-k="the-core-primitives-b35-1-2">自动模式使用分类器审查风险较高的操作，并阻止被判定为危险的操作，以便 Claude 寻找更安全的做法。</span><span class="s" data-k="the-core-primitives-b35-1-3">不过，最重要的决策仍然需要用户审查。</span></li><li><span class="s" data-k="the-core-primitives-b35-2-0"><b>延后执行的工具调用：</b>在 Claude Code 中，<a class='lnk' href='https://code.claude.com/docs/en/hooks#defer-a-tool-call-for-later' target='_blank' rel='noopener' data-link='L10'>钩子可以延后执行工具调用</a>，等待用户提供更多输入。</span><span class="s" data-k="the-core-primitives-b35-2-1">同样的模式也适用于常驻智能体，因为它们在执行某些操作之前，可能需要澄清或获得批准。</span><span class="s" data-k="the-core-primitives-b35-2-2">当工具调用被延后执行时，本次运行结束，会话则保存在调用尚未完成的状态。</span><span class="s" data-k="the-core-primitives-b35-2-3">请求会展示给用户（例如，通过使用 <a class='lnk' href='https://modelcontextprotocol.io/extensions/apps/overview' target='_blank' rel='noopener' data-link='L11'>MCP Apps</a> 构建的交互卡片），用户的回答则作为一个事件返回到收件箱。</span><span class="s" data-k="the-core-primitives-b35-2-4">该事件会启动一次新的运行，带着用户的输入恢复已保存的会话。</span><span class="s" data-k="the-core-primitives-b35-2-5">在延后执行的调用等待响应期间，工作进程可以处理其他事件，因此智能体不会被阻塞。</span></li></ul></div></div>
+<div class="row h3row wide" id="h-the-core-primitives-b36"><h3><span class='h3-en'>Outbox</span><span class='h3-zh'>发件箱</span></h3></div>
+<div class="row" data-rid="the-core-primitives-b37"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b37-0">With most AI agents, the response is streamed to the user as it’s generated, so they can follow along as Claude reasons through the problem, calls tools, and writes its answer.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b37-0">大多数 AI 智能体会在生成回答的同时，将内容流式传输给用户，因此用户可以跟随 Claude 分析问题、调用工具并撰写回答的过程。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b38"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b38-0">Always-on agents, on the other hand, do most of their work in the background.</span> <span class="s" data-k="the-core-primitives-b38-1">The user gets the outcome and a few details, rather than the entire step-by-step breakdown.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b38-0">而常驻智能体的大部分工作都在后台进行。</span><span class="s" data-k="the-core-primitives-b38-1">用户收到的是结果和少量细节，而非完整的逐步说明。</span></p></div></div>
+<figure class="row wide fig" id="fig6" data-cap="发件箱：把「说」和「送达」拆开"><div class="fig-media"><img class="still" src="media/img6.jpg" loading="lazy" decoding="async" alt="Diagram of the outbox. A run ends with nothing to say, a send tool call, or a deferred tool call that asks the user. Messages go to the outbox, a database table, and a dispatcher delivers them to the user. A deferred request can go through the outbox or be shown in your own interface."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>发件箱：把「说」和「送达」拆开</b>　一次运行可能什么都不说、发一条消息、或延后一个要问用户的问题；消息先进 outbox 表，再由 dispatcher 投递。延后的问题可以走 outbox，也可以在自己的界面里展示。</p><p class="cap-en">原文图注：Diagram of the outbox. A run ends with nothing to say, a send tool call, or a deferred tool call that asks the user. Messages go to the outbox, a database table, and a dispatcher delivers them to the user. A deferred request can go through the outbox or be shown in your own interface.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>三条出口：Nothing to say / Send tool call / Ask the user（Deferred）</li><li>看 outbox 表的三行 pending 与一行 sent，Status 是投递状态</li><li>最下方虚线 Or in your own interface：延后的问题不必经过 outbox</li></ol><p class="takeaway">一句话：发件箱把生成消息与投递消息分开，便于控制发送节奏、支持错误恢复。</p></details></figcaption></figure>
+<div class="row" data-rid="the-core-primitives-b40"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b40-0">A run can end in one of three ways:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b40-0">一次运行可以通过以下三种方式之一结束：</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b41"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="the-core-primitives-b41-0-0">The agent sends a message to the outbox,</span></li><li><span class="s" data-k="the-core-primitives-b41-1-0">The agent decides that nothing needs to be sent, or</span></li><li><span class="s" data-k="the-core-primitives-b41-2-0">The agent uses a deferred tool call to request permission or additional input.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="the-core-primitives-b41-0-0">智能体向发件箱发送一条消息，</span></li><li><span class="s" data-k="the-core-primitives-b41-1-0">智能体判断无需发送任何内容，或者</span></li><li><span class="s" data-k="the-core-primitives-b41-2-0">智能体通过延后执行的工具调用请求权限或更多输入。</span></li></ul></div></div>
+<div class="row" data-rid="the-core-primitives-b42"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b42-0">Most always-on agents can get by with a “send” tool that delivers the message directly to the user.</span> <span class="s" data-k="the-core-primitives-b42-1">You only need a formal outbox when you want to pace your agent’s messages or allow your agent to recover from errors.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b42-0">大多数常驻智能体只需一个将消息直接发送给用户的“send”工具，就足以满足需求。</span><span class="s" data-k="the-core-primitives-b42-1">只有当你希望控制智能体发送消息的节奏，或让智能体能够从错误中恢复时，才需要一个正式的发件箱。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b43"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b43-0">The outbox is a separate table of outgoing messages, analogous to the event inbox.</span> <span class="s" data-k="the-core-primitives-b43-1">There’s also a <span class='term' data-term='dispatcher'>dispatcher</span>, usually a background service, that’s analogous to the worker.</span> <span class="s" data-k="the-core-primitives-b43-2">The dispatcher reads the pending messages, decides what to deliver, and sends those to the user.</span> <span class="s" data-k="the-core-primitives-b43-3">A request from a deferred tool call can either go through the outbox or be shown directly in the interface.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b43-0">发件箱是一张独立的待发送消息表，与事件收件箱类似。</span><span class="s" data-k="the-core-primitives-b43-1">此外，还有一个与工作进程类似的<span class='term' data-term='dispatcher'>分发器</span>，通常是一个后台服务。</span><span class="s" data-k="the-core-primitives-b43-2">分发器读取待发送的消息，决定要投递哪些消息，并将这些消息发送给用户。</span><span class="s" data-k="the-core-primitives-b43-3">来自延迟工具调用的请求既可以通过发件箱发送，也可以直接显示在界面中。</span></p></div></div>
+<div class="row" data-rid="the-core-primitives-b44"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-core-primitives-b44-0">Beyond delivery, it’s important to tune how many messages the agent sends.</span> <span class="s" data-k="the-core-primitives-b44-1">An agent that sends too many becomes noisy, while an agent that doesn’t send enough misses things that the user needs to know.</span> <span class="s" data-k="the-core-primitives-b44-2">We recommend building evals to find the right balance.</span> <span class="s" data-k="the-core-primitives-b44-3">In practice, it’s better for the agent to start quiet and then earn more of the user’s attention over time.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-core-primitives-b44-0">除了消息投递之外，调整智能体发送消息的数量也很重要。</span><span class="s" data-k="the-core-primitives-b44-1">智能体发送的消息太多，就会造成干扰；发送的消息太少，又会遗漏用户需要知道的事情。</span><span class="s" data-k="the-core-primitives-b44-2">我们建议构建评估来找到合适的平衡点。</span><span class="s" data-k="the-core-primitives-b44-3">在实践中，最好让智能体起初保持安静，再随着时间推移逐步赢得用户更多的关注。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-how-everything-fits-together">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">How everything fits together</span><span class="h-zh">五个原语如何扣在一起</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>把五个原语放回一张图：定时器与收件箱启动运行，运行在会话里用记忆与权限，发件箱把话送出去，用户的回答再变成事件。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="how-everything-fits-together-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-everything-fits-together-b0-0">Here is how the five primitives fit together:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-everything-fits-together-b0-0">这五个原语的协作方式如下：</span></p></div></div>
+<figure class="row wide fig has-video" id="fig7" data-cap="五个原语如何扣在一起"><div class="fig-media has-video"><img class="video-poster" src="media/img7-still.png" alt="Animated diagram of how the five primitives fit together. Timers and the event inbox start a run, the run works with memory and permissions inside a session, and the outbox delivers messages to the user, whose answer comes back as an event." loading="lazy"><button class="video-play" type="button" data-video="fig7" data-src="media/img7.mp4"><b>▶ 播放视频</b><small>0.1 MB · 按需加载</small></button><div class="fig-bar"><span class="vtag">视频按需加载 · 支持拖动</span></div></div><figcaption><p class="cap-zh"><b>五个原语如何扣在一起</b>　左中右三栏：什么启动一次运行（定时器/收件箱）、运行用什么（记忆/权限/会话）、什么离开运行（发件箱→用户）；用户的答复又作为事件回到收件箱。</p><p class="cap-en">原文图注：Animated diagram of how the five primitives fit together. Timers and the event inbox start a run, the run works with memory and permissions inside a session, and the outbox delivers messages to the user, whose answer comes back as an event.</p><p class="cap-video">▶ 视频按需加载（0.1 MB，浏览器 Range 请求，点击后才下载）。</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>从左到右读三栏标题：What starts a run / What a run works with / What leaves a run</li><li>沿橙色箭头：Timers 与 Event inbox 启动 run，outbox 把消息送出去</li><li>注意底部细线 The answer, as an event：用户的回答闭环回收件箱</li></ol><p class="takeaway">一句话：五个原语共同组成一个闭环：事件触发运行，运行产出的消息投递给用户，用户的答复再作为事件回来。</p></details></figcaption></figure>
+<div class="row" data-rid="how-everything-fits-together-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-everything-fits-together-b2-0">Every run starts with an event from the inbox, whether it’s a user message, a webhook, or a timer.</span> <span class="s" data-k="how-everything-fits-together-b2-1">When the worker picks up an event, it kicks off a run and wakes the agent in a new or existing session.</span> <span class="s" data-k="how-everything-fits-together-b2-2">The agent reads its memory to get a baseline, works within its permissions to take actions, and then updates its memory with anything it has learned.</span> <span class="s" data-k="how-everything-fits-together-b2-3">Once the run is finished, the agent pushes a row to the outbox, and the dispatcher delivers the message to the user.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-everything-fits-together-b2-0">每次运行都由收件箱中的一个事件触发，无论它是用户消息、webhook，还是定时器事件。</span><span class="s" data-k="how-everything-fits-together-b2-1">当工作进程接收到一个事件时，它会启动一次运行，并在新的或现有的会话中唤醒智能体。</span><span class="s" data-k="how-everything-fits-together-b2-2">智能体读取记忆以了解基本情况，在其权限范围内采取行动，然后将学到的内容更新到记忆中。</span><span class="s" data-k="how-everything-fits-together-b2-3">运行结束后，智能体向发件箱写入一条记录，分发器再将消息投递给用户。</span></p></div></div>
+<div class="row" data-rid="how-everything-fits-together-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-everything-fits-together-b3-0">Together, these form a cycle.</span> <span class="s" data-k="how-everything-fits-together-b3-1">A run can set a timer that wakes the agent again later, and when the user replies to a message, their answer comes back as an event in the inbox.</span> <span class="s" data-k="how-everything-fits-together-b3-2">Each run is brief, but the cycle keeps going indefinitely, and that’s what makes the agent feel like it’s always on.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-everything-fits-together-b3-0">这些环节共同构成一个循环。</span><span class="s" data-k="how-everything-fits-together-b3-1">一次运行可以设置一个定时器，在稍后再次唤醒智能体；当用户回复消息时，回复会作为一个事件回到收件箱中。</span><span class="s" data-k="how-everything-fits-together-b3-2">每次运行都很短暂，但这个循环会持续不断地进行，这正是智能体让人感觉始终在线的原因。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-acknowledgements">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Acknowledgements</span><span class="h-zh">致谢</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>原文的致谢与参与名单。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="acknowledgements-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="acknowledgements-b0-0"><i>Written by William Hu.</span> <span class="s" data-k="acknowledgements-b0-1">Special thanks to Rodrigo Olivares and Michael Segner for their contributions.</i></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="acknowledgements-b0-0"><i>作者：William Hu。</span><span class="s" data-k="acknowledgements-b0-1">特别感谢 Rodrigo Olivares 和 Michael Segner 的贡献。</i></span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 11 处正文引用，指向 11 个不同链接；另有 7 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>构建有效的智能体</h4><p class="lnk-site">anthropic.com · Building effective agents</p><p class="lnk-anchors">正文对应：<em>核心循环</em></p><p><b>这是什么：</b>Anthropic 的官方长文，给出 agent 的最小定义：模型在循环里调用工具，直到任务完成。</p><p><b>为什么值得点：</b>本文说常驻智能体「底层仍是同一个核心循环」，这篇就是那个循环的出处。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>agent = 模型 + 工具 + 循环；真正拉开差距的是循环外面的工程，而不是循环本身。</p><ul><li>把 workflow 与 agent 分开：前者按预设路径走，后者自己决定下一步</li><li>工具设计、上下文管理、评估是三个主要工程面</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip must">必读</span><span class="chip">建议第 7 个读</span><span class="chip">本区域受限</span></div><h4>上下文压缩</h4><p class="lnk-site">platform.claude.com · Compaction</p><p class="lnk-anchors">正文对应：<em>压缩较旧的消息</em></p><p><b>这是什么：</b>把旧对话压成摘要、腾出上下文窗口的官方能力。</p><p><b>为什么值得点：</b>正文说「已有会话整段带回，直到压缩把旧记录变成摘要」，这是那条机制的文档。</p><p><b>访问说明：</b>本机显示区域不可用；换网络可读。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>压缩是有损的：摘要能保住主线，但细节会丢，所以关键状态要另存到记忆。</p><ul><li>压缩发生在会话内部</li><li>重要事实应写进外部记忆而不是只靠摘要</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/build-with-claude/compaction" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip must">必读</span><span class="chip">建议第 10 个读</span></div><h4>Hooks 参考 · 延后工具调用</h4><p class="lnk-site">code.claude.com · Hooks reference · Defer a tool call</p><p class="lnk-anchors">正文对应：<em>钩子可以延后一次工具调用</em></p><p><b>这是什么：</b>hooks 文档中「把一次工具调用延后到以后」的机制说明。</p><p><b>为什么值得点：</b>正文描述发件箱里的 defer：调用被延后，运行结束，会话保存，等用户答复再继续。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>defer 让「问用户」不阻塞当前运行：先收工存档，答复作为新事件重新叫醒智能体。</p><ul><li>延后不是失败，是正常路径</li><li>答复走事件收件箱回来</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/hooks#defer-a-tool-call-for-later" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip bg">背景</span><span class="chip">建议第 2 个读</span><span class="chip">本区域受限</span></div><h4>为成本与智能做优化</h4><p class="lnk-site">platform.claude.com · Optimizing for cost and intelligence</p><p class="lnk-anchors">正文对应：<em>一项长时程编程基准测试</em></p><p><b>这是什么：</b>官方文档：不同模型在典型负载与长时程任务上的成本对比与选型建议。</p><p><b>为什么值得点：</b>正文「Opus 5.5 每解决一项任务便宜 78%，典型负载只便宜 40%」的出处。</p><p><b>访问说明：</b>本机访问显示「App unavailable in region」，换网络或代理可读；不影响本文结论。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>长时程任务的成本降幅远大于典型负载，这是常驻智能体重新变得可行的直接原因之一。</p><ul><li>按任务长度看单任务成本，而不是只看每百万 token 单价</li><li>长时程任务对模型判断力更敏感</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 3 个读</span></div><h4>Claude 如何记住你的项目</h4><p class="lnk-site">code.claude.com · How Claude remembers your project</p><p class="lnk-anchors">正文对应：<em>自动记忆</em></p><p><b>这是什么：</b>Claude Code 的项目记忆机制说明：CLAUDE.md、导入与自动记忆。</p><p><b>为什么值得点：</b>正文把「记忆」列为核心原语，这是现成实现之一。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>记忆可以是一个项目级文件，由人写规则、由模型在运行中补充；读什么、写什么都要显式规定。</p><ul><li>CLAUDE.md 是每次会话都加载的常驻指令</li><li>自动记忆把「这次学到的东西」写回文件</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/memory" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 4 个读</span><span class="chip">本区域受限</span></div><h4>记忆工具</h4><p class="lnk-site">platform.claude.com · Memory tool</p><p class="lnk-anchors">正文对应：<em>记忆工具</em></p><p><b>这是什么：</b>让模型通过工具读写一个记忆目录的 API 文档。</p><p><b>为什么值得点：</b>对应正文「记忆是一组文件，运行中写、需要时读」的落地接口。</p><p><b>访问说明：</b>本机显示区域不可用；换网络可读。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把记忆做成目录 + 文件工具，模型可以自己决定记什么、何时读回。</p><ul><li>工具只暴露目录内路径</li><li>适合跨会话保留小而稳定的信息</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span><span class="chip">本区域受限</span></div><h4>提示缓存</h4><p class="lnk-site">platform.claude.com · Prompt caching</p><p class="lnk-anchors">正文对应：<em>提示缓存</em></p><p><b>这是什么：</b>把稳定前缀缓存起来、降低重复计算成本的官方文档。</p><p><b>为什么值得点：</b>常驻智能体每次运行都带同一段系统提示与记忆，缓存直接决定单位成本。</p><p><b>访问说明：</b>本机显示区域不可用；换网络可读。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>稳定前缀缓存后，重复的系统提示与工具定义不再按全价计费。</p><ul><li>缓存命中按更低价计费</li><li>前缀要稳定，别把时间戳塞进系统提示</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>安全地部署智能体</h4><p class="lnk-site">code.claude.com · Securely deploying AI agents</p><p class="lnk-anchors">正文对应：<em>推荐做法</em></p><p><b>这是什么：</b>Claude Code 安全部署文档里的凭据管理一节。</p><p><b>为什么值得点：</b>常驻智能体无人盯守，权限与凭据隔离是前置条件。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>每个用户、每个会话用自己的凭据，代理层不要持有万能钥匙。</p><ul><li>凭据按用户隔离</li><li>高风险工具加审批门</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/agent-sdk/secure-deployment#credential-management" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>我们如何构建 Claude Code 的自动模式</h4><p class="lnk-site">anthropic.com · How we built Claude Code auto mode</p><p class="lnk-anchors">正文对应：<em>自动模式</em></p><p><b>这是什么：</b>官方介绍：在无人逐步确认时，如何给工具调用分级放行。</p><p><b>为什么值得点：</b>对应正文「权限要规定什么时候必须问人」的分级思路。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>自动模式用分类器审查风险较高的操作，阻止其中被判定为危险的操作；最重要的决策仍需用户审查。</p><ul><li>按动作风险分级</li><li>保留人工确认入口</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/claude-code-auto-mode" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip">可选</span><span class="chip">建议第 5 个读</span></div><h4>智能体记忆的组成</h4><p class="lnk-site">anthropic.com · The components of agent memory</p><p class="lnk-anchors">正文对应：<em>关于智能体记忆的文章</em></p><p><b>这是什么：</b>官方研究博客，拆解智能体记忆由哪些部分组成、各自解决什么问题。</p><p><b>为什么值得点：</b>为正文「记忆读什么、写什么」的取舍提供背景。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>记忆不是一个向量库：指令、事实、经验、进度是不同种类，读写频率也不同。</p><ul><li>按读写频率分层</li><li>遗忘与压缩是设计的一部分</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/components-of-agent-memory" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip">可选</span><span class="chip">建议第 11 个读</span></div><h4>MCP Apps</h4><p class="lnk-site">modelcontextprotocol.io · MCP Apps</p><p class="lnk-anchors">正文对应：<em>MCP Apps</em></p><p><b>这是什么：</b>MCP 的交互式卡片扩展：工具可以返回可操作的 UI，而不只是文本。</p><p><b>为什么值得点：</b>正文举例：审批请求可以用 MCP Apps 做成卡片给用户点。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把「批准/拒绝」做成卡片，用户点一下就是一个结构化答复，回到收件箱。</p><ul><li>工具结果可以是 UI</li><li>适合审批与参数确认</li></ul></details><a class="lnk-open" href="https://modelcontextprotocol.io/extensions/apps/overview" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 13 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">always-on agent</span><span class="gl-zh">常驻智能体</span></div><p class="gl-def">跨会话保留状态、不等用户发消息也能自己醒来干活的一类智能体。它的「常驻」是用户体验，底层其实是「大部分时间睡着、被事件叫醒」。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">stateful</span><span class="gl-zh">有状态</span></div><p class="gl-def">指系统把上一轮的结果存下来，下一轮还能读到。与之相对的是每次调用都从零开始的「无状态」。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">run</span><span class="gl-zh">运行</span></div><p class="gl-def">智能体被一个事件叫醒后，从开始干活到收工存档的那一段。一次运行结束，智能体重新睡下，等下一个事件。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">session</span><span class="gl-zh">会话</span></div><p class="gl-def">可跨多次运行累积的消息与工具调用记录。恢复已有会话时会带回此前运行的记录；也可以另开新会话，只带最近几条消息。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">primitive</span><span class="gl-zh">原语</span></div><p class="gl-def">这里指搭常驻智能体时反复使用的最小构件：收件箱、定时器、记忆、权限、发件箱。每个都只解决一件事。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">event inbox</span><span class="gl-zh">事件收件箱</span></div><p class="gl-def">接收事件的持久化列表，通常用数据库表实现，同一时刻只有一个活跃工作进程读取并批量处理。它把「谁在什么时候叫醒智能体」变成可去重、可重试的记录。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">handler</span><span class="gl-zh">处理器</span></div><p class="gl-def">接收事件、把事件写进收件箱并唤醒工作进程的那段代码，通常是一个 HTTP 端点；它也可以做轻量检查，深入验证留到运行期间。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">timer</span><span class="gl-zh">定时器</span></div><p class="gl-def">保存在独立持久化存储中的到期触发记录，通常用数据库表实现；可以是智能体自己设的跟进，也可以是用户设的周期任务。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">memory</span><span class="gl-zh">记忆</span></div><p class="gl-def">跨运行保留、下次开工要读的那部分信息，通常是一组文件：用户指令、索引、已汇报过什么、笔记与进度。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">permission</span><span class="gl-zh">权限</span></div><p class="gl-def">对智能体每一次工具调用的放行规则：自行执行、阻止，还是等待用户批准。无人盯着时，这个判断要逐次做。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">outbox</span><span class="gl-zh">发件箱</span></div><p class="gl-def">智能体要说的话先写进的一张表，由分发器投递。它把「生成消息」和「送达消息」拆开；只有需要控制发送节奏或从错误中恢复时，才需要正式发件箱。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">dispatcher</span><span class="gl-zh">分发器</span></div><p class="gl-def">后台服务：读取待发消息、决定投递哪些，并把它们发送给用户。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tool call</span><span class="gl-zh">工具调用</span></div><p class="gl-def">模型请求执行一个具体动作（读文件、发消息、查数据库）的结构化调用。常驻智能体的权限就是按工具调用逐条检查的。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>always-on 的译法</h4><p>本文统一译作「常驻智能体」。原文自己提醒：always-on 描述的是用户体验，不是 24 小时不停计算——它大部分时间在睡。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>run 与 session 不是一回事</h4><p>run 是被一个事件切出来的一段工作；session 是可跨多次运行累积的消息与工具调用记录。恢复已有会话时会带回此前运行的记录；也可以另开新会话，只带最近几条消息。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>78% 与 40% 的口径</h4><p>78% 是「每解决一个任务」的成本降幅，来自一项长时程编程基准；40% 是典型负载。两者都不是每百万 token 单价的降幅，也不代表所有任务都降 78%。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>压缩是有损的</h4><p>压缩与重开会话都会丢细节，所以需要保留的状态要随时写进记忆。图 4 里的 reported.md 是其中一种做法：单独记录「已经告诉过用户什么」，避免重复汇报；正文也允许工作进程加载智能体最近与用户交流的几条消息。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>defer 不是失败</h4><p>defer 会结束本次运行并保存未完成的调用；用户的答复作为新事件启动下一次运行，再恢复保存的会话。实现时应保留会话，并让用户答复触发新运行。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>权限的重点在参数与时机</h4><p>无人值守时，权限要对每一次工具调用判断：自行执行、阻止，还是等用户批准。重点不在「能不能用某个工具」，而在这一次调用该不该放行。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>卡片审批</h4><p>MCP Apps 让工具返回可点的卡片。正文用它举例：审批请求可以显示成卡片，用户的答复作为一个事件回到收件箱；答复的内容形式不限。</p></div></div></div></section><footer><p>原文 2026-11-13 发布于 Anthropic 的 Claude 博客，作者 William Hu；原文版权归 Anthropic。中文译文、术语卡、译注与图注解读为本页所加。</p><p>原文：<a href="https://claude.com/resources/articles/building-always-on-agents" target="_blank" rel="noopener">Building always-on agents</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-the-cycle-behind-the-always-on-agent"><span class="dot">●</span>常驻智能体的循环</a><a class="l2" href="#s-the-core-primitives"><span class="dot">●</span>五个核心原语</a><a class="l3" href="#h-the-core-primitives-b1"><span class="dot">●</span>事件收件箱</a><a class="l3" href="#h-the-core-primitives-b12"><span class="dot">●</span>定时器</a><a class="l3" href="#h-the-core-primitives-b19"><span class="dot">●</span>记忆</a><a class="l3" href="#h-the-core-primitives-b27"><span class="dot">●</span>上下文窗口内部</a><a class="l3" href="#h-the-core-primitives-b32"><span class="dot">●</span>权限</a><a class="l3" href="#h-the-core-primitives-b36"><span class="dot">●</span>发件箱</a><a class="l2" href="#s-how-everything-fits-together"><span class="dot">●</span>五个原语如何扣在一起</a><a class="l2" href="#s-acknowledgements"><span class="dot">●</span>致谢</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"构建有效的智能体","title_en":"Building effective agents","site":"anthropic.com","what_zh":"Anthropic 的官方长文，给出 agent 的最小定义：模型在循环里调用工具，直到任务完成。","why_zh":"本文说常驻智能体「底层仍是同一个核心循环」，这篇就是那个循环的出处。","tier":"必读","order":1,"url":"https://www.anthropic.com/research/building-effective-agents"},"L2":{"title_zh":"为成本与智能做优化","title_en":"Optimizing for cost and intelligence","site":"platform.claude.com","what_zh":"官方文档：不同模型在典型负载与长时程任务上的成本对比与选型建议。","why_zh":"正文「Opus 5.5 每解决一项任务便宜 78%，典型负载只便宜 40%」的出处。","tier":"背景","order":2,"url":"https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence"},"L3":{"title_zh":"Claude 如何记住你的项目","title_en":"How Claude remembers your project","site":"code.claude.com","what_zh":"Claude Code 的项目记忆机制说明：CLAUDE.md、导入与自动记忆。","why_zh":"正文把「记忆」列为核心原语，这是现成实现之一。","tier":"背景","order":3,"url":"https://code.claude.com/docs/en/memory"},"L4":{"title_zh":"记忆工具","title_en":"Memory tool","site":"platform.claude.com","what_zh":"让模型通过工具读写一个记忆目录的 API 文档。","why_zh":"对应正文「记忆是一组文件，运行中写、需要时读」的落地接口。","tier":"背景","order":4,"url":"https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool"},"L5":{"title_zh":"智能体记忆的组成","title_en":"The components of agent memory","site":"anthropic.com","what_zh":"官方研究博客，拆解智能体记忆由哪些部分组成、各自解决什么问题。","why_zh":"为正文「记忆读什么、写什么」的取舍提供背景。","tier":"可选","order":5,"url":"https://www.anthropic.com/research/components-of-agent-memory"},"L6":{"title_zh":"提示缓存","title_en":"Prompt caching","site":"platform.claude.com","what_zh":"把稳定前缀缓存起来、降低重复计算成本的官方文档。","why_zh":"常驻智能体每次运行都带同一段系统提示与记忆，缓存直接决定单位成本。","tier":"背景","order":6,"url":"https://platform.claude.com/docs/en/build-with-claude/prompt-caching"},"L7":{"title_zh":"上下文压缩","title_en":"Compaction","site":"platform.claude.com","what_zh":"把旧对话压成摘要、腾出上下文窗口的官方能力。","why_zh":"正文说「已有会话整段带回，直到压缩把旧记录变成摘要」，这是那条机制的文档。","tier":"必读","order":7,"url":"https://platform.claude.com/docs/en/build-with-claude/compaction"},"L8":{"title_zh":"安全地部署智能体","title_en":"Securely deploying AI agents","site":"code.claude.com","what_zh":"Claude Code 安全部署文档里的凭据管理一节。","why_zh":"常驻智能体无人盯守，权限与凭据隔离是前置条件。","tier":"背景","order":8,"url":"https://code.claude.com/docs/en/agent-sdk/secure-deployment#credential-management"},"L9":{"title_zh":"我们如何构建 Claude Code 的自动模式","title_en":"How we built Claude Code auto mode","site":"anthropic.com","what_zh":"官方介绍：在无人逐步确认时，如何给工具调用分级放行。","why_zh":"对应正文「权限要规定什么时候必须问人」的分级思路。","tier":"背景","order":9,"url":"https://www.anthropic.com/research/claude-code-auto-mode"},"L10":{"title_zh":"Hooks 参考 · 延后工具调用","title_en":"Hooks reference · Defer a tool call","site":"code.claude.com","what_zh":"hooks 文档中「把一次工具调用延后到以后」的机制说明。","why_zh":"正文描述发件箱里的 defer：调用被延后，运行结束，会话保存，等用户答复再继续。","tier":"必读","order":10,"url":"https://code.claude.com/docs/en/hooks#defer-a-tool-call-for-later"},"L11":{"title_zh":"MCP Apps","title_en":"MCP Apps","site":"modelcontextprotocol.io","what_zh":"MCP 的交互式卡片扩展：工具可以返回可操作的 UI，而不只是文本。","why_zh":"正文举例：审批请求可以用 MCP Apps 做成卡片给用户点。","tier":"可选","order":11,"url":"https://modelcontextprotocol.io/extensions/apps/overview"}},"terms":{"always-on":{"en":"always-on agent","zh":"常驻智能体","def_zh":"跨会话保留状态、不等用户发消息也能自己醒来干活的一类智能体。它的「常驻」是用户体验，底层其实是「大部分时间睡着、被事件叫醒」。"},"stateful":{"en":"stateful","zh":"有状态","def_zh":"指系统把上一轮的结果存下来，下一轮还能读到。与之相对的是每次调用都从零开始的「无状态」。"},"run":{"en":"run","zh":"运行","def_zh":"智能体被一个事件叫醒后，从开始干活到收工存档的那一段。一次运行结束，智能体重新睡下，等下一个事件。"},"session":{"en":"session","zh":"会话","def_zh":"可跨多次运行累积的消息与工具调用记录。恢复已有会话时会带回此前运行的记录；也可以另开新会话，只带最近几条消息。"},"primitive":{"en":"primitive","zh":"原语","def_zh":"这里指搭常驻智能体时反复使用的最小构件：收件箱、定时器、记忆、权限、发件箱。每个都只解决一件事。"},"inbox":{"en":"event inbox","zh":"事件收件箱","def_zh":"接收事件的持久化列表，通常用数据库表实现，同一时刻只有一个活跃工作进程读取并批量处理。它把「谁在什么时候叫醒智能体」变成可去重、可重试的记录。"},"handler":{"en":"handler","zh":"处理器","def_zh":"接收事件、把事件写进收件箱并唤醒工作进程的那段代码，通常是一个 HTTP 端点；它也可以做轻量检查，深入验证留到运行期间。"},"timers":{"en":"timer","zh":"定时器","def_zh":"保存在独立持久化存储中的到期触发记录，通常用数据库表实现；可以是智能体自己设的跟进，也可以是用户设的周期任务。"},"memory":{"en":"memory","zh":"记忆","def_zh":"跨运行保留、下次开工要读的那部分信息，通常是一组文件：用户指令、索引、已汇报过什么、笔记与进度。"},"permissions":{"en":"permission","zh":"权限","def_zh":"对智能体每一次工具调用的放行规则：自行执行、阻止，还是等待用户批准。无人盯着时，这个判断要逐次做。"},"outbox":{"en":"outbox","zh":"发件箱","def_zh":"智能体要说的话先写进的一张表，由分发器投递。它把「生成消息」和「送达消息」拆开；只有需要控制发送节奏或从错误中恢复时，才需要正式发件箱。"},"dispatcher":{"en":"dispatcher","zh":"分发器","def_zh":"后台服务：读取待发消息、决定投递哪些，并把它们发送给用户。"},"tool-call":{"en":"tool call","zh":"工具调用","def_zh":"模型请求执行一个具体动作（读文件、发消息、查数据库）的结构化调用。常驻智能体的权限就是按工具调用逐条检查的。"}},"notes":{"N1":{"title_zh":"always-on 的译法","body_zh":"本文统一译作「常驻智能体」。原文自己提醒：always-on 描述的是用户体验，不是 24 小时不停计算——它大部分时间在睡。"},"N2":{"title_zh":"run 与 session 不是一回事","body_zh":"run 是被一个事件切出来的一段工作；session 是可跨多次运行累积的消息与工具调用记录。恢复已有会话时会带回此前运行的记录；也可以另开新会话，只带最近几条消息。"},"N3":{"title_zh":"78% 与 40% 的口径","body_zh":"78% 是「每解决一个任务」的成本降幅，来自一项长时程编程基准；40% 是典型负载。两者都不是每百万 token 单价的降幅，也不代表所有任务都降 78%。"},"N4":{"title_zh":"压缩是有损的","body_zh":"压缩与重开会话都会丢细节，所以需要保留的状态要随时写进记忆。图 4 里的 reported.md 是其中一种做法：单独记录「已经告诉过用户什么」，避免重复汇报；正文也允许工作进程加载智能体最近与用户交流的几条消息。"},"N5":{"title_zh":"defer 不是失败","body_zh":"defer 会结束本次运行并保存未完成的调用；用户的答复作为新事件启动下一次运行，再恢复保存的会话。实现时应保留会话，并让用户答复触发新运行。"},"N6":{"title_zh":"权限的重点在参数与时机","body_zh":"无人值守时，权限要对每一次工具调用判断：自行执行、阻止，还是等用户批准。重点不在「能不能用某个工具」，而在这一次调用该不该放行。"},"N7":{"title_zh":"卡片审批","body_zh":"MCP Apps 让工具返回可点的卡片。正文用它举例：审批请求可以显示成卡片，用户的答复作为一个事件回到收件箱；答复的内容形式不限。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

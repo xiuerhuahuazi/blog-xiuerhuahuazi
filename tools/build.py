@@ -237,7 +237,7 @@ def build_home(posts):
       <h1>把值得读的文章，<br><em>读透</em>。</h1>
       <p class="lede">英文原文与中文译文逐句对照，配术语卡、译者注和图注解读；下面是平日的技术手记。不是机翻，每一句都过了一遍。</p>
       <dl class="stats">
-        <div><dt>双语精读</dt><dd>10<small>篇</small></dd></div>
+        <div><dt>双语精读</dt><dd>{readers}<small>篇</small></dd></div>
         <div><dt>逐句对照</dt><dd>{pairs}<small>句</small></dd></div>
         <div><dt>术语卡</dt><dd>{terms}<small>张</small></dd></div>
         <div><dt>技术手记</dt><dd>{notes}<small>篇</small></dd></div>
@@ -259,7 +259,7 @@ def build_home(posts):
     </div>
   </div>
 </section>
-""".format(pairs=f"{total_pairs:,}", terms=total_terms, notes=len(posts))
+""".format(readers=len(READERS), pairs=f"{total_pairs:,}", terms=total_terms, notes=len(posts))
 
     feature = ""
     if FEATURED:
