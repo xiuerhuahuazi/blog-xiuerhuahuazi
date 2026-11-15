@@ -98,6 +98,7 @@ HEAD = """<!DOCTYPE html>
 {ogimage}<meta name="twitter:card" content="{twcard}">
 <link rel="stylesheet" href="{r}assets/site.css">
 <script>(function(){{try{{if(localStorage.getItem('site-theme')==='dark'){{document.documentElement.dataset.theme='dark'}}}}catch(e){{}}}})();</script>
+<script>(function(){{try{{var d=document.documentElement;if(!('IntersectionObserver' in window)||!window.matchMedia)return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('js-motion');setTimeout(function(){{if(!d.getAttribute('data-motion-ready'))d.classList.remove('js-motion')}},3000)}}catch(e){{}}}})();</script>
 {extra}
 </head>
 <body class="{bodyclass}">
@@ -189,7 +190,7 @@ def meta_chips(r):
 
 
 def reader_row(r, index, href, tag="h3"):
-    return f"""<article class="read-row">
+    return f"""<article class="read-row" data-reveal style="--i:{min(index - 1, 5)}">
   <span class="row-num" aria-hidden="true">{index:02d}</span>
   <div class="row-main">
     <{tag} class="row-title"><a href="{href}">{txt(r["title_zh"])}</a></{tag}>
@@ -204,9 +205,9 @@ def reader_row(r, index, href, tag="h3"):
 </article>"""
 
 
-def note_row(p, href, tag="h3"):
+def note_row(p, href, tag="h3", index=0):
     tags = "".join(f'<span class="tag">{txt(t)}</span>' for t in p["tags"])
-    return f"""<article class="note-row">
+    return f"""<article class="note-row" data-reveal style="--i:{min(index, 5)}">
   <time datetime="{p["date"]}">{human_date(p["date"])}</time>
   <div class="note-main">
     <{tag} class="note-title"><a href="{href}">{txt(p["title"])}</a></{tag}>
@@ -219,7 +220,7 @@ def note_row(p, href, tag="h3"):
 def section_head(title, count, more_href=None, more_label="全部"):
     more = f'<a class="sec-more" href="{more_href}">{more_label} <span aria-hidden="true">→</span></a>' if more_href else ""
     count_html = f'<span class="sec-count">{count}</span>' if count else ""
-    return f'<div class="sec-head"><h2 class="sec-title">{title}{count_html}</h2>{more}</div>'
+    return f'<div class="sec-head" data-reveal><h2 class="sec-title">{title}{count_html}</h2>{more}</div>'
 
 
 # ---------------------------------------------------------------- 页面
@@ -234,7 +235,7 @@ def build_home(posts):
   <div class="wrap hero-in">
     <div class="hero-copy">
       <p class="eyebrow">Bilingual Reader · Notes</p>
-      <h1>把值得读的文章，<br><em>读透</em>。</h1>
+      <h1><span class="line"><span class="line-in">把值得读的文章，</span></span><span class="line"><span class="line-in"><em>读透</em>。</span></span></h1>
       <p class="lede">英文原文与中文译文逐句对照，配术语卡、译者注和图注解读；下面是平日的技术手记。不是机翻，每一句都过了一遍。</p>
       <dl class="stats">
         <div><dt>双语精读</dt><dd>{readers}<small>篇</small></dd></div>
@@ -269,7 +270,7 @@ def build_home(posts):
         feature = f"""
 <section class="feature-wrap">
   <div class="wrap">
-    <a class="feature" href="readers/{FEATURED["slug"]}/">
+    <a class="feature" href="readers/{FEATURED["slug"]}/" data-reveal>
       {media}
       <div class="feature-body">
         <p class="kicker">本期精读 · {human_date(FEATURED["published"])}</p>
@@ -284,14 +285,14 @@ def build_home(posts):
 </section>"""
 
     rows = "".join(reader_row(r, i + 1, f"readers/{r['slug']}/") for i, r in enumerate(latest))
-    note_rows = "".join(note_row(p, p["path"] + "/") for p in posts[:4])
+    note_rows = "".join(note_row(p, p["path"] + "/", index=i) for i, p in enumerate(posts[:4]))
 
     body = spec + feature + f"""
 <section class="block">
   <div class="wrap">
     {section_head("双语精读", len(READERS), "readers/", f"全部 {len(READERS)} 篇")}
     <div class="read-list">{rows}</div>
-    <a class="more-link" href="readers/">看完剩下 {max(len(READERS) - len(latest), 0)} 篇 <span aria-hidden="true">→</span></a>
+    <a class="more-link" href="readers/" data-reveal>看完剩下 {max(len(READERS) - len(latest), 0)} 篇 <span aria-hidden="true">→</span></a>
   </div>
 </section>
 
@@ -303,7 +304,7 @@ def build_home(posts):
 </section>
 
 <section class="block about-strip">
-  <div class="wrap about-strip-in">
+  <div class="wrap about-strip-in" data-reveal>
     <div class="about-portrait"><img src="img/avatar.jpg" alt="xiuerhuahuazi" width="88" height="88" loading="lazy"></div>
     <div>
       <h2 class="about-strip-title">关于这个站点</h2>
@@ -347,7 +348,7 @@ def build_readers_index():
 
 
 def build_notes_index(posts):
-    rows = "".join(note_row(p, rel(1) + p["path"] + "/", tag="h2") for p in posts)
+    rows = "".join(note_row(p, rel(1) + p["path"] + "/", tag="h2", index=i) for i, p in enumerate(posts))
     body = f"""
 <header class="page-head">
   <div class="wrap">
@@ -418,7 +419,7 @@ def build_post(p, prev, nxt):
                      if prev else "<span></span>")
         next_html = (f'<a class="pn next" href="{rel(depth)}{nxt["path"]}/"><span>下一篇</span>{txt(nxt["title"])}</a>'
                      if nxt else "<span></span>")
-        nav_links = f'<nav class="post-nav" aria-label="文章导航">{prev_html}{next_html}</nav>'
+        nav_links = f'<nav class="post-nav" aria-label="文章导航" data-reveal>{prev_html}{next_html}</nav>'
 
     body = f"""
 <div class="progress" aria-hidden="true"><i></i></div>

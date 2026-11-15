@@ -18,6 +18,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="stylesheet" href="assets/site.css">
 <script>(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.dataset.theme='dark'}}catch(e){}})();</script>
+<script>(function(){try{var d=document.documentElement;if(!('IntersectionObserver' in window)||!window.matchMedia)return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('js-motion');setTimeout(function(){if(!d.getAttribute('data-motion-ready'))d.classList.remove('js-motion')},3000)}catch(e){}})();</script>
 
 </head>
 <body class="">
@@ -41,7 +42,7 @@
   <div class="wrap hero-in">
     <div class="hero-copy">
       <p class="eyebrow">Bilingual Reader · Notes</p>
-      <h1>把值得读的文章，<br><em>读透</em>。</h1>
+      <h1><span class="line"><span class="line-in">把值得读的文章，</span></span><span class="line"><span class="line-in"><em>读透</em>。</span></span></h1>
       <p class="lede">英文原文与中文译文逐句对照，配术语卡、译者注和图注解读；下面是平日的技术手记。不是机翻，每一句都过了一遍。</p>
       <dl class="stats">
         <div><dt>双语精读</dt><dd>13<small>篇</small></dd></div>
@@ -69,7 +70,7 @@
 
 <section class="feature-wrap">
   <div class="wrap">
-    <a class="feature" href="readers/always-on-agents/">
+    <a class="feature" href="readers/always-on-agents/" data-reveal>
       
       <div class="feature-body">
         <p class="kicker">本期精读 · 2026.11.13</p>
@@ -84,8 +85,8 @@
 </section>
 <section class="block">
   <div class="wrap">
-    <div class="sec-head"><h2 class="sec-title">双语精读<span class="sec-count">13</span></h2><a class="sec-more" href="readers/">全部 13 篇 <span aria-hidden="true">→</span></a></div>
-    <div class="read-list"><article class="read-row">
+    <div class="sec-head" data-reveal><h2 class="sec-title">双语精读<span class="sec-count">13</span></h2><a class="sec-more" href="readers/">全部 13 篇 <span aria-hidden="true">→</span></a></div>
+    <div class="read-list"><article class="read-row" data-reveal style="--i:0">
   <span class="row-num" aria-hidden="true">01</span>
   <div class="row-main">
     <h3 class="row-title"><a href="readers/fable-multi-agent/">安全地把多智能体团队扩到 1,000 个：Claude Fable 5.2 的一次玩具实验</a></h3>
@@ -97,7 +98,7 @@
     <span class="row-date">2026.11.09</span>
     <span class="row-go" aria-hidden="true">↗</span>
   </div>
-</article><article class="read-row">
+</article><article class="read-row" data-reveal style="--i:1">
   <span class="row-num" aria-hidden="true">02</span>
   <div class="row-main">
     <h3 class="row-title"><a href="readers/agent-manager/">你的编码智能体，把你变成了管理者</a></h3>
@@ -109,7 +110,7 @@
     <span class="row-date">2026.11.08</span>
     <span class="row-go" aria-hidden="true">↗</span>
   </div>
-</article><article class="read-row">
+</article><article class="read-row" data-reveal style="--i:2">
   <span class="row-num" aria-hidden="true">03</span>
   <div class="row-main">
     <h3 class="row-title"><a href="readers/super-agent-design/">探索超级智能体的设计：走向更自主的智能体系统</a></h3>
@@ -121,7 +122,7 @@
     <span class="row-date">2026.11.01</span>
     <span class="row-go" aria-hidden="true">↗</span>
   </div>
-</article><article class="read-row">
+</article><article class="read-row" data-reveal style="--i:3">
   <span class="row-num" aria-hidden="true">04</span>
   <div class="row-main">
     <h3 class="row-title"><a href="readers/claude-code-review/">Claude Code 团队怎么做代码审查</a></h3>
@@ -133,7 +134,7 @@
     <span class="row-date">2026.10.26</span>
     <span class="row-go" aria-hidden="true">↗</span>
   </div>
-</article><article class="read-row">
+</article><article class="read-row" data-reveal style="--i:4">
   <span class="row-num" aria-hidden="true">05</span>
   <div class="row-main">
     <h3 class="row-title"><a href="readers/claude-subagent-loop/">构建智能体：何时该把子智能体折叠进主智能体循环</a></h3>
@@ -146,35 +147,35 @@
     <span class="row-go" aria-hidden="true">↗</span>
   </div>
 </article></div>
-    <a class="more-link" href="readers/">看完剩下 8 篇 <span aria-hidden="true">→</span></a>
+    <a class="more-link" href="readers/" data-reveal>看完剩下 8 篇 <span aria-hidden="true">→</span></a>
   </div>
 </section>
 
 <section class="block">
   <div class="wrap">
-    <div class="sec-head"><h2 class="sec-title">技术手记<span class="sec-count">8</span></h2><a class="sec-more" href="notes/">全部 <span aria-hidden="true">→</span></a></div>
-    <div class="note-list"><article class="note-row">
+    <div class="sec-head" data-reveal><h2 class="sec-title">技术手记<span class="sec-count">8</span></h2><a class="sec-more" href="notes/">全部 <span aria-hidden="true">→</span></a></div>
+    <div class="note-list"><article class="note-row" data-reveal style="--i:0">
   <time datetime="2026-11-15">2026.11.15</time>
   <div class="note-main">
     <h3 class="note-title"><a href="2026/11/15/harness-engineering-end/">Harness Engineering 的终结：一场还没打完的仗</a></h3>
     <p>把「Harness 要终结了」当结论会读错三件事：模型在长上下文里偷懒是真的，手写脚手架的手艺在贬值是真的，但运行契约与评测集反而变得更重。</p>
   </div>
   <div class="note-tags"><span class="tag">agent</span><span class="tag">harness</span><span class="tag">论文</span><span class="tag">评测</span></div>
-</article><article class="note-row">
+</article><article class="note-row" data-reveal style="--i:1">
   <time datetime="2026-11-15">2026.11.15</time>
   <div class="note-main">
     <h3 class="note-title"><a href="2026/11/15/12-claude-motion-repos/">12 个让 Claude 做动效的仓库：清单、实测 star 与选型</a></h3>
     <p>一条 X 帖列了 12 个「Claude + 动效」仓库。我逐个核了 star、仓库状态与真实用途，并给出按任务选的三条路径。</p>
   </div>
   <div class="note-tags"><span class="tag">motion</span><span class="tag">claude</span><span class="tag">资源</span><span class="tag">视频</span></div>
-</article><article class="note-row">
+</article><article class="note-row" data-reveal style="--i:2">
   <time datetime="2026-11-15">2026.11.15</time>
   <div class="note-main">
     <h3 class="note-title"><a href="2026/11/15/100-design-sites-27-picks/">100 个设计网站，我先挑了 27 个能马上用的</a></h3>
     <p>Eian 的《100 个提升审美的设计网站大赏》按 9 类整理了 100 个站；我按「现在就能打开用」的标准挑了 27 个，并说明每个站该在什么时候翻。</p>
   </div>
   <div class="note-tags"><span class="tag">design</span><span class="tag">资源</span><span class="tag">审美</span></div>
-</article><article class="note-row">
+</article><article class="note-row" data-reveal style="--i:3">
   <time datetime="2026-07-27">2026.07.27</time>
   <div class="note-main">
     <h3 class="note-title"><a href="2026/07/27/SSH-Docker-Alias-简化Hermes启动命令/">SSH 连接 Docker 容器太麻烦？一招用 alias 把命令缩短到 5 个字符</a></h3>
@@ -186,7 +187,7 @@
 </section>
 
 <section class="block about-strip">
-  <div class="wrap about-strip-in">
+  <div class="wrap about-strip-in" data-reveal>
     <div class="about-portrait"><img src="img/avatar.jpg" alt="xiuerhuahuazi" width="88" height="88" loading="lazy"></div>
     <div>
       <h2 class="about-strip-title">关于这个站点</h2>

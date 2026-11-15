@@ -1,12 +1,14 @@
-/* 站点交互：主题切换、阅读进度、目录高亮。无依赖。 */
+/* 站点交互：主题切换（含圆形揭示）、滚动渐入、阅读进度、目录高亮。无依赖。 */
 (function () {
   'use strict';
 
   var root = document.documentElement;
   var KEY = 'site-theme';
   var toggle = document.querySelector('[data-theme-toggle]');
+  var reduceQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
   function isDark() { return root.dataset.theme === 'dark'; }
+  function prefersReduced() { return !!(reduceQuery && reduceQuery.matches); }
 
   function syncButton() {
     if (!toggle) return;
@@ -14,19 +16,71 @@
     toggle.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
   }
 
+  function commitTheme() {
+    try { localStorage.setItem(KEY, isDark() ? 'dark' : 'light'); } catch (e) {}
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', isDark() ? '#15130f' : '#fbf8f3');
+    syncButton();
+  }
+
   if (toggle) {
     syncButton();
     toggle.addEventListener('click', function () {
-      if (isDark()) {
-        root.removeAttribute('data-theme');
-      } else {
-        root.dataset.theme = 'dark';
+      var dark = !isDark();
+      function set() {
+        if (dark) { root.dataset.theme = 'dark'; } else { root.removeAttribute('data-theme'); }
       }
-      try { localStorage.setItem(KEY, isDark() ? 'dark' : 'light'); } catch (e) {}
-      var meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', isDark() ? '#15130f' : '#fbf8f3');
-      syncButton();
+
+      // 支持 View Transitions 时，从按钮位置扩散一个圆把新主题揭开
+      if (typeof document.startViewTransition !== 'function' || prefersReduced()) {
+        set();
+        commitTheme();
+        return;
+      }
+
+      var rect = toggle.getBoundingClientRect();
+      var x = rect.left + rect.width / 2;
+      var y = rect.top + rect.height / 2;
+      var r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+      root.style.setProperty('--vt-x', x + 'px');
+      root.style.setProperty('--vt-y', y + 'px');
+      root.style.setProperty('--vt-r', r + 'px');
+      root.classList.add('theme-vt');
+
+      var vt = document.startViewTransition(function () {
+        set();
+        commitTheme();
+      });
+      function cleanup() { root.classList.remove('theme-vt'); }
+      vt.finished.then(cleanup, cleanup);
     });
+  }
+
+  // 滚动渐入：head 内联脚本已经判定过浏览器能力与 reduced-motion
+  var revealEls = document.querySelectorAll('[data-reveal]');
+  if (root.classList.contains('js-motion') && revealEls.length && 'IntersectionObserver' in window) {
+    var reveal = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('is-in');
+        reveal.unobserve(en.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: .05 });
+
+    Array.prototype.forEach.call(revealEls, function (el) { reveal.observe(el); });
+    root.dataset.motionReady = '1';
+  }
+
+  if (reduceQuery) {
+    var onReduceChange = function () {
+      if (!reduceQuery.matches) return;
+      root.classList.remove('js-motion');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-reveal]'), function (el) {
+        el.classList.add('is-in');
+      });
+    };
+    if (reduceQuery.addEventListener) { reduceQuery.addEventListener('change', onReduceChange); }
+    else if (reduceQuery.addListener) { reduceQuery.addListener(onReduceChange); }
   }
 
   // 阅读进度条
