@@ -986,8 +986,10 @@ h1, h2, h3, h4 { font-weight: 400; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(root) { animation: vt-out .18s ease both; }
-  ::view-transition-new(root) { animation: vt-in .24s ease both; }
+  /* 先淡出旧页、再淡入新页，避免两套版式叠在一起出现"重影" */
+  ::view-transition-group(root) { background: var(--paper); }
+  ::view-transition-old(root) { animation: vt-out .14s ease both; }
+  ::view-transition-new(root) { animation: vt-in .22s ease .08s both; }
   html.theme-vt::view-transition-old(root) { animation: none; }
   html.theme-vt::view-transition-new(root) { animation: vt-theme .5s var(--ease-out) both; }
 }

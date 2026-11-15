@@ -521,6 +521,116 @@ fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
 .cap-video a:hover{border-bottom-color:var(--accent)}
 
 </style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:721px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .14s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .22s ease .08s both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+}
+</style>
 <style id="site-nav-style">
 .topbar-in{justify-content:flex-start!important}
 .topbar-in>.brand{margin-right:18px}
@@ -547,6 +657,25 @@ fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
 <meta name="twitter:card" content="summary_large_image">
 </head>
 <body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
 
 <div id="progress"></div>
 
@@ -1033,6 +1162,47 @@ SCOPE     fix this file only, do not touch other slices</pre></details></div>
     if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
   });
   window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
 })();
 </script>
 <script id="site-a11y">
