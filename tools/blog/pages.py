@@ -1,0 +1,273 @@
+"""页面构建：把内容与模板拼成 dist/ 下的静态站点。
+
+  python3 tools/build.py          # 清空 dist 后全量生成
+  python3 tools/build.py --check  # 只打印页面大小，不写 dist
+
+流程：清空 dist → 复制 src/static/ 到 dist 根 → 复制 src/readers/ 到
+dist/readers/ → 写 15 个页面（含 sitemap.xml 与 robots.txt）。
+"""
+import argparse
+import re
+import shutil
+import sys
+from datetime import date
+
+from .config import BASE, DIST, READERS_SRC, ROOT, SITE, STATIC, TEMPLATES, load_readers
+from .content import load_posts
+from .template import Templates
+from .utils import abs_url, depth_of, esc, human_date, nav_html, rel, txt
+
+READERS = load_readers()
+FEATURED = next((r for r in READERS if r.get("featured")), READERS[0] if READERS else None)
+TODAY = date.today().isoformat()
+
+T = Templates(TEMPLATES)
+PARTIALS = Templates(TEMPLATES / "partials")
+
+
+def render_page(path, title, desc, body, *, active="", extra="", bodyclass="",
+                ogtype="website", image=None):
+    """填 base.html 的共享槽位，返回整份 HTML 文档。"""
+    depth = depth_of(path)
+    page_title = f"{title} · {SITE['name']}" if title else SITE["title"]
+    ogimage = ""
+    if image:
+        ogimage = (f'<meta property="og:image" content="{BASE}/{image}">\n'
+                   f'<meta property="og:image:alt" content="{esc(title)}">\n')
+    return T.render("base.html", {
+        "lang": SITE["lang"], "title": esc(page_title), "desc": esc(desc),
+        "author": esc(SITE["author"]), "canonical": abs_url(path.replace("index.html", "")),
+        "root": rel(depth), "ogtype": ogtype, "name": esc(SITE["name"]),
+        "ogimage": ogimage, "twcard": "summary_large_image" if image else "summary",
+        "extra": extra, "bodyclass": bodyclass, "nav": nav_html(depth, active),
+        "footer_nav": nav_html(depth, ""), "tagline": txt(SITE["tagline"]),
+        "year": TODAY[:4], "content": body,
+    })
+
+
+def write(path, content):
+    full = DIST / path
+    full.parent.mkdir(parents=True, exist_ok=True)
+    full.write_text(content, encoding="utf-8")
+    return len(content)
+
+
+# ---------------------------------------------------------------- 组件
+
+def chip(text):
+    return f'<span class="chip">{txt(text)}</span>'
+
+
+def meta_chips(r):
+    stats = [f'{r["pairs"]} 句对']
+    if r["terms"]:
+        stats.append(f'{r["terms"]} 术语')
+    stats.append(f'{r["read_min"]} 分钟')
+    return (f'<div class="row-meta-in"><span class="chip">{txt(r["category"])}</span>'
+            f'<span class="row-stats">{" · ".join(stats)}</span></div>')
+
+
+def reader_row(r, index, href, tag="h3"):
+    return PARTIALS.render("reader-row.html", {
+        "i": min(index - 1, 5), "num": f"{index:02d}", "tag": tag, "href": href,
+        "title_zh": txt(r["title_zh"]), "title_en": txt(r["title_en"]),
+        "blurb": txt(r["blurb"]), "meta": meta_chips(r),
+        "date": human_date(r["published"]),
+    })
+
+
+def note_row(p, href, tag="h3", index=0):
+    tags = "".join(f'<span class="tag">{txt(t)}</span>' for t in p["tags"])
+    return PARTIALS.render("note-row.html", {
+        "i": min(index, 5), "date": p["date"], "human_date": human_date(p["date"]),
+        "tag": tag, "href": href, "title": txt(p["title"]),
+        "description": txt(p["description"]), "tags": tags,
+    })
+
+
+def section_head(title, count, more_href=None, more_label="全部"):
+    more = f'<a class="sec-more" href="{more_href}">{more_label} <span aria-hidden="true">→</span></a>' if more_href else ""
+    count_html = f'<span class="sec-count">{count}</span>' if count else ""
+    return f'<div class="sec-head" data-reveal><h2 class="sec-title">{title}{count_html}</h2>{more}</div>'
+
+
+# ---------------------------------------------------------------- 页面
+
+def _feature_html():
+    """首页「本期精读」卡片；没有 featured 时返回空串。"""
+    if not FEATURED:
+        return ""
+    cover = FEATURED.get("cover") or ""
+    media = (f'<div class="feature-media"><img src="readers/{FEATURED["slug"]}/{esc(cover)}" alt="" loading="lazy"></div>'
+             if cover else "")
+    return f"""
+<section class="feature-wrap">
+  <div class="wrap">
+    <a class="feature" href="readers/{FEATURED["slug"]}/" data-reveal>
+      {media}
+      <div class="feature-body">
+        <p class="kicker">本期精读 · {human_date(FEATURED["published"])}</p>
+        <h2 class="feature-title">{txt(FEATURED["title_zh"])}</h2>
+        <p class="feature-en" lang="en">{txt(FEATURED["title_en"])}</p>
+        <p class="feature-blurb">{txt(FEATURED["blurb"])}</p>
+        <div class="feature-meta">{meta_chips(FEATURED)}</div>
+        <span class="cta">进入阅读 <span aria-hidden="true">→</span></span>
+      </div>
+    </a>
+  </div>
+</section>"""
+
+
+def build_home(posts):
+    total_pairs = sum(r["pairs"] for r in READERS)
+    total_terms = sum(r["terms"] for r in READERS)
+    latest = [r for r in READERS if not r.get("featured")][:5]
+    rows = "".join(reader_row(r, i + 1, f"readers/{r['slug']}/") for i, r in enumerate(latest))
+    note_rows = "".join(note_row(p, p["path"] + "/", index=i) for i, p in enumerate(posts[:4]))
+    body = T.render("home.html", {
+        "readers": len(READERS), "pairs": f"{total_pairs:,}", "terms": total_terms,
+        "notes": len(posts), "feature": _feature_html(),
+        "head_readers": section_head("双语精读", len(READERS), "readers/", f"全部 {len(READERS)} 篇"),
+        "rows": rows, "more_count": max(len(READERS) - len(latest), 0),
+        "head_notes": section_head("技术手记", len(posts), "notes/", "全部"),
+        "note_rows": note_rows,
+    })
+    cover = (FEATURED or {}).get("cover") or ""
+    og = f"readers/{FEATURED['slug']}/{cover}" if FEATURED and cover else None
+    return render_page("index.html", "", SITE["description"], body, image=og)
+
+
+def build_readers_index():
+    rows = "".join(reader_row(r, i + 1, f"{r['slug']}/", tag="h2") for i, r in enumerate(READERS))
+    total_pairs = sum(r["pairs"] for r in READERS)
+    body = T.render("readers.html", {
+        "count": len(READERS), "pairs": f"{total_pairs:,}", "rows": rows,
+    })
+    cover = (FEATURED or {}).get("cover") or ""
+    og = f"readers/{FEATURED['slug']}/{cover}" if FEATURED and cover else None
+    return render_page("readers/index.html", "双语书架",
+                       "英文原文与中文译文逐句对照的精读页合集。", body,
+                       active="readers/", image=og)
+
+
+def build_notes_index(posts):
+    rows = "".join(note_row(p, rel(1) + p["path"] + "/", tag="h2", index=i)
+                   for i, p in enumerate(posts))
+    body = T.render("notes.html", {"rows": rows})
+    return render_page("notes/index.html", "技术手记", "系统、模型与工具的实操记录。", body,
+                       active="notes/")
+
+
+def build_about():
+    a = SITE["about"]
+    paras = "".join(f"<p>{txt(p)}</p>" for p in a["paras"])
+    facts = "".join(f'<dt>{txt(f["k"])}</dt><dd>{txt(f["v"])}</dd>' for f in a["facts"])
+    body = T.render("about.html", {
+        "lead": txt(a["lead"]), "paras": paras, "facts": facts,
+        "root": rel(1), "github": esc(SITE["github"]), "repo": esc(SITE["repo"]),
+    })
+    return render_page("about/index.html", "关于", "关于 xiuerhuahuazi 与这个站点。", body,
+                       active="about/")
+
+
+def build_post(p, prev, nxt):
+    depth = depth_of(p["path"] + "/index.html")
+    content = p["content"].replace("{{ROOT}}", rel(depth))
+    toc_items = [t for t in p.get("toc", []) if t.get("id")]
+    toc = ""
+    if len(toc_items) >= 2:
+        links = "".join(
+            f'<li class="toc-l{t["level"]}"><a href="#{esc(t["id"])}">{txt(t["text"])}</a></li>'
+            for t in toc_items if t["level"] == 2)
+        toc = f'<aside class="toc" aria-label="目录"><p class="toc-title">目录</p><ol>{links}</ol></aside>'
+    else:
+        toc = '<aside class="toc" aria-hidden="true"></aside>'
+
+    tags = "".join(f'<span class="tag">{txt(t)}</span>' for t in p["tags"])
+    nav_links = ""
+    if prev or nxt:
+        prev_html = (f'<a class="pn prev" href="{rel(depth)}{prev["path"]}/"><span>上一篇</span>{txt(prev["title"])}</a>'
+                     if prev else "<span></span>")
+        next_html = (f'<a class="pn next" href="{rel(depth)}{nxt["path"]}/"><span>下一篇</span>{txt(nxt["title"])}</a>'
+                     if nxt else "<span></span>")
+        nav_links = f'<nav class="post-nav" aria-label="文章导航" data-reveal>{prev_html}{next_html}</nav>'
+
+    body = T.render("post.html", {
+        "root": rel(depth), "date": p["date"], "human_date": human_date(p["date"]),
+        "tags": tags, "title": txt(p["title"]), "description": txt(p["description"]),
+        "toc": toc, "content": content, "nav_links": nav_links,
+    })
+    return render_page(p["path"] + "/index.html", p["title"], p["description"], body,
+                       active="notes/", ogtype="article", extra="", bodyclass="is-post")
+
+
+def build_404():
+    body = T.render("404.html", {})
+    html_404 = render_page("404.html", "页面不存在", "404", body)
+
+    # 404 可能从任意深度被请求：把站内相对地址一律换成站点绝对地址
+    def absolutize(doc):
+        return re.sub(r'(href|src)="(?!https?:|mailto:|#|data:)([^"]*)"',
+                      lambda m: f'{m.group(1)}="{BASE}/{m.group(2)}"', doc)
+    return absolutize(html_404)
+
+
+def build_sitemap(posts):
+    urls = [("", "1.0"), ("readers/", "0.9"), ("notes/", "0.7"), ("about/", "0.4")]
+    urls += [(f"readers/{r['slug']}/", "0.8") for r in READERS]
+    urls += [(p["path"] + "/", "0.6") for p in posts]
+    items = "".join(
+        f"<url><loc>{abs_url(u)}</loc><lastmod>{TODAY}</lastmod><priority>{pr}</priority></url>"
+        for u, pr in urls)
+    return (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{items}</urlset>\n')
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true")
+    args = ap.parse_args()
+
+    posts = load_posts()
+    if not READERS:
+        sys.exit("src/content/readers.json 为空：先跑 tools/import_readers.py")
+
+    pages = []
+    pages.append(("index.html", build_home(posts)))
+    pages.append(("readers/index.html", build_readers_index()))
+    pages.append(("notes/index.html", build_notes_index(posts)))
+    pages.append(("about/index.html", build_about()))
+    for i, p in enumerate(posts):
+        prev = posts[i + 1] if i + 1 < len(posts) else None
+        nxt = posts[i - 1] if i > 0 else None
+        pages.append((p["path"] + "/index.html", build_post(p, prev, nxt)))
+    pages.append(("404.html", build_404()))
+    pages.append(("sitemap.xml", build_sitemap(posts)))
+    pages.append(("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {BASE}/sitemap.xml\n"))
+
+    if args.check:
+        for path, content in pages:
+            print(f"{len(content):8d}  {path}")
+        print("共", len(pages), "个页面（未写入）")
+        return
+
+    # 防御性检查：只有仓库根下的 dist 才允许被整个删除
+    if DIST.name != "dist" or DIST.parent != ROOT:
+        sys.exit(f"拒绝清空 {DIST}：dist 必须是仓库根下的 dist 目录")
+
+    if DIST.exists():
+        shutil.rmtree(DIST)
+    DIST.mkdir()
+    shutil.copytree(STATIC, DIST, dirs_exist_ok=True)
+    shutil.copytree(READERS_SRC, DIST / "readers")
+
+    for path, content in pages:
+        write(path, content)
+
+    print("生成", len(pages), "个页面")
+    total = sum(len(c) for _, c in pages)
+    print(f"HTML 合计 {total/1024:.0f} KB")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,57 @@
+{
+ "featured": "always-on-agents",
+ "readers": {
+  "agent-manager": {
+   "category": "智能体协作",
+   "blurb": "写代码的智能体一多，你就成了项目经理。文章把这件事拆成 12 个可执行的习惯，也点明智能体和初级工程师的 6 处不同。"
+  },
+  "anthropic-scm": {
+   "category": "工程基建",
+   "blurb": "合并量五个月涨十倍，git 撑不住了：7 个人、5 个月自研版本控制系统 Scion，把内部 monorepo 全量迁了过去。"
+  },
+  "claude-code-review": {
+   "category": "工程实践",
+   "blurb": "当 Claude 写掉约 90% 的代码，review 不再是路尽头的闸门，而是写代码时的拼写检查。"
+  },
+  "claude-sdlc-sec": {
+   "category": "安全",
+   "blurb": "AI 写代码之后，安全边界该放在哪：从会话、权限与审批，到部署后的监控与回滚。"
+  },
+  "claude-subagent-loop": {
+   "category": "智能体架构",
+   "blurb": "什么时候该把子智能体折叠回主循环？答案取决于上下文隔离、工具数量与成本，而不是「多一层更专业」。"
+  },
+  "fable-multi-agent": {
+   "category": "智能体架构",
+   "blurb": "1,000 个智能体、28.7 小时、一个费马大定理的形式化证明：一篇关于「扩到多大才安全」的实验报告。"
+  },
+  "harness-reader": {
+   "category": "智能体架构",
+   "blurb": "把主观设计变成可评分项，让生成与评估两个智能体互相制衡：长程自主编程的流水线长什么样。"
+  },
+  "always-on-agents": {
+   "category": "智能体架构",
+   "blurb": "常驻智能体不是更聪明的循环，而是五件基础设施围着同一个循环：事件收件箱、定时器、记忆、权限、发件箱。"
+  },
+  "loops-graphs": {
+   "category": "智能体架构",
+   "blurb": "循环让一个工作单元自己检查到通过，图决定有哪些单元、谁等谁；两条回传路径，加上按影响半径开的闸门。"
+  },
+  "loop-engineering": {
+   "category": "智能体架构",
+   "blurb": "四层循环：干活的智能体循环、打分的验证循环、被事件触发的事件循环、用 trace 自我改进的爬坡循环。前三层自动化工作，第四层自动化改进。"
+  },
+  "robotics-engineer-6mo": {
+   "category": "学习路线",
+   "blurb": "六个月、每月一个能动的实物、三档预算、100 多个资源：一份零基础可执行的机器人路线。"
+  },
+  "super-agent-design": {
+   "category": "智能体架构",
+   "blurb": "路由层 + 工作层、事件驱动、算存分离、外部看门狗：为什么「一个会话 + 一个人盯着」撑不起整个团队。"
+  },
+  "wiki-layer": {
+   "category": "上下文工程",
+   "blurb": "把「每次上传文件」换成「先编译成 Wiki，再提问」：把 Karpathy 的 LLM Wiki 讲成四步流程。"
+  }
+ }
+}

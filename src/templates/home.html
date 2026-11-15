@@ -1,0 +1,56 @@
+
+<section class="hero">
+  <div class="wrap hero-in">
+    <div class="hero-copy">
+      <p class="eyebrow">Bilingual Reader · Notes</p>
+      <h1><span class="line"><span class="line-in">把值得读的文章，</span></span><span class="line"><span class="line-in"><em>读透</em>。</span></span></h1>
+      <p class="lede">英文原文与中文译文逐句对照，配术语卡、译者注和图注解读；下面是平日的技术手记。不是机翻，每一句都过了一遍。</p>
+      <dl class="stats">
+        <div><dt>双语精读</dt><dd>{{readers}}<small>篇</small></dd></div>
+        <div><dt>逐句对照</dt><dd>{{pairs}}<small>句</small></dd></div>
+        <div><dt>术语卡</dt><dd>{{terms}}<small>张</small></dd></div>
+        <div><dt>技术手记</dt><dd>{{notes}}<small>篇</small></dd></div>
+      </dl>
+    </div>
+    <div class="specimen">
+      <div class="specimen-head"><span>逐句对照</span><span class="specimen-src">EN / 中</span></div>
+      <div class="spec-pair">
+        <span class="spec-no">01</span>
+        <p class="spec-en" lang="en">Review becomes spelling-check-as-you-write, not the gate at the end of the road.</p>
+        <p class="spec-zh">review 不再是路尽头的闸门，而是写代码时的拼写检查。</p>
+      </div>
+      <div class="spec-pair">
+        <span class="spec-no">02</span>
+        <p class="spec-en" lang="en">When you have several agents writing code, you are managing.</p>
+        <p class="spec-zh">当有好几个智能体在写代码时，你其实已经在做管理。</p>
+      </div>
+      <p class="specimen-foot">悬停任一句，另一侧同步高亮 · <span>阅读器里的真实交互</span></p>
+    </div>
+  </div>
+</section>
+{{feature}}
+<section class="block">
+  <div class="wrap">
+    {{head_readers}}
+    <div class="read-list">{{rows}}</div>
+    <a class="more-link" href="readers/" data-reveal>看完剩下 {{more_count}} 篇 <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    {{head_notes}}
+    <div class="note-list">{{note_rows}}</div>
+  </div>
+</section>
+
+<section class="block about-strip">
+  <div class="wrap about-strip-in" data-reveal>
+    <div class="about-portrait"><img src="img/avatar.jpg" alt="xiuerhuahuazi" width="88" height="88" loading="lazy"></div>
+    <div>
+      <h2 class="about-strip-title">关于这个站点</h2>
+      <p>这里放两样东西：逐句对照的双语精读页，和折腾系统、模型、工具时留下的技术手记。都是自己读完、踩完之后写的。</p>
+      <a class="text-link" href="about/">读完这段介绍 <span aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>

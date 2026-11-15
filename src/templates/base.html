@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="{{lang}}" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{desc}}">
+<meta name="author" content="{{author}}">
+<meta name="theme-color" content="#fbf8f3">
+<link rel="canonical" href="{{canonical}}">
+<link rel="icon" href="{{root}}img/favicon.ico" sizes="any">
+<meta property="og:type" content="{{ogtype}}">
+<meta property="og:site_name" content="{{name}}">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{desc}}">
+<meta property="og:url" content="{{canonical}}">
+<meta property="og:locale" content="zh_CN">
+{{ogimage}}<meta name="twitter:card" content="{{twcard}}">
+<link rel="stylesheet" href="{{root}}assets/site.css">
+<script>(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.dataset.theme='dark'}}catch(e){}})();</script>
+<script>(function(){try{var d=document.documentElement;if(!('IntersectionObserver' in window)||!window.matchMedia)return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('js-motion');setTimeout(function(){if(!d.getAttribute('data-motion-ready'))d.classList.remove('js-motion')},3000)}catch(e){}})();</script>
+{{extra}}
+</head>
+<body class="{{bodyclass}}">
+<a class="skip" href="#main">跳到正文</a>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="{{root}}" aria-label="回到首页">
+      <span class="brand-mark" aria-hidden="true">x</span>
+      <span class="brand-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="nav" aria-label="主导航">{{nav}}</nav>
+    <button class="theme-btn" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+<main id="main">
+{{content}}</main>
+<footer class="site-foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <span class="brand-mark" aria-hidden="true">x</span>
+      <div>
+        <p class="foot-name">xiuerhuahuazi</p>
+        <p class="foot-line">{{tagline}}</p>
+      </div>
+    </div>
+    <nav class="foot-nav" aria-label="页脚导航">{{footer_nav}}</nav>
+    <p class="foot-meta">© {{year}} · 纯静态页面 · 无第三方脚本与统计</p>
+  </div>
+</footer>
+<script src="{{root}}assets/site.js" defer></script>
+</body>
+</html>

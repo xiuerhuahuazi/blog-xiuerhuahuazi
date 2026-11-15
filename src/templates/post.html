@@ -1,0 +1,19 @@
+
+<div class="progress" aria-hidden="true"><i></i></div>
+<article class="post">
+  <header class="post-head">
+    <div class="wrap post-head-in">
+      <a class="back-link" href="{{root}}notes/">← 技术手记</a>
+      <p class="post-kicker"><time datetime="{{date}}">{{human_date}}</time>{{tags}}</p>
+      <h1>{{title}}</h1>
+      <p class="post-lede">{{description}}</p>
+    </div>
+  </header>
+  <div class="wrap post-grid">
+    {{toc}}
+    <div class="prose" id="article">
+      {{content}}
+    </div>
+  </div>
+  <div class="wrap">{{nav_links}}</div>
+</article>

@@ -15,6 +15,11 @@
 
 ### Changed
 
+- 仓库结构调整：源文件迁入 `src/`（配置、内容、模板、静态资源、精读成品），构建产物统一输出到 `dist/` 且不再入库；生成器拆成 `tools/blog/` 包（`config` / `template` / `pages` / `markdown` / `sitecheck` / `reader_shell`），页面模板外置到 `src/templates/`。页面输出与重构前逐字节一致（15 个生成页）。
+- 发布改为 GitHub Actions：`.github/workflows/pages.yml` 在推 `main` 时构建 `dist/` 并部署到 GitHub Pages，不再从仓库根直接发布。
+- 精读导入的注入 CSS / JS / 顶栏抽到 `src/templates/readers-shell/`；分类、导读与 `featured` 抽到 `src/content/readers_curated.json`。
+- 工具更名：`tools/check_site.py` → `tools/check.py`，`tools/md2post.py` → `tools/new_post.py`；`import_legacy.py` 移入 `tools/oneoff/`。
+- `README.md` 按新结构重写；新增 `AGENTS.md` 记录目录约定、不变量与验收流程。
 - 双语精读页接入站点外壳：顶栏（品牌 / 全站导航 / 主题切换）、深色主题（与全站共用 `site-theme`）、阅读工具条下移、跨页淡入；打印时强制浅色并隐藏顶栏。由 `tools/import_readers.py` 幂等注入，重导不会丢。
 - 全站动效升级：首页 hero 分行入场、列表与分区滚动渐入、主题切换从按钮位置圆形揭示、跨页导航淡入淡出、导航与条目的 hover 微交互；全部遵循 `prefers-reduced-motion`，无 JS 时内容完整可见。
 
