@@ -11,7 +11,7 @@
 - `src/` 是唯一手改区域；`dist/` 是构建产物，已 gitignore，**不要手改、不要提交**。
 - `src/content/` 是内容唯一数据源：手记 `posts/*.json`、精读索引 `readers.json`、精读策展 `readers_curated.json`。
 - `src/readers/` 是导入物（精读成品），只能由 `tools/import_readers.py` 覆盖，不要手工编辑。
-- `src/static/` 构建时原样复制到 `dist/`；`src/templates/` 只放静态 HTML 与 `{{槽位}}`。
+- `src/static/` 构建时原样复制到 `dist/`；`src/templates/` 放页面模板（静态 HTML 与 `{{槽位}}`），其中 `readers-shell/` 是例外——放注入精读页的 CSS / JS / HTML。
 - 条件、循环、转义、路径计算都在 `tools/blog/`；入口脚本只做参数与调度。
 - 精读页注入资源（顶栏、主题、CSS/JS）在 `src/templates/readers-shell/`，不是站点模板。
 

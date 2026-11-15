@@ -49,13 +49,13 @@ python3 -m http.server -d dist 8000
 # 打开 http://127.0.0.1:8000/
 ```
 
-所有站内链接都是相对路径，直接在仓库根起静态服务即可。
+站内链接以相对路径为主；`404.html` 与 canonical / `og:` 元信息按设计使用绝对地址。直接在仓库根起静态服务即可。
 
 ## 生成与自检
 
 ```bash
 python3 tools/build.py          # 生成全站到 dist/
-python3 tools/build.py --check  # 只打印每个页面的字节数，不写文件
+python3 tools/build.py --check  # 只打印每个页面的字符数，不写文件
 python3 tools/check.py          # 检查 dist/ 的内部链接、资源、锚点与 canonical
 ```
 
