@@ -1,5 +1,9 @@
 name: Deploy site
 
+env:
+  # sitemap 的 lastmod 用构建日；固定站点时区，避免 Actions 的 UTC 比本地早一天
+  TZ: Asia/Shanghai
+
 on:
   push:
     branches: [main]

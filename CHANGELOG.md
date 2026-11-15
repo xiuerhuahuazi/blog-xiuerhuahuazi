@@ -25,6 +25,7 @@
 
 ### Fixed
 
+- `sitemap.xml` 的 `lastmod` 固定按 `Asia/Shanghai` 的构建日生成（workflow 设置 `TZ`），避免 GitHub Actions 的 UTC 日期比本地早一天，导致同一提交的本地与线上产物不一致。
 - 跨页导航：旧页退场与新页入场改为重叠的 crossfade；`pagereveal` 时首屏快照前置呈现，避免新页快照为空、过渡中间出现近空屏。
 - 精读页 721–900px：顶栏的「← 双语书架」入口保留到 900px，901px 起才由 `.sm-nav` 接管。
 - 深色主题打印：对比卡 `.cmp.win` 恢复浅底深字，打印稿可读。
