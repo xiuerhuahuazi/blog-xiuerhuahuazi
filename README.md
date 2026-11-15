@@ -9,7 +9,7 @@
 ```
 index.html              首页
 readers/                双语书架（列表）
-readers/<slug>/         10 篇精读成品页 + media/
+readers/<slug>/         11 篇精读成品页 + media/
 notes/                  技术手记列表
 <年>/<月>/<日>/<slug>/   技术手记正文（沿用老 URL，不制造死链）
 about/                  关于

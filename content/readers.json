@@ -145,6 +145,24 @@
    "featured": false
   },
   {
+   "slug": "loop-engineering",
+   "title_zh": "循环工程的艺术：四层循环，让智能体越跑越好",
+   "title_en": "The Art of Loop Engineering",
+   "source_url": "https://www.langchain.com/blog/the-art-of-loop-engineering",
+   "org": "LangChain · Blog",
+   "published": "2026-06-16",
+   "read_min": 9,
+   "category": "智能体架构",
+   "blurb": "四层循环：干活的智能体循环、打分的验证循环、被事件触发的事件循环、用 trace 自我改进的爬坡循环。前三层自动化工作，第四层自动化改进。",
+   "pairs": 69,
+   "words": 1200,
+   "chars": 3000,
+   "terms": 15,
+   "figures": 8,
+   "cover": "media/cover.png",
+   "featured": false
+  },
+  {
    "slug": "wiki-layer",
    "title_zh": "你的 LLM 在烧 token——Karpathy 找到了省下 90% 的办法",
    "title_en": "Your LLM Is Burning Through Tokens - Karpathy Found a Way to Save 90%",

@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>循环工程的艺术：四层循环，让智能体越跑越好｜The Art of Loop Engineering</title>
+<meta name="description" content="循环工程的艺术：四层循环，让智能体越跑越好｜The Art of Loop Engineering：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/loop-engineering/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="循环工程的艺术：四层循环，让智能体越跑越好">
+<meta property="og:description" content="LangChain 把「循环」拆成四层：干活的智能体循环、检查的验证循环、被事件触发的事件循环、用 trace 自我改进的爬坡循环。前三层让工作自动执行，第四层让运行框架持续改进。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/loop-engineering/">
+<meta property="og:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/loop-engineering/media/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body data-mode="both">
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">LangChain · Blog · 2026-06-16</p><h1 class="h1-wrap"><span class="h1-en" lang="en">The Art of Loop Engineering</span><span class="h1-zh">循环工程的艺术：四层循环，让智能体越跑越好</span></h1><div class="hero-meta"><span>原文 1200 词</span><span>中文 3000 字</span><span>逐句对照 <i>69</i> 句</span><span>预计 9 分钟</span><span><a href="https://www.langchain.com/blog/the-art-of-loop-engineering" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><figure class="cover"><img src="media/cover.png" alt="The Art of Loop Engineering — LangChain blog cover"><figcaption>题图｜LangChain 原文封面：深蓝底上的点阵与标题。它只是封面，不含信息；四层循环的结构在 fig1–fig8 里。</figcaption></figure><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：可靠的智能体不是「强模型 + 一组工具」，而是模型外面套着几层循环——干活、验证、被事件触发、用运行记录自我改进。</li><li><b>四层循环</b>：第一层智能体循环（模型反复调工具直到完成）→ 第二层验证循环（评分器按量表打分，不合格带反馈重试）→ 第三层事件驱动循环（定时、webhook、消息触发，常驻系统）→ 第四层爬坡循环（运行记录喂给分析智能体，改写运行框架）。</li><li><b>关键区别</b>：前三层自动化的是「工作」，第四层自动化的是「改进」；第四层的回箭头不只是绕回顶部，而是伸进内层、直接改智能体循环。</li><li><b>落地对应</b>：文中给的都是 LangChain 原语：create_agent、RubricMiddleware 与 after_agent 钩子、LangSmith Deployment 与 Fleet channels、LangSmith Engine。</li><li><b>代价与边界</b>：验证会增加延迟和成本，当质量比速度更重要时，增加验证通常是值得的；人的判断仍然要放在敏感动作、评分和上线前审查这些位置。</li><li><b>作者的判断</b>：价值正在从第一、二层（把活干完）转向第三、四层（把智能体嵌进生态、持续变好）；早早建起学习循环的组织会拿到难以复制的优势。</li></ul><div class="compare"><div class="cmp"><h3>常见搭法：只搭基础循环，外围靠人工</h3><ol><li>一个智能体 + 一组工具，跑完就交给人</li><li>错误靠人工 review 抓，失败后手动重来</li><li>智能体要人手动触发，跑在一次会话里</li><li>线上出问题靠人翻日志、改 prompt</li></ol></div><div class="cmp win"><h3>本文建议：四层循环叠起来</h3><ol><li>第一层 智能体循环：把活干完</li><li>第二层 验证循环：评分器自动打分、带反馈重试</li><li>第三层 事件驱动循环：cron / webhook / 消息触发，常驻系统</li><li>第四层 爬坡循环：运行记录喂给分析智能体，改写运行框架，越跑越好</li><li>四层可嵌套：外层循环让内层循环更有效</li></ol></div></div><p class="ov-foot cmp-foot">左右两栏是译者按正文归纳，不是原文；原文自己的对照表在「把四层拼起来」一节。</p><p class="ov-foot">读法建议：速览和对比卡是译者按正文压缩的，不是原文；正文里带虚线下划线的词可以悬停看术语卡，上标数字是译者注。原文 2026-06-16 发布在 LangChain Blog，作者 Sydney Runkle。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Agents are useful because they help us automate work by taking actions in the real world.</span> <span class="s" data-k="intro-b0-1">But getting agents to do valuable work reliably takes more than just a good model: it requires a carefully designed <span class='term' data-term='harness'>harness</span> that's fit to a set of tasks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">智能体之所以有用，是因为它能在真实世界里替我们采取行动、把工作自动化。</span><span class="s" data-k="intro-b0-1">但要让智能体稳定地把活干出价值，光有好模型远远不够：它需要一个为具体任务量身设计的<span class='term' data-term='harness'>运行框架</span>（harness）<sup class='tn' data-note='N1'>1</sup>。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">The core agent algorithm is simple: give the LLM context and let it call tools in a loop until it's done.</span> <span class="s" data-k="intro-b1-1">This is the most fundamental loop.</span> <span class="s" data-k="intro-b1-2">But it’s far from the only loop that powers agents. <a href='https://x.com/swyx' target='_blank' rel='noopener'>Swyx</a> recently wrote a great piece on <a class='lnk' href='https://latent.space/p/loopcraft/' target='_blank' rel='noopener' data-link='L1'>"loopcraft: the art of stacking loops"</a>, the idea that you can stack and extend loops to build more effective agents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">智能体的核心算法很简单：把上下文交给 LLM，让它在一个循环里反复调用工具，直到完成。</span><span class="s" data-k="intro-b1-1">这是最基础的一层循环。</span><span class="s" data-k="intro-b1-2">但它远不是驱动智能体的唯一一层循环。<a href='https://x.com/swyx' target='_blank' rel='noopener'>Swyx</a> 最近写了一篇很好的文章 <a class='lnk' href='https://latent.space/p/loopcraft/' target='_blank' rel='noopener' data-link='L1'>「loopcraft：堆叠循环的艺术」</a><sup class='tn' data-note='N2'>2</sup>，讲的正是可以叠加、扩展循环来构建更有效的智能体。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">Here's how we think about that stack, and how to instrument each level with LangChain <span class='term' data-term='primitive'>primitives</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">下面是我们如何看待这摞循环，以及如何用 LangChain 的<span class='term' data-term='primitive'>原语</span>（primitives）把每一层实现出来。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-loop-1-the-agent">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Loop 1: The Agent</span><span class="h-zh">第一层：智能体循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本层只回答「能不能做」：模型在循环里反复调工具直到完成。LangChain 的 create_agent 就是这一层；后文的文档智能体是贯穿全文的例子。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="loop-1-the-agent-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-1-the-agent-b0-0">At its core, an agent is just a model calling tools in a loop until a task is complete.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-1-the-agent-b0-0">从本质上说，智能体只是一个模型在循环里调用工具，直到任务完成。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="第一层：智能体循环"><div class="fig-media"><img class="still" src="media/fig1.png" loading="lazy" decoding="async" alt="Loop 1: Agent loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>第一层：智能体循环</b>　请求进入模型，模型在 Action 与 Observation 之间反复调工具；「Repeat until done」把循环收敛成结果。</p><p class="cap-en">原文图注：Loop 1: Agent loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看下面的小环：Model 与 Tools 之间有两条箭头，右出的是 Action（模型动手），左回的是 Observation（工具结果回到上下文）。</li><li>看上面的入口：Request 只有一条箭头进 Model，说明这一层只处理「一次请求怎么做完」。</li><li>看横向：循环不结束就不算完，直到模型不再调工具，箭头才指向 Result。</li></ol><p class="takeaway">一句话：这一层只解决「能不能把活干完」。</p></details></figcaption></figure>
+<div class="row" data-rid="loop-1-the-agent-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-1-the-agent-b2-0">This is what LangChain’s <a class='lnk' href='https://docs.langchain.com/oss/python/langchain/agents' target='_blank' rel='noopener' data-link='L2'><code>create_agent</code></a> gives you.</span> <span class="s" data-k="loop-1-the-agent-b2-1">Pick any model, plug in tools, and you have a working <span class='term' data-term='agent_loop'>agent loop</span>. <a class='lnk' href='https://docs.langchain.com/oss/python/langchain/tools' target='_blank' rel='noopener' data-link='L3'>Tools</a> are what give the agent the power to take action in the real world.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-1-the-agent-b2-0">这正是 LangChain 的 <a class='lnk' href='https://docs.langchain.com/oss/python/langchain/agents' target='_blank' rel='noopener' data-link='L2'>create_agent</a> 提供的东西。</span><span class="s" data-k="loop-1-the-agent-b2-1">随便挑一个模型、接上一组工具，你就得到了一个能跑的<span class='term' data-term='agent_loop'>智能体循环</span>。<a class='lnk' href='https://docs.langchain.com/oss/python/langchain/tools' target='_blank' rel='noopener' data-link='L3'>工具</a> 让智能体有能力在真实世界里采取行动。</span></p></div></div>
+<div class="row" data-rid="loop-1-the-agent-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-1-the-agent-b3-0">Take our internal docs agent as an example (which we’ll use as a motivating example for the rest of this blog).</span> <span class="s" data-k="loop-1-the-agent-b3-1">At the first loop level, it receives a request for a documentation improvement, the model <span class='typo' data-typo='0'>plans and draft changes</span>, and it uses tools to clone repos, read files, write docs, open a pull request, etc.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-1-the-agent-b3-0">拿我们内部的文档智能体举例（后面的内容都会以它为例子）。</span><span class="s" data-k="loop-1-the-agent-b3-1">在第一层循环里，它收到一个改进文档的请求，模型规划并起草改动，然后调用工具去克隆仓库、读文件、写文档、开 Pull Request，等等。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="文档智能体的第一层"><div class="fig-media"><img class="still" src="media/fig2.png" loading="lazy" decoding="async" alt="Docs writer agent loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>文档智能体的第一层</b>　同一个循环换上具体角色：文档改进请求进来，模型规划并起草改动，沙箱工具负责克隆、读、写，最后产出带 diff 与描述的 Pull Request。</p><p class="cap-en">原文图注：Docs writer agent loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看 Tools 框：Sandbox tools 下面写着 Clone, read, write——这是文档智能体实际能碰的三类动作。</li><li>看右端：Result 被具体化成 Pull request，括号里是 Diff + description，也就是这次「做完」的交付物。</li><li>对比 fig1：拓扑完全一样，变的只是每个框里的名字。</li></ol><p class="takeaway">一句话：换任务只换框里的名字，循环结构不变。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-level-2-verification-loo">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Level 2: Verification loop</span><span class="h-zh">第二层：验证循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本层回答「做得对不对」：在外面套一个评分器，按量表打分，不合格就带反馈重试。代价是延迟与成本上升。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="level-2-verification-loo-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-2-verification-loo-b0-0">The agent loop gets work done, but it doesn't always produce correct or consistent work on the first pass.</span> <span class="s" data-k="level-2-verification-loo-b0-1">When consistency matters, it's often useful to wrap it in a <span class='term' data-term='verification_loop'>verification loop</span> that checks the output and sends feedback back to the model when it falls short.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-2-verification-loo-b0-0">智能体循环能把活干完，但第一次就做对、做一致，并不总能保证。</span><span class="s" data-k="level-2-verification-loo-b0-1">当一致性很重要时，通常值得在它外面再套一层<span class='term' data-term='verification_loop'>验证循环</span>：检查输出，不达标就把反馈送回模型。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="第二层：验证循环"><div class="fig-media"><img class="still" src="media/fig3.png" loading="lazy" decoding="async" alt="Loop 2: Verification loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>第二层：验证循环</b>　在智能体循环外面再套一层：Result 交给 Grader，按 Rubric / eval 打分；Pass 才进 Done，不合格就沿绿线 Retry with feedback 回到 Model。</p><p class="cap-en">原文图注：Loop 2: Verification loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看蓝色虚线框：Agent loop 被整体包住，说明验证在「外层」，不是塞进循环内部。</li><li>看绿色 Grader：它是唯一的判断点，输入是 Result，输出只有 Pass 或 Retry。</li><li>看绿色回线：反馈直接回到 Model，而不是回到 Tools——改的是下一次怎么想，不是上一个动作。</li></ol><p class="takeaway">一句话：验证循环把「交付」变成「打分—重试」。</p></details></figcaption></figure>
+<div class="row" data-rid="level-2-verification-loo-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-2-verification-loo-b2-0">The verification loop adds a <span class='term' data-term='grader'>grader</span>: something that checks the agent's output against a <span class='term' data-term='rubric'>rubric</span> and, if it fails, sends the result back with feedback.</span> <span class="s" data-k="level-2-verification-loo-b2-1">Graders can either be deterministic or agentic (<a class='lnk' href='https://docs.langchain.com/langsmith/llm-as-judge' target='_blank' rel='noopener' data-link='L4'>LLM as a judge</a> is a classic example, here).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-2-verification-loo-b2-0">验证循环增加了一个<span class='term' data-term='grader'>评分器</span>（grader）：它拿<span class='term' data-term='rubric'>评分量表</span>（rubric）<sup class='tn' data-note='N3'>3</sup> 去检查智能体的输出，不合格就把结果连同反馈一起退回。</span><span class="s" data-k="level-2-verification-loo-b2-1">评分器既可以按固定规则检查（deterministic），也可以交给智能体判断（agentic）——<a class='lnk' href='https://docs.langchain.com/langsmith/llm-as-judge' target='_blank' rel='noopener' data-link='L4'>LLM 当裁判</a> 就是后者的经典例子。</span></p></div></div>
+<div class="row" data-rid="level-2-verification-loo-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-2-verification-loo-b3-0"><a class='lnk' href='https://docs.langchain.com/oss/python/deepagents/rubric' target='_blank' rel='noopener' data-link='L5'><code>RubricMiddleware</code></a> handles this pattern, or you can wire it up with an <a href='https://docs.langchain.com/oss/python/langchain/middleware/overview' target='_blank' rel='noopener'><code>after_agent</code> hook</a> on <code>create_agent</code>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-2-verification-loo-b3-0"><a class='lnk' href='https://docs.langchain.com/oss/python/deepagents/rubric' target='_blank' rel='noopener' data-link='L5'>RubricMiddleware</a> 能处理这种模式，也可以在 <code>create_agent</code> 上挂一个 <a href='https://docs.langchain.com/oss/python/langchain/middleware/overview' target='_blank' rel='noopener'>after_agent 钩子</a> 自己接。</span></p></div></div>
+<div class="row" data-rid="level-2-verification-loo-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-2-verification-loo-b4-0">For our docs writer example, the grader runs tests after each attempt, checking that all links resolve, all CI checks pass, and the diff is scoped to what was actually requested.</span> <span class="s" data-k="level-2-verification-loo-b4-1">No manual review needed to catch those classes of error.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-2-verification-loo-b4-0">在文档智能体这个例子里，评分器在每次尝试后跑测试，检查所有链接都能解析、所有 CI 检查都通过、diff 的范围确实就是被要求改的那部分。</span><span class="s" data-k="level-2-verification-loo-b4-1">这几类错误不需要人工 review 就能抓住。</span></p></div></div>
+<div class="row" data-rid="level-2-verification-loo-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-2-verification-loo-b5-0">One tradeoff: adding verification increases latency and cost per run.</span> <span class="s" data-k="level-2-verification-loo-b5-1">It's worth it when quality matters more than speed, which is most production use cases.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-2-verification-loo-b5-0">一个代价是：加验证会增加每次运行的延迟和成本。</span><span class="s" data-k="level-2-verification-loo-b5-1">当质量比速度更重要时——大多数生产场景都是如此——这笔投入是值得的。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="文档智能体的验证循环"><div class="fig-media"><img class="still" src="media/fig4.png" loading="lazy" decoding="async" alt="Docs writer verification loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>文档智能体的验证循环</b>　文档智能体版：Grader 检查 Links resolve 与 CI passes，不合格就带着反馈重试，合格才 Done。</p><p class="cap-en">原文图注：Docs writer verification loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看 Grader 里的两行：Links resolve、CI passes——这是文档任务最硬的验收条件。</li><li>看 Retry 回线：它回到 Model，而不是回到 Pull request，说明修的是生成过程。</li><li>看右端 Done：从 Grader 出去，不是从智能体出去——通过与否由评分器决定。</li></ol><p class="takeaway">一句话：验收标准写进评分器，才能无人值守地重试。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-level-3-event-driven-loo">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Level 3: Event driven loop</span><span class="h-zh">第三层：事件驱动循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本层回答「什么时候跑」：cron、webhook、消息事件触发，智能体变成系统里常驻的组件，而不是被人手动调用。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="level-3-event-driven-loo-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b0-0">One of the most important parts of agent development is the integrations layer: connecting your agent to your ecosystem so that it can run in the background.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b0-0">智能体开发中最重要的部分之一是集成层：把智能体接进你的生态，让它能在后台跑起来。</span></p></div></div>
+<div class="row" data-rid="level-3-event-driven-loo-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b1-0">The <span class='term' data-term='event_loop'>event-driven loop</span> connects your agent to your ecosystem.</span> <span class="s" data-k="level-3-event-driven-loo-b1-1">An event fires — a new document lands, a schedule triggers, a <span class='term' data-term='webhook'>webhook</span> arrives — and the agent runs.</span> <span class="s" data-k="level-3-event-driven-loo-b1-2">The agent isn't something you invoke manually; it's a component running continuously inside a larger system.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b1-0"><span class='term' data-term='event_loop'>事件驱动循环</span>负责把智能体接入你的生态。</span><span class="s" data-k="level-3-event-driven-loo-b1-1">事件发生了——新文档落地、定时任务触发、<span class='term' data-term='webhook'>webhook</span> 到达<sup class='tn' data-note='N4'>4</sup>——智能体就运行一次。</span><span class="s" data-k="level-3-event-driven-loo-b1-2">它不再是你手动调用的东西，而是长期跑在一个更大系统里的组件。</span></p></div></div>
+<figure class="row wide fig" id="fig5" data-cap="第三层：事件驱动循环"><div class="fig-media"><img class="still" src="media/fig5.png" loading="lazy" decoding="async" alt="Loop 3: Event loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>第三层：事件驱动循环</b>　事件触发之后，跑的仍是一个完整的验证循环；结果落到 System update（Service improves），再以 New events 回到触发器。</p><p class="cap-en">原文图注：Loop 3: Event loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看紫色外圈：Event trigger → … → System update → New events → Event trigger，这是常驻系统的那一层。</li><li>看虚线嵌套：Agent loop 与 Verification loop 都缩在事件循环里面，说明事件层不重写工作逻辑，只负责「什么时候跑」。</li><li>看紫色终点框：System update 写着 Service improves——这一层的产出是系统状态变化，不是一份文档。</li></ol><p class="takeaway">一句话：事件循环把智能体变成系统里常驻的组件。</p></details></figcaption></figure>
+<div class="row" data-rid="level-3-event-driven-loo-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b3-0"><a href='https://info.langchain.com/agent-development-platform?utm_campaign=evergreen_agent_development_platform_cv&amp;utm_campaign_id=23761370321&amp;utm_ad_group_id=195261126163&amp;utm_ad_id=805594028616&amp;utm_network=g&amp;utm_term=ai%20agent%20development%20platform&amp;utm_campaign=evergreen_agents_cv&amp;utm_source=google&amp;utm_medium=cpc&amp;hsa_acc=7906965105&amp;hsa_cam=23761370321&amp;hsa_grp=195261126163&amp;hsa_ad=805594028616&amp;hsa_src=g&amp;hsa_tgt=kwd-2392721013549&amp;hsa_kw=ai%20agent%20development%20platform&amp;hsa_mt=p&amp;hsa_net=adwords&amp;hsa_ver=3&amp;gad_source=1&amp;gad_campaignid=23761370321&amp;gbraid=0AAAAA-PkievTcIb-6awevyQxCB-9n-H6Z&amp;gclid=CjwKCAjwxb7RBhA5EiwAQ-AAdF5XHKtTYLgQVrVYstdxYjTd0hcrCuqxvuACiKzOOdxcJdTza8HkwxoCDiQQAvD_BwE' target='_blank' rel='noopener'>LangSmith Deployment</a> supports the trigger infrastructure, including support for <a class='lnk' href='https://docs.langchain.com/langsmith/cron-jobs' target='_blank' rel='noopener' data-link='L6'>cron schedules</a> and <a class='lnk' href='https://docs.langchain.com/langsmith/use-webhooks' target='_blank' rel='noopener' data-link='L7'>webhooks</a>.</span> <span class="s" data-k="level-3-event-driven-loo-b3-1">One popular example of <span class='term' data-term='cron'>crons</span> in action is “heartbeats” in <a class='lnk' href='https://docs.openclaw.ai/gateway/heartbeat' target='_blank' rel='noopener' data-link='L8'>openclaw</a>, which turn your agent into an always-on, proactive assistant.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b3-0"><a href='https://info.langchain.com/agent-development-platform?utm_campaign=evergreen_agent_development_platform_cv&amp;utm_campaign_id=23761370321&amp;utm_ad_group_id=195261126163&amp;utm_ad_id=805594028616&amp;utm_network=g&amp;utm_term=ai%20agent%20development%20platform&amp;utm_campaign=evergreen_agents_cv&amp;utm_source=google&amp;utm_medium=cpc&amp;hsa_acc=7906965105&amp;hsa_cam=23761370321&amp;hsa_grp=195261126163&amp;hsa_ad=805594028616&amp;hsa_src=g&amp;hsa_tgt=kwd-2392721013549&amp;hsa_kw=ai%20agent%20development%20platform&amp;hsa_mt=p&amp;hsa_net=adwords&amp;hsa_ver=3&amp;gad_source=1&amp;gad_campaignid=23761370321&amp;gbraid=0AAAAA-PkievTcIb-6awevyQxCB-9n-H6Z&amp;gclid=CjwKCAjwxb7RBhA5EiwAQ-AAdF5XHKtTYLgQVrVYstdxYjTd0hcrCuqxvuACiKzOOdxcJdTza8HkwxoCDiQQAvD_BwE' target='_blank' rel='noopener'>LangSmith Deployment</a> 支撑触发器基础设施，包括 <a class='lnk' href='https://docs.langchain.com/langsmith/cron-jobs' target='_blank' rel='noopener' data-link='L6'>cron 定时任务</a> 与 <a class='lnk' href='https://docs.langchain.com/langsmith/use-webhooks' target='_blank' rel='noopener' data-link='L7'>webhook</a>。</span><span class="s" data-k="level-3-event-driven-loo-b3-1"><span class='term' data-term='cron'>定时任务</span>在实践中一个流行的例子，是 <a class='lnk' href='https://docs.openclaw.ai/gateway/heartbeat' target='_blank' rel='noopener' data-link='L8'>openclaw</a> 里的「心跳」（heartbeat）<sup class='tn' data-note='N5'>5</sup>：它把智能体变成一个始终在线、主动干活的助手。</span></p></div></div>
+<div class="row" data-rid="level-3-event-driven-loo-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b4-0">Our docs agent is powered by <a class='lnk' href='https://www.langchain.com/langsmith/fleet' target='_blank' rel='noopener' data-link='L9'>Fleet</a>, our no-code agent builder.</span> <span class="s" data-k="level-3-event-driven-loo-b4-1">Fleet's <a href='https://docs.langchain.com/langsmith/fleet/channels' target='_blank' rel='noopener'>channels</a> and <a href='https://docs.langchain.com/langsmith/fleet/schedules' target='_blank' rel='noopener'>schedules</a> handle event-driven and cron-style triggers.</span> <span class="s" data-k="level-3-event-driven-loo-b4-2">We use a channel to fire off the docs agent whenever a message is sent in our <code>#docs-plz</code> Slack channel.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-3-event-driven-loo-b4-0">我们的文档智能体由 <a class='lnk' href='https://www.langchain.com/langsmith/fleet' target='_blank' rel='noopener' data-link='L9'>Fleet</a> 驱动，这是我们的无代码智能体搭建器。</span><span class="s" data-k="level-3-event-driven-loo-b4-1">Fleet 的 <a href='https://docs.langchain.com/langsmith/fleet/channels' target='_blank' rel='noopener'>channel</a> 负责接消息并触发任务，<a href='https://docs.langchain.com/langsmith/fleet/schedules' target='_blank' rel='noopener'>schedule</a> 负责按时间表触发。</span><span class="s" data-k="level-3-event-driven-loo-b4-2">我们用了一个 channel：只要 <code>#docs-plz</code> 这个 Slack 频道里有消息，就触发文档智能体。</span></p></div></div>
+<figure class="row wide fig" id="fig6" data-cap="文档智能体的事件循环"><div class="fig-media"><img class="still" src="media/fig6.png" loading="lazy" decoding="async" alt="Docs writer event loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>文档智能体的事件循环</b>　Slack 的 #docs-plz 消息就是 Event trigger；跑完验证循环后落到 Docs enhancement（Merged, live, discoverable），新请求再回到起点。</p><p class="cap-en">原文图注：Docs writer event loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看顶部：Slack message 下面标了 #docs-plz——触发源具体到一个频道。</li><li>看右下：Docs enhancement 下面三个词 Merged, live, discoverable，是「真的上线了」的三个条件。</li><li>看最外圈：New request 绕回 Slack message，说明这是一个持续在线的服务，不是一次性任务。</li></ol><p class="takeaway">一句话：触发器接进日常工具，智能体才会被真正用起来。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-level-4-hill-climbing-lo">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Level 4: Hill climbing loop</span><span class="h-zh">第四层：爬坡循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>本层回答「怎么越跑越好」：运行记录喂给分析智能体，产出的改动直接写回运行框架；这是唯一自动化「改进」的循环。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="level-4-hill-climbing-lo-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b0-0">The first three loops automate work.</span> <span class="s" data-k="level-4-hill-climbing-lo-b0-1">The fourth (and arguably most important) automates improvement!</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b0-0">前三层循环自动化的是「工作」。</span><span class="s" data-k="level-4-hill-climbing-lo-b0-1">第四层（也可以说最重要的一层）自动化的是「改进」！</span></p></div></div>
+<figure class="row wide fig" id="fig7" data-cap="第四层：爬坡循环"><div class="fig-media"><img class="still" src="media/fig7.png" loading="lazy" decoding="async" alt="Loop 4: Hill climbing loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>第四层：爬坡循环</b>　Engine analysis 从 Traces 里找出问题，沿红色 Harness improvements 箭头把改动写回内层；紫色 New events 是事件循环自己的回线，两条线作用不同。</p><p class="cap-en">原文图注：Loop 4: Hill climbing loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看右侧红色块：Engine analysis 的输入是 Traces，输出是 Harness improvements——这是「分析 → 改配置」的闭环。</li><li>看红色箭头：它从右侧直接指向内层的 Tools，不是绕回顶部；紫色 New events 才是回到 Event trigger 的那条线。</li><li>看三层虚线嵌套：Agent ⊂ Verification ⊂ Event，最外面才是这层爬坡；越外层，改动越「元」。</li></ol><p class="takeaway">一句话：四层里唯一自动化「改进」的一层，也是复利所在。</p></details></figcaption></figure>
+<div class="row" data-rid="level-4-hill-climbing-lo-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b2-0">Every agent run <a class='lnk' href='https://docs.langchain.com/langsmith/observability' target='_blank' rel='noopener' data-link='L10'>produce a trace</a>: a record of what the model did, the tools it called, grader feedback, etc.</span> <span class="s" data-k="level-4-hill-climbing-lo-b2-1">Those <span class='term' data-term='trace'>traces</span> contain high value signal regarding what's working and what isn't.</span> <span class="s" data-k="level-4-hill-climbing-lo-b2-2">The <span class='term' data-term='hill_climbing'>hill climbing loop</span> runs an analysis agent over those traces and uses the findings to rewrite the harness with improved configuration.</span> <span class="s" data-k="level-4-hill-climbing-lo-b2-3">That can include prompt/tool tweaks or grader tweaks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b2-0">智能体的每一次运行都会 <a class='lnk' href='https://docs.langchain.com/langsmith/observability' target='_blank' rel='noopener' data-link='L10'>产生一条运行记录</a><sup class='tn' data-note='N6'>6</sup>：记录模型做了什么、调用了哪些工具、评分器的反馈，等等。</span><span class="s" data-k="level-4-hill-climbing-lo-b2-1">这些<span class='term' data-term='trace'>运行记录</span>里带着很有价值的信号：什么在起作用，什么没有。</span><span class="s" data-k="level-4-hill-climbing-lo-b2-2"><span class='term' data-term='hill_climbing'>爬坡循环</span>（hill climbing loop）会用一个分析智能体扫这些运行记录，并用结论重写运行框架的配置。</span><span class="s" data-k="level-4-hill-climbing-lo-b2-3">这可以包括调 prompt、调工具，或者调评分器。</span></p></div></div>
+<div class="row" data-rid="level-4-hill-climbing-lo-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b3-0">In LangSmith, you can use <a class='lnk' href='https://www.langchain.com/langsmith/engine' target='_blank' rel='noopener' data-link='L11'>Engine</a>, our trace analysis agent, to instrument this fourth loop.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b3-0">在 LangSmith 里，你可以用 <a class='lnk' href='https://www.langchain.com/langsmith/engine' target='_blank' rel='noopener' data-link='L11'>Engine</a>——我们的运行记录分析智能体——来把第四层循环实现出来。</span></p></div></div>
+<div class="row" data-rid="level-4-hill-climbing-lo-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b4-0">Wrapping up the docs agent analogy, we run engine over the docs agent traces to detect any issues.</span> <span class="s" data-k="level-4-hill-climbing-lo-b4-1">When multiple traces signal a potential problem, an issue is filed requesting changes to the offending prompt or tool.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b4-0">最后用文档智能体收个尾：我们让 Engine 跑在它的运行记录上，找出问题。</span><span class="s" data-k="level-4-hill-climbing-lo-b4-1">当多条运行记录都指向潜在问题时，就会开一个 issue，要求修改有问题的 prompt 或工具。</span></p></div></div>
+<figure class="row wide fig" id="fig8" data-cap="文档智能体的爬坡循环"><div class="fig-media"><img class="still" src="media/fig8.png" loading="lazy" decoding="async" alt="Docs writer hill climbing loop diagram"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>文档智能体的爬坡循环</b>　Engine analysis 跨 trace 发现问题、提交修改 prompt 或工具的请求；请求落实后，下一轮运行就能用上新配置。</p><p class="cap-en">原文图注：Docs writer hill climbing loop diagram</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>看 Engine analysis 的两行：Detects issues across traces, files prompt or tool change——先发现问题，再落成改动请求。</li><li>看红色 Harness improvements：它指向 Sandbox tools，说明改的是工具与配置层，不是模型权重。</li><li>看两条回线：紫色 New request 回到 Slack message 触发下一轮；红色箭头只负责把改进送进内层，二者不要混。</li></ol><p class="takeaway">一句话：改进以「请求」的形式落地，不是静默改掉。</p></details></figcaption></figure>
+<div class="row" data-rid="level-4-hill-climbing-lo-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b6-0">The key move here is that the return arrow doesn't just loop back to the top — it reaches inside and updates the agent loop directly.</span> <span class="s" data-k="level-4-hill-climbing-lo-b6-1">Each cycle of the outer loop makes the inner loops more effective.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b6-0">这里的关键动作是：那条回箭头不只是绕回顶部，而是伸进内层，直接更新智能体循环。</span><span class="s" data-k="level-4-hill-climbing-lo-b6-1">外层循环每转一圈，内层循环就变得更有效一点。</span></p></div></div>
+<div class="row" data-rid="level-4-hill-climbing-lo-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b7-0"><b>Looking forward:</b> prompt and tool configuration are the most simple things to improve, but they're not the only options.</span> <span class="s" data-k="level-4-hill-climbing-lo-b7-1">For teams running <span class='term' data-term='open_weight'>open-weight</span> models, the hill climbing loop can feed into RL <span class='term' data-term='fine_tuning'>fine-tuning</span>, using trace or <span class='term' data-term='eval'>eval</span> outcomes as training signal to improve the model itself.</span> <span class="s" data-k="level-4-hill-climbing-lo-b7-2">Auxiliary context like memory and retrieved skills can be improved the same way.</span> <span class="s" data-k="level-4-hill-climbing-lo-b7-3">The loop is the pattern; what it optimizes is up to you.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="level-4-hill-climbing-lo-b7-0"><b>展望：</b> prompt 和工具配置是最简单的改进点，但它们不是唯一的选项。</span><span class="s" data-k="level-4-hill-climbing-lo-b7-1">对使用<span class='term' data-term='open_weight'>开放权重</span>模型（open-weight）的团队来说，爬坡循环可以把运行记录或<span class='term' data-term='eval'>评测</span>（eval）的结果当作训练信号，喂给强化学习<span class='term' data-term='fine_tuning'>微调</span>（fine-tuning），直接改进模型本身。</span><span class="s" data-k="level-4-hill-climbing-lo-b7-2">记忆、检索到的技能这类辅助上下文，也可以用同样的方式改进。</span><span class="s" data-k="level-4-hill-climbing-lo-b7-3">循环是模式；它优化什么，由你决定。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-human-oversight-and-expe">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Human oversight and expertise</span><span class="h-zh">人的监督与专业判断</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>每一层都有人工介入的天然位置：敏感动作前、评分时、上线前。自动评分器查得了链接，查不了「这段内容该怎么讲」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="human-oversight-and-expe-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="human-oversight-and-expe-b0-0">Automation doesn't mean removing humans from the loop.</span> <span class="s" data-k="human-oversight-and-expe-b0-1">At every level, there are natural points where human oversight adds value.</span> <span class="s" data-k="human-oversight-and-expe-b0-2">An automated grader can check whether links resolve; it takes a human to notice the framing is wrong for the audience.</span> <span class="s" data-k="human-oversight-and-expe-b0-3">That kind of judgment, earned from context, experience, and taste, is exactly where human review earns its place.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="human-oversight-and-expe-b0-0">自动化不意味着把人从循环里拿掉。</span><span class="s" data-k="human-oversight-and-expe-b0-1">在每一层，都有一些天然的位置，人的监督能带来价值。</span><span class="s" data-k="human-oversight-and-expe-b0-2">自动评分器能检查链接是否可解析；但要发现「内容的切入角度不适合目标读者」，得靠人。</span><span class="s" data-k="human-oversight-and-expe-b0-3">这种来自上下文、经验和品味的判断，正是人工 review 值得存在的地方。</span></p></div></div>
+<div class="row" data-rid="human-oversight-and-expe-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="human-oversight-and-expe-b1-0">Some expertise should be codified in the prompt/tools themselves, but for sensitive actions, live human review is essential (think financial transactions, DB operations, etc).</span> <span class="s" data-k="human-oversight-and-expe-b1-1">LangChain makes it straightforward to instrument these touch points in every loop:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="human-oversight-and-expe-b1-0">有些专业判断应该固化进 prompt 和工具本身，但对敏感动作，实时的人工 review 不可替代（想想金融交易、数据库操作）。</span><span class="s" data-k="human-oversight-and-expe-b1-1">LangChain 让每一层循环里的这些触点都很容易接上人：</span></p></div></div>
+<div class="row" data-rid="human-oversight-and-expe-b2"><div class="cell en" lang="en"><ol class='para'><li><span class="s" data-k="human-oversight-and-expe-b2-0-0">In the agent loop, <a class='lnk' href='https://docs.langchain.com/oss/python/langchain/human-in-the-loop' target='_blank' rel='noopener' data-link='L12'>require human input</a> before sensitive actions/tool calls</span></li><li><span class="s" data-k="human-oversight-and-expe-b2-1-0">In the verification loop, a human can act as the grader for sensitive workflows</span></li><li><span class="s" data-k="human-oversight-and-expe-b2-2-0">In the application loop, a human can approve outputs before they’re returned to the end user</span></li><li><span class="s" data-k="human-oversight-and-expe-b2-3-0">In the hill climbing loop, harness improvements can flow through human review before deployment</span></li></ol></div><div class="cell zh"><ol class='para'><li><span class="s" data-k="human-oversight-and-expe-b2-0-0">在智能体循环里，敏感动作或工具调用之前 <a class='lnk' href='https://docs.langchain.com/oss/python/langchain/human-in-the-loop' target='_blank' rel='noopener' data-link='L12'>要求人工输入</a></span></li><li><span class="s" data-k="human-oversight-and-expe-b2-1-0">在验证循环里，敏感流程可以让人来当评分器</span></li><li><span class="s" data-k="human-oversight-and-expe-b2-2-0">在应用循环里，输出返回给最终用户之前，人可以审批</span></li><li><span class="s" data-k="human-oversight-and-expe-b2-3-0">在爬坡循环里，运行框架的改进可以先过人工 review 再上线</span></li></ol></div></div>
+<div class="row" data-rid="human-oversight-and-expe-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="human-oversight-and-expe-b3-0">All of LangChain’s open source frameworks make adding a “<span class='term' data-term='human_in_the_loop'>human in the loop</span>” a <a class='lnk' href='https://docs.langchain.com/oss/python/deepagents/human-in-the-loop' target='_blank' rel='noopener' data-link='L13'>first class primitive</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="human-oversight-and-expe-b3-0">LangChain 所有开源框架都把「<span class='term' data-term='human_in_the_loop'>人在回路</span>」（human in the loop）做成了 <a class='lnk' href='https://docs.langchain.com/oss/python/deepagents/human-in-the-loop' target='_blank' rel='noopener' data-link='L13'>一等公民</a>。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-putting-it-all-together">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Putting it all together</span><span class="h-zh">把四层拼起来</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>一张表把四层循环、各自的作用、影响和对应的 LangChain 原语对齐；作者认为价值正在向第三、四层转移。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="putting-it-all-together-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="putting-it-all-together-b0-0">In case you’d prefer a more tabular view, here’s how those four loops stack together:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="putting-it-all-together-b0-0">如果你更喜欢表格，四层循环叠起来是这样：</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">Loop</span><span class="th-zh">循环</span></th><th><span class="th-en">What it does</span><span class="th-zh">它做什么</span></th><th><span class="th-en">Impact</span><span class="th-zh">影响</span></th><th><span class="th-en">LangChain primitive</span><span class="th-zh">LangChain 原语</span></th></tr></thead><tbody><tr><td><span class="td-en">1. Agent loop</span><span class="td-zh">1. 智能体循环</span></td><td><span class="td-en">Model calls tools repeatedly until a task is complete</span><span class="td-zh">模型反复调用工具，直到任务完成</span></td><td><span class="td-en">Automate work</span><span class="td-zh">自动化工作</span></td><td><span class="td-en">create_agent, any LangChain-supported model</span><span class="td-zh">create_agent，以及任何 LangChain 支持的模型</span></td></tr><tr><td><span class="td-en">2. Verification loop</span><span class="td-zh">2. 验证循环</span></td><td><span class="td-en">Agent runs, output is scored against a rubric, retried with feedback if it fails</span><span class="td-zh">智能体运行，输出按评分量表打分，不合格就带反馈重试</span></td><td><span class="td-en">Ensure work quality and correctness</span><span class="td-zh">保证工作质量与正确性</span></td><td><span class="td-en">RubricMiddleware</span><span class="td-zh">RubricMiddleware</span></td></tr><tr><td><span class="td-en">3. Event driven loop</span><span class="td-zh">3. 事件驱动循环</span></td><td><span class="td-en">Events trigger agent runs that update a real system</span><span class="td-zh">事件触发智能体运行，更新真实系统</span></td><td><span class="td-en">Automated work at scale</span><span class="td-zh">规模化自动工作</span></td><td><span class="td-en">LangSmith Deployment with cron triggers / webhooks or Fleet channels</span><span class="td-zh">LangSmith Deployment 的 cron 触发器 / webhook，或 Fleet channels</span></td></tr><tr><td><span class="td-en">4. Hill climbing loop</span><span class="td-zh">4. 爬坡循环</span></td><td><span class="td-en">Traces from production runs feed an analysis agent that improves the harness config</span><span class="td-zh">生产运行的运行记录喂给分析智能体，改进运行框架配置</span></td><td><span class="td-en">Harness improvements</span><span class="td-zh">运行框架持续改进</span></td><td><span class="td-en">LangSmith Engine</span><span class="td-zh">LangSmith Engine</span></td></tr></tbody></table></div></div>
+<div class="row" data-rid="putting-it-all-together-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="putting-it-all-together-b2-0">This is what loop engineering — or <a class='lnk' href='https://latent.space/p/loopcraft/' target='_blank' rel='noopener' data-link='L1'>loopcraft</a>, as swyx puts it — actually looks like in practice.</span> <span class="s" data-k="putting-it-all-together-b2-1">AI leaders like <a href='https://x.com/steipete/status/2063697162748260627' target='_blank' rel='noopener'>Steipete</a>, <a href='https://x.com/0xwhrrari/status/2064804504608887040' target='_blank' rel='noopener'>Boris</a>, and <a href='https://www.youtube.com/watch?v=kwSVtQ7dziU' target='_blank' rel='noopener'>Andrej</a> have all arrived at the same conclusion: the potential in agents is in the loops you build around them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="putting-it-all-together-b2-0">这就是循环工程——或者用 swyx 的说法，<a class='lnk' href='https://latent.space/p/loopcraft/' target='_blank' rel='noopener' data-link='L1'>loopcraft</a>——在实践里真正长成的样子。</span><span class="s" data-k="putting-it-all-together-b2-1">AI 领域的领导者，像 <a href='https://x.com/steipete/status/2063697162748260627' target='_blank' rel='noopener'>Steipete</a>、<a href='https://x.com/0xwhrrari/status/2064804504608887040' target='_blank' rel='noopener'>Boris</a>、<a href='https://www.youtube.com/watch?v=kwSVtQ7dziU' target='_blank' rel='noopener'>Andrej</a>，都得出了同一个结论：智能体的潜力，在于你围绕它搭起来的那些循环。</span></p></div></div>
+<div class="row" data-rid="putting-it-all-together-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="putting-it-all-together-b3-0">We’ve been thinking about loops 1 and 2 for a while.</span> <span class="s" data-k="putting-it-all-together-b3-1">But focus should pivot to loops 3 and 4 where value compounds by embedding agents into your ecosystem that continuously improve in response to your criteria.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="putting-it-all-together-b3-0">我们已经琢磨第一、第二层有一阵子了。</span><span class="s" data-k="putting-it-all-together-b3-1">但重心应该转向第三、第四层：把智能体嵌进你的生态、让它按你的标准持续变好，价值会在那里复利。</span></p></div></div>
+<div class="row" data-rid="putting-it-all-together-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="putting-it-all-together-b4-0">Satya <a class='lnk' href='https://x.com/satyanadella/status/2066182223213293753' target='_blank' rel='noopener' data-link='L14'>frames the organizational stakes</a>: companies that build learning loops <span class='typo' data-typo='1'>early,where human judgment</span> and token capital compound together, will build an advantage that's hard to replicate.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="putting-it-all-together-b4-0">Satya <a class='lnk' href='https://x.com/satyanadella/status/2066182223213293753' target='_blank' rel='noopener' data-link='L14'>把组织层面的利害关系讲清楚</a><sup class='tn' data-note='N7'>7</sup>：早早建起学习循环的公司，会让人的判断与 token 资本一起复利，从而形成难以复制的优势。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-acknowledgements">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">Acknowledgements</span><span class="h-zh">致谢</span></h2></div>
+<div class="reader-body">
+<div class="row" data-rid="acknowledgements-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="acknowledgements-b0-0">Thanks to <a href='https://x.com/Vtrivedy10' target='_blank' rel='noopener'>Vivek</a>, <a href='https://x.com/masondrxy' target='_blank' rel='noopener'>Mason</a>, <a href='https://x.com/hwchase17?lang=en' target='_blank' rel='noopener'>Harrison</a>, and <a href='https://x.com/huntlovell' target='_blank' rel='noopener'>Hunter</a> for thoughtful review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="acknowledgements-b0-0">感谢 <a href='https://x.com/Vtrivedy10' target='_blank' rel='noopener'>Vivek</a>、<a href='https://x.com/masondrxy' target='_blank' rel='noopener'>Mason</a>、<a href='https://x.com/hwchase17?lang=en' target='_blank' rel='noopener'>Harrison</a> 和 <a href='https://x.com/huntlovell' target='_blank' rel='noopener'>Hunter</a> 的审阅。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-reference">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Reference</span><span class="h-zh">参考资料</span></h2></div>
+<div class="reader-body">
+<div class="row" data-rid="reference-b0"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="reference-b0-0-0"><a href='https://docs.langchain.com/oss/python/deepagents/quickstart' target='_blank' rel='noopener'>deepagents quickstart</a></span></li><li><span class="s" data-k="reference-b0-1-0"><a href='https://docs.langchain.com/oss/python/langchain/agents' target='_blank' rel='noopener'>create_agent docs</a></span></li><li><span class="s" data-k="reference-b0-2-0"><a href='https://docs.langchain.com/oss/python/deepagents/rubric' target='_blank' rel='noopener'>rubric middleware</a></span></li><li><span class="s" data-k="reference-b0-3-0"><a href='https://docs.langchain.com/langsmith/cron-jobs' target='_blank' rel='noopener'>cron jobs</a>, <a href='https://docs.langchain.com/langsmith/use-webhooks' target='_blank' rel='noopener'>webhooks</a></span></li><li><span class="s" data-k="reference-b0-4-0"><a href='https://www.langchain.com/langsmith/engine' target='_blank' rel='noopener'>langsmith engine</a></span></li><li><span class="s" data-k="reference-b0-5-0"><a href='https://docs.langchain.com/langsmith/fleet/channels' target='_blank' rel='noopener'>fleet channels</a></span></li><li><span class="s" data-k="reference-b0-6-0"><a class='lnk' href='https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents' target='_blank' rel='noopener' data-link='L15'>Loop Engineering with LangChain Deep Agents</a> (DeepLearning.AI course)</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="reference-b0-0-0"><a href='https://docs.langchain.com/oss/python/deepagents/quickstart' target='_blank' rel='noopener'>deepagents 快速上手</a></span></li><li><span class="s" data-k="reference-b0-1-0"><a href='https://docs.langchain.com/oss/python/langchain/agents' target='_blank' rel='noopener'>create_agent 文档</a></span></li><li><span class="s" data-k="reference-b0-2-0"><a href='https://docs.langchain.com/oss/python/deepagents/rubric' target='_blank' rel='noopener'>rubric 中间件</a></span></li><li><span class="s" data-k="reference-b0-3-0"><a href='https://docs.langchain.com/langsmith/cron-jobs' target='_blank' rel='noopener'>cron 任务</a>、<a href='https://docs.langchain.com/langsmith/use-webhooks' target='_blank' rel='noopener'>webhook</a></span></li><li><span class="s" data-k="reference-b0-4-0"><a href='https://www.langchain.com/langsmith/engine' target='_blank' rel='noopener'>LangSmith Engine</a></span></li><li><span class="s" data-k="reference-b0-5-0"><a href='https://docs.langchain.com/langsmith/fleet/channels' target='_blank' rel='noopener'>Fleet channels</a></span></li><li><span class="s" data-k="reference-b0-6-0"><a class='lnk' href='https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents' target='_blank' rel='noopener' data-link='L15'>《Loop Engineering with LangChain Deep Agents》</a>（DeepLearning.AI 课程）</span></li></ul></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 16 处正文引用，指向 15 个不同链接；另有 8 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>Loopcraft：堆叠循环的艺术</h4><p class="lnk-site">latent.space · Loopcraft: The Art of Stacking Loops</p><p class="lnk-anchors">正文对应：<em>「loopcraft：堆叠循环的艺术」</em> <em>loopcraft</em></p><p><b>这是什么：</b>swyx 在 Latent Space 的文章：把「循环」当作设计对象，一层层叠起来搭智能体。</p><p><b>为什么值得点：</b>本文的整个框架来自这篇；正文只借了标题，读原文能拿到「为什么可以叠、怎么叠」的论证。</p><p><b>访问说明：</b>原文里给的 /p/ainews-loopcraft-the-art-of-stacking 已 404，卡片改用作者现在的页面 /p/loopcraft/。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章把智能体系统看成一摞可嵌套的循环：内层负责行动，外层负责验证、触发和改进。关键不是某一层多强，而是层与层如何咬合、外层如何改写内层。</p><ul><li>loopcraft = 把 loop 当设计对象</li><li>循环可以叠加而不是替换</li><li>外层循环能改写内层配置</li></ul></details><a class="lnk-open" href="https://latent.space/p/loopcraft/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>Agents：create_agent 文档</h4><p class="lnk-site">docs.langchain.com · Agents — Docs by LangChain</p><p class="lnk-anchors">正文对应：<em>create_agent</em></p><p><b>这是什么：</b>LangChain 里创建智能体的入口：给模型、给工具，得到一个能跑的循环。</p><p><b>为什么值得点：</b>正文第一层循环的落地实现就是它；文档还讲了 prompt、工具、中间件怎么共同构成运行框架。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>官方把智能体定义为「模型在循环里调用工具直到任务完成」，并强调运行框架（prompt、工具、middleware）决定行为边界。</p><ul><li>最小智能体 = 模型 + 工具 + 循环</li><li>运行框架决定行为</li><li>与后续中间件、钩子衔接</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/oss/python/langchain/agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>评分量表（RubricMiddleware）</h4><p class="lnk-site">docs.langchain.com · Grading rubrics — Docs by LangChain</p><p class="lnk-anchors">正文对应：<em>RubricMiddleware</em></p><p><b>这是什么：</b>按评分量表反复迭代、直到达标的中间件。</p><p><b>为什么值得点：</b>第二层验证循环的现成实现；正文把它和 after_agent 钩子并列为两种接法。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把「好」写成 rubric，让评分器逐轮打分；不达标就把反馈送回模型重试，直到通过或耗尽预算。</p><ul><li>rubric = 可检查的标准</li><li>不达标自动带反馈重试</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/oss/python/deepagents/rubric" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip must">必读</span><span class="chip">建议第 10 个读</span></div><h4>LangSmith 观测与 trace</h4><p class="lnk-site">docs.langchain.com · LangSmith Observability</p><p class="lnk-anchors">正文对应：<em>产生一条运行记录</em></p><p><b>这是什么：</b>记录并查看智能体每一次运行：模型调用、工具调用、评分反馈。</p><p><b>为什么值得点：</b>第四层爬坡循环的原料就是 trace；没有它，改进没有依据。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>trace 是一次运行的完整链路；LangSmith 支持筛选、对比与监控，让「哪一步在拖后腿」变得可查。</p><ul><li>trace = 一次运行的全链路</li><li>可筛选、可监控</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/langsmith/observability" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip must">必读</span><span class="chip">建议第 11 个读</span></div><h4>LangSmith Engine：trace 分析智能体</h4><p class="lnk-site">langchain.com · LangSmith Engine</p><p class="lnk-anchors">正文对应：<em>Engine</em></p><p><b>这是什么：</b>跨 trace 找问题的分析智能体，是第四层循环里的「分析者」。</p><p><b>为什么值得点：</b>正文用它落地爬坡循环：发现问题、提交 prompt 或工具改动。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Engine 会归纳失败模式、写 prompt 或代码修复、验证不引入回归；接了代码库还可以直接开 GitHub PR 供团队 review 合并。本文的文档智能体例子只写到「提交 issue 请求改动」，比当前产品能力保守。</p><ul><li>写 prompt / 代码修复并自测</li><li>可开 GitHub PR</li><li>本文例子只提「请求改动」</li></ul></details><a class="lnk-open" href="https://www.langchain.com/langsmith/engine" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 4 个读</span></div><h4>Tools：工具文档</h4><p class="lnk-site">docs.langchain.com · Tools — Docs by LangChain</p><p class="lnk-anchors">正文对应：<em>工具</em></p><p><b>这是什么：</b>给智能体定义可调用工具的方式：取实时数据、执行代码、查数据库、对外部系统动手。</p><p><b>为什么值得点：</b>第一层循环里，模型之所以能「采取行动」，靠的就是工具；这一段正文只一句话带过。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>工具是模型与外部世界之间的动作接口；文档讲工具的描述、参数 schema、调用与错误处理。</p><ul><li>工具 = 动作接口</li><li>schema 影响调用准确率</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/oss/python/langchain/tools" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>如何定义 LLM 裁判</h4><p class="lnk-site">docs.langchain.com · How to define an LLM-as-a-judge evaluator</p><p class="lnk-anchors">正文对应：<em>LLM 当裁判</em></p><p><b>这是什么：</b>用一个大模型按给定标准给另一个模型的输出打分。</p><p><b>为什么值得点：</b>正文说评分器可以「确定性」也可以「智能体式」，LLM 裁判就是后者最典型的例子。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>LLM 裁判适合「没有唯一正确答案、但有明确标准」的任务；文档给评分标准、样例与偏差控制的写法。</p><ul><li>适合主观但有标准的任务</li><li>标准要写成可逐条检查的 rubric</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/langsmith/llm-as-judge" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span></div><h4>使用 cron 定时任务</h4><p class="lnk-site">docs.langchain.com · Use cron jobs — Docs by LangChain</p><p class="lnk-anchors">正文对应：<em>cron 定时任务</em></p><p><b>这是什么：</b>LangSmith 里按时间表触发智能体运行。</p><p><b>为什么值得点：</b>第三层事件驱动循环最常见的触发方式之一。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>用 cron 表达式给部署好的智能体排期；文档讲时区、调度与运行记录。</p><ul><li>时间触发</li><li>部署后才有意义</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/langsmith/cron-jobs" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip bg">背景</span><span class="chip">建议第 7 个读</span></div><h4>使用 webhook</h4><p class="lnk-site">docs.langchain.com · Use webhooks — Docs by LangChain</p><p class="lnk-anchors">正文对应：<em>webhook</em></p><p><b>这是什么：</b>LangSmith 的出站 webhook：某次运行完成后，向外部服务发 POST 回调。</p><p><b>为什么值得点：</b>正文说的是「webhook 到达」触发智能体（入站）；这篇文档讲的是反方向（出站通知），读的时候别混。</p><p><b>访问说明：</b>文档标题 Use webhooks，正文明确是 outbound webhook requests。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文档介绍运行完成后的出站 POST：指定回调地址、配置鉴权头、管理重试。另有 automation webhooks，同样由 LangSmith 向外部端点发 POST，只是触发条件改成规则匹配运行或会话——两者都不是「外部事件打进 LangSmith」。</p><ul><li>方向：LangSmith → 外部服务</li><li>触发点：某次运行完成</li><li>与正文的入站事件方向相反</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/langsmith/use-webhooks" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>Fleet：无代码智能体搭建器</h4><p class="lnk-site">langchain.com · Fleet — LangSmith</p><p class="lnk-anchors">正文对应：<em>Fleet</em></p><p><b>这是什么：</b>LangChain 的无代码智能体搭建器，文档智能体就托管在它上面。</p><p><b>为什么值得点：</b>正文用它做「事件触发」的落地例子：channels 与 schedules。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Fleet 面向不写代码的团队：用 channel 接消息、用 schedule 定时，底层仍是同一套循环与运行记录。</p><ul><li>channels 接事件</li><li>schedules 做定时</li></ul></details><a class="lnk-open" href="https://www.langchain.com/langsmith/fleet" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip bg">背景</span><span class="chip">建议第 12 个读</span></div><h4>人在回路：人工输入</h4><p class="lnk-site">docs.langchain.com · Human-in-the-loop — Docs by LangChain</p><p class="lnk-anchors">正文对应：<em>要求人工输入</em></p><p><b>这是什么：</b>在敏感动作或工具调用前停下来，等人工输入。</p><p><b>为什么值得点：</b>正文「人的监督」一节的第一条落地方式。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>人审不是把整条流程停下来，而是在关键节点插入审批；文档讲中断、恢复与状态保存。</p><ul><li>敏感动作前中断</li><li>恢复后继续执行</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/oss/python/langchain/human-in-the-loop" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L13"><div class="lnk-top"><span class="lnk-id">L13</span><span class="chip bg">背景</span><span class="chip">建议第 13 个读</span></div><h4>Deep Agents：人在回路</h4><p class="lnk-site">docs.langchain.com · Human-in-the-loop — Deep Agents</p><p class="lnk-anchors">正文对应：<em>一等公民</em></p><p><b>这是什么：</b>Deep Agents 把人工审批做成框架里的一等能力。</p><p><b>为什么值得点：</b>正文说 LangChain 的开源框架都把它做成一等公民，这里是 Deep Agents 的版本。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>为敏感工具配置审批门：调用前暂停、等人决定、再继续；适合金融、数据库这类不可逆操作。</p><ul><li>审批门是框架能力</li><li>面向不可逆操作</li></ul></details><a class="lnk-open" href="https://docs.langchain.com/oss/python/deepagents/human-in-the-loop" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L14"><div class="lnk-top"><span class="lnk-id">L14</span><span class="chip bg">背景</span><span class="chip">建议第 14 个读</span><span class="chip">本区域受限</span></div><h4>Satya Nadella：没有生态的前沿并不稳定</h4><p class="lnk-site">x.com · A frontier without an ecosystem is not stable</p><p class="lnk-anchors">正文对应：<em>把组织层面的利害关系讲清楚</em></p><p><b>这是什么：</b>Satya 的 X 长文，谈 AI 经济里公司的未来：人与数字系统之间第一次出现真正的认知循环。</p><p><b>为什么值得点：</b>正文结尾借它把「学习循环」从工程问题抬到组织问题。</p><p><b>访问说明：</b>X 需要登录；本机直连超时，内容经 fxtwitter 接口确认存在（2026-06-14 发布）。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>长文的核心：竞争不再只是买工具，而是组织能不能持续学习、积累 IP、把人判断与模型能力接成回路；早建循环的公司会得到复利。</p><ul><li>认知循环发生在组织层</li><li>学习速度决定优势</li><li>人判断与 token 资本一起复利</li></ul></details><a class="lnk-open" href="https://x.com/satyanadella/status/2066182223213293753" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip">可选</span><span class="chip">建议第 8 个读</span></div><h4>openclaw 的 heartbeat（已迁移）</h4><p class="lnk-site">docs.openclaw.ai · Heartbeat migration — OpenClaw</p><p class="lnk-anchors">正文对应：<em>openclaw</em></p><p><b>这是什么：</b>原文引用的「heartbeat」用法：定时唤醒智能体，让它变成常在线、主动干活的助手。</p><p><b>为什么值得点：</b>正文把它当作 cron 在实践中的流行例子；但这条链接的内容已经变了。</p><p><b>访问说明：</b>页面标题已是 Heartbeat migration；heartbeat 监控被 automation jobs 取代。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>注意：这个页面现在是迁移指南——heartbeat 监控已经退休，改成普通的 automation jobs，由 job 自己带 schedule、prompt、scratch 与运行历史。原文说的「heartbeat 让 agent 常在线」是当时的用法。</p><ul><li>heartbeat 已退休</li><li>改为 automation jobs</li><li>引用要按当时的语境理解</li></ul></details><a class="lnk-open" href="https://docs.openclaw.ai/gateway/heartbeat" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L15"><div class="lnk-top"><span class="lnk-id">L15</span><span class="chip">可选</span><span class="chip">建议第 15 个读</span></div><h4>课程：用 LangChain Deep Agents 做循环工程</h4><p class="lnk-site">deeplearning.ai · Loop Engineering with LangChain Deep Agents</p><p class="lnk-anchors">正文对应：<em>《Loop Engineering with LangChain Deep Agents》</em></p><p><b>这是什么：</b>DeepLearning.AI 的短课，作者是 LangChain 团队。</p><p><b>为什么值得点：</b>想把这套四层循环上手做一遍的人，可以从这里开始。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>课程围绕 agent loop 与外围循环展开：先让模型会行动，再给它验证、触发和改进的框架。</p><ul><li>官方团队授课</li><li>从 agent loop 讲到外围循环</li></ul></details><a class="lnk-open" href="https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 15 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">agent loop</span><span class="gl-zh">智能体循环</span></div><p class="gl-def">最基础的一层：模型在循环里反复调用工具，直到任务完成。</p><p class="gl-ana">对着工具箱反复试，直到把活干完。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">verification loop</span><span class="gl-zh">验证循环</span></div><p class="gl-def">在智能体循环外面再套一层：评分器按量表检查输出，不合格就带反馈退回重试。</p><p class="gl-ana">交卷前先按评分标准自己批一遍。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">event loop</span><span class="gl-zh">事件驱动循环</span></div><p class="gl-def">由外部事件（定时、webhook、消息）触发智能体运行，让它常驻系统而不是被人手动调用。</p><p class="gl-ana">门铃响了才去开门，而不是一直站在门口。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">hill climbing loop</span><span class="gl-zh">爬坡循环</span></div><p class="gl-def">用生产运行记录驱动的改进循环：分析智能体找出问题，直接改写运行框架的配置。</p><p class="gl-ana">每次只往上走一小步，走对了就保留。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">运行框架</span></div><p class="gl-def">围绕模型的整套运行配置：prompt、工具、评分器、循环结构。</p><p class="gl-ana">不是发动机本身，而是把发动机装进车里跑起来的底盘。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">grader</span><span class="gl-zh">评分器</span></div><p class="gl-def">按评分量表给智能体输出打分的组件，可以是确定性测试，也可以是 LLM 裁判。</p><p class="gl-ana">阅卷老师，按评分细则给分。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rubric</span><span class="gl-zh">评分量表</span></div><p class="gl-def">把「什么叫做好」拆成可以逐条检查的标准，供评分器使用。</p><p class="gl-ana">作文的评分细则。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">trace</span><span class="gl-zh">运行记录</span></div><p class="gl-def">一次智能体运行的完整记录：模型做了什么、调了哪些工具、评分器给了什么反馈。</p><p class="gl-ana">行车记录仪。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">human in the loop</span><span class="gl-zh">人在回路</span></div><p class="gl-def">在关键步骤让人审批或判断，而不是全自动跑完。</p><p class="gl-ana">自动驾驶里随时准备接管。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">cron</span><span class="gl-zh">定时任务</span></div><p class="gl-def">按固定时间表触发任务的机制。</p><p class="gl-ana">闹钟。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">webhook</span><span class="gl-zh">webhook</span></div><p class="gl-def">外部系统发生事件时，主动回调你的服务。</p><p class="gl-ana">快递到了给你发一条通知。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">fine-tuning</span><span class="gl-zh">微调</span></div><p class="gl-def">用任务数据继续训练模型，让它更适配特定任务。</p><p class="gl-ana">科班毕业后再做上岗培训。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">open-weight</span><span class="gl-zh">开放权重</span></div><p class="gl-def">权重可以下载、自行部署和训练的模型。</p><p class="gl-ana">买回家自己改的车。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">eval</span><span class="gl-zh">评测</span></div><p class="gl-def">用一组任务和标准衡量智能体的表现。</p><p class="gl-ana">模拟考。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">primitive</span><span class="gl-zh">原语</span></div><p class="gl-def">框架提供的最小可组合构件。</p><p class="gl-ana">乐高积木。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>这里的「运行框架」指什么</h4><p>本文的 harness 指围绕模型的整套运行配置：prompt、工具、评分器、循环结构；不是评测集，也不是训练框架。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>loopcraft 的原帖</h4><p>swyx 原文发在 Latent Space；文章里给的链接（/p/ainews-loopcraft-the-art-of-stacking）已经 404，本页链接卡改指可用的 /p/loopcraft/。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>rubric 与 grader 的分工</h4><p>rubric 是「什么叫做好」的评分标准；grader 是执行打分的组件，可以是确定性测试，也可以是 LLM 裁判。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>webhook 的方向和正文相反</h4><p>正文说「webhook 到达」触发智能体（入站）；LangChain 的 webhook 文档讲的是运行完成后向外部服务发 POST（出站）。两者方向相反，链接卡里写清楚了。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>heartbeat 这条链接已经变了</h4><p>原文把 openclaw 的 heartbeat 当作定时任务的流行用法；该文档现在已是迁移指南：heartbeat 监控被退休，改成普通 automation jobs。引用时按「当时的用法」理解。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>trace 与 Engine</h4><p>trace 是一次运行的完整记录（模型做了什么、调了哪些工具、评分器反馈）；Engine 是 LangSmith 里跨 trace 找问题的分析智能体。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>Satya 那段是转述</h4><p>结尾关于 Satya 的那句话是文章作者的转述，不是逐字引语。按 Satya 原文，token capital 指公司自己构建并拥有的 AI 能力，与 human capital（人的知识、判断与关系）并列；它不是单纯烧掉的算力预算。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 2 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>plans and draft changes</code><p>原文语法如此（应为 drafts），中文按「规划并起草」翻译。</p></div><div class="typo-item"><code>early,where human judgment</code><p>原文逗号后缺空格，英文照录。</p></div></div></section><footer><p>原文：LangChain Blog，2026-06-16，作者 Sydney Runkle。本页为非官方中文精读：英文照录原文，译文、速览、术语卡、图注与译注为译者所加；原文与配图版权归 LangChain 与原作者，第三方链接内容版权归各站。</p><p>原文：<a href="https://www.langchain.com/blog/the-art-of-loop-engineering" target="_blank" rel="noopener">The Art of Loop Engineering</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-loop-1-the-agent"><span class="dot">●</span>第一层：智能体循环</a><a class="l2" href="#s-level-2-verification-loo"><span class="dot">●</span>第二层：验证循环</a><a class="l2" href="#s-level-3-event-driven-loo"><span class="dot">●</span>第三层：事件驱动循环</a><a class="l2" href="#s-level-4-hill-climbing-lo"><span class="dot">●</span>第四层：爬坡循环</a><a class="l2" href="#s-human-oversight-and-expe"><span class="dot">●</span>人的监督与专业判断</a><a class="l2" href="#s-putting-it-all-together"><span class="dot">●</span>把四层拼起来</a><a class="l2" href="#s-acknowledgements"><span class="dot">●</span>致谢</a><a class="l2" href="#s-reference"><span class="dot">●</span>参考资料</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"Loopcraft：堆叠循环的艺术","title_en":"Loopcraft: The Art of Stacking Loops","site":"latent.space","what_zh":"swyx 在 Latent Space 的文章：把「循环」当作设计对象，一层层叠起来搭智能体。","why_zh":"本文的整个框架来自这篇；正文只借了标题，读原文能拿到「为什么可以叠、怎么叠」的论证。","tier":"必读","order":1,"url":"https://latent.space/p/loopcraft/"},"L2":{"title_zh":"Agents：create_agent 文档","title_en":"Agents — Docs by LangChain","site":"docs.langchain.com","what_zh":"LangChain 里创建智能体的入口：给模型、给工具，得到一个能跑的循环。","why_zh":"正文第一层循环的落地实现就是它；文档还讲了 prompt、工具、中间件怎么共同构成运行框架。","tier":"必读","order":2,"url":"https://docs.langchain.com/oss/python/langchain/agents"},"L3":{"title_zh":"Tools：工具文档","title_en":"Tools — Docs by LangChain","site":"docs.langchain.com","what_zh":"给智能体定义可调用工具的方式：取实时数据、执行代码、查数据库、对外部系统动手。","why_zh":"第一层循环里，模型之所以能「采取行动」，靠的就是工具；这一段正文只一句话带过。","tier":"背景","order":4,"url":"https://docs.langchain.com/oss/python/langchain/tools"},"L4":{"title_zh":"如何定义 LLM 裁判","title_en":"How to define an LLM-as-a-judge evaluator","site":"docs.langchain.com","what_zh":"用一个大模型按给定标准给另一个模型的输出打分。","why_zh":"正文说评分器可以「确定性」也可以「智能体式」，LLM 裁判就是后者最典型的例子。","tier":"背景","order":5,"url":"https://docs.langchain.com/langsmith/llm-as-judge"},"L5":{"title_zh":"评分量表（RubricMiddleware）","title_en":"Grading rubrics — Docs by LangChain","site":"docs.langchain.com","what_zh":"按评分量表反复迭代、直到达标的中间件。","why_zh":"第二层验证循环的现成实现；正文把它和 after_agent 钩子并列为两种接法。","tier":"必读","order":3,"url":"https://docs.langchain.com/oss/python/deepagents/rubric"},"L6":{"title_zh":"使用 cron 定时任务","title_en":"Use cron jobs — Docs by LangChain","site":"docs.langchain.com","what_zh":"LangSmith 里按时间表触发智能体运行。","why_zh":"第三层事件驱动循环最常见的触发方式之一。","tier":"背景","order":6,"url":"https://docs.langchain.com/langsmith/cron-jobs"},"L7":{"title_zh":"使用 webhook","title_en":"Use webhooks — Docs by LangChain","site":"docs.langchain.com","what_zh":"LangSmith 的出站 webhook：某次运行完成后，向外部服务发 POST 回调。","why_zh":"正文说的是「webhook 到达」触发智能体（入站）；这篇文档讲的是反方向（出站通知），读的时候别混。","tier":"背景","order":7,"url":"https://docs.langchain.com/langsmith/use-webhooks"},"L8":{"title_zh":"openclaw 的 heartbeat（已迁移）","title_en":"Heartbeat migration — OpenClaw","site":"docs.openclaw.ai","what_zh":"原文引用的「heartbeat」用法：定时唤醒智能体，让它变成常在线、主动干活的助手。","why_zh":"正文把它当作 cron 在实践中的流行例子；但这条链接的内容已经变了。","tier":"可选","order":8,"url":"https://docs.openclaw.ai/gateway/heartbeat"},"L9":{"title_zh":"Fleet：无代码智能体搭建器","title_en":"Fleet — LangSmith","site":"langchain.com","what_zh":"LangChain 的无代码智能体搭建器，文档智能体就托管在它上面。","why_zh":"正文用它做「事件触发」的落地例子：channels 与 schedules。","tier":"背景","order":9,"url":"https://www.langchain.com/langsmith/fleet"},"L10":{"title_zh":"LangSmith 观测与 trace","title_en":"LangSmith Observability","site":"docs.langchain.com","what_zh":"记录并查看智能体每一次运行：模型调用、工具调用、评分反馈。","why_zh":"第四层爬坡循环的原料就是 trace；没有它，改进没有依据。","tier":"必读","order":10,"url":"https://docs.langchain.com/langsmith/observability"},"L11":{"title_zh":"LangSmith Engine：trace 分析智能体","title_en":"LangSmith Engine","site":"langchain.com","what_zh":"跨 trace 找问题的分析智能体，是第四层循环里的「分析者」。","why_zh":"正文用它落地爬坡循环：发现问题、提交 prompt 或工具改动。","tier":"必读","order":11,"url":"https://www.langchain.com/langsmith/engine"},"L12":{"title_zh":"人在回路：人工输入","title_en":"Human-in-the-loop — Docs by LangChain","site":"docs.langchain.com","what_zh":"在敏感动作或工具调用前停下来，等人工输入。","why_zh":"正文「人的监督」一节的第一条落地方式。","tier":"背景","order":12,"url":"https://docs.langchain.com/oss/python/langchain/human-in-the-loop"},"L13":{"title_zh":"Deep Agents：人在回路","title_en":"Human-in-the-loop — Deep Agents","site":"docs.langchain.com","what_zh":"Deep Agents 把人工审批做成框架里的一等能力。","why_zh":"正文说 LangChain 的开源框架都把它做成一等公民，这里是 Deep Agents 的版本。","tier":"背景","order":13,"url":"https://docs.langchain.com/oss/python/deepagents/human-in-the-loop"},"L14":{"title_zh":"Satya Nadella：没有生态的前沿并不稳定","title_en":"A frontier without an ecosystem is not stable","site":"x.com","what_zh":"Satya 的 X 长文，谈 AI 经济里公司的未来：人与数字系统之间第一次出现真正的认知循环。","why_zh":"正文结尾借它把「学习循环」从工程问题抬到组织问题。","tier":"背景","order":14,"url":"https://x.com/satyanadella/status/2066182223213293753"},"L15":{"title_zh":"课程：用 LangChain Deep Agents 做循环工程","title_en":"Loop Engineering with LangChain Deep Agents","site":"deeplearning.ai","what_zh":"DeepLearning.AI 的短课，作者是 LangChain 团队。","why_zh":"想把这套四层循环上手做一遍的人，可以从这里开始。","tier":"可选","order":15,"url":"https://www.deeplearning.ai/courses/loop-engineering-with-langchain-deep-agents"}},"terms":{"agent_loop":{"en":"agent loop","zh":"智能体循环","def_zh":"最基础的一层：模型在循环里反复调用工具，直到任务完成。","analogy_zh":"对着工具箱反复试，直到把活干完。"},"verification_loop":{"en":"verification loop","zh":"验证循环","def_zh":"在智能体循环外面再套一层：评分器按量表检查输出，不合格就带反馈退回重试。","analogy_zh":"交卷前先按评分标准自己批一遍。"},"event_loop":{"en":"event loop","zh":"事件驱动循环","def_zh":"由外部事件（定时、webhook、消息）触发智能体运行，让它常驻系统而不是被人手动调用。","analogy_zh":"门铃响了才去开门，而不是一直站在门口。"},"hill_climbing":{"en":"hill climbing loop","zh":"爬坡循环","def_zh":"用生产运行记录驱动的改进循环：分析智能体找出问题，直接改写运行框架的配置。","analogy_zh":"每次只往上走一小步，走对了就保留。"},"harness":{"en":"harness","zh":"运行框架","def_zh":"围绕模型的整套运行配置：prompt、工具、评分器、循环结构。","analogy_zh":"不是发动机本身，而是把发动机装进车里跑起来的底盘。"},"grader":{"en":"grader","zh":"评分器","def_zh":"按评分量表给智能体输出打分的组件，可以是确定性测试，也可以是 LLM 裁判。","analogy_zh":"阅卷老师，按评分细则给分。"},"rubric":{"en":"rubric","zh":"评分量表","def_zh":"把「什么叫做好」拆成可以逐条检查的标准，供评分器使用。","analogy_zh":"作文的评分细则。"},"trace":{"en":"trace","zh":"运行记录","def_zh":"一次智能体运行的完整记录：模型做了什么、调了哪些工具、评分器给了什么反馈。","analogy_zh":"行车记录仪。"},"human_in_the_loop":{"en":"human in the loop","zh":"人在回路","def_zh":"在关键步骤让人审批或判断，而不是全自动跑完。","analogy_zh":"自动驾驶里随时准备接管。"},"cron":{"en":"cron","zh":"定时任务","def_zh":"按固定时间表触发任务的机制。","analogy_zh":"闹钟。"},"webhook":{"en":"webhook","zh":"webhook","def_zh":"外部系统发生事件时，主动回调你的服务。","analogy_zh":"快递到了给你发一条通知。"},"fine_tuning":{"en":"fine-tuning","zh":"微调","def_zh":"用任务数据继续训练模型，让它更适配特定任务。","analogy_zh":"科班毕业后再做上岗培训。"},"open_weight":{"en":"open-weight","zh":"开放权重","def_zh":"权重可以下载、自行部署和训练的模型。","analogy_zh":"买回家自己改的车。"},"eval":{"en":"eval","zh":"评测","def_zh":"用一组任务和标准衡量智能体的表现。","analogy_zh":"模拟考。"},"primitive":{"en":"primitive","zh":"原语","def_zh":"框架提供的最小可组合构件。","analogy_zh":"乐高积木。"}},"notes":{"N1":{"title_zh":"这里的「运行框架」指什么","body_zh":"本文的 harness 指围绕模型的整套运行配置：prompt、工具、评分器、循环结构；不是评测集，也不是训练框架。"},"N2":{"title_zh":"loopcraft 的原帖","body_zh":"swyx 原文发在 Latent Space；文章里给的链接（/p/ainews-loopcraft-the-art-of-stacking）已经 404，本页链接卡改指可用的 /p/loopcraft/。"},"N3":{"title_zh":"rubric 与 grader 的分工","body_zh":"rubric 是「什么叫做好」的评分标准；grader 是执行打分的组件，可以是确定性测试，也可以是 LLM 裁判。"},"N4":{"title_zh":"webhook 的方向和正文相反","body_zh":"正文说「webhook 到达」触发智能体（入站）；LangChain 的 webhook 文档讲的是运行完成后向外部服务发 POST（出站）。两者方向相反，链接卡里写清楚了。"},"N5":{"title_zh":"heartbeat 这条链接已经变了","body_zh":"原文把 openclaw 的 heartbeat 当作定时任务的流行用法；该文档现在已是迁移指南：heartbeat 监控被退休，改成普通 automation jobs。引用时按「当时的用法」理解。"},"N6":{"title_zh":"trace 与 Engine","body_zh":"trace 是一次运行的完整记录（模型做了什么、调了哪些工具、评分器反馈）；Engine 是 LangSmith 里跨 trace 找问题的分析智能体。"},"N7":{"title_zh":"Satya 那段是转述","body_zh":"结尾关于 Satya 的那句话是文章作者的转述，不是逐字引语。按 Satya 原文，token capital 指公司自己构建并拥有的 AI 能力，与 human capital（人的知识、判断与关系）并列；它不是单纯烧掉的算力预算。"}},"typos":[{"quote_en":"plans and draft changes","body_zh":"原文语法如此（应为 drafts），中文按「规划并起草」翻译。"},{"quote_en":"early,where human judgment","body_zh":"原文逗号后缺空格，英文照录。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
