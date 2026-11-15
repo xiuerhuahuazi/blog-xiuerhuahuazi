@@ -557,7 +557,7 @@ html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
 .topbar{top:var(--mast)}
 .topbar-in>.blogback{flex:none}
 .colheads{top:calc(var(--mast) + var(--bar))}
-@media (min-width:721px){.topbar-in>.brand.blogback{display:none!important}}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
 @media (max-width:900px){.sm-nav{display:none}}
 @media (max-width:640px){:root{--mast:48px}}
 @media (max-width:359px){.sm-word{display:none}}
@@ -572,9 +572,10 @@ html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
   to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
 }
 @media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
   ::view-transition-group(root){background:var(--paper)}
-  ::view-transition-old(root){animation:sm-vt-out .14s ease both}
-  ::view-transition-new(root){animation:sm-vt-in .22s ease .08s both}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
   html.theme-vt::view-transition-old(root){animation:none}
   html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
 }
@@ -629,6 +630,7 @@ html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
   }
   [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
   [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
 }
 </style>
 <style id="site-nav-style">

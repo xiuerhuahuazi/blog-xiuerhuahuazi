@@ -56,6 +56,23 @@
     });
   }
 
+  // 跨页过渡：新页首绘时首屏内容还没入场，快照会拍成近空屏；
+  // 只把首屏内会入场的元素直接呈现，首屏以下仍走滚动渐入。
+  addEventListener('pagereveal', function (e) {
+    if (!e.viewTransition) return;
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    var els = document.querySelectorAll('[data-reveal],' +
+      '.page-head .eyebrow, .page-head h1, .page-head .page-lede,' +
+      '.post-head .back-link, .post-head .post-kicker, .post-head h1, .post-head .post-lede,' +
+      '.hero .eyebrow, .hero h1, .hero .line, .hero .line-in, .hero .lede, .hero .stats > div, .specimen');
+    Array.prototype.forEach.call(els, function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top >= vh || r.bottom <= 0) return;
+      el.classList.add('vt-snap');
+      if (el.hasAttribute('data-reveal')) el.classList.add('is-in');
+    });
+  });
+
   // 滚动渐入：head 内联脚本已经判定过浏览器能力与 reduced-motion
   var revealEls = document.querySelectorAll('[data-reveal]');
   if (root.classList.contains('js-motion') && revealEls.length && 'IntersectionObserver' in window) {

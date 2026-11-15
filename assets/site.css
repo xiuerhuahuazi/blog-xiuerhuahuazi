@@ -984,12 +984,14 @@ h1, h2, h3, h4 { font-weight: 400; }
   animation: reveal-in .65s var(--ease-out-expo) backwards;
   animation-delay: calc(var(--i, 0) * 55ms);
 }
+/* 跨页过渡时，新页首屏元素在快照前直接呈现（由 site.js 在 pagereveal 加类） */
+.vt-snap { animation: none !important; opacity: 1 !important; transform: none !important; translate: none !important; }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* 先淡出旧页、再淡入新页，避免两套版式叠在一起出现"重影" */
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
   ::view-transition-group(root) { background: var(--paper); }
-  ::view-transition-old(root) { animation: vt-out .14s ease both; }
-  ::view-transition-new(root) { animation: vt-in .22s ease .08s both; }
+  ::view-transition-old(root) { animation: vt-out .18s ease both; }
+  ::view-transition-new(root) { animation: vt-in .24s ease both; }
   html.theme-vt::view-transition-old(root) { animation: none; }
   html.theme-vt::view-transition-new(root) { animation: vt-theme .5s var(--ease-out) both; }
 }
