@@ -28,6 +28,7 @@ jobs:
           python-version: "3.12"
       - run: python3 tools/build.py
       - run: python3 tools/check.py
+      - run: python3 -m unittest discover -s tests -v
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

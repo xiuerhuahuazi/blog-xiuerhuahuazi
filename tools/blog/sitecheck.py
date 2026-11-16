@@ -1,18 +1,23 @@
 """生成后自检：dist/ 里的内部链接、资源、锚点、canonical 是否都站得住。
 
 只检查 dist/ 内已生成的静态文件（不联网）。任何失败退出码 1。
-覆盖：href / src / data-src / poster / srcset，站内绝对路径（按 BASE 前缀），
-页内 #锚点，以及每页的 <title> / meta description / rel=canonical。
+覆盖：
+  - href / src / data-src / poster / srcset 指向的文件是否存在；
+  - 目录链接必须带 index.html，不能只命中一个空目录；
+  - 站内绝对路径必须带站点子路径前缀（Pages 部署在 /blog-xiuerhuahuazi/）；
+  - 页内锚点与跨页锚点是否真的存在；
+  - <title> / meta description / rel=canonical，且 canonical 必须对应当前页。
 """
 import os
 import re
 from html.parser import HTMLParser
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 from .config import BASE, DIST
 
 SKIP_DIRS = {".git", "node_modules", "content", "tools", "assets", ".github"}
 BASE_PATH = urlsplit(BASE).path.rstrip("/") + "/"
+SKIP_SCHEMES = re.compile(r"^(data:|javascript:|mailto:|tel:|blob:)")
 
 
 class Collector(HTMLParser):
@@ -76,6 +81,21 @@ def resolve(page, ref):
     return os.path.normpath(os.path.join(os.path.dirname(page), path))
 
 
+def expected_canonical(rel_page):
+    """当前页应有的 canonical：站点前缀 + 去掉 index.html 的页面路径。"""
+    path = rel_page.replace(os.sep, "/").replace("index.html", "")
+    return BASE + "/" + quote(path, safe="/")
+
+
+def ids_of(path, cache):
+    if path not in cache:
+        p = Collector()
+        with open(path, encoding="utf-8") as f:
+            p.feed(f.read())
+        cache[path] = p.ids
+    return cache[path]
+
+
 def main():
     if not DIST.is_dir():
         print("dist 不存在：先跑 python3 tools/build.py")
@@ -88,10 +108,12 @@ def main():
             if fn.endswith(".html"):
                 pages.append(os.path.join(dirpath, fn))
 
+    id_cache = {}
     for page in pages:
         rel_page = os.path.relpath(page, DIST)
         p = Collector()
-        p.feed(open(page, encoding="utf-8").read())
+        with open(page, encoding="utf-8") as f:
+            p.feed(f.read())
         if not p.title.strip():
             problems.append(f"{rel_page}: 缺少 <title>")
         if rel_page != "404.html":
@@ -99,11 +121,13 @@ def main():
                 problems.append(f"{rel_page}: 缺少 meta description")
             if not p.canonical:
                 problems.append(f"{rel_page}: 缺少 rel=canonical")
-            elif not p.canonical.startswith(BASE + "/"):
-                problems.append(f"{rel_page}: canonical 不在站点前缀下：{p.canonical}")
+            else:
+                want = expected_canonical(rel_page)
+                if p.canonical != want:
+                    problems.append(f"{rel_page}: canonical 与当前页不符：{p.canonical}（应为 {want}）")
 
         for kind, ref in p.refs:
-            if re.match(r"^(data:|javascript:|mailto:|tel:)", ref):
+            if SKIP_SCHEMES.match(ref):
                 continue
             if ref.startswith("#"):
                 frag = unquote(ref[1:])
@@ -111,13 +135,27 @@ def main():
                 if frag and frag not in p.ids:
                     problems.append(f"{rel_page}: 页内锚点 #{frag} 不存在")
                 continue
+            if ref.startswith("/") and not ref.startswith("//") and not ref.startswith(BASE_PATH):
+                checked += 1
+                problems.append(f"{rel_page}: {kind} 站内绝对路径缺少站点前缀 {BASE_PATH}：{ref}")
+                continue
             target = resolve(page, ref)
             if target is None:
                 continue
             checked += 1
-            candidates = [target, os.path.join(target, "index.html")]
-            if not any(os.path.exists(c) for c in candidates):
+            if os.path.isdir(target):
+                target = os.path.join(target, "index.html")
+                if not os.path.isfile(target):
+                    problems.append(f"{rel_page}: {kind} 指向目录但没有 index.html：{ref}")
+                    continue
+            if not os.path.isfile(target):
                 problems.append(f"{rel_page}: {kind} 指向不存在的 {ref} → {os.path.relpath(target, DIST)}")
+                continue
+            frag = unquote(urlsplit(ref).fragment)
+            if frag and target.lower().endswith(".html"):
+                if frag not in ids_of(target, id_cache):
+                    problems.append(
+                        f"{rel_page}: {kind} 锚点 #{frag} 不在 {os.path.relpath(target, DIST)}")
 
     print(f"检查 {len(pages)} 个页面、{checked} 个引用")
     if problems:

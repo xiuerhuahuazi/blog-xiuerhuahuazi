@@ -6,6 +6,8 @@
 
 ### Added
 
+- 检查器回归测试 `tests/test_sitecheck.py`（9 条正向/负向样例），CI 在 build/check 后执行 `python3 -m unittest discover -s tests -v`。
+- 维护者文档 `docs/ARCHITECTURE.md`：目录职责、数据流、检查器覆盖、部署与项目级信息归属。
 - 双语精读：新增三篇，共 13 篇、2,841 句对、313 张术语卡。
   - 第十一篇《The Art of Loop Engineering》（LangChain Blog，2026-06-16），69 句对 / 15 术语 / 8 图。
   - 第十二篇《构建常驻智能体：五个原语，让智能体自己醒来》（Anthropic，2026-11-13），135 句对 / 13 术语 / 7 图。
@@ -15,6 +17,8 @@
 
 ### Changed
 
+- `tools/blog/pages.py` 与 `reader_shell.py` 剩余 HTML 抽到 `src/templates/partials/` 与 `src/templates/readers-shell/`；页面输出与重构前逐字节一致。
+- 项目级细节从全局记忆迁到仓库 `docs/ARCHITECTURE.md` 与 `.agents/`（本机台账、原始审计）；全局记忆只保留项目指针与跨会话判断。
 - 仓库结构调整：源文件迁入 `src/`（配置、内容、模板、静态资源、精读成品），构建产物统一输出到 `dist/` 且不再入库；生成器拆成 `tools/blog/` 包（`config` / `template` / `pages` / `markdown` / `sitecheck` / `reader_shell`），页面模板外置到 `src/templates/`。页面输出与重构前逐字节一致（15 个生成页）。
 - 发布改为 GitHub Actions：`.github/workflows/pages.yml` 在推 `main` 时构建 `dist/` 并部署到 GitHub Pages，不再从仓库根直接发布。
 - 精读导入的注入 CSS / JS / 顶栏抽到 `src/templates/readers-shell/`；分类、导读与 `featured` 抽到 `src/content/readers_curated.json`。
@@ -25,6 +29,8 @@
 
 ### Fixed
 
+- `tools/check.py` 补齐 4 类语义检查：站内绝对路径必须带 `/blog-xiuerhuahuazi/` 前缀；目录链接必须有 `index.html`；跨页锚点必须存在于目标页；非 404 页的 canonical 必须等于当前页地址。
+- `tools/import_readers.py` 导入前预检 `meta.json` 必需字段、`meta.cover.asset` 指向的媒体文件、`glossary.json` / `figures.json` 结构；缺 glossary / figures 会告警并按 0 计，不再静默。
 - `sitemap.xml` 的 `lastmod` 固定按 `Asia/Shanghai` 的构建日生成（workflow 设置 `TZ`），避免 GitHub Actions 的 UTC 日期比本地早一天，导致同一提交的本地与线上产物不一致。
 - 跨页导航：旧页退场与新页入场改为重叠的 crossfade；`pagereveal` 时首屏快照前置呈现，避免新页快照为空、过渡中间出现近空屏。
 - 精读页 721–900px：顶栏的「← 双语书架」入口保留到 900px，901px 起才由 `.sm-nav` 接管。

@@ -32,8 +32,10 @@ def render_page(path, title, desc, body, *, active="", extra="", bodyclass="",
     page_title = f"{title} · {SITE['name']}" if title else SITE["title"]
     ogimage = ""
     if image:
-        ogimage = (f'<meta property="og:image" content="{BASE}/{image}">\n'
-                   f'<meta property="og:image:alt" content="{esc(title)}">\n')
+        ogimage = PARTIALS.render("og-image.html", {
+            "url": f"{BASE}/{image}",
+            "alt": esc(title),
+        })
     return T.render("base.html", {
         "lang": SITE["lang"], "title": esc(page_title), "desc": esc(desc),
         "author": esc(SITE["author"]), "canonical": abs_url(path.replace("index.html", "")),
@@ -54,17 +56,15 @@ def write(path, content):
 
 # ---------------------------------------------------------------- 组件
 
-def chip(text):
-    return f'<span class="chip">{txt(text)}</span>'
-
-
 def meta_chips(r):
     stats = [f'{r["pairs"]} 句对']
     if r["terms"]:
         stats.append(f'{r["terms"]} 术语')
     stats.append(f'{r["read_min"]} 分钟')
-    return (f'<div class="row-meta-in"><span class="chip">{txt(r["category"])}</span>'
-            f'<span class="row-stats">{" · ".join(stats)}</span></div>')
+    return PARTIALS.render("reader-meta.html", {
+        "category": txt(r["category"]),
+        "stats": " · ".join(stats),
+    })
 
 
 def reader_row(r, index, href, tag="h3"):
@@ -77,7 +77,7 @@ def reader_row(r, index, href, tag="h3"):
 
 
 def note_row(p, href, tag="h3", index=0):
-    tags = "".join(f'<span class="tag">{txt(t)}</span>' for t in p["tags"])
+    tags = "".join(PARTIALS.render("tag.html", {"text": txt(t)}) for t in p["tags"])
     return PARTIALS.render("note-row.html", {
         "i": min(index, 5), "date": p["date"], "human_date": human_date(p["date"]),
         "tag": tag, "href": href, "title": txt(p["title"]),
@@ -86,9 +86,12 @@ def note_row(p, href, tag="h3", index=0):
 
 
 def section_head(title, count, more_href=None, more_label="全部"):
-    more = f'<a class="sec-more" href="{more_href}">{more_label} <span aria-hidden="true">→</span></a>' if more_href else ""
-    count_html = f'<span class="sec-count">{count}</span>' if count else ""
-    return f'<div class="sec-head" data-reveal><h2 class="sec-title">{title}{count_html}</h2>{more}</div>'
+    more = (PARTIALS.render("section-more.html", {"href": more_href, "label": more_label})
+            if more_href else "")
+    count_html = PARTIALS.render("section-count.html", {"count": count}) if count else ""
+    return PARTIALS.render("section-head.html", {
+        "title": title, "count": count_html, "more": more,
+    })
 
 
 # ---------------------------------------------------------------- 页面
@@ -98,24 +101,18 @@ def _feature_html():
     if not FEATURED:
         return ""
     cover = FEATURED.get("cover") or ""
-    media = (f'<div class="feature-media"><img src="readers/{FEATURED["slug"]}/{esc(cover)}" alt="" loading="lazy"></div>'
-             if cover else "")
-    return f"""
-<section class="feature-wrap">
-  <div class="wrap">
-    <a class="feature" href="readers/{FEATURED["slug"]}/" data-reveal>
-      {media}
-      <div class="feature-body">
-        <p class="kicker">本期精读 · {human_date(FEATURED["published"])}</p>
-        <h2 class="feature-title">{txt(FEATURED["title_zh"])}</h2>
-        <p class="feature-en" lang="en">{txt(FEATURED["title_en"])}</p>
-        <p class="feature-blurb">{txt(FEATURED["blurb"])}</p>
-        <div class="feature-meta">{meta_chips(FEATURED)}</div>
-        <span class="cta">进入阅读 <span aria-hidden="true">→</span></span>
-      </div>
-    </a>
-  </div>
-</section>"""
+    media = (PARTIALS.render("feature-media.html", {
+        "src": f'readers/{FEATURED["slug"]}/{esc(cover)}',
+    }) if cover else "")
+    return PARTIALS.render("feature.html", {
+        "href": f'readers/{FEATURED["slug"]}/',
+        "media": media,
+        "date": human_date(FEATURED["published"]),
+        "title": txt(FEATURED["title_zh"]),
+        "title_en": txt(FEATURED["title_en"]),
+        "blurb": txt(FEATURED["blurb"]),
+        "meta": meta_chips(FEATURED),
+    })
 
 
 def build_home(posts):
@@ -160,8 +157,9 @@ def build_notes_index(posts):
 
 def build_about():
     a = SITE["about"]
-    paras = "".join(f"<p>{txt(p)}</p>" for p in a["paras"])
-    facts = "".join(f'<dt>{txt(f["k"])}</dt><dd>{txt(f["v"])}</dd>' for f in a["facts"])
+    paras = "".join(PARTIALS.render("paragraph.html", {"text": txt(p)}) for p in a["paras"])
+    facts = "".join(PARTIALS.render("fact.html", {"key": txt(f["k"]), "value": txt(f["v"])})
+                    for f in a["facts"])
     body = T.render("about.html", {
         "lead": txt(a["lead"]), "paras": paras, "facts": facts,
         "root": rel(1), "github": esc(SITE["github"]), "repo": esc(SITE["repo"]),
@@ -174,23 +172,29 @@ def build_post(p, prev, nxt):
     depth = depth_of(p["path"] + "/index.html")
     content = p["content"].replace("{{ROOT}}", rel(depth))
     toc_items = [t for t in p.get("toc", []) if t.get("id")]
-    toc = ""
     if len(toc_items) >= 2:
         links = "".join(
-            f'<li class="toc-l{t["level"]}"><a href="#{esc(t["id"])}">{txt(t["text"])}</a></li>'
+            PARTIALS.render("toc-item.html", {
+                "level": t["level"], "id": esc(t["id"]), "text": txt(t["text"]),
+            })
             for t in toc_items if t["level"] == 2)
-        toc = f'<aside class="toc" aria-label="目录"><p class="toc-title">目录</p><ol>{links}</ol></aside>'
+        toc = PARTIALS.render("toc.html", {"links": links})
     else:
-        toc = '<aside class="toc" aria-hidden="true"></aside>'
+        toc = PARTIALS.render("toc-empty.html", {})
 
-    tags = "".join(f'<span class="tag">{txt(t)}</span>' for t in p["tags"])
+    tags = "".join(PARTIALS.render("tag.html", {"text": txt(t)}) for t in p["tags"])
     nav_links = ""
     if prev or nxt:
-        prev_html = (f'<a class="pn prev" href="{rel(depth)}{prev["path"]}/"><span>上一篇</span>{txt(prev["title"])}</a>'
-                     if prev else "<span></span>")
-        next_html = (f'<a class="pn next" href="{rel(depth)}{nxt["path"]}/"><span>下一篇</span>{txt(nxt["title"])}</a>'
-                     if nxt else "<span></span>")
-        nav_links = f'<nav class="post-nav" aria-label="文章导航" data-reveal>{prev_html}{next_html}</nav>'
+        empty = PARTIALS.render("post-link-empty.html", {})
+        prev_html = (PARTIALS.render("post-link.html", {
+            "kind": "prev", "label": "上一篇",
+            "href": rel(depth) + prev["path"] + "/", "title": txt(prev["title"]),
+        }) if prev else empty)
+        next_html = (PARTIALS.render("post-link.html", {
+            "kind": "next", "label": "下一篇",
+            "href": rel(depth) + nxt["path"] + "/", "title": txt(nxt["title"]),
+        }) if nxt else empty)
+        nav_links = PARTIALS.render("post-nav.html", {"prev": prev_html, "next": next_html})
 
     body = T.render("post.html", {
         "root": rel(depth), "date": p["date"], "human_date": human_date(p["date"]),

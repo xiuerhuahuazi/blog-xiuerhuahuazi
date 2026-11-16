@@ -41,20 +41,50 @@ def main():
         return
 
     # 先把所有输入检查一遍：缺任何一个都不写，避免用半份数据覆盖已有索引
-    missing = []
+    missing, warnings, metas = [], [], {}
     for slug in curated:
-        if not (src / slug / "data" / "meta.json").is_file():
+        meta_path = src / slug / "data" / "meta.json"
+        if not meta_path.is_file():
             missing.append(f"{slug}/data/meta.json")
+        else:
+            try:
+                meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                missing.append(f"{slug}/data/meta.json 不是合法 JSON：{exc}")
+            else:
+                lack = [k for k in ("title_zh", "title_en", "source_url", "org_en", "published", "read_min")
+                        if k not in meta]
+                if lack:
+                    missing.append(f"{slug}/data/meta.json 缺字段：{', '.join(lack)}")
+                else:
+                    metas[slug] = meta
+                    cover = (meta.get("cover") or {}).get("asset") or ""
+                    if cover and not (src / slug / "cloud" / "media" / cover).is_file():
+                        missing.append(f"{slug}/cloud/media/{cover}（meta.cover.asset 指向的文件）")
+                    for name, key in (("glossary.json", "terms"), ("figures.json", "figures")):
+                        path = src / slug / "data" / name
+                        if not path.is_file():
+                            warnings.append(f"{slug}: 缺 data/{name}，{key} 按 0 计")
+                            continue
+                        try:
+                            data = json.loads(path.read_text(encoding="utf-8"))
+                        except json.JSONDecodeError as exc:
+                            missing.append(f"{slug}/data/{name} 不是合法 JSON：{exc}")
+                        else:
+                            if not isinstance(data.get(key), list):
+                                missing.append(f"{slug}/data/{name} 缺 {key} 列表")
         if not (src / slug / "cloud" / "index.html").is_file():
             missing.append(f"{slug}/cloud/index.html")
     if missing:
-        raise SystemExit("源目录缺少文件，未做任何改动：\n  " + "\n  ".join(missing))
+        raise SystemExit("源目录缺少文件或数据，未做任何改动：\n  " + "\n  ".join(missing))
+    for warning in warnings:
+        print("警告:", warning)
 
     OUT_PAGES.mkdir(parents=True, exist_ok=True)
     readers = []
     keep = set()
     for slug, curation in curated.items():
-        meta = json.loads((src / slug / "data" / "meta.json").read_text(encoding="utf-8"))
+        meta = metas[slug]
         cloud = src / slug / "cloud"
         page = (cloud / "index.html").read_text(encoding="utf-8")
         nums = hero_numbers(page)

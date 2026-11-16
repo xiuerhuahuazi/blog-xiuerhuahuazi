@@ -8,8 +8,10 @@ import html
 import re
 
 from .config import BASE, SITE, TEMPLATES
+from .template import Templates
 
 SHELL = TEMPLATES / "readers-shell"
+SHELL_T = Templates(SHELL)
 
 
 def read(name):
@@ -61,17 +63,22 @@ def inject(page: str, slug: str, title: str, desc: str, cover: str) -> str:
             raise SystemExit(f"{slug}: 找不到 topbar-in，无法注入返回导航（源页结构变了？）")
     # canonical：子路径部署下防止重复收录
     if 'rel="canonical"' not in page:
-        page = page.replace("</head>", f'<link rel="canonical" href="{BASE}/readers/{slug}/">\n</head>', 1)
+        canonical = SHELL_T.render("canonical.html", {"url": f"{BASE}/readers/{slug}/"})
+        page = page.replace("</head>", canonical + "\n</head>", 1)
     # 分享卡片：X / 微信 / 搜索
     if 'property="og:title"' not in page:
-        img = f'\n<meta property="og:image" content="{BASE}/readers/{slug}/media/{cover}">' if cover else ""
+        img = (SHELL_T.render("og-image.html", {
+            "url": f"{BASE}/readers/{slug}/media/{cover}",
+        }) if cover else "")
         card = "summary_large_image" if cover else "summary"
-        og = (f'<meta property="og:type" content="article">\n'
-              f'<meta property="og:site_name" content="{html.escape(SITE["name"])}">\n'
-              f'<meta property="og:title" content="{html.escape(title)}">\n'
-              f'<meta property="og:description" content="{html.escape(desc)}">\n'
-              f'<meta property="og:url" content="{BASE}/readers/{slug}/">'
-              f'{img}\n<meta name="twitter:card" content="{card}">\n')
+        og = SHELL_T.render("og.html", {
+            "site_name": html.escape(SITE["name"]),
+            "title": html.escape(title),
+            "desc": html.escape(desc),
+            "url": f"{BASE}/readers/{slug}/",
+            "image": img,
+            "card": card,
+        })
         page = page.replace("</head>", og + "</head>", 1)
     # 英文一栏标语言，读屏不会用中文音读英文
     page = page.replace('class="cell en"', 'class="cell en" lang="en"')
