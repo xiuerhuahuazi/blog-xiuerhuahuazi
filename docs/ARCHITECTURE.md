@@ -98,8 +98,8 @@ python3 -m http.server -d dist 8000
 
 ## 当前验收基线（2026-11-16）
 
-- build：15 个生成页；`dist/` 共 26 个 HTML 页、126 个文件。
-- check：26 个页面 / 635 个引用，exit 0。
+- build：16 个生成页；`dist/` 共 27 个 HTML 页、127 个文件。
+- check：27 个页面 / 660 个引用，exit 0。
 - tests：9 条（`tests/test_sitecheck.py`）。
 - 精读：13 篇；源仓未变时重导 `src/readers/` 与 `readers.json` 零差异。
 - 数字随内容与模板变化；每次改版后重跑并更新本节。

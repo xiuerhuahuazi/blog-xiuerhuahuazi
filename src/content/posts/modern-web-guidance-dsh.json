@@ -1,0 +1,60 @@
+{
+ "slug": "modern-web-guidance-dsh",
+ "path": "2026/11/16/modern-web-guidance-dsh",
+ "title": "Modern Web Guidance 接进 DSH：三个不吭声的坑",
+ "description": "GoogleChrome 的 modern-web-guidance 是离线的 Web 最佳实践检索技能。接入步骤本身不多，真正费时间的是三个不吭声的坑：默认遥测、500 字符截断、一个让技能静默消失的 YAML 冒号。",
+ "date": "2026-11-16",
+ "tags": [
+  "DSH",
+  "Web",
+  "工具链"
+ ],
+ "content": "<p>写前端的时候，我经常卡在同一个问题上：这个交互在今天的 Web 平台上，标准做法到底是什么？</p>\n<p>弹窗该不该自己管焦点、表单什么时候提示错误、长文首屏怎么不卡、跨页过渡要不要写 JS——这些都不难，但每次都要翻 MDN、翻规范、翻别人的实现，翻完还不确定是不是过时了。GoogleChrome 把这类答案收成了一个可检索的技能包：<a href=\"https://github.com/GoogleChrome/modern-web-guidance\" target=\"_blank\" rel=\"noopener\">modern-web-guidance</a>。</p>\n<p>它不是一个框架，也不是构建工具。按上游 README 的口径，里面是 250 个 Web 特性、203 个真实开发用例；落到本地是 209 篇 Markdown 指南、一份 8.7 MB 的检索索引，加一个 <code>modern-web.mjs</code> 命令行。<code>search</code> 查词，<code>retrieve</code> 取全文，<code>list</code> 列全部，全部在本地算，不请求检索服务。下面这些数字对应 1.0.0、快照 <code>2026_11_09-5bcc021b</code>（2026-11-16 核验），升级后要按命令重测。</p>\n<p>这东西很适合接进 DSH（DeepSeek Harness）：它本身就是一个标准的 <code>SKILL.md</code> 技能目录，而 DSH 正好按目录扫技能。实际接完，安装步骤本身不多，真正费时间的是三件它不会主动告诉你的事。</p>\n<h2 id=\"一-它是什么-先划清边界\">一、它是什么，先划清边界</h2>\n<p>先把“是什么”说准，否则很容易把它当成万能工具箱。</p>\n<p><strong>它是</strong>一本可离线查询的“现代 Web 平台怎么做才对”的说明书。查一条具体用例，拿到的是做法、Baseline 可用性、替代回退和代码，不是一篇泛泛的博客。</p>\n<p><strong>它不是</strong>：</p>\n<ul><li>不是框架或构建工具，不碰 Vite、tsconfig、ESLint，也不管打包体积；</li><li>不覆盖后端，SQL、ORM、API 路由、发信、部署都不在范围内；</li><li>不是设计或排版权威，字体、栅格、留白仍归排版类技能；</li><li>不是自动化 linter。它自带 <code>legacy-scan</code>，但本机实测只覆盖 33 篇指南、35 条规则，大约是语料的 20%，只适合“开放式现代化改造”，改某个具体组件时不要用它扫全仓。</li></ul>\n<p>这个边界很重要。它的原文写得很强硬，几乎要求所有 HTML/CSS 任务先跑一遍检索；如果不把“纯内容排版、后端、工具链不触发”这条排除条款补回去，它容易在前台任务上抢触发，把相邻技能的入口挤掉。</p>\n<h2 id=\"二-装进-dsh-没有官方目标-反而简单\">二、装进 DSH：没有官方目标，反而简单</h2>\n<p>官方安装向导里<strong>没有 DSH 这个目标</strong>（列出来的是 Claude Code、Codex、Cursor 这类宿主），而且它自己不做宿主适配，而是把安装委托给第三方的 <code>skills</code> 命令行。所以本机不跑交互式安装，直接手工放目录、再打本地补丁。</p>\n<p>DSH 这边的方式反而直接：把完整技能目录放进 <code>~/.agents/skills/modern-web-guidance/</code>，由 <code>dsh-skill-filesystem</code> 扫描。它只认直接子项（depth=1），读 <code>SKILL.md</code>，并且带 watcher 热加载。实测目录出现后 <strong>0.98 秒</strong>，当前会话的技能目录就从 91 条变成 92 条，不用重启。</p>\n<p>安装动作本身可以压缩成三步：<code>npm pack modern-web-guidance@1.0.0</code> 取包、解压、把解压出来的完整技能目录放到 <code>~/.agents/skills/modern-web-guidance/</code>。然后打两个本地补丁（后面两节会讲为什么要打），补丁正文单独放 <code>local-overrides.md</code>，不要直接改上游 <code>SKILL.md</code>——升级会重建它。</p>\n<p>日常调用长这样：</p>\n<pre><code class=\"language-sh\"># 检索：本地索引，0.2 秒级；DISABLE_TELEMETRY=1 不是可选项，原因见下一节\nDISABLE_TELEMETRY=1 node ~/.agents/skills/modern-web-guidance/modern-web.mjs search &quot;light dismiss dialog&quot;\n\n# 取全文：id 是短横线英文名，和 search 词不是一回事\nDISABLE_TELEMETRY=1 node ~/.agents/skills/modern-web-guidance/modern-web.mjs retrieve &quot;dialog,light-dismiss-a-dialog&quot;\n\n# 列全部 208 条\nDISABLE_TELEMETRY=1 node ~/.agents/skills/modern-web-guidance/modern-web.mjs list</code></pre>\n<p>要求 Node ≥ 22，本机是 25.8，正常。没有 npm 依赖，也没有 install hook，所以“加载技能”本身不执行代码，执行只发生在你显式调用 CLI 的时候。</p>\n<h2 id=\"三-坑一-本地检索-不等于默认没有外联\">三、坑一：本地检索，不等于默认没有外联</h2>\n<p>第一个坑最值得单独说，因为它打破了“离线工具”这个印象。</p>\n<p>检索确实不联网：<code>search</code>、<code>retrieve</code>、<code>list</code>、<code>legacy-scan</code> 都在本地 <code>gen/</code> 索引上算。但 CLI 默认开着遥测。每次调用，它会拉起一个 detached 的 <code>watchdog/main.js</code> 子进程；按源码，这个子进程会把<strong>查询词原文、命中的 guide id、操作系统、agent 名</strong> POST 到 <code>play.googleapis.com/log</code>，也就是 Google 的 Clearcut。</p>\n<p>这意味着你搜“confirmation modal dialog”，搜索词本身会离开本机。对于查公开文档来说不算致命，但“本地检索”不等于“整个 CLI 默认没有外联”。</p>\n<p>关掉它只要一个环境变量：<code>DISABLE_TELEMETRY=1</code>（或 <code>true</code>）。本机所有调用、<code>SKILL.md</code> 的本地补丁、升级脚本全部按这个前缀写，避免哪次忘了带。</p>\n<p>这里还有一个更值得记的教训：<strong>“有没有外联”不能用死代理来证伪</strong>。把 <code>HTTPS_PROXY</code> 指向 <code>http://127.0.0.1:1</code>，再执行 <code>fetch(\"https://example.com\")</code>，请求照样返回 200——Node 的 undici <code>fetch</code> 默认根本不读 <code>HTTPS_PROXY</code>，除非设 <code>NODE_USE_ENV_PROXY=1</code>。所以这条路证明不了“没有外联”；真正的证据得从源码和子进程里拿。</p>\n<h2 id=\"四-坑二-dsh-只留-500-字符-排除条款正好被切掉\">四、坑二：DSH 只留 500 字符，排除条款正好被切掉</h2>\n<p>DSH 的技能目录（catalog）对每条 <code>description</code> 只保留 <strong>500 字符</strong>。上游这份描述有 855 字符，被截断后，恰好把最后那段“DO NOT trigger for backend/infra/tooling”（后端、基础设施、工具链不触发）整段丢掉了。</p>\n<p>后果不是报错，而是行为漂移：模型看到的只剩“所有 HTML/CSS 任务都该先查我”，于是更容易在前台任务里优先加载它，相邻技能的触发面被挤压。这种问题很难从“技能能不能用”上看出来，只能去看 catalog 里实际留下的是什么。</p>\n<p>修法是本地把 <code>description</code> 压到 <strong>488 字符</strong>，保留排除条款，并让升级脚本在拼接 <code>SKILL.md</code> 时强制写入、校验长度不超过 500。补丁不放在上游正文里，升级时才不会丢。</p>\n<p>顺带一个使用体验上的事实：在活跃的长会话里改技能 frontmatter，DSH 会追加一整条约 31 KB 的 catalog 替换消息；新会话则只有一份。介意上下文的话，别在关键长会话中途改。</p>\n<h2 id=\"五-坑三-一个冒号-让技能静默消失\">五、坑三：一个冒号，让技能静默消失</h2>\n<p>第三个坑是我自己制造又自己修掉的，也是最像“玄学”的一个。</p>\n<p>为了压进 500 字符，我最初把 <code>description</code> 写成了单行裸值，里面有一句 <code>Trigger for interactive UI: dialog/popover</code>。问题出在冒号后面的空格：在 YAML 里，裸值中的「冒号 + 空格」会被当成 mapping 的分隔符，整个 frontmatter 变成非法结构：</p>\n<pre><code class=\"language-text\">mapping values are not allowed in this context</code></pre>\n<p>DSH 的扫描器解析失败后，<strong>没有告警，直接跳过这个技能</strong>。表现出来是：catalog 不更新，<code>skill</code> 工具报 <code>unknown or no longer available</code>。第一反应很容易怀疑“热加载坏了”，实际是文件坏了。</p>\n<p>修法本身很简单：值用双引号包起来，并且用真正的 YAML 解析器校验，而不是用正则看一眼：</p>\n<pre><code class=\"language-sh\">ruby -ryaml -e &#x27;YAML.load_file(ARGV[0])&#x27; ~/.agents/skills/modern-web-guidance/SKILL.md</code></pre>\n<p>macOS 自带 ruby；Python 不一定装了 PyYAML。升级脚本已经把“双引号 + ruby 解析通过”做成落盘前的硬校验，手工改完也建议跑一次。</p>\n<p>修好之后，<code>skill</code> 工具正常返回新补丁段，catalog 自动热替换成 488 字符的新描述，不用重启。这也反过来证明：热加载没坏，坏的是那个冒号。</p>\n<h2 id=\"六-另一个不该踩的雷-别跑自带的-uninstall\">六、另一个不该踩的雷：别跑自带的 uninstall</h2>\n<p>这一条不是“坑”，是“别碰”。</p>\n<p><code>modern-web.mjs</code> 的 <code>uninstall</code> 会调用 <code>npx -y skills remove &lt;名字列表&gt;</code>，而名字列表来自“与 CLI 相邻的 <code>skills/</code> 目录里所有带 <code>SKILL.md</code> 的目录”。本机 CLI 就在 <code>~/.agents/skills/modern-web-guidance/</code>，它的父目录正是 <code>~/.agents/skills/</code>。按源码逻辑复现（不执行），这个列表会收集到 <strong>74 个技能名</strong>，包含 Blender、排版、双语精读等全部全局技能。</p>\n<p>也就是说，在本机跑它的 <code>uninstall</code>，等于要求删除所有全局技能。要卸载就老老实实 <code>mv</code> 目录，再从技能清单里删对应的一行；只想暂时不用，可以在 frontmatter 加 <code>disable-model-invocation: true</code>。</p>\n<h2 id=\"七-什么时候该用-什么时候别用\">七、什么时候该用，什么时候别用</h2>\n<p>装好之后，真正要定的是触发边界。我给自己定的判据是一句话：</p>\n<blockquote>只要动了交互组件或 CSS 布局机制，先 search；纯内容搬运不强制。</blockquote>\n<p><strong>该用</strong>：弹窗与 popover、表单校验与错误播报、anchor 定位、容器查询、跨页过渡、滚动驱动动画、可访问性、Core Web Vitals。比如公司官网的联系表单现在只在 <code>onSubmit</code> 时一次性标错，正好对应 <code>validate-input-after-interaction</code> 和 <code>accessible-error-announcement</code>；博客已经用 <code>@view-transition</code> 做跨页过渡，可以拿 <code>cross-document-transitions</code> 对照；双语精读页的单文件最大 6.4 MB，首屏对应 <code>defer-rendering-heavy-content</code>。</p>\n<p><strong>别用</strong>：纯中文长文排版（不新增交互时）、网页 PPT 版式、后端与部署、Vite/tsconfig/测试这类工具链。版式归排版技能，验证归浏览器调试工具——它只回答“应该怎么写”，不负责“你有没有做到”。</p>\n<h2 id=\"八-验证到了哪一步\">八、验证到了哪一步</h2>\n<ul><li><code>search</code> 实测 0.17 秒，<code>list</code> 返回 208 条，<code>skill</code> 工具能正常加载，catalog 已是 488 字符且排除条款完整；</li><li>升级脚本默认 dry-run：跑完 <code>SKILL.md</code> 的 mtime 不变，确认没写盘；<code>--apply</code> 在假 HOME 里演练过，冒烟失败会自动从备份回滚；</li><li>本机是 Node 25.8，Node 22 只核对了 <code>engines.node &gt;= 22</code> 的声明，没有实跑；</li><li>遥测的现有证据在源码与子进程层面，没有网络抓包记录；<code>legacy-scan</code> 只在单个模板文件上跑过，全仓耗时与误报率未知。</li></ul>\n<p>这些“没验到”的部分，比“验到了”更值得写下来。否则过两周，自己也会把“应该没问题”当成“已经验证”。</p>\n<h2 id=\"最后\">最后</h2>\n<p>接入一个别人的技能，安装是最简单的一步。真正的工作是两件事：把边界划清楚，让它在该出现的时候出现；把静默失败找出来，让它坏的时候至少能看见。</p>\n<p>前者靠补丁和判据，后者靠真正的解析器、真实的子进程和可复跑的命令。一个查资料的技能，最后教我的倒是怎么验证工具本身。</p>\n<p>项目地址：<a href=\"https://github.com/GoogleChrome/modern-web-guidance\" target=\"_blank\" rel=\"noopener\">github.com/GoogleChrome/modern-web-guidance</a></p>",
+ "toc": [
+  {
+   "level": 2,
+   "text": "一、它是什么，先划清边界",
+   "id": "一-它是什么-先划清边界"
+  },
+  {
+   "level": 2,
+   "text": "二、装进 DSH：没有官方目标，反而简单",
+   "id": "二-装进-dsh-没有官方目标-反而简单"
+  },
+  {
+   "level": 2,
+   "text": "三、坑一：本地检索，不等于默认没有外联",
+   "id": "三-坑一-本地检索-不等于默认没有外联"
+  },
+  {
+   "level": 2,
+   "text": "四、坑二：DSH 只留 500 字符，排除条款正好被切掉",
+   "id": "四-坑二-dsh-只留-500-字符-排除条款正好被切掉"
+  },
+  {
+   "level": 2,
+   "text": "五、坑三：一个冒号，让技能静默消失",
+   "id": "五-坑三-一个冒号-让技能静默消失"
+  },
+  {
+   "level": 2,
+   "text": "六、另一个不该踩的雷：别跑自带的 uninstall",
+   "id": "六-另一个不该踩的雷-别跑自带的-uninstall"
+  },
+  {
+   "level": 2,
+   "text": "七、什么时候该用，什么时候别用",
+   "id": "七-什么时候该用-什么时候别用"
+  },
+  {
+   "level": 2,
+   "text": "八、验证到了哪一步",
+   "id": "八-验证到了哪一步"
+  },
+  {
+   "level": 2,
+   "text": "最后",
+   "id": "最后"
+  }
+ ]
+}
