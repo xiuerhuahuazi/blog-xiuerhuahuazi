@@ -68,7 +68,7 @@ python3 -m http.server -d dist 8000
 - `sitemap.xml` 的 `lastmod` 用构建当天，逐字节对比要同一天跑。
 - `readers-shell/*` 注入的是第三方成品页结构；源页改版后注入锚点（`topbar-in`、`<body>`）可能失配，`inject()` 会直接报错而不是静默跳过。
 - 图片/目录含中文或括号时，canonical 与 sitemap 必须百分号编码（`abs_url` 已处理）。
-- 本机 `github.com` 直连可能超时，push 需要 `HTTPS_PROXY=http://127.0.0.1:7890`。
+- 本机 `github.com` 直连基本会超时，push 要过本地代理。端口不固定：先试 `HTTPS_PROXY=http://127.0.0.1:7890`，不通就换 `7897`（2026-11-20 实测可用）；都失败时用 `scutil --proxy` 看当前 `HTTPPort`，别把端口写死。
 
 ## 发布
 
