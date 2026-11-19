@@ -526,6 +526,7 @@ fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
 /* ---------- 站点顶栏（阅读页） ---------- */
 :root{--mast:52px}
 html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
 .site-mast{
   position:sticky;top:0;z-index:85;height:var(--mast);
   background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);

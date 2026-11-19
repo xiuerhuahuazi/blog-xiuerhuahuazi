@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>用 Grok Bot 自动化任何事｜Automate Anything with Grok Bot</title>
+<meta name="description" content="用 Grok Bot 自动化任何事｜Automate Anything with Grok Bot：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+/* 项目级修正（2026-11-19）：粘性顶栏会盖住目录锚点落位的小节标题 */
+html:not(:has(.site-mast)) .sec{scroll-margin-top:calc(var(--bar) + 44px)}
+@media (max-width:1080px){html:not(:has(.site-mast)) .sec{scroll-margin-top:calc(var(--bar) + 14px)}}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/grok-bot-automation/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="用 Grok Bot 自动化任何事">
+<meta property="og:description" content="「自动化 = 目标 + 流程 + 替你跑流程的东西」：一位 Grok Bot 作者写给非技术读者的操作法">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/grok-bot-automation/">
+<meta property="og:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/grok-bot-automation/media/cover.jpg">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">X Article · lauren（@poteto） · 2026-11-18</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Automate Anything with Grok Bot</span><span class="h1-zh">用 Grok Bot 自动化任何事</span></h1><div class="hero-meta"><span>原文 2180 词</span><span>中文 3700 字</span><span>逐句对照 <i>119</i> 句</span><span>预计 9 分钟</span><span><a href="https://x.com/i/article/2122921713864171520" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><figure class="cover"><img src="media/cover.jpg" alt="原文封面：手绘风插画，左侧写着 Automate Anything with Grok Bot，右侧一个戴眼镜的女孩托着腮坐在桌前，桌上有一台笔记本电脑，周围飘着彩色机器人图标"><figcaption>题图｜原文封面。手绘插画，与正文论证无关，只交代主题：一个人、一台电脑、几个机器人。</figcaption></figure><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：自动化 = 一个目标 + 一套流程 + 一个替你跑流程的东西。Grok Bot 把第三项换成「用大白话指挥的机器人」，所以不会写代码也能开始。</li><li><b>真正难的地方不是工具，是想清楚</b>：很多人一上来就描述步骤（填表、发邮件），却没问过这些步骤是为了什么。作者说，她经常看到这种把流程当目标的错误。</li><li><b>三步操作法</b>：① 先定目标，用业务结果描述（增收还是降本）；② 口述流程，建议用语音听写、允许想到哪说到哪，然后让它用简单英文复述、你确认之后再动手；③ 把隐性判断、信息从哪来、怎么算做完、什么时候该来找你帮忙，一并讲清。</li><li><b>让它自己转</b>：给它接上能拿到反馈的地方（邮件、社媒、Yelp/Google 点评），让它自己发现问题、提改进；再用例程（routine）设成「邮件到达」或「每周一次」，它就不用你催。</li><li><b>数据决定上限</b>：业务越数字化、各处又有稳定的唯一 ID（客户 ID、订单号、邮箱），它越能把散落的信息拼起来，诊断也越准。</li><li><b>边界要说清</b>：这是产品作者写给新用户的操作指南，不是第三方评测——全文没有一个效果数字，「机器人能做你在电脑上能做的任何事」是主张，不是测量。原文也没谈成本、权限和出错回滚。</li></ul><div class="compare"><div class="cmp"><h3>原文说的「一两年前」：自动化只属于懂技术的人</h3><ol><li>要么懂怎么搭机器、怎么把它组装起来</li><li>要么会写代码——工程师过去得亲手写代码，把电脑能做的事自动化</li><li>机器是实打实的设备，比如面包房批量烤苹果派的烤箱</li><li>所以，自动化当时只对有技术背景的人开放</li></ol></div><div class="cmp win"><h3>本文主张：用大白话指挥一个机器人</h3><ol><li>用自然语言说清目标，机器人自己写代码、用它自己的电脑</li><li>先口述你的做法，它复述确认之后再动手</li><li>把隐性判断、信息源、验收标准也讲给它</li><li>让它自己找反馈、提改进</li><li>用例程（routine）按邮件、消息或时间表自动跑</li></ol></div></div><p class="ov-foot cmp-foot">左栏只保留原文明确说过的（技术门槛、工程师手写代码、面包房烤箱）；右栏是原文主张的做法。两边都不是实测对比，原文没有给任何成功率或耗时数字。</p><p class="ov-foot">读法建议：先看下面的对比卡，再按「目标 → 流程 → 反馈 → 例程」的顺序读。五个引用块是直接可以抄的提示词，读的时候可以跳过引号、只记结构。术语卡是给没用过这类机器人产品的读者补课的。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0"><span class='term' data-term='automation'>Automation</span> can be surprisingly hard to get right, even for people who do it every day.</span> <span class="s" data-k="intro-b0-1">I’d like to share how I approach it, at work and in my personal life, and how <span class='term' data-term='grok-bot'>Grok Bot</span> can help you take on more ambitious <span class='term' data-term='goal'>goals</span>.<sup class='tn' data-note='N1'>1</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0"><span class='term' data-term='automation'>自动化</span>这件事，要做到位可能意外地难——就连每天都在做的人也一样。</span><span class="s" data-k="intro-b0-1">我想分享自己在工作中和生活中是怎么做这件事的，以及 <span class='term' data-term='grok-bot'>Grok Bot</span> 能怎样帮你接下更宏大的<span class='term' data-term='goal'>目标</span>。<sup class='tn' data-note='N1'>1</sup></span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-thinking">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">A way of thinking</span><span class="h-zh">一种思考方式</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一节只做一件事：把「目标」和「流程」分开。苹果派和换轮胎两个例子都在说同一句话——目标是终点，流程是到达终点的那串步骤。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="thinking-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="thinking-b0-0">Automation is really just a way of thinking that anyone can learn.</span> <span class="s" data-k="thinking-b0-1">It's about thinking systematically and logically, breaking things down into small steps while keeping a goal in mind.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="thinking-b0-0">说到底，自动化只是一种思考方式，任何人都学得会。</span><span class="s" data-k="thinking-b0-1">它的要点是有条理、有逻辑地想问题：把一件事拆成小步骤，同时心里始终装着目标。</span></p></div></div>
+<div class="row" data-rid="thinking-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="thinking-b1-0">There are 2 parts to it: a goal, and a <span class='term' data-term='process'>process</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="thinking-b1-0">它由两部分组成：一个目标，和一套<span class='term' data-term='process'>流程</span>。</span></p></div></div>
+<div class="row" data-rid="thinking-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="thinking-b2-0">An everyday example of this is baking an apple pie (the goal).</span> <span class="s" data-k="thinking-b2-1">You follow a recipe or process which has clearly laid out steps - buying and preparing the right ingredients, assembling the pie and decorating it, baking it, letting it cool, and so on.</span> <span class="s" data-k="thinking-b2-2">Or if you're replacing a flat tire (also a goal), you might need to find a way to jack the car up so you can reach the tire, find the tools to remove and replace it with a new one, and then put everything back together again.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="thinking-b2-0">一个日常例子是烤一个苹果派——这就是目标。</span><span class="s" data-k="thinking-b2-1">你照着食谱，也就是一套流程，按写清楚的步骤走：买齐并处理好原料、把派组装起来并装饰、烘烤、放凉，等等。</span><span class="s" data-k="thinking-b2-2">又比如换一只瘪掉的轮胎（这也是目标）：你可能得想办法把车顶起来才能够到轮胎，找出拆装轮胎的工具，把旧胎换成新胎，再把所有东西装回去。</span></p></div></div>
+<div class="row" data-rid="thinking-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="thinking-b3-0">Simply put, the goal is what you want at the end, and the process is how you get there.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="thinking-b3-0">简单说，目标是最后你想要的那个东西，流程是你怎么走到那里。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="左边是过程，右边是目标"><div class="fig-media"><img class="still" src="media/fig1.jpg" loading="lazy" decoding="async" alt="fig1"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>左边是过程，右边是目标</b>　原文用这张插画把两个词并排放：左边 process，一本摊开的食谱，苹果 → 搅拌碗 → 烤箱；右边 goal，一只烤好的派。作者的意思很直白——食谱是流程，派才是目标。</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>图上只有两个英文词：左侧 process，右侧 goal，其余全是图标。</li><li>书页上三个图标按箭头排：苹果（备料）→ 搅拌碗（混合）→ 烤箱（烘烤），这就是流程。</li><li>女孩手里端着的派，是流程跑完之后你想要的结果，也就是目标。</li><li>两侧那两只彩色小机器人是这套插画的固定角色，不代表具体功能；正文说的「自动化」，是在流程之外再加一台机器或一段代码。</li></ol><p class="takeaway">一句话：自动化搬走的是左边的步骤，不是右边的结果——先认清你要的是派。</p></details></figcaption></figure>
+<div class="row" data-rid="thinking-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="thinking-b5-0">Automation is the same thing: a goal and a process, but with the addition of something like a machine, like the ones a bakery might use to bake lots of apple pies.</span> <span class="s" data-k="thinking-b5-1">Or code, what software engineers used to write by hand to automate stuff that could be done by a computer.</span> <span class="s" data-k="thinking-b5-2">It's about breaking things down into steps towards a goal, then automating the process so you don't have to personally do it every time.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="thinking-b5-0">自动化是同一回事：一个目标加一套流程，只不过多了一样东西——一台机器，比如面包房用来批量烤苹果派的那种。</span><span class="s" data-k="thinking-b5-1">或者代码——软件工程师过去要亲手写代码，把电脑能做的事自动化。</span><span class="s" data-k="thinking-b5-2">做法是把事情拆成通往目标的一个个步骤，然后把流程自动化，这样你就不必每次都亲手做。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-everyone">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Grok Bot is automation for everyone</span><span class="h-zh">Grok Bot 让每个人都能做自动化</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>作者的主张：过去自动化有技术门槛，现在只要会用大白话描述，机器人自己写代码、自己操作电脑。她还特意请非技术读者「暂时放下怀疑」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="everyone-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="everyone-b0-0">Just a year or two ago, automation was limited to those with the technical know-how of how to build or put together machines or write code.</span> <span class="s" data-k="everyone-b0-1">With Grok Bot, automating anything that can be done with a computer is now in reach even for people who aren't technical or software engineers!</span> <span class="s" data-k="everyone-b0-2">And the really surprising thing is just how much computers can do, even on tasks that you might not think a <span class='term' data-term='bot'>bot</span> is capable of doing.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="everyone-b0-0">就在一两年前，自动化还只属于那些懂技术的人：会搭机器、会组装，或者会写代码。</span><span class="s" data-k="everyone-b0-1">有了 Grok Bot，凡是电脑能做的事，现在哪怕你不懂技术、不是软件工程师，也能把它自动化。</span><span class="s" data-k="everyone-b0-2">真正让人意外的是电脑能做的事情之多——包括那些你可能觉得<span class='term' data-term='bot'>机器人</span>做不了的任务。</span></p></div></div>
+<div class="row" data-rid="everyone-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="everyone-b1-0">You don’t need to know how to write code to start automating tasks with Grok Bot.</span> <span class="s" data-k="everyone-b1-1">You can describe what you want in <span class='term' data-term='plain-english'>plain English</span>, then work with your bot to figure out the steps.</span> <span class="s" data-k="everyone-b1-2"><span class='typo' data-typo='2'>Bots can write code for you, and use its own computer</span> to do pretty much anything that you can do on your own computer or smartphone.<sup class='tn' data-note='N2'>2</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="everyone-b1-0">用 Grok Bot 开始自动化，你不需要会写代码。</span><span class="s" data-k="everyone-b1-1">你可以用<span class='term' data-term='plain-english'>大白话</span>把想要的东西描述出来，再和你的机器人一起把步骤理出来。</span><span class="s" data-k="everyone-b1-2">机器人能替你写代码，还能用它自己的电脑，做几乎任何你能在自己电脑或手机上做的事。<sup class='tn' data-note='N2'>2</sup></span></p></div></div>
+<div class="row" data-rid="everyone-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="everyone-b2-0">If you're not technical, I want you to suspend your disbelief for a moment.</span> <span class="s" data-k="everyone-b2-1">Bots really can do anything that you can do on a computer.</span> <span class="s" data-k="everyone-b2-2">It can move its own mouse around and click on things, install or connect to <span class='typo' data-typo='4'>apps and software that you use everyday</span>, browse the internet on its own browser, join meetings and take notes for you, and so much more.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="everyone-b2-0">如果你不是技术出身，我想请你先暂时放下怀疑。</span><span class="s" data-k="everyone-b2-1">机器人真的能做你在电脑上能做的任何事。</span><span class="s" data-k="everyone-b2-2">它能自己移动鼠标、点击东西，安装或连接你日常用的应用和软件，用它自己的浏览器上网，替你参加会议并做笔记，还有更多。</span></p></div></div>
+<div class="row" data-rid="everyone-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="everyone-b3-0">And because so much of our work and life these days relies on technology, it means that more and more work can be done by a bot instead, freeing you up to focus on other things.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="everyone-b3-0">而如今我们的工作和生活有那么多都依赖技术，这意味着越来越多的工作可以改由机器人来做，把你解放出来去专注别的事。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-goal">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Start with the goal</span><span class="h-zh">从目标开始</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>最常见也最贵的错误，是把流程当目标。这一节给了判断方法（增收还是降本），以及两段可以直接抄的提示词：一段用来立目标，一段让机器人在你不确定时反过来采访你。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="goal-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b0-0">To make this concrete, let's build a new bot together that will automate something for you.<sup class='tn' data-note='N3'>3</sup></span> <span class="s" data-k="goal-b0-1">Go to Grok Bot, then make a new bot and give it any name you like.</span> <span class="s" data-k="goal-b0-2">If you're struggling to find a name, just call it Potato and ask it to name itself later.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b0-0">为了让这件事具体起来，我们一起建一个新的机器人，让它替你自动化一件事。<sup class='tn' data-note='N3'>3</sup></span><span class="s" data-k="goal-b0-1">打开 Grok Bot，新建一个机器人，随便起个你喜欢的名字。</span><span class="s" data-k="goal-b0-2">如果实在想不出名字，就先叫它 Potato，回头再让它自己起。</span></p></div></div>
+<div class="row" data-rid="goal-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b1-0">Before we start chatting with the bot: when I think about automation, I always start with thinking about the goal.</span> <span class="s" data-k="goal-b1-1">What are we trying to do here?</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b1-0">在开始和机器人聊天之前：我做自动化时，总是先想目标。</span><span class="s" data-k="goal-b1-1">我们到底想做成什么？</span></p></div></div>
+<div class="row" data-rid="goal-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b2-0">One mistake I often see is that people confuse the process for the goal.</span> <span class="s" data-k="goal-b2-1">For example, you may already have a well-defined process at work for the tasks that you do.</span> <span class="s" data-k="goal-b2-2">But the goal is not to fill up a form, or to send an email.</span> <span class="s" data-k="goal-b2-3">That's just a step in the process.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b2-0">我经常看到的一个错误，是把流程当成了目标。</span><span class="s" data-k="goal-b2-1">比如，你在工作里做的那些任务，可能已经有一套定义得很清楚的流程。</span><span class="s" data-k="goal-b2-2">但目标不是填完一张表，也不是发出一封邮件。</span><span class="s" data-k="goal-b2-3">那只是流程里的一步。</span></p></div></div>
+<div class="row" data-rid="goal-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b3-0">Instead, think about the goal at the end: what is this process for, and where does it fit into the business?</span> <span class="s" data-k="goal-b3-1">Does it help increase revenue (eg processing a sale, building new features), or does it reduce costs (eg ordering just the right amount of inventory)?</span> <span class="s" data-k="goal-b3-2">If you're not sure, chat with your manager or colleagues, or even ask Bot to help you figure it out!</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b3-0">反过来，想想终点上的目标：这套流程是为了什么，它在业务里处在哪个位置？</span><span class="s" data-k="goal-b3-1">它是在帮你增收（比如处理一笔销售、开发新功能），还是在帮你降本（比如把库存订到刚好合适的量）？</span><span class="s" data-k="goal-b3-2">如果你不确定，就跟你的经理或同事聊聊，甚至可以让机器人帮你把它想清楚！</span></p></div></div>
+<div class="row" data-rid="goal-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b4-0"><span class='typo' data-typo='0'>Clarifying what the goal is the best place to start</span> because it focuses you and Grok Bot on the end result.</span> <span class="s" data-k="goal-b4-1">You may actually find that bots can figure out how to make the process more efficient too, so it's important not to be too attached to a specific process, since it's a means to an end after all.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b4-0">澄清目标究竟是什么，是最好的起点，因为它能把你和 Grok Bot 的注意力都集中到最终结果上。</span><span class="s" data-k="goal-b4-1">你也许会发现，机器人也能想出办法让流程更高效，所以不要把某套具体流程抓得太紧——它说到底只是达到目的的手段。</span></p></div></div>
+<div class="row" data-rid="goal-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b5-0"><span class='typo' data-typo='1'>Once you're figured out the goal</span>, start by describing it to the new bot, then ask it to pick a name for itself if you'd rather not call it Potato.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b5-0">一旦你搞清了目标，就先把它描述给新机器人，然后——如果你不想一直叫它 Potato——让它给自己挑个名字。</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b6-0">"Hi Potato, this is the goal I want you to be responsible for: &lt;goal&gt;.</span> <span class="s" data-k="goal-b6-1">Pick out a name and picture for yourself based on it."</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b6-0">「嗨 Potato，这是我想让你负责的目标：&lt;goal&gt;。</span><span class="s" data-k="goal-b6-1">根据这个目标，给自己挑一个名字和一张头像吧。」</span></p></div></div></div></div>
+<div class="row" data-rid="goal-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b7-0">Here are some starter goal ideas you can tell your bot:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b7-0">下面是一些可以告诉机器人的入门目标，供你参考：</span></p></div></div>
+<div class="row" data-rid="goal-b8"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="goal-b8-0-0">Save money towards buying a new car, house, college fund for my kids</span></li><li><span class="s" data-k="goal-b8-1-0">Schedule new customer bookings for my small business</span></li><li><span class="s" data-k="goal-b8-2-0">Improve my customer experience for my small business so they leave me good reviews</span></li><li><span class="s" data-k="goal-b8-3-0"><span class='typo' data-typo='3'>Hire new employee for my small business</span></span></li><li><span class="s" data-k="goal-b8-4-0">Gather <span class='term' data-term='feedback'>feedback</span> for my product so I can make improvements to it</span></li><li><span class="s" data-k="goal-b8-5-0">Prepare slides for a weekly meeting</span></li><li><span class="s" data-k="goal-b8-6-0">Build new features for my product</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="goal-b8-0-0">攒钱买新车、买房，或者给孩子存大学基金</span></li><li><span class="s" data-k="goal-b8-1-0">为我的小生意安排新客户的预约</span></li><li><span class="s" data-k="goal-b8-2-0">改善我的小生意的客户体验，让客户愿意给我好评</span></li><li><span class="s" data-k="goal-b8-3-0">为我的小生意招一名新员工</span></li><li><span class="s" data-k="goal-b8-4-0">收集我产品的<span class='term' data-term='feedback'>反馈</span>，好让我据此改进</span></li><li><span class="s" data-k="goal-b8-5-0">为每周例会准备演示文稿</span></li><li><span class="s" data-k="goal-b8-6-0">为我的产品开发新功能</span></li></ul></div></div>
+<div class="row" data-rid="goal-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b9-0">If you're not quite sure how to describe your goal, ask Potato to help you!</span> <span class="s" data-k="goal-b9-1">Tell it:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b9-0">如果你不太确定该怎么描述目标，就让 Potato 帮你！</span><span class="s" data-k="goal-b9-1">对它说：</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="goal-b10-0">"Hi Potato, I'd like you to be responsible for a goal, but I'm not sure how to best describe it.</span> <span class="s" data-k="goal-b10-1">Can you ask me some questions and interview me until we have a goal that I'm happy with?"</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="goal-b10-0">「嗨 Potato，我想让你负责一个目标，但我不太确定该怎么把它描述得最好。</span><span class="s" data-k="goal-b10-1">你能不能问我一些问题、像面试一样采访我，直到我们得到一个我满意的目标？」</span></p></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-process">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">The process</span><span class="h-zh">流程</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>把流程口头倒出来，让它复述、你确认，再让它接应用。作者强调别指望第一遍就对；最后还给了一条「让机器人拿流程去对照目标」的进阶提示词。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="process-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="process-b0-0">Once you've told it your goal, think about how you would achieve this goal if you were doing it, then ask the bot to see where it can make things more efficient.</span> <span class="s" data-k="process-b0-1">If you'd rather it do a task exactly following your process, you can tell it that too.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="process-b0-0">把目标告诉它之后，先想想如果由你亲手做，你会怎么达成这个目标；然后再让机器人看看哪里能做得更高效。</span><span class="s" data-k="process-b0-1">如果你更希望它严格照你的流程做，也可以直接告诉它。</span></p></div></div>
+<div class="row" data-rid="process-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="process-b1-0">The best way to give bot this information is to use <span class='term' data-term='voice-dictation'>voice dictation</span> in Grok Bot and speak for a while, <span class='term' data-term='brain-dump'>brain dump</span> everything it needs to know to do the job, and don't worry about the stream of consciousness or organizing your thoughts first.</span> <span class="s" data-k="process-b1-1">Tell it:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="process-b1-0">把这些信息交给机器人最好的方式，是用 Grok Bot 的<span class='term' data-term='voice-dictation'>语音听写</span>说上一会儿：把做这件事需要知道的一切<span class='term' data-term='brain-dump'>一股脑倒出</span>来，先别管说得乱不乱，也别急着把思路理清楚。</span><span class="s" data-k="process-b1-1">对它说：</span></p></div></div>
+<div class="row" data-rid="process-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="process-b2-0-0">The steps you usually take</span></li><li><span class="s" data-k="process-b2-1-0">The things you watch out for and pay attention to</span></li><li><span class="s" data-k="process-b2-2-0">The apps and tools you use to do it</span></li><li><span class="s" data-k="process-b2-3-0">How you check that the work was done right</span></li><li><span class="s" data-k="process-b2-4-0">Where you get the information you need to do it (eg email, Slack/Teams, a ticket, an app or website)</span></li><li><span class="s" data-k="process-b2-5-0">Where you get feedback on how it went (eg customer feedback/review, feedback from colleagues)</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="process-b2-0-0">你通常会走的步骤</span></li><li><span class="s" data-k="process-b2-1-0">你会留意、会特别注意的地方</span></li><li><span class="s" data-k="process-b2-2-0">你做这件事时用的应用和工具</span></li><li><span class="s" data-k="process-b2-3-0">你怎么检查这件事有没有做对</span></li><li><span class="s" data-k="process-b2-4-0">你从哪里拿到做这件事需要的信息（比如邮件、Slack/Teams、一张工单、某个应用或网站）</span></li><li><span class="s" data-k="process-b2-5-0">你从哪里得知做得怎么样（比如客户的反馈或评价、同事的反馈）</span></li></ul></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="process-b3-0">"Potato, this is how I usually do this goal myself: &lt;process&gt;</span> <span class="s" data-k="process-b3-1">I want you to think about how you can take this over completely from me.</span> <span class="s" data-k="process-b3-2">Before you begin, restate what you think my goal and process is in simple English so I can give you feedback and confirm it.</span> <span class="s" data-k="process-b3-3">I don't want you to start executing on this yet, let's focus on getting the process planned first."</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="process-b3-0">「Potato，这个目标我通常是自己这样做的：&lt;process&gt;</span><span class="s" data-k="process-b3-1">我想让你想一想，怎么把它从我手里完全接过去。</span><span class="s" data-k="process-b3-2">在开始之前，先用简单的英文复述一遍你认为我的目标和流程是什么，这样我能给你反馈、跟你确认。</span><span class="s" data-k="process-b3-3">我还不想让你现在就开始执行，我们先把流程规划好。</span></p></div></div></div></div>
+<figure class="row wide fig" id="fig2" data-cap="把脑子里的做法倒给机器人"><div class="fig-media"><img class="still" src="media/fig2.jpg" loading="lazy" decoding="async" alt="fig2"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>把脑子里的做法倒给机器人</b>　女孩对着手机说话，上方气泡里是信封、日历、打勾清单；黄色箭头指向一块写字板，同样的三样被排成三行，两只方形机器人趴在板子边上。这是「口述流程」的示意图，不是产品界面。</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>图上没有文字标签，只能靠图标认：气泡里依次是信封、日历、打勾的清单。</li><li>箭头把这三样从「想」挪到写字板上，意思是把脑内的流程写成它照着做的清单。</li><li>三行图标与气泡一一对应：信息从哪来、什么时候做、怎么算做完。</li><li>青、紫两只方形机器人是装饰角色，不代表任何真实界面。</li></ol><p class="takeaway">一句话：流程要写成清单，不能只留在脑子里。</p></details></figcaption></figure>
+<div class="row" data-rid="process-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="process-b5-0">Don't worry about getting it right on the first pass.</span> <span class="s" data-k="process-b5-1">Review what the bot says and then correct it by giving it more information.</span> <span class="s" data-k="process-b5-2">Once you've done this a few times, you should have something you're happy with.</span> <span class="s" data-k="process-b5-3">You can then tell bot to proceed, and to start connecting to the apps and tools it needs to do the job correctly.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="process-b5-0">第一遍没做对，不用着急。</span><span class="s" data-k="process-b5-1">看看机器人说的哪里不对，再补信息，把它的说法纠正过来。</span><span class="s" data-k="process-b5-2">这样来回几次之后，你应该就能得到一个自己满意的版本。</span><span class="s" data-k="process-b5-3">这时你就可以让它继续，并开始连接它把这件事做对所需要的应用和工具。</span></p></div></div>
+<div class="row" data-rid="process-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="process-b6-0">If you're feeling ambitious, you can even ask it to review the process against the goal and see if it can think of a better or more efficient way to do it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="process-b6-0">如果你想更进一步，甚至可以让它拿流程去对照目标，看看能不能想出一个更好、更高效的做法。</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="process-b7-0">"Review our process against my original goal, and if you see a way to make it better or more efficient, let me know."</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="process-b7-0">「把我们的流程跟我最初的目标对照一下；如果你看到能做得更好或更高效的办法，告诉我。」</span></p></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-teach">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Teach your bot how you think</span><span class="h-zh">教会机器人「你怎么想」</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>真正难讲的是那些你「没想就做了」的判断。这一节给了三个抓手：信息从哪来、冲突时信谁、什么算做完；再让机器人主动追问你漏掉的部分。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="teach-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teach-b0-0">One thing that's easy to forget when explaining a process is how much you do without really thinking about it.</span> <span class="s" data-k="teach-b0-1">If you're booking customers, you probably know which services take longer, who can do each job, and when to leave extra time between appointments.</span> <span class="s" data-k="teach-b0-2">These decisions might feel obvious to you, but your bot needs that context too.</span> <span class="s" data-k="teach-b0-3">Think about what you're paying attention to when you do the task yourself, and what makes you do something differently.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teach-b0-0">讲流程时，有一件事很容易被忘掉：你有多少动作是根本没细想就做完了的。</span><span class="s" data-k="teach-b0-1">比如你在给客户做预约，你大概知道哪些服务更费时间、谁能做哪一项、什么时候该在两个预约之间多留点余量。</span><span class="s" data-k="teach-b0-2">这些判断对你来说可能理所当然，但你的机器人也需要这些背景。</span><span class="s" data-k="teach-b0-3">想想你亲手做这件事时在留意什么，以及是什么让你换一种做法。</span></p></div></div>
+<div class="row" data-rid="teach-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teach-b1-0">Tell it where you get that information and how you check that the work is done right.</span> <span class="s" data-k="teach-b1-1">For example, if an email and your booking system show different appointment times, which should it trust?</span> <span class="s" data-k="teach-b1-2">A booking also isn't finished just because an email was sent.</span> <span class="s" data-k="teach-b1-3">The appointment needs to be saved correctly and the customer needs a confirmation.</span> <span class="s" data-k="teach-b1-4">If you're still waiting for details, have the bot keep track of that so it can pick things back up later without accidentally creating another booking.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teach-b1-0">告诉它你从哪里拿到这些信息，以及你怎么确认事情做对了。</span><span class="s" data-k="teach-b1-1">比如，一封邮件和你的预约系统显示的预约时间对不上，它该信哪个？</span><span class="s" data-k="teach-b1-2">另外，仅仅因为一封邮件发出去了，并不等于预约就完成了。</span><span class="s" data-k="teach-b1-3">预约要正确地存进系统，客户也要收到确认。</span><span class="s" data-k="teach-b1-4">如果有些细节你还在等，就让机器人记下这些还没到齐的细节，好让它之后能接着处理，而不会一不小心又建一个重复的预约。</span></p></div></div>
+<div class="row" data-rid="teach-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teach-b2-0">Don't worry about explaining every possible situation upfront.</span> <span class="s" data-k="teach-b2-1">Start with a few real examples, including ones where something went wrong or you had to do something differently.</span> <span class="s" data-k="teach-b2-2">Ask the bot how it would handle them, then give it feedback.</span> <span class="s" data-k="teach-b2-3">You can also ask it to help you figure out what you've forgotten to explain!</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teach-b2-0">不用一开始就把所有可能的情况都讲完。</span><span class="s" data-k="teach-b2-1">先从几个真实例子开始，包括出过岔子的、或者你不得不换个做法的那几次。</span><span class="s" data-k="teach-b2-2">问问机器人它会怎么处理这些情况，然后给它反馈。</span><span class="s" data-k="teach-b2-3">你也可以让它帮你想想，你还有哪些地方忘了讲！</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="teach-b3-0">“Potato, help me figure out what I haven't told you about this process yet.</span> <span class="s" data-k="teach-b3-1">Ask me questions about how I make decisions, where I get my information, how I check the work, and when you should ask me for help.</span> <span class="s" data-k="teach-b3-2">Ask one question at a time, then walk me through a few examples so I can give you feedback before we automate this.”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="teach-b3-0">「Potato，帮我理一理，关于这套流程，我还有哪些没告诉你。</span><span class="s" data-k="teach-b3-1">问我：我是怎么做决定的、我从哪里拿信息、我怎么检查工作，以及什么时候你该来问我。</span><span class="s" data-k="teach-b3-2">一次问一个问题，然后带我走几个例子，好在自动化之前让我给你反馈。」</span></p></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-improve">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">Let your bots improve themselves</span><span class="h-zh">让机器人自己改进自己</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>想让机器人越跑越好，就把它接到反馈来源上：邮件、社媒、点评网站。业务越数字化、唯一 ID 越统一，它越能把线索拼起来。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="improve-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b0-0">Once your bot is performing the <span class='term' data-term='workflow'>workflow</span>, it's important to give it feedback so it can improve.</span> <span class="s" data-k="improve-b0-1">The best way to do it is to equip your bot with the apps and tools it needs to get that feedback for itself.</span> <span class="s" data-k="improve-b0-2">The way I approach this is to think about what I would do if it was me doing the task and I wanted to self improve.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b0-0">机器人开始跑这个<span class='term' data-term='workflow'>工作流</span>之后，给它反馈很重要，它靠这个才能改进。</span><span class="s" data-k="improve-b0-1">最好的做法，是给它配上能自己拿到反馈的那些应用和工具。</span><span class="s" data-k="improve-b0-2">我的思路是：如果这件事是我自己在做、而且我想自我改进，我会去做什么。</span></p></div></div>
+<div class="row" data-rid="improve-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b1-0">For example, if your bot is managing new customer bookings for you, a way to let it improve itself is by letting it monitor your emails, social media, or Google/Yelp reviews for customer feedback.</span> <span class="s" data-k="improve-b1-1">It can look out for that feedback and then take the initiative to propose improvements to your process.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b1-0">比如，如果你的机器人在替你管理新客户预约，让它自我改进的一种方式，是让它去盯你的邮件、社交媒体，或者 Google/Yelp 上的评论，找客户反馈。</span><span class="s" data-k="improve-b1-1">它能留意这些反馈，然后主动提出对流程的改进建议。</span></p></div></div>
+<div class="row" data-rid="improve-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b2-0">Maybe a customer says on Yelp that they had to wait very long before someone could attend to them.</span> <span class="s" data-k="improve-b2-1">If your bot can look up this information on Yelp for itself, and also look up any records you have for the customer that day, it could see what might have gone wrong.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b2-0">也许有客户在 Yelp 上说，自己等了很久才有人来接待。</span><span class="s" data-k="improve-b2-1">如果机器人能自己去 Yelp 查这条信息，再查你那天关于这位客户的记录，它就可能看出哪里出了问题。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="让机器人自己看反馈、自己排时间"><div class="fig-media"><img class="still" src="media/fig3.jpg" loading="lazy" decoding="async" alt="fig3"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>让机器人自己看反馈、自己排时间</b>　日历上排着彩色时间块，旁边一只闹钟；放大镜底下是一段带引号的反馈和一只时钟，下方卡片上三个时钟用虚线连起来。对应「让机器人自己改进自己」与「让机器人自动干活」两节：用时间戳诊断「客户等了多久」，以及按时间表跑。</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>日历上的彩色条是排期，对应例程（routine）：每周一次、隔天一次这类固定节奏。</li><li>放大镜压在引号和时钟上，对应让机器人去 Yelp、社媒、邮件里找客户反馈。</li><li>下方卡片三个时钟用虚线相连，对应车行例子里那条时间线：到店 → 见到接待 → 交钥匙 → 完工（原文列了四个时间点，图里画了三个）。</li><li>闹钟和日历都是通用图标，图上没有产品界面文字。</li></ol><p class="takeaway">一句话：反馈与时间戳是两路数据，接上它们，机器人才能自己发现问题。</p></details></figcaption></figure>
+<div class="row" data-rid="improve-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b4-0">In that sense, the more computerized your business is, the better for bots and automation.</span> <span class="s" data-k="improve-b4-1">The availability of that data is what gives your bot the ability to come up with better improvements.</span> <span class="s" data-k="improve-b4-2">And the best part is that Grok Bot can build tools for you to get this data!</span> <span class="s" data-k="improve-b4-3">For example, if you're operating a car repair service, you could ask bot to build you an app that you can use on your computer and phone to log details about a customer visit.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b4-0">从这个意义上说，你的生意越数字化，对机器人和自动化就越有利。</span><span class="s" data-k="improve-b4-1">机器人能不能提出更好的改进，取决于这些数据拿不拿得到。</span><span class="s" data-k="improve-b4-2">最棒的是，Grok Bot 还能为你做工具，来收集这些数据！</span><span class="s" data-k="improve-b4-3">比如你经营一家修车行，可以让它给你做一个应用，你在电脑和手机上都能用，用来记录客户到店的细节。</span></p></div></div>
+<div class="row" data-rid="improve-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b5-0">If you log the time of:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b5-0">如果你记下这几个时间：</span></p></div></div>
+<div class="row" data-rid="improve-b6"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="improve-b6-0-0">when they got to your shop</span></li><li><span class="s" data-k="improve-b6-1-0">when they were able to speak to a service rep</span></li><li><span class="s" data-k="improve-b6-2-0">when you took possession of their keys</span></li><li><span class="s" data-k="improve-b6-3-0">when service started and finished</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="improve-b6-0-0">他们到店的时间</span></li><li><span class="s" data-k="improve-b6-1-0">他们能跟服务顾问说上话的时间</span></li><li><span class="s" data-k="improve-b6-2-0">你拿到他们车钥匙的时间</span></li><li><span class="s" data-k="improve-b6-3-0">服务开始和结束的时间</span></li></ul></div></div>
+<div class="row" data-rid="improve-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b7-0">You could work out how long they spent waiting and better diagnose why.</span> <span class="s" data-k="improve-b7-1">This is just a simple example, but the key lesson here is that the more data you have available to Grok Bot, the better it can help you and your business and work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b7-0">你就能算出他们等了多久，也更容易诊断出为什么等。</span><span class="s" data-k="improve-b7-1">这只是一个简单的例子，但关键的教训是：你能给 Grok Bot 的数据越多，它就越能帮到你、帮到你的生意和工作。</span></p></div></div>
+<div class="row" data-rid="improve-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="improve-b8-0">Bots can also cross reference data across multiple sources if you have something like an <span class='term' data-term='id'>ID</span> - some kind of number or unique text like an email address that gives that data an identity.</span> <span class="s" data-k="improve-b8-1">This could be a customer ID or email address, an order number, a part number, a barcode, an employee ID, and so on.</span> <span class="s" data-k="improve-b8-2">If you use multiple apps and services, having unique and consistent IDs across all these tools will help you bring that data together so bot can fully understand what's going on.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="improve-b8-0">如果每份数据都有一个 ID（<span class='term' data-term='id'>唯一标识符</span>——某种编号，或者像邮箱这样唯一的文字），机器人还能跨多个来源把数据对起来，那个 ID 就是数据的身份。</span><span class="s" data-k="improve-b8-1">它可以是客户 ID、邮箱地址、订单号、零件号、条码、员工工号，等等。</span><span class="s" data-k="improve-b8-2">如果你用好几个应用和服务，让这些工具里的 ID 唯一且一致，就能帮你把数据汇总到一起，好让机器人完全弄清发生了什么。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-auto">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Making bots do work automatically</span><span class="h-zh">让机器人自动干活</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>没有例程，机器人只在你叫它时才动。例程把「什么时候开工」定下来：邮件到达、收到消息，或固定时间表。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="auto-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="auto-b0-0">The next thing is, when should the bot do the work?</span> <span class="s" data-k="auto-b0-1">Should it start when an email arrives, when someone sends a message, or on a regular schedule?</span> <span class="s" data-k="auto-b0-2">In Grok Bot, you set this up with <span class='term' data-term='routine'>routines</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="auto-b0-0">接下来要问的是：机器人该在什么时候干活？</span><span class="s" data-k="auto-b0-1">是邮件一到就开始，还是有人发来消息时开始，或者按固定时间表来？</span><span class="s" data-k="auto-b0-2">在 Grok Bot 里，这件事是用<span class='term' data-term='routine'>例程</span>来设置的。</span></p></div></div>
+<div class="row" data-rid="auto-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="auto-b1-0">Without a routine, bots will only do the work when you ask them to.</span> <span class="s" data-k="auto-b1-1">This is fine when you're first starting out with using bot, but if you want to streamline things, you'll want to figure out how to get the bot to do it automatically, so you're no longer the bottleneck.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="auto-b1-0">没有例程，机器人只会在你叫它的时候才干活。</span><span class="s" data-k="auto-b1-1">刚开始用机器人的时候这没问题；但如果你想把事情理顺，就得想办法让它自动去做，这样你就不再是那个瓶颈。</span></p></div></div>
+<div class="row" data-rid="auto-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="auto-b2-0">Usually, the work happens with some kind of <span class='term' data-term='trigger'>trigger</span> like an email or Slack/Teams message.</span> <span class="s" data-k="auto-b2-1">Or maybe it happens on a regular schedule, like once a week or every other day.</span> <span class="s" data-k="auto-b2-2">Either way, if you ask your bot to set it up, it will!</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="auto-b2-0">通常，这些活儿是由某个<span class='term' data-term='trigger'>触发器</span>启动的，比如收到一封邮件或一条 Slack/Teams 消息。</span><span class="s" data-k="auto-b2-1">也可能按固定节奏发生，比如每周一次，或者隔天一次。</span><span class="s" data-k="auto-b2-2">不管是哪种，只要你让机器人去设，它就会设好！</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-eggbot">
+<div class="sec-head"><span class="sec-num">09</span><h2><span class="h-en">Install Dr Eggbot</span><span class="h-zh">安装 Dr Eggbot</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>作者把自己会的一切教给了一个叫 Dr Eggbot 的机器人，用来替别人设计机器人。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="eggbot-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="eggbot-b0-0">I taught everything I know about automating work to <a class='lnk' href='https://x.ai/bot/rJW52lmFLtCvy2tSHcIag' target='_blank' rel='noopener' data-link='L1'>Dr Eggbot</a>, so if you want to start automating your work more, install it and ask it to help you!<sup class='tn' data-note='N4'>4</sup></span> <span class="s" data-k="eggbot-b0-1">Dr Eggbot is a bot designer - it will create high quality bots for you.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="eggbot-b0-0">我把自己知道的关于工作自动化的一切都教给了 <a class='lnk' href='https://x.ai/bot/rJW52lmFLtCvy2tSHcIag' target='_blank' rel='noopener' data-link='L1'>Dr Eggbot</a>；如果你想更多地自动化自己的工作，就装上它，让它来帮你！<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="eggbot-b0-1">Dr Eggbot 是一个机器人设计者——它会为你做出高质量的机器人。</span></p></div></div>
+<div class="row" data-rid="eggbot-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="eggbot-b1-0">Thanks for reading!</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="eggbot-b1-0">谢谢阅读！</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 1 处正文引用，指向 1 个不同链接；另有 3 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>Dr Eggbot v2（lauren 制作）</h4><p class="lnk-site">x.ai · dr eggbot v2 by lauren</p><p class="lnk-anchors">正文对应：<em>Dr Eggbot</em></p><p><b>这是什么：</b>Grok Bot 上的一个机器人：你把自己的工作讲给它，它先采访你、问清目标与流程，再给你造一个能自己跑的机器人。</p><p><b>为什么值得点：</b>本文的「三步操作法」是作者手把手演示；这个机器人把同一套流程固化成了一个可以对话的对象，想直接试的人从这里进。</p><p><b>访问说明：</b>x.ai 在部分网络环境需代理；本页按实测状态记为可访问。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>页面自述：Designs tight, single-job Grok Bots——只做一件事的机器人；流程是先采访你（goal 与 process），再生成一个机器人自己跑。页面同时声明：它由第三方用户创建，不是 SpaceXSI 出品，使用即代表你接受它会代替你行动。打开页面需要能访问 x.ai 的网络（部分网络环境需代理）。</p><ul><li>它先问清「目标」和「流程」，再动手造机器人，和正文的顺序一致</li><li>定位是「只做一件事的机器人」，不追求一个机器人包打天下</li><li>第三方机器人，不是官方出品；会代表你执行操作</li><li>打开页面需要能访问 x.ai 的网络</li></ul></details><a class="lnk-open" href="https://x.ai/bot/rJW52lmFLtCvy2tSHcIag" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 13 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">automation</span><span class="gl-zh">自动化</span></div><p class="gl-def">把「目标 + 流程」交给机器或代码重复执行，人不必每次亲手做。</p><p class="gl-ana">像面包房的烤箱替你烤派。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">goal</span><span class="gl-zh">目标</span></div><p class="gl-def">你最终想要的结果：多赚钱、少花钱、客户给好评，而不是中间某个动作。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">process</span><span class="gl-zh">流程</span></div><p class="gl-def">从起点到目标的那串步骤：备料、组装、烘烤；填表、发邮件只是其中一步。</p><p class="gl-ana">食谱就是一张流程。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">workflow</span><span class="gl-zh">工作流</span></div><p class="gl-def">一串会被反复执行的流程；本文指机器人接手的那件完整的活。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">bot</span><span class="gl-zh">机器人</span></div><p class="gl-def">本文指能自己开浏览器、动鼠标、装应用的软件代理，不是仓库里的机械臂。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Grok Bot</span><span class="gl-zh">Grok Bot</span></div><p class="gl-def">文中使用的产品名：用自然语言指挥、带自己一台电脑的机器人平台。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">plain English</span><span class="gl-zh">大白话</span></div><p class="gl-def">不用术语和代码，像跟同事说话一样描述你要什么。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">voice dictation</span><span class="gl-zh">语音听写</span></div><p class="gl-def">对着 Grok Bot 说话、由它转成文字；作者建议用它一口气倒完流程。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">brain dump</span><span class="gl-zh">一股脑倒出</span></div><p class="gl-def">不整理、不排序，先把知道的全部说出来，再让它帮你理。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">routine</span><span class="gl-zh">例程</span></div><p class="gl-def">Grok Bot 里「什么时候自动开工」的设置：邮件到达、收到消息，或固定时间表。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">trigger</span><span class="gl-zh">触发器</span></div><p class="gl-def">让流程自动开始的那个事件：一封邮件、一条消息、一个时间点。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">feedback</span><span class="gl-zh">反馈</span></div><p class="gl-def">事情做完之后的评价与结果：客户点评、同事意见、等待时长，机器人用它改进。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">ID</span><span class="gl-zh">唯一标识符</span></div><p class="gl-def">跨系统认出同一个人或同一张单的编号，如客户 ID、订单号、邮箱。</p><p class="gl-ana">没有它，多处数据拼不起来。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>这是一篇产品作者的操作指南，不是评测</h4><p>作者 lauren（@poteto）的简介写着自己「grok @bot at @SpaceXSI」，此前在 React Compiler、Cursor、Meta、Netflix。也就是说，她是在写自己参与的产品 Grok Bot 怎么用。这不是缺点，但决定了读法：文中「bots really can do anything that you can do on a computer」是产品主张，全文没有成本、成功率、可靠性数字，也没有失败案例。把它当成「作者希望你这样用」，别当成「第三方实测证明它能做到」。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>原文用 it / its 指机器人</h4><p>英文里对工具惯用 it，比如「use its own computer」「it can move its own mouse」。中文统一译作「它」，不暗示拟人化，也不暗示性别。文中的 Potato 只是作者建议的临时名字，不是产品功能。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>「Start with the goal」在原文里不是标题</h4><p>同一篇文章里其他小节都是 H2 样式，只有这一节是加粗的普通段落——多半是作者编辑时漏套了样式。本页按小节标题处理，只影响目录与层级，一个字都没改。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>文末那条链接卡是什么</h4><p>原文结尾有一条链接卡（不是正文句子），指向 x.ai/bot/rJW52lmFLtCvy2tSHcIag。实测：页面标题「dr eggbot v2 by lauren」，功能是「采访你、问清目标与流程，然后造一个自己跑的机器人」；页面自己标明它由第三方用户创建、不是 SpaceXSI 出品。本页把它作为外链卡 L1，锚在正文的 Dr Eggbot 上。</p></div></div></div><div class="app-sect" id="typos"><h3>原文笔误与图文问题</h3><p class="desc">原文有 5 处笔误或图文问题，中文按语义翻译、英文照录原文，并在此备案，方便对照核查。不在正文里改动原文。</p><div class="typo-item"><code>Clarifying what the goal is the best place to start</code><p>缺一个系动词：应为「Clarifying what the goal is is the best place to start」（澄清目标是什么，是最好的起点）。照录不静默改。</p></div><div class="typo-item"><code>Once you're figured out the goal</code><p>时态与助动词错位：应为「Once you've figured out the goal」。照录不静默改。</p></div><div class="typo-item"><code>Bots can write code for you, and use its own computer</code><p>主语 Bots 是复数，后面却用 its；紧接着的下一段也用 it。原文单复数混用，照录。</p></div><div class="typo-item"><code>Hire new employee for my small business</code><p>缺冠词：应为「Hire a new employee for my small business」。照录。</p></div><div class="typo-item"><code>apps and software that you use everyday</code><p>everyday 是形容词，这里作副词应为 every day（两个词）。照录不静默改。</p></div></div></section><footer><p>原文 © lauren（@poteto），2026-11-18 发布于 X。本页为逐句双语对照与译者注释，仅供个人阅读；英文列逐字照录（含原文笔误），中文列为译者所译。产品名与界面以官方为准。</p><p>原文：<a href="https://x.com/i/article/2122921713864171520" target="_blank" rel="noopener">Automate Anything with Grok Bot</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-thinking"><span class="dot">●</span>一种思考方式</a><a class="l2" href="#s-everyone"><span class="dot">●</span>Grok Bot 让每个人都能做自动化</a><a class="l2" href="#s-goal"><span class="dot">●</span>从目标开始</a><a class="l2" href="#s-process"><span class="dot">●</span>流程</a><a class="l2" href="#s-teach"><span class="dot">●</span>教会机器人「你怎么想」</a><a class="l2" href="#s-improve"><span class="dot">●</span>让机器人自己改进自己</a><a class="l2" href="#s-auto"><span class="dot">●</span>让机器人自动干活</a><a class="l2" href="#s-eggbot"><span class="dot">●</span>安装 Dr Eggbot</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"Dr Eggbot v2（lauren 制作）","title_en":"dr eggbot v2 by lauren","site":"x.ai","what_zh":"Grok Bot 上的一个机器人：你把自己的工作讲给它，它先采访你、问清目标与流程，再给你造一个能自己跑的机器人。","why_zh":"本文的「三步操作法」是作者手把手演示；这个机器人把同一套流程固化成了一个可以对话的对象，想直接试的人从这里进。","tier":"必读","order":1,"url":"https://x.ai/bot/rJW52lmFLtCvy2tSHcIag"}},"terms":{"automation":{"en":"automation","zh":"自动化","def_zh":"把「目标 + 流程」交给机器或代码重复执行，人不必每次亲手做。","analogy_zh":"像面包房的烤箱替你烤派。"},"goal":{"en":"goal","zh":"目标","def_zh":"你最终想要的结果：多赚钱、少花钱、客户给好评，而不是中间某个动作。","analogy_zh":""},"process":{"en":"process","zh":"流程","def_zh":"从起点到目标的那串步骤：备料、组装、烘烤；填表、发邮件只是其中一步。","analogy_zh":"食谱就是一张流程。"},"workflow":{"en":"workflow","zh":"工作流","def_zh":"一串会被反复执行的流程；本文指机器人接手的那件完整的活。","analogy_zh":""},"bot":{"en":"bot","zh":"机器人","def_zh":"本文指能自己开浏览器、动鼠标、装应用的软件代理，不是仓库里的机械臂。","analogy_zh":""},"grok-bot":{"en":"Grok Bot","zh":"Grok Bot","def_zh":"文中使用的产品名：用自然语言指挥、带自己一台电脑的机器人平台。","analogy_zh":""},"plain-english":{"en":"plain English","zh":"大白话","def_zh":"不用术语和代码，像跟同事说话一样描述你要什么。","analogy_zh":""},"voice-dictation":{"en":"voice dictation","zh":"语音听写","def_zh":"对着 Grok Bot 说话、由它转成文字；作者建议用它一口气倒完流程。","analogy_zh":""},"brain-dump":{"en":"brain dump","zh":"一股脑倒出","def_zh":"不整理、不排序，先把知道的全部说出来，再让它帮你理。","analogy_zh":""},"routine":{"en":"routine","zh":"例程","def_zh":"Grok Bot 里「什么时候自动开工」的设置：邮件到达、收到消息，或固定时间表。","analogy_zh":""},"trigger":{"en":"trigger","zh":"触发器","def_zh":"让流程自动开始的那个事件：一封邮件、一条消息、一个时间点。","analogy_zh":""},"feedback":{"en":"feedback","zh":"反馈","def_zh":"事情做完之后的评价与结果：客户点评、同事意见、等待时长，机器人用它改进。","analogy_zh":""},"id":{"en":"ID","zh":"唯一标识符","def_zh":"跨系统认出同一个人或同一张单的编号，如客户 ID、订单号、邮箱。","analogy_zh":"没有它，多处数据拼不起来。"}},"notes":{"N1":{"title_zh":"这是一篇产品作者的操作指南，不是评测","body_zh":"作者 lauren（@poteto）的简介写着自己「grok @bot at @SpaceXSI」，此前在 React Compiler、Cursor、Meta、Netflix。也就是说，她是在写自己参与的产品 Grok Bot 怎么用。这不是缺点，但决定了读法：文中「bots really can do anything that you can do on a computer」是产品主张，全文没有成本、成功率、可靠性数字，也没有失败案例。把它当成「作者希望你这样用」，别当成「第三方实测证明它能做到」。"},"N2":{"title_zh":"原文用 it / its 指机器人","body_zh":"英文里对工具惯用 it，比如「use its own computer」「it can move its own mouse」。中文统一译作「它」，不暗示拟人化，也不暗示性别。文中的 Potato 只是作者建议的临时名字，不是产品功能。"},"N3":{"title_zh":"「Start with the goal」在原文里不是标题","body_zh":"同一篇文章里其他小节都是 H2 样式，只有这一节是加粗的普通段落——多半是作者编辑时漏套了样式。本页按小节标题处理，只影响目录与层级，一个字都没改。"},"N4":{"title_zh":"文末那条链接卡是什么","body_zh":"原文结尾有一条链接卡（不是正文句子），指向 x.ai/bot/rJW52lmFLtCvy2tSHcIag。实测：页面标题「dr eggbot v2 by lauren」，功能是「采访你、问清目标与流程，然后造一个自己跑的机器人」；页面自己标明它由第三方用户创建、不是 SpaceXSI 出品。本页把它作为外链卡 L1，锚在正文的 Dr Eggbot 上。"}},"typos":[{"quote_en":"Clarifying what the goal is the best place to start","body_zh":"缺一个系动词：应为「Clarifying what the goal is is the best place to start」（澄清目标是什么，是最好的起点）。照录不静默改。"},{"quote_en":"Once you're figured out the goal","body_zh":"时态与助动词错位：应为「Once you've figured out the goal」。照录不静默改。"},{"quote_en":"Bots can write code for you, and use its own computer","body_zh":"主语 Bots 是复数，后面却用 its；紧接着的下一段也用 it。原文单复数混用，照录。"},{"quote_en":"Hire new employee for my small business","body_zh":"缺冠词：应为「Hire a new employee for my small business」。照录。"},{"quote_en":"apps and software that you use everyday","body_zh":"everyday 是形容词，这里作副词应为 every day（两个词）。照录不静默改。"}]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

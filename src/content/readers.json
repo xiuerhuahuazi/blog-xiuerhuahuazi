@@ -1,6 +1,24 @@
 {
  "readers": [
   {
+   "slug": "grok-bot-automation",
+   "title_zh": "用 Grok Bot 自动化任何事",
+   "title_en": "Automate Anything with Grok Bot",
+   "source_url": "https://x.com/i/article/2122921713864171520",
+   "org": "X Article · lauren（@poteto）",
+   "published": "2026-11-18",
+   "read_min": 9,
+   "category": "自动化",
+   "blurb": "自动化难的不是工具，是想清楚：一位 Grok Bot 作者把「定目标 → 讲流程 → 自己找反馈 → 设例程」拆成五步，五段提示词可以直接抄。",
+   "pairs": 119,
+   "words": 2180,
+   "chars": 3700,
+   "terms": 13,
+   "figures": 3,
+   "cover": "media/cover.jpg",
+   "featured": false
+  },
+  {
    "slug": "always-on-agents",
    "title_zh": "构建常驻智能体：五个原语，让智能体自己醒来",
    "title_en": "Building always-on agents",

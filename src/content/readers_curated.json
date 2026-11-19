@@ -52,6 +52,10 @@
   "wiki-layer": {
    "category": "上下文工程",
    "blurb": "把「每次上传文件」换成「先编译成 Wiki，再提问」：把 Karpathy 的 LLM Wiki 讲成四步流程。"
+  },
+  "grok-bot-automation": {
+   "category": "自动化",
+   "blurb": "自动化难的不是工具，是想清楚：一位 Grok Bot 作者把「定目标 → 讲流程 → 自己找反馈 → 设例程」拆成五步，五段提示词可以直接抄。"
   }
  }
 }
