@@ -20,6 +20,7 @@
 
 ### Changed
 
+- 精读页图片全面转 WebP 并做尺寸收敛：引用素材按显示尺寸上限重编码（照片 1600px / 图稿 2000px），两段动图重做调色板与帧率。全站精读图片 13.6 MB → 4.5 MB（−67%），单篇最重的 Grok 页 1.3 MB → 0.82 MB，anthropic-scm 1.2 MB → 0.31 MB，loop-engineering 1.7 MB → 0.59 MB。原图保留在各项目 `assets/`，可回滚。
 - `tools/blog/pages.py` 与 `reader_shell.py` 剩余 HTML 抽到 `src/templates/partials/` 与 `src/templates/readers-shell/`；页面输出与重构前逐字节一致。
 - 项目级细节从全局记忆迁到仓库 `docs/ARCHITECTURE.md` 与 `.agents/`（本机台账、原始审计）；全局记忆只保留项目指针与跨会话判断。
 - 仓库结构调整：源文件迁入 `src/`（配置、内容、模板、静态资源、精读成品），构建产物统一输出到 `dist/` 且不再入库；生成器拆成 `tools/blog/` 包（`config` / `template` / `pages` / `markdown` / `sitecheck` / `reader_shell`），页面模板外置到 `src/templates/`。页面输出与重构前逐字节一致（15 个生成页）。
