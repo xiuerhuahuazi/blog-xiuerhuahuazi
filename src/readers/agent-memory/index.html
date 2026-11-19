@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>智能体记忆的组成：Claude 怎样用「做梦」整理记忆｜The components of agent memory</title>
+<meta name="description" content="智能体记忆的组成：Claude 怎样用「做梦」整理记忆｜The components of agent memory：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/agent-memory/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="智能体记忆的组成：Claude 怎样用「做梦」整理记忆">
+<meta property="og:description" content="Anthropic 把智能体记忆拆成四层：会话记录、记忆笔记、记忆表示（维基）、注入上下文。贯穿四层的那个动作叫「做梦」——用空闲算力回看日志，改错、写笔记、搭地图、决定哪些内容预加载。全篇拿 CL-Bench、宝可梦红、Stainless 文档库和 Harvey LAB 四组评测来回答一个问题：记忆到底该怎么组织。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/agent-memory/">
+<meta property="og:image" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/agent-memory/media/cover.webp">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic · Research · 2026-11-06</p><h1 class="h1-wrap"><span class="h1-en" lang="en">The components of agent memory</span><span class="h1-zh">智能体记忆的组成：Claude 怎样用「做梦」整理记忆</span></h1><div class="hero-meta"><span>原文 3950 词</span><span>中文 8100 字</span><span>逐句对照 <i>207</i> 句</span><span>预计 17 分钟</span><span><a href="https://www.anthropic.com/research/components-of-agent-memory" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><figure class="cover"><img src="media/cover.webp" alt="Illustration of two offset half circles with a grid pattern, one green and one pink, facing each other across a gap on a light blue background."><figcaption>题图｜原文头图，和正文内容无关，只是 Anthropic Research 的统一视觉。</figcaption></figure><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：智能体记忆不是「存得越多越好」，而是四层结构 + 一个离线整理动作——「做梦」。</li><li><b>四层</b>：会话记录（可搜索的事件日志）→ 记忆笔记（Claude 自己写的显著观察）→ 记忆表示（比如维基，给记忆画一张地图）→ 注入上下文（每次会话都预加载的顶层索引，必须小）。</li><li><b>两个主考场</b>：CL-Bench 数据库题看「学习闭环」有没有走通；宝可梦红看「什么才值得记」——判据是屏幕读不到的信息（策略、计划、验证过的规则）。</li><li><b>维基的边界</b>：Stainless 约 4.2 亿 token 文档上，「做梦」从 2 次扩到 128 次会话，25 个问题得分从 13% 升到 48%；但能靠单份文档检索的任务几乎没有增益，维基甚至会膨胀到比原始文档还大。</li><li><b>最反直觉的一条</b>：给强模型设「只记录失败」这类固定规则，会吃掉记忆增益的大半；告诉它记忆是干什么用的、具体记什么交给它判断，反而更有效。</li><li><b>代价</b>：一条错笔记会被每一次会话继承；顶层注入要省 token 就得持续把细节下移；「做梦」要烧算力，产出也不是即时的。</li></ul><div class="compare"><div class="cmp"><h3>一个常见误读：记忆 = 存档</h3><ol><li>常为每场战斗、每个道具、每个 NPC 各开一个文件（Sonnet 3.7：413 个文件、225 个文件夹，一枚徽章）</li><li>记忆越长越全越好，靠事后翻找解决</li><li>用固定规则规定「只记失败」「只记事实」</li><li>维基等于把原始文档换个形式再放一遍</li><li>写进记忆了，就等于下次会用</li></ol></div><div class="cmp win"><h3>本文的做法：四层 + 一个离线动作</h3><ol><li>只记屏幕读不到的东西：策略、计划、验证过的规则（Fable 5：10 个文件，四枚徽章）</li><li>顶层保持极小，只放索引与链接（MEMORY.md 只加载前 200 行 / 25 KB）</li><li>告诉模型记忆是干什么的，具体记什么交给它判断显著性</li><li>维基必须做抽象与互链，否则等于什么也没抽象</li><li>要拿会话记录对质并修正，才知道它有没有真的在用</li></ol></div></div><p class="ov-foot cmp-foot">左右两栏是译者按正文归纳，不是原文。</p><p class="ov-foot">速览与对比卡是译者按正文压缩的，不是原文。正文里带虚线下划线的词可悬停看术语卡，上标数字是译者注。原文 2026-11-06 发布于 Anthropic Research。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>人类靠两套机制形成记忆：海马体当场记录，睡眠与休息时再慢慢巩固进新皮层。智能体可以照搬这套分工——工作过程落在会话记录里，「做梦」负责离线整理。全文就是围绕这条记忆层级展开的。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Søren Kierkegaard wrote that life can only be understood <i>backward</i>, but it must be lived <i>forward</i>.<sup class='tn' data-note='N1'>1</sup></span> <span class="s" data-k="intro-b0-1">We’ve encountered a similar bind when designing memory for AI agents.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">索伦·克尔凯郭尔写过：生活只能<i>倒着</i>理解，却必须<i>正着</i>过。<sup class='tn' data-note='N1'>1</sup></span><span class="s" data-k="intro-b0-1">为 AI 智能体设计记忆时，我们撞上了同一种两难。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">As humans, we encode memory constantly as we go about our lives.</span> <span class="s" data-k="intro-b1-1"><a class='lnk' href='https://stanford.edu/~jlmcc/papers/McCMcNaughtonOReilly95.pdf' target='_blank' rel='noopener' data-link='L1'>The hippocampus</a> plays a central role in this, capturing experiences in the moment so that memories form quickly and are immediately available.</span> <span class="s" data-k="intro-b1-2">But only <a class='lnk' href='https://www.science.org/doi/10.1126/science.adk8261' target='_blank' rel='noopener' data-link='L2'>some experiences</a> are consolidated into long-term knowledge.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">人类在日常生活中不断把记忆编码存下来。</span><span class="s" data-k="intro-b1-1"><a class='lnk' href='https://stanford.edu/~jlmcc/papers/McCMcNaughtonOReilly95.pdf' target='_blank' rel='noopener' data-link='L1'>海马体</a>在其中扮演核心角色：它在当下捕捉经历，让记忆快速形成、立即可用。</span><span class="s" data-k="intro-b1-2">但只有<a class='lnk' href='https://www.science.org/doi/10.1126/science.adk8261' target='_blank' rel='noopener' data-link='L2'>部分经历</a>会被巩固为长期知识。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">Much of that <span class='term' data-term='consolidation'>consolidation</span> appears to happen when our brains are offline.</span> <span class="s" data-k="intro-b2-1">As we sleep, and during quiet <a class='lnk' href='https://www.nature.com/articles/s41467-018-06213-1' target='_blank' rel='noopener' data-link='L3'>rest</a>, the <span class='term' data-term='hippocampus'>hippocampus</span> <span class='term' data-term='replay'>replays</span> our recent experiences.</span> <span class="s" data-k="intro-b2-2">This is thought to gradually distill <a class='lnk' href='https://www.nature.com/articles/s41593-019-0467-3' target='_blank' rel='noopener' data-link='L4'>those experiences and integrate them</a> into the <span class='term' data-term='neocortex'>neocortex</span>—the part of our brains that stores most of what we think of as knowledge.<sup class='tn' data-note='N2'>2</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">这种<span class='term' data-term='consolidation'>巩固</span>似乎大多发生在大脑「离线」的时候。</span><span class="s" data-k="intro-b2-1">我们睡着时、以及在安静的<a class='lnk' href='https://www.nature.com/articles/s41467-018-06213-1' target='_blank' rel='noopener' data-link='L3'>休息</a>中，<span class='term' data-term='hippocampus'>海马体</span>会<span class='term' data-term='replay'>重放</span>最近的经历。</span><span class="s" data-k="intro-b2-2">一般认为，这个过程会把<a class='lnk' href='https://www.nature.com/articles/s41593-019-0467-3' target='_blank' rel='noopener' data-link='L4'>这些经历</a>逐步提炼、整合进<span class='term' data-term='neocortex'>新皮层</span>——大脑里存放我们大部分所谓「知识」的部位。<sup class='tn' data-note='N2'>2</sup></span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0"><span class='term' data-term='agent-memory'>Agent memory</span> can use a similar division of labor.</span> <span class="s" data-k="intro-b3-1">Agents capture much of their work in logs or <span class='term' data-term='transcripts'>transcripts</span>.</span> <span class="s" data-k="intro-b3-2">Researchers at Letta and UC Berkeley proposed <a class='lnk' href='https://arxiv.org/abs/2504.13171' target='_blank' rel='noopener' data-link='L5'>sleep-time compute</a> as a way for models to use idle time between interactions to reorganize their existing context.</span> <span class="s" data-k="intro-b3-3">The same idea can help agents organize their memory by reflecting on logs to fix mistakes or produce new notes and representations.</span> <span class="s" data-k="intro-b3-4">This process is often <a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/dreams' target='_blank' rel='noopener' data-link='L6'>called</a> <a class='lnk' href='https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/' target='_blank' rel='noopener' data-link='L7'><i>dreaming</i></a> (Figure 1).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0"><span class='term' data-term='agent-memory'>智能体记忆</span>可以沿用类似的分工。</span><span class="s" data-k="intro-b3-1">智能体把大量工作记录在日志或<span class='term' data-term='transcripts'>会话记录</span>里。</span><span class="s" data-k="intro-b3-2">Letta 与加州大学伯克利分校的研究者提出<a class='lnk' href='https://arxiv.org/abs/2504.13171' target='_blank' rel='noopener' data-link='L5'>睡眠时计算</a>：让模型利用两次交互之间的空闲时间，重组自己已有的上下文。</span><span class="s" data-k="intro-b3-3">同样的思路可以帮智能体整理记忆——回看日志、修正错误，或产出新的笔记与记忆表示。</span><span class="s" data-k="intro-b3-4">这个过程常<a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/dreams' target='_blank' rel='noopener' data-link='L6'>被称为</a><a class='lnk' href='https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/' target='_blank' rel='noopener' data-link='L7'><i>做梦</i></a>（图 1）。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">We’ve found that <span class='term' data-term='dreaming'>dreaming</span> has been a useful tool for helping us give Claude effective memory.</span> <span class="s" data-k="intro-b4-1">In this post, we share how we’ve come to think about agent memory and walk through several evaluations we’ve used to explore agent memory, including the use of dreaming, and what each component contributes to memory organization.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">我们发现，「<span class='term' data-term='dreaming'>做梦</span>」是个好用的工具，帮我们给 Claude 配上了有效的记忆。</span><span class="s" data-k="intro-b4-1">本文分享我们如今怎样理解智能体记忆，并逐一走过我们用来探索智能体记忆的几组评测——包括「做梦」的用法，以及每个组成部分对记忆组织各自的贡献。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="记忆层级：四层，以及「做梦」在层间搬运"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="Diagram of a memory hierarchy between one session and the next. From bottom to top: transcripts (a searchable event log), memory notes written by Claude, memory representations such as wikis, and injected context loaded into every session. Inside a box labeled “Dreaming,” arrows run from transcripts up to each layer, and in both directions between neighboring upper layers."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>记忆层级：四层，以及「做梦」在层间搬运</b>　最底层是会话记录（可搜索的事件日志），往上依次是 Claude 写的记忆笔记、由记录与笔记算出的记忆表示（如维基），最顶层是每次会话都会加载的注入上下文。「做梦」的原料在最底层，相邻两层之间是双向箭头。</p><p class="cap-en">原文图注：Diagram of a memory hierarchy between one session and the next. From bottom to top: transcripts (a searchable event log), memory notes written by Claude, memory representations such as wikis, and injected context loaded into every session. Inside a box labeled “Dreaming,” arrows run from transcripts up to each layer, and in both directions between neighboring upper layers.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>从下往上读四个方框：Transcripts → Memory notes → Memory representations → Injected context；越往上越省 token，越往下越原始。</li><li>看箭头的起点：橙色实线全部从最底层的 Transcripts 出发，说明「做梦」的原料是会话记录本身。</li><li>相邻两层之间是双向箭头（笔记↔表示、表示↔注入），意味着一轮整理既能往上浮、也能往下沉。</li><li>最右侧 Next session 只从注入上下文那一层取东西——新会话开场能白拿的只有顶层。</li></ol><p class="takeaway">一句话：记忆不是一堆文件，而是一叠可以互相搬运的层级。</p></details></figcaption></figure>
+<div class="row" data-rid="intro-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b6-0">Claude can use dreaming to organize memory.</span> <span class="s" data-k="intro-b6-1">This can correct mistakes, create notes, build new <span class='term' data-term='representations'>memory representations</span>, or shape what’s preemptively loaded into future sessions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b6-0">Claude 可以用「做梦」来整理记忆。</span><span class="s" data-k="intro-b6-1">这可以修正错误、写笔记、搭出新的<span class='term' data-term='representations'>记忆表示</span>，或者塑造「哪些内容会预先装进未来会话」。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-memory-notes">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Memory notes</span><span class="h-zh">记忆笔记</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>先把「智能体记忆」划清边界：它只指跨会话保留下来、能读到的知识，不含改权重、上下文学习和压缩。人类靠化学信号给记忆打标记、再在离线时重放，Claude 对应的是写记忆笔记——难点在于当场怎么判断「什么算显著」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="memory-notes-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="memory-notes-b0-0">By “agent memory,” we mean knowledge that Claude gains from experience—including interactions with users and tasks it’s been assigned—and that it retains between sessions, saved as context it can read later.</span> <span class="s" data-k="memory-notes-b0-1">It excludes other ways models can learn or manage context, such as changes to their <i>weights</i> (the internal parameters set during training), <a class='lnk' href='https://www.anthropic.com/research/in-context-learning-and-induction-heads' target='_blank' rel='noopener' data-link='L8'><i>in-context learning</i></a> (knowledge gained within a single conversation), and <a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction' target='_blank' rel='noopener' data-link='L9'><i>compaction</i></a> (summaries written by Claude that replace its older turns so it can continue working in a new <span class='term' data-term='context-window'>context window</span>).<sup class='tn' data-note='N3'>3</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="memory-notes-b0-0">所谓「智能体记忆」，指的是 Claude 从经历中获得的、并在会话之间保留下来的知识——包括与用户的交互，以及它接到的任务——存成日后能读到的上下文。</span><span class="s" data-k="memory-notes-b0-1">它不包括模型学习或管理上下文的其他方式，比如改动<i>权重</i>（训练时设定的内部参数）、<a class='lnk' href='https://www.anthropic.com/research/in-context-learning-and-induction-heads' target='_blank' rel='noopener' data-link='L8'><i>上下文学习</i></a>（在单次对话内获得的知识），以及<a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction' target='_blank' rel='noopener' data-link='L9'><i>压缩</i></a>（由 Claude 写摘要、替换掉较早的轮次，好让它在新的<span class='term' data-term='context-window'>上下文窗口</span>里接着干活）。<sup class='tn' data-note='N3'>3</sup></span></p></div></div>
+<div class="row" data-rid="memory-notes-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="memory-notes-b1-0">In the human brain, chemical signals released before, during, or after an experience can <a class='lnk' href='https://www.nature.com/articles/385533a0' target='_blank' rel='noopener' data-link='L10'>mark a memory</a> as important.</span> <span class="s" data-k="memory-notes-b1-1">Marked memories tend to be replayed more often than unmarked ones during offline periods.</span> <span class="s" data-k="memory-notes-b1-2">This process, called <i>replay</i>, helps stabilize and integrate them into long-term memory.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="memory-notes-b1-0">在人的大脑里，一段经历之前、之中或之后释放的化学信号，可以把<a class='lnk' href='https://www.nature.com/articles/385533a0' target='_blank' rel='noopener' data-link='L10'>一段记忆</a>标记为重要。</span><span class="s" data-k="memory-notes-b1-1">被标记过的记忆，在离线时段被重放的次数往往多于没被标记的。</span><span class="s" data-k="memory-notes-b1-2">这个过程叫<i>重放</i>，它帮助这些记忆稳定下来、并整合进长期记忆。</span></p></div></div>
+<div class="row" data-rid="memory-notes-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="memory-notes-b2-0">Similarly, Claude can tag <span class='term' data-term='salience'>salient</span> events in a session log as they happen, so they’re easier to find later, or it can <a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool' target='_blank' rel='noopener' data-link='L11'>write</a> them to a memory store, such as a folder of <span class='term' data-term='memory-notes'>memory notes</span> (Figure 2).</span> <span class="s" data-k="memory-notes-b2-1">But how can Claude tell what’s salient in the moment, before it knows what’s coming next?</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="memory-notes-b2-0">类似地，Claude 可以在事件发生时，判断会话日志里事件的<span class='term' data-term='salience'>显著</span>性高低并打上标签，方便日后查找；也可以把它们<a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool' target='_blank' rel='noopener' data-link='L11'>写</a>进记忆存储——比如一个放<span class='term' data-term='memory-notes'>记忆笔记</span>的文件夹（图 2）。</span><span class="s" data-k="memory-notes-b2-1">可是，在还不知道接下来会发生什么的时候，Claude 怎么判断此刻什么算显著？</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="只发生一件事：会话直接写笔记"><div class="fig-media"><img class="still" src="media/fig2.webp" loading="lazy" decoding="async" alt="The same memory hierarchy, with the memory notes layer highlighted. An arrow runs from the session directly to the memory notes, described as salient observations written by Claude."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>只发生一件事：会话直接写笔记</b>　同一张层级图，这次只高亮记忆笔记：会话临结束时，Claude 把当下的显著观察直接写进笔记。记忆表示与注入上下文这两层此时还没动，这是「当场记」的路径。</p><p class="cap-en">原文图注：The same memory hierarchy, with the memory notes layer highlighted. An arrow runs from the session directly to the memory notes, described as salient observations written by Claude.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>与图 1 对比：其余三层被淡化，只有 Memory notes 是橙色描边。</li><li>从 Session 出发有两条箭头：一条橙色进 Memory notes，一条灰色进 Transcripts——先记录，再挑。</li><li>被淡化的记忆表示层和注入层说明：这一刻只写笔记，还没到整理地图、决定注入什么的时候。</li></ol><p class="takeaway">一句话：现场能做的只有「写下来」，判断显著性就发生在这一刻。</p></details></figcaption></figure>
+<div class="row" data-rid="memory-notes-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="memory-notes-b4-0">Claude can write notes to memory.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="memory-notes-b4-0">Claude 可以往记忆里写笔记。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-prediction">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Memory can be a prediction about what the future will need</span><span class="h-zh">记忆可以是对未来需求的预测</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>写下一个规则，就是在赌「这个模式还会再出现」。CL-Bench 的数据库题把这件事变成可测的：只有记忆目录能跨会话带走信息，模型得自己把「答错了什么、为什么错」沉淀成规则。老模型只走到一半，Opus 5 才把闭环走通。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="prediction-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b0-0">Memory is, occasionally, a prediction.</span> <span class="s" data-k="prediction-b0-1">By writing down a rule, an agent predicts that the pattern it’s describing will be relevant again.</span> <span class="s" data-k="prediction-b0-2">For instance, writing down a verified fact is a prediction that an agent in a future session will want to rely on that fact without double-checking it.</span> <span class="s" data-k="prediction-b0-3">Over time, Claude has become much better at making these kinds of predictions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b0-0">记忆偶尔是一种预测。</span><span class="s" data-k="prediction-b0-1">写下一个规则，就等于预测：它描述的这个模式还会再次派上用场。</span><span class="s" data-k="prediction-b0-2">例如写下一条核实过的事实，就是在预测：未来某次会话里的智能体会想直接依赖这条事实，而不再复核一遍。</span><span class="s" data-k="prediction-b0-3">随着时间推移，Claude 在这类预测上已经明显变强。</span></p></div></div>
+<div class="row" data-rid="prediction-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b1-0">Consider a task from <a class='lnk' href='https://continual-learning-bench.com/news/cl-bench-1-0/' target='_blank' rel='noopener' data-link='L12'>Continual Learning Bench (CL-Bench) 1.0</a>, a benchmark that measures an agent’s ability to use memory in order to tackle long-horizon tasks.</span> <span class="s" data-k="prediction-b1-1">One particular task asks Claude to answer a series of questions by looking up information in a database.</span> <span class="s" data-k="prediction-b1-2">After Claude gives an answer, it’s told the correct solution and can write a memory to help answer future questions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b1-0">看<a class='lnk' href='https://continual-learning-bench.com/news/cl-bench-1-0/' target='_blank' rel='noopener' data-link='L12'>持续学习基准（CL-Bench）1.0</a>里的一道题。这个基准衡量智能体利用记忆去处理长时程任务的能力。</span><span class="s" data-k="prediction-b1-1">其中一道题要求 Claude 通过查数据库来回答一连串问题。</span><span class="s" data-k="prediction-b1-2">Claude 给出答案后，会被告知正确答案，并且可以写一条记忆，帮自己回答后面的问题。</span></p></div></div>
+<div class="row" data-rid="prediction-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b2-0">Memory can support a <span class='term' data-term='learning-loop'>learning loop</span> here.</span> <span class="s" data-k="prediction-b2-1">If Claude gets a question wrong, it can record the failure, come up with theories about what went wrong, test those theories, and turn what it finds into a rule about how to answer in the future.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b2-0">记忆在这里能撑起一个<span class='term' data-term='learning-loop'>学习闭环</span>。</span><span class="s" data-k="prediction-b2-1">如果答错了，它可以记下这次失败，提出关于「哪里出了问题」的假说，验证这些假说，再把结论变成一条「以后该怎么答」的规则。</span></p></div></div>
+<div class="row" data-rid="prediction-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b3-0">We ran the <span class='term' data-term='cl-bench'>CL-Bench</span> 1.0 task using <a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/overview' target='_blank' rel='noopener' data-link='L13'>Claude Managed Agents</a>.<sup class='tn' data-note='N4'>4</sup></span> <span class="s" data-k="prediction-b3-1">Claude started each question in a fresh session, with one exception: it could retrieve files from a <a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/memory' target='_blank' rel='noopener' data-link='L14'>memory directory</a> that persisted from one session to the next.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b3-0">我们借助 <a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/overview' target='_blank' rel='noopener' data-link='L13'>Claude 托管智能体</a>跑了这道 <span class='term' data-term='cl-bench'>CL-Bench</span> 1.0 题。<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="prediction-b3-1">Claude 每道题都从一个全新的会话开始，只有一个例外：它可以从<a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/memory' target='_blank' rel='noopener' data-link='L14'>记忆目录</a>里读文件——这个目录会跨会话保留下来。</span></p></div></div>
+<div class="row" data-rid="prediction-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b4-0">Different models achieved different levels of success at creating their own learning loops.</span> <span class="s" data-k="prediction-b4-1">Claude Sonnet 4.6 got as far as generating theories about why an answer was wrong.</span> <span class="s" data-k="prediction-b4-2">Its <span class='term' data-term='memory-directory'>memory directory</span> contained a scattering of files, each listing several untested guesses.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b4-0">不同模型在「建立自己的学习闭环」上走到了不同的程度。</span><span class="s" data-k="prediction-b4-1">Claude Sonnet 4.6 只走到「提出关于答案为何错误的假说」这一步。</span><span class="s" data-k="prediction-b4-2">它的<span class='term' data-term='memory-directory'>记忆目录</span>里散着若干文件，每个文件列着几条没被验证过的猜测。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="有记忆 vs 无状态：六个模型的 CL-Bench 数据库题得分"><div class="fig-media"><img class="still" src="media/fig3.webp" loading="lazy" decoding="async" alt="Left: bar chart of mean reward on the CL-Bench database task, stateless baseline versus memory store. Opus 5.5: 0.655, 0.838. Sonnet 5.5: 0.644, 0.833. Opus 5: 0.564, 0.828. Opus 4.7: 0.383, 0.700. Sonnet 5: 0.306, 0.610. Sonnet 4.6: 0.330, 0.364. Right: line chart of running-mean reward over 30 questions for the same models, with and without memory."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>有记忆 vs 无状态：六个模型的 CL-Bench 数据库题得分</b>　左图每个模型两根柱：实心是「有记忆存储」，斜纹是「无状态基线」；右图是同样六条曲线在 30 道题上的累计均值。Sonnet 4.6 只有 0.330 → 0.364，几乎没吃到记忆的好处；Opus 5.5 是 0.655 → 0.838。</p><p class="cap-en">原文图注：Left: bar chart of mean reward on the CL-Bench database task, stateless baseline versus memory store. Opus 5.5: 0.655, 0.838. Sonnet 5.5: 0.644, 0.833. Opus 5: 0.564, 0.828. Opus 4.7: 0.383, 0.700. Sonnet 5: 0.306, 0.610. Sonnet 4.6: 0.330, 0.364. Right: line chart of running-mean reward over 30 questions for the same models, with and without memory.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左图先看每一对的差值：差值越大，说明记忆帮得越多；Sonnet 4.6 的差值只有 0.034。</li><li>右图虚线是无状态、实线是有记忆；两条线的开口在越强的模型上张得越早。</li><li>两幅图共用图例：With memory store 实心，Stateless baseline 斜纹（右图是实线/虚线）。</li><li>右图横轴写的是 running mean of all questions so far——越往后越稳，前几题的起伏不必当真。</li></ol><p class="takeaway">一句话：记忆的增益随模型变强而放大，弱模型几乎吃不进去。</p></details></figcaption></figure>
+<div class="row" data-rid="prediction-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b6-0">CL-Bench database task, comparing memory with a stateless baseline across models.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b6-0">CL-Bench 数据库题：各模型在有记忆与无状态基线下的对比。</span></p></div></div>
+<div class="row" data-rid="prediction-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b7-0">Claude Opus 4.7 consolidated its notes into a single reference document and began marking which facts it had checked and which were still unconfirmed.</span> <span class="s" data-k="prediction-b7-1">Claude Sonnet 5 marked each answer as confirmed after the grader had checked it, and wrote a correction when it had answered wrong.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b7-0">Claude Opus 4.7 把笔记汇总成一份参考文档，并开始标注哪些事实它核查过、哪些还没确认。</span><span class="s" data-k="prediction-b7-1">Claude Sonnet 5 会在评分器核对之后把每个答案标为已确认；答错时，就写一条更正。</span></p></div></div>
+<div class="row" data-rid="prediction-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b8-0">Claude Opus 5 was the first of these models to close the loop.</span> <span class="s" data-k="prediction-b8-1">Most of its entries included a rule (and also how it knew the rule was true), answers to earlier questions, and clear warnings about traps it had discovered along the way (Figure 3).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b8-0">Claude Opus 5 是这批模型里第一个把闭环走通的。</span><span class="s" data-k="prediction-b8-1">它的多数条目都包含一条规则（以及它凭什么知道这条规则成立）、此前问题的答案，还有对途中发现的陷阱的明确警告（图 3）。</span></p></div></div>
+<div class="row" data-rid="prediction-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prediction-b9-0">Like Opus 5, Claude Opus 5.5 and Claude Sonnet 5.5 both closed the loop, using memory to capture validated rules about how to best answer future questions.</span> <span class="s" data-k="prediction-b9-1">With memory, both scored about the same as Opus 5, though their baseline performance without memory was slightly higher.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prediction-b9-0">和 Opus 5 一样，Claude Opus 5.5 与 Claude Sonnet 5.5 也都走通了闭环，用记忆沉淀出「以后怎样答最好」这类经过验证的规则。</span><span class="s" data-k="prediction-b9-1">有记忆时，两者的得分与 Opus 5 大致持平；不过它们在没有记忆时的基线成绩略高一些。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-salience">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Claude has learned to judge salience</span><span class="h-zh">Claude 学会了判断显著性</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>用宝可梦红做第二个考场：给每个模型一个可读写的记忆文件夹。Sonnet 3.7 什么都记，413 个文件反而拖慢了自己；Fable 5 只记「游戏不会明说」的策略与规则，10 个文件拿到四枚徽章。判断标准从「可能有用」变成「不记下来就会消失」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="salience-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b0-0">We also evaluated Claude’s ability to play <i>Pokémon Red</i>, a game that <a class='lnk' href='https://www.youtube.com/watch?v=CXhYDOvgpuU' target='_blank' rel='noopener' data-link='L15'>challenges Claude to navigate</a> complex long-horizon tasks, as a test of Claude’s judgment about <i>what</i> to save to memory.</span> <span class="s" data-k="salience-b0-1">At the start of each run, we gave each model a folder of memory files that it could read from and write to while it played (Figure 4).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b0-0">我们还评测了 Claude 玩<i>宝可梦 红</i>的能力——这款游戏<a class='lnk' href='https://www.youtube.com/watch?v=CXhYDOvgpuU' target='_blank' rel='noopener' data-link='L15'>要求 Claude 在复杂的长时程任务里做导航</a>——用来检验它对「<i>什么</i>该存进记忆」的判断力。</span><span class="s" data-k="salience-b0-1">每次运行开始时，我们给每个模型一个记忆文件夹，它可以在游戏过程中读写（图 4）。</span></p></div></div>
+<div class="row" data-rid="salience-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b1-0">We compared the memory folders from one run each of Claude Sonnet 3.7 and Claude Fable 5, when each was about 10,000 steps into the game.<sup class='tn' data-note='N5'>5</sup></span> <span class="s" data-k="salience-b1-1">A key difference we noticed was what each model thought was worth remembering.</span> <span class="s" data-k="salience-b1-2">Sonnet 3.7 assumed everything might matter and wrote to memory indiscriminately.</span> <span class="s" data-k="salience-b1-3">Its memory folder contained an archive of encounters, often with a separate file for each battle it fought, each item it found, and each non-player character it met.</span> <span class="s" data-k="salience-b1-4">Ultimately, Sonnet 3.7 wrote 413 memory files across 225 folders and earned one badge (badges mark a player’s progress through the game).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b1-0">我们各取一次运行来比较记忆文件夹：Claude Sonnet 3.7 与 Claude Fable 5，都玩到大约第 10,000 步。<sup class='tn' data-note='N5'>5</sup></span><span class="s" data-k="salience-b1-1">我们注意到的一个关键差异，是它们各自认为什么值得记。</span><span class="s" data-k="salience-b1-2">Sonnet 3.7 假设什么都可能有用，不加区分地往记忆里写。</span><span class="s" data-k="salience-b1-3">它的记忆文件夹像一份遭遇存档：经常为每场战斗、捡到的每个道具、遇到的每个非玩家角色各开一个文件。</span><span class="s" data-k="salience-b1-4">最终，Sonnet 3.7 在 225 个文件夹里写了 413 个记忆文件，拿到一枚徽章（徽章代表玩家在游戏里的进度）。</span></p></div></div>
+<div class="row" data-rid="salience-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b2-0">Fable 5, by comparison, wrote nine files in two folders, plus a single top-level file called `global.md`, and earned four badges.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b2-0">相比之下，Fable 5 只在两个文件夹里写了九个文件，外加一个顶层文件 `global.md`，拿到了四枚徽章。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="同一尺度下的两份宝可梦记忆目录"><div class="fig-media"><img class="still" src="media/fig4.webp" loading="lazy" decoding="async" alt="Two treemaps of Pokémon memory directories at the same scale, where area shows characters of memory. Claude Sonnet 3.7’s is large and crowded, with 413 files and 977,930 characters across folders such as locations, main, battles, and several “consolidated” folders. Claude Fable 5’s is small, with 10 files and 43,406 characters in locations, gameplay, and global.md."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>同一尺度下的两份宝可梦记忆目录</b>　面积代表记忆字符数，不是文件数。Sonnet 3.7（413 个文件、977,930 字符）几乎铺满整张图，Fable 5（10 个文件、43,406 字符）只占右侧一小块；两者都截在第 9,989 步。</p><p class="cap-en">原文图注：Two treemaps of Pokémon memory directories at the same scale, where area shows characters of memory. Claude Sonnet 3.7’s is large and crowded, with 413 files and 977,930 characters across folders such as locations, main, battles, and several “consolidated” folders. Claude Fable 5’s is small, with 10 files and 43,406 characters in locations, gameplay, and global.md.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>先看面积比例，再看右边那三个小方块：Fable 5 的 locations/、gameplay/ 与 global.md。</li><li>颜色是分类：橙点是「像新起点或新的规范知识库」的目录，红点是警报式命名（sos、emergency、evac），灰点是其他主题目录——Sonnet 3.7 大量用「consolidated」「core」这类词给自己建规范库。</li><li>标题下都写着 step 9,989：正文说的「约第 10,000 步」就是这个截点。</li><li>注意 Fable 5 的 global.md 只占一小条，却是唯一的顶层文件——顶层要小，正文后面会讲。</li></ol><p class="takeaway">一句话：同样的步数，记忆体积差 20 多倍，进度却反过来了。</p></details></figcaption></figure>
+<div class="row" data-rid="salience-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b4-0">Claude’s memory directories for Sonnet 3.7 versus Fable 5 while playing Pokémon.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b4-0">玩宝可梦时，Sonnet 3.7 与 Fable 5 的记忆目录对比。</span></p></div></div>
+<div class="row" data-rid="salience-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b5-0">Sonnet 3.7’s approach was a problem mainly because the game state of Pokémon changes constantly—Sonnet 3.7’s detailed record was continuously going out of date.</span> <span class="s" data-k="salience-b5-1">As a result, as Claude progressed, it had to spend more time and resources combing through its memories rather than playing the game.</span> <span class="s" data-k="salience-b5-2">Around step 10,000, for example, Sonnet 3.7 started its fourth folder of “master” memory files.</span> <span class="s" data-k="salience-b5-3">Over the next 17 steps, it created six files, deleted nine others, and took no actions in the game itself.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b5-0">Sonnet 3.7 的做法成问题，主要是因为宝可梦的游戏状态一直在变——它那份详尽的记录不断过期。</span><span class="s" data-k="salience-b5-1">结果，随着游戏推进，Claude 得把越来越多的时间和资源花在翻自己的记忆上，而不是玩游戏。</span><span class="s" data-k="salience-b5-2">比如在第 10,000 步前后，Sonnet 3.7 开始建第四个「主」记忆文件夹。</span><span class="s" data-k="salience-b5-3">接下来的 17 步里，它新建了六个文件、删掉另外九个，游戏本身一步没走。</span></p></div></div>
+<div class="row" data-rid="salience-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b6-0">Fable 5’s approach used memory for things the game didn’t explicitly tell it.</span> <span class="s" data-k="salience-b6-1">Some of the kinds of information Sonnet 3.7 wrote to memory—such as how much money the player has or where the player is on the map—can be read off the screen every turn, so storing it is redundant.</span> <span class="s" data-k="salience-b6-2">By contrast, memory files about strategy, plans, and tested rules exist only if Claude works them out, and they disappear unless Claude writes them down.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b6-0">Fable 5 的做法，是把记忆用在游戏没有明说的东西上。</span><span class="s" data-k="salience-b6-1">Sonnet 3.7 写进记忆的某些信息——比如玩家有多少钱、玩家在地图上的位置——每回合都能从屏幕上直接读出来，存下来是冗余的。</span><span class="s" data-k="salience-b6-2">相反，关于策略、计划和验证过的规则的文件，只有 Claude 想出来了才存在；不写下来，它们就消失了。</span></p></div></div>
+<div class="row" data-rid="salience-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b7-0">Fable 5 organized its memory accordingly.</span> <span class="s" data-k="salience-b7-1">Its `global.md` file acted as a dashboard, holding the current goal, a prewritten plan for tackling gyms (the challenges where badges are won), and the model’s own rules for using memory.</span> <span class="s" data-k="salience-b7-2">A `locations` folder held plans for navigating particular routes, and a `gameplay` folder held strategies based on what it had learned about how the game works.</span> <span class="s" data-k="salience-b7-3">For example, after seven Poké Balls in a row failed to catch a Magikarp (one of the easiest Pokémon to catch), Claude wrote, “If 3+ balls fail in a row, VARY the timing (insert extra ‘wait’ presses between menu steps) - the catch landed right after doing this.”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b7-0">Fable 5 据此组织自己的记忆。</span><span class="s" data-k="salience-b7-1">它的 `global.md` 像一块仪表盘：放着当前目标、一份预先写好的打道馆计划（道馆是赢徽章的挑战），以及模型自己定的「怎么用记忆」的规则。</span><span class="s" data-k="salience-b7-2">`locations` 文件夹放具体路线的导航计划，`gameplay` 文件夹放它从游戏机制里学到的策略。</span><span class="s" data-k="salience-b7-3">例如，连续七个精灵球都没抓到鲤鱼王（最容易抓的宝可梦之一）之后，Claude 写道：“如果连续 3 个以上球都失败，就改变时机（在菜单步骤之间多插入几次「等待」）——这样做之后立刻就成功了。”</span></p></div></div>
+<div class="row" data-rid="salience-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="salience-b8-0">With a much smaller memory folder, Fable 5 progressed much further in the game than Sonnet 3.7.</span> <span class="s" data-k="salience-b8-1">Opus 5.5 took a similar approach: it kept a small folder of memory notes that tracked its current goal and next steps, rewrote them as it played, and beat the game.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="salience-b8-0">靠一个小得多的记忆文件夹，Fable 5 在游戏里推进得比 Sonnet 3.7 远得多。</span><span class="s" data-k="salience-b8-1">Opus 5.5 用了类似做法：维护一个小文件夹，记着当前目标和下一步，边玩边重写，最后通关。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-steering">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Steering Claude to write memory</span><span class="h-zh">引导 Claude 写记忆</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>要告诉它记忆是干什么用的，别规定怎么用。给强模型设「只记录失败」这类固定规则，反而吃掉记忆带来的大半增益；而给老模型补「先读记忆、再验证假说」的提示，几乎能让得分翻倍——同一条引导，对不同代际的模型作用完全不同。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="steering-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steering-b0-0">We’ve found that it helps to tell Claude what memory is for, but not <i>how</i> to use it.</span> <span class="s" data-k="steering-b0-1">On CL-Bench, we simply told Claude that a memory folder was available.</span> <span class="s" data-k="steering-b0-2">That general guidance was enough for Opus 4.7 and Opus 5 to use memory effectively, and it gave both a noticeable boost in performance (Figure 3).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steering-b0-0">我们发现，告诉 Claude 记忆是干什么用的、但不规定<i>怎么</i>用，效果更好。</span><span class="s" data-k="steering-b0-1">在 CL-Bench 上，我们只是告诉 Claude「有一个记忆文件夹可用」。</span><span class="s" data-k="steering-b0-2">这条笼统的提示就足以让 Opus 4.7 和 Opus 5 有效地使用记忆，并给两者的表现带来明显提升（图 3）。</span></p></div></div>
+<div class="row" data-rid="steering-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steering-b1-0">We also tested giving the models specific rules about what they should write to memory, with one rule per test.</span> <span class="s" data-k="steering-b1-1">We compared how much each model gained from memory with each rule against how much it gained without it.</span> <span class="s" data-k="steering-b1-2">When we set a rule to “record only failures,” both Opus 5 and Opus 4.7 lost much of the performance boost that memory gave them (Figure 5, right).<sup class='tn' data-note='N6'>6</sup></span> <span class="s" data-k="steering-b1-3">For stronger models, giving them freedom to judge salience was more effective than setting fixed rules in advance, and those rules could end up weakening performance.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steering-b1-0">我们也试过给模型规定「该往记忆里写什么」的具体规则，每次测试只给一条规则。</span><span class="s" data-k="steering-b1-1">我们比较了每条规则下模型从记忆里得到的增益，和没有这条规则时的增益。</span><span class="s" data-k="steering-b1-2">当我们把规则设成「只记录失败」时，Opus 5 和 Opus 4.7 都丢掉了记忆带来的一大部分增益（图 5 右）。<sup class='tn' data-note='N6'>6</sup></span><span class="s" data-k="steering-b1-3">对更强的模型来说，让它们自主判断显著性，比事先设定固定规则更有效；那些规则反而可能削弱表现。</span></p></div></div>
+<figure class="row wide fig" id="fig5" data-cap="引导的作用：补提示 vs 加规则"><div class="fig-media"><img class="still" src="media/fig5.webp" loading="lazy" decoding="async" alt="Left: bar chart of Sonnet 4.6’s mean reward on the CL-Bench database task: 0.330 at baseline, 0.364 with memory, and 0.641 with memory and refined instruction. Reference lines mark Opus 4.7 with memory at 0.700 and Opus 5 with memory at 0.828. Right: change in memory gain when told to record only failures: Opus 5, −0.234; Opus 4.7, −0.150; Sonnet 4.6, −0.020."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>引导的作用：补提示 vs 加规则</b>　左图是 Sonnet 4.6 的三根柱（基线 0.330、有记忆 0.364、有记忆 + 细化指令 0.641），两条横线是 Opus 5 与 Opus 4.7 有记忆时的参考值；右图是「只记录失败」这条规则带来的增益变化，三个模型全为负。</p><p class="cap-en">原文图注：Left: bar chart of Sonnet 4.6’s mean reward on the CL-Bench database task: 0.330 at baseline, 0.364 with memory, and 0.641 with memory and refined instruction. Reference lines mark Opus 4.7 with memory at 0.700 and Opus 5 with memory at 0.828. Right: change in memory gain when told to record only failures: Opus 5, −0.234; Opus 4.7, −0.150; Sonnet 4.6, −0.020.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左图三根柱的标签带着 runs 数（3 runs），误差棒是跨 run 的标准差；横线标签写着 16 runs / 3 runs。</li><li>0.364 → 0.641 这一步只多了一句「先读记忆、再验证假说」，模型没换。</li><li>右图纵轴是 Change in gain from memory：负值表示这条规则把记忆的增益吃掉了，Opus 5 的 −0.234 最深。</li><li>右图 Sonnet 4.6 只有 1 run（−0.020），别拿它和 3 runs 的另外两根比精度。</li></ol><p class="takeaway">一句话：同一条「只记失败」的规则，对强模型伤害更大。</p></details></figcaption></figure>
+<div class="row" data-rid="steering-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steering-b3-0">Left: Sonnet 4.6 on the CL-Bench database task with and without prompting to guide memory usage.</span> <span class="s" data-k="steering-b3-1">Right: how much each model’s gain from memory changed when it was told to record only failures.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steering-b3-0">左：Sonnet 4.6 在 CL-Bench 数据库题上，有无「引导记忆用法」提示的对比。</span><span class="s" data-k="steering-b3-1">右：被告知「只记录失败」后，各模型从记忆中所得的增益变化。</span></p></div></div>
+<div class="row" data-rid="steering-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steering-b4-0">We also noticed that steering helped older models the most.</span> <span class="s" data-k="steering-b4-1">For instance, Sonnet 4.6 often didn’t read files from its memory directory and failed to test its theories about why an answer was wrong.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steering-b4-0">我们还注意到，这类引导对较老的模型帮助最大。</span><span class="s" data-k="steering-b4-1">例如，Sonnet 4.6 经常不去读记忆目录里的文件，也没有去验证自己关于「答案为何错误」的假说。</span></p></div></div>
+<div class="row" data-rid="steering-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steering-b5-0">In this case, prompting Claude to read its memory files before answering—and then to explicitly test its theories—nearly doubled its benchmark score (Figure 5, left).</span> <span class="s" data-k="steering-b5-1">Sonnet 5 does this on its own.</span> <span class="s" data-k="steering-b5-2">Without being prompted to, it read its memory before answering 9 out of 10 times.</span> <span class="s" data-k="steering-b5-3">By comparison, Sonnet 4.6 did this less than half of the time.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steering-b5-0">在这个例子里，提示 Claude 在回答前读记忆文件、然后再明确验证自己的假说，几乎让它的基准得分翻倍（图 5 左）。</span><span class="s" data-k="steering-b5-1">Sonnet 5 自己就会这么做。</span><span class="s" data-k="steering-b5-2">没人提示，它也有十次里有九次在回答前读了记忆。</span><span class="s" data-k="steering-b5-3">相比之下，Sonnet 4.6 这样做的时候不到一半。</span></p></div></div>
+<div class="row" data-rid="steering-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="steering-b6-0">With frontier Claude models, we typically give simple guidance to create memory notes when a person asks them to or when something is clearly worth remembering, and we leave that judgment up to Claude.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="steering-b6-0">对前沿的 Claude 模型，我们通常只给简单指引：当用户要求它记、或明显有值得记住的东西时，就写记忆笔记；这个判断交给 Claude 自己做。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-correct">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Dreaming can correct memory</span><span class="h-zh">「做梦」可以修正记忆</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>笔记写错了，后来的会话会照样信它。月见山那段单向崖边把这件事演了一遍：Claude 记错了宝可梦中心在哪一侧，掉回原路还以为自己走过头了。拿会话记录对质、改掉那条笔记，它才走回洞里、走到华蓝市。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="correct-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b0-0">Since Claude writes to memory based on what it judges to be salient in-session, a note that’s wrong from the start or that drifts as the environment changes can be read, and trusted, by Claude in a later session.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b0-0">由于 Claude 是按自己在会话里判断的显著性来写记忆，一条开局就错、或随环境变化而漂移的笔记，可能在后来的会话里被 Claude 读到、并信以为真。</span></p></div></div>
+<div class="row" data-rid="correct-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b1-0">Dreaming gives Claude a way to test its notes against the original transcripts (Figure 6).</span> <span class="s" data-k="correct-b1-1">We saw a positive example of this when Claude played Pokémon using Managed Agents with a mounted directory for its memories.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b1-0">「做梦」给了 Claude 一个办法：拿笔记去和原始会话记录对质（图 6）。</span><span class="s" data-k="correct-b1-1">我们看到过一个正面例子：Claude 用托管智能体玩宝可梦，并挂载了一个目录来存记忆。</span></p></div></div>
+<figure class="row wide fig" id="fig6" data-cap="「做梦」做的一件事：拿会话记录校正笔记"><div class="fig-media"><img class="still" src="media/fig6.webp" loading="lazy" decoding="async" alt="The memory hierarchy with dreaming, highlighting an arrow from the transcripts layer up to the memory notes layer, which shows dreaming correcting notes against transcripts."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>「做梦」做的一件事：拿会话记录校正笔记</b>　虚线框标出这一轮「做梦」的范围，橙色高亮记忆笔记；一条粗箭头从最底层的 Transcripts 直上 Memory notes，表示逐条对质、改错。其余三层这一轮不动。</p><p class="cap-en">原文图注：The memory hierarchy with dreaming, highlighting an arrow from the transcripts layer up to the memory notes layer, which shows dreaming correcting notes against transcripts.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>与图 1 对比：整个「做梦」框变成虚线，只有笔记层被高亮——这一轮只修笔记。</li><li>看那条最陡的箭头：它跳过记忆表示层，直接从 Transcripts 连到 Memory notes，这就是「校对」。</li><li>其余箭头保持灰色，表示它们没参与这一轮。</li></ol><p class="takeaway">一句话：校正的原料是原始记录，不是别的笔记。</p></details></figcaption></figure>
+<div class="row" data-rid="correct-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b3-0">Dreaming can correct mistakes in memory.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b3-0">「做梦」可以修正记忆里的错误。</span></p></div></div>
+<div class="row" data-rid="correct-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b4-0">In one part of the game, the player has to get through Mt. Moon, a cave system with its entrance on the west side of the map and its exit on the east.<sup class='tn' data-note='N7'>7</sup></span> <span class="s" data-k="correct-b4-1">Near the entrance is a trap: a one-way ledge that drops the player onto the route they came from, with no clear way to climb back up.</span> <span class="s" data-k="correct-b4-2">Claude was using the PokéCenter, a building at the mountain’s entrance, as a landmark, so whether it walked off the ledge depended on which side of the mountain it thought the PokéCenter was on.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b4-0">游戏里有一段，玩家必须穿过月见山（Mt. Moon）——一个入口在地图西侧、出口在东侧的洞穴系统。<sup class='tn' data-note='N7'>7</sup></span><span class="s" data-k="correct-b4-1">入口附近有个陷阱：一段单向的崖边，一旦掉下去就会落回你来时的那条路，而且没有明显能爬回去的路。</span><span class="s" data-k="correct-b4-2">Claude 把宝可梦中心（PokéCenter，山入口处的一栋建筑）当地标，所以它会不会从崖边掉下去，取决于它以为宝可梦中心在山哪一侧。</span></p></div></div>
+<div class="row" data-rid="correct-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b5-0">At one point, Claude wrote down (incorrectly) that the PokéCenter was on the east side.</span> <span class="s" data-k="correct-b5-1">When it walked out of the PokéCenter, it announced, “Mt Moon is behind me,” and updated its notes: “Mt Moon DONE.”</span> <span class="s" data-k="correct-b5-2">But Mt. Moon was not behind it.</span> <span class="s" data-k="correct-b5-3">A few actions later, Claude went over the ledge and landed back on the route it had come from (Figure 7).</span> <span class="s" data-k="correct-b5-4">Its navigation tool didn’t show the drop, so Claude concluded, “I overshot far west,” and that it had been on the correct side all along.</span> <span class="s" data-k="correct-b5-5">It hadn’t.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b5-0">有一次，Claude（错误地）记下宝可梦中心在东侧。</span><span class="s" data-k="correct-b5-1">它走出宝可梦中心时宣称“月见山在我身后”，并更新笔记：“月见山 完成。”</span><span class="s" data-k="correct-b5-2">但月见山并不在它身后。</span><span class="s" data-k="correct-b5-3">几步操作之后，Claude 从崖边掉了下去，落回了它来时的那条路（图 7）。</span><span class="s" data-k="correct-b5-4">它的导航工具没有显示这次坠落，于是 Claude 断定“我往西走过头了”，并认为自己一直都在正确的那一侧。</span><span class="s" data-k="correct-b5-5">它并没有。</span></p></div></div>
+<figure class="row wide fig" id="fig7" data-cap="一条记错的笔记如何改变路线"><div class="fig-media"><img class="still" src="media/fig7.webp" loading="lazy" decoding="async" alt="Two Pokémon map panels with the agent next to a ledge. Left, “Raw memory,” where the stored note is wrong: an arrow shows the agent heading for the next city. Right, “Memory + dreaming,” where an offline pass corrected the note: an arrow shows the agent heading back to the cave entrance."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>一条记错的笔记如何改变路线</b>　左「Raw memory」：笔记记错宝可梦中心在山东侧，Claude 走出中心后说「月见山在我身后」，朝下一座城市走；右「Memory + dreaming」：离线校对后笔记被改正，它转身回洞口。</p><p class="cap-en">原文图注：Two Pokémon map panels with the agent next to a ledge. Left, “Raw memory,” where the stored note is wrong: an arrow shows the agent heading for the next city. Right, “Memory + dreaming,” where an offline pass corrected the note: an arrow shows the agent heading back to the cave entrance.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>两幅图场景完全相同（同一段崖边、同一个 Agent 位置），差别在标题下那行小字（Stored note is wrong / Offline pass corrected the note）和箭头旁的标注。</li><li>两幅图的红箭头都朝右（左图那条略朝右下），区别在标注：左图写 Heads for the next city，右图写 Heads back to the cave entrance——标注里的目的地就是结论。</li><li>白圈标出的是 Agent 左侧那段岩壁与崖边；两边都没画「爬回去的路」，这正是陷阱所在。</li></ol><p class="takeaway">一句话：同一条笔记写对还是写错，决定它往哪走。</p></details></figcaption></figure>
+<div class="row" data-rid="correct-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b7-0">A corrected memory note changed the outcome in Pokémon.</span> <span class="s" data-k="correct-b7-1">With the uncorrected note, Claude says, “Mt Moon is behind me,” heads for the next city, and ends up back on the route it came from.</span> <span class="s" data-k="correct-b7-2">With the note corrected by dreaming, it says, “Now I need to find the Mt Moon cave entrance to re-enter,” and goes back into the cave.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b7-0">一条被修正的记忆笔记，改变了宝可梦里的结局。</span><span class="s" data-k="correct-b7-1">笔记没修正时，Claude 说“月见山在我身后”，朝下一座城市走，结果又回到了来时的路上。</span><span class="s" data-k="correct-b7-2">笔记被「做梦」修正后，它说“现在我得找到月见山洞口重新进去”，然后回头进了洞。</span></p></div></div>
+<div class="row" data-rid="correct-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b8-0">We then tested whether dreaming could help Claude avoid this trap.</span> <span class="s" data-k="correct-b8-1">We ran dreaming on the memory folder that contained the wrong location for the PokéCenter: Claude checked the note against the session transcript, caught its error, and rewrote it.</span> <span class="s" data-k="correct-b8-2">The transcript gave Claude a ground truth to validate its memory against.</span> <span class="s" data-k="correct-b8-3">With the corrected memory note, Claude went straight back into Mt. Moon and eventually reached Cerulean City.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b8-0">接着我们测试了「做梦」能否帮 Claude 避开这个陷阱。</span><span class="s" data-k="correct-b8-1">我们在那个记着错误宝可梦中心位置的记忆文件夹上跑了一次「做梦」：Claude 拿笔记和会话记录核对，发现了自己的错误，并改写过来。</span><span class="s" data-k="correct-b8-2">会话记录给了 Claude 一个可以用来校验记忆的基准事实。</span><span class="s" data-k="correct-b8-3">带着修正后的记忆笔记，Claude 径直回到月见山，最终到达了华蓝市（Cerulean City）。</span></p></div></div>
+<div class="row" data-rid="correct-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b9-0">In the run with the uncorrected note, Claude dropped back onto that earlier route three times.</span> <span class="s" data-k="correct-b9-1">After the third failure, Claude seemed to give up, writing, “I’m going to stop rather than keep looping.”</span> <span class="s" data-k="correct-b9-2">Our setup’s automatic reply instructed it to continue.</span> <span class="s" data-k="correct-b9-3">So it did, all the way back to Pewter City, the town before the mountain, where it hoped to heal and restock.</span> <span class="s" data-k="correct-b9-4">The run ended without Claude ever reaching Cerulean City.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b9-0">在笔记未修正的那次运行里，Claude 三次掉回之前那条路。</span><span class="s" data-k="correct-b9-1">第三次失败后，Claude 似乎放弃了，写道：“我打算停下来，而不是继续绕圈。”</span><span class="s" data-k="correct-b9-2">我们这套设置的自动回复指示它继续。</span><span class="s" data-k="correct-b9-3">它照做了，一路走回山前的小镇深灰市（Pewter City），希望在那里治疗和补给。</span><span class="s" data-k="correct-b9-4">那次运行结束时，Claude 始终没能到达华蓝市。</span></p></div></div>
+<figure class="row wide fig" id="fig8" data-cap="3,000 步里的三次坠落与一次出洞"><div class="fig-media"><img class="still" src="media/fig8.webp" loading="lazy" decoding="async" alt="Line chart of progress toward Cerulean over 3,000 cumulative actions. The memory plus dreaming run reaches Cerulean at action 1,935. The raw memory run falls off the ledge and backtracks to Pewter. The run with no memory never reaches Cerulean."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>3,000 步里的三次坠落与一次出洞</b>　纵轴是从 Pewter 到 Cerulean 的估计进度，横轴是累计动作数；橙红实线是「记忆 + 做梦」，蓝色虚线是「原始记忆」，灰色点线是「无记忆」。红线在 1,935 步抵达华蓝市，蓝线从崖边掉下去后一路退回深灰市。</p><p class="cap-en">原文图注：Line chart of progress toward Cerulean over 3,000 cumulative actions. The memory plus dreaming run reaches Cerulean at action 1,935. The raw memory run falls off the ledge and backtracks to Pewter. The run with no memory never reaches Cerulean.</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>先认纵轴那几道横线：Pewter（最底）→ Below the ledge（粉色带）→ Cave entrance / Outside the cave → Ladders near the entrance → Starting point → Cave exit (east) → Cerulean（最顶）。</li><li>蓝色虚线每次下探进粉色带就是一次从崖边掉下去；它掉了三次，最后停在 Pewter 那条线。</li><li>橙红实线在 1,500 步之后陡升，旁边的标注是 Dreaming finds the exit ladder and leaves the cave to the east，终点是星号 Reached Cerulean (action 1935)。</li><li>灰色点线一直在中段来回，从没接近 Cave exit——无记忆那次连洞口都没走出去。</li><li>中间那条竖虚线把图切成 First 1,500 actions / Next 1,500 actions，前一半三条线还很难分。</li></ol><p class="takeaway">一句话：校正笔记省下的不是时间，是三次坠落。</p></details></figcaption></figure>
+<div class="row" data-rid="correct-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="correct-b11-0">Dreaming corrects the memory, and Claude goes back into the cave and reaches the next city.</span> <span class="s" data-k="correct-b11-1">The run with the uncorrected note (“Raw memory”) never gets past the mountain, and neither does the run with no memory.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="correct-b11-0">「做梦」修正了记忆，Claude 回到洞里，到达了下一座城市。</span><span class="s" data-k="correct-b11-1">笔记未修正的那次运行（“原始记忆”）从未翻过这座山，无记忆的那次也没有。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-representations">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Dreaming can build new memory representations</span><span class="h-zh">「做梦」可以搭出新的记忆表示</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>维基是给记忆画的一张地图：一页一个主题，页间互相链接。在 Stainless 约 4.2 亿 token 的内部文档上，把「做梦」从 2 次会话扩到 128 次，25 个问题的得分从 13% 涨到 48%；但维基不是万能——能靠单份文档检索到的任务，它几乎没有增益，甚至会长得比原始文档还大。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="representations-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b0-0">With dreaming, Claude can build representations to help navigate memory (Figure 9).</span> <span class="s" data-k="representations-b0-1">One type of memory representation it uses is called a <a class='lnk' href='https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f' target='_blank' rel='noopener' data-link='L16'><i>wiki</i></a>, a collection of pages written and maintained by Claude that gathers what Claude knows about one subject and links it to other notes.<sup class='tn' data-note='N8'>8</sup></span> <span class="s" data-k="representations-b0-2">These links effectively provide Claude with a map it can use to sift through its memory and efficiently locate memories when they’re needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b0-0">借助「做梦」，Claude 可以搭出一些记忆表示——帮它整理和查找记忆的结构——用来在记忆里导航（图 9）。</span><span class="s" data-k="representations-b0-1">它使用的一类记忆表示叫<a class='lnk' href='https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f' target='_blank' rel='noopener' data-link='L16'><i>维基</i></a>：一组由 Claude 自己撰写和维护的页面，汇集它关于某个主题所知的内容，并链接到其他笔记。<sup class='tn' data-note='N8'>8</sup></span><span class="s" data-k="representations-b0-2">这些链接实际上给了 Claude 一张地图，让它能翻检记忆，在需要时高效定位。</span></p></div></div>
+<figure class="row wide fig" id="fig9" data-cap="「做梦」的第三种产出：把记忆表示搭起来"><div class="fig-media"><img class="still" src="media/fig9.webp" loading="lazy" decoding="async" alt="The memory hierarchy with dreaming, highlighting arrows from transcripts and from memory notes up to the memory representations layer, such as wikis."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>「做梦」的第三种产出：把记忆表示搭起来</b>　同一张层级图，这一轮高亮记忆表示层：箭头同时从 Transcripts 和 Memory notes 进入它，表示维基这类页面由「原始记录 + 已有笔记」共同算出。</p><p class="cap-en">原文图注：The memory hierarchy with dreaming, highlighting arrows from transcripts and from memory notes up to the memory representations layer, such as wikis.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>找两条进入记忆表示层的箭头：一条来自最底层（记录），一条来自笔记层——两层都是原料。</li><li>表示层与注入层之间是双向箭头：地图可以往上供索引，也可以被索引修正。</li><li>把图 2、图 9、图 13 连着看：三次高亮分别落在笔记、记忆表示、注入上下文，正好是三件「做梦」能做的事。</li></ol><p class="takeaway">一句话：表示层是「算出来的」，不是写出来的。</p></details></figcaption></figure>
+<div class="row" data-rid="representations-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b2-0">Dreaming can build memory representations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b2-0">「做梦」可以搭出记忆表示。</span></p></div></div>
+<div class="row" data-rid="representations-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b3-0">Representations like <span class='term' data-term='wiki'>wikis</span> can help Claude traverse its ever-growing knowledge base.</span> <span class="s" data-k="representations-b3-1">We explored the benefit of wikis as a memory representation using a corpus of internal documents—about 350,000 files, roughly 420M <span class='term' data-term='token'>tokens</span>—from Stainless, a software company we acquired in May.</span> <span class="s" data-k="representations-b3-2">We created an evaluation set of 25 questions about this corpus and gave Claude a search tool to explore it.</span> <span class="s" data-k="representations-b3-3">We also instructed Claude to build a wiki based on these files using dreaming.</span> <span class="s" data-k="representations-b3-4">Over 128 sessions, we prompted Opus 5 agents to explore the files, write or correct linked wiki pages, merge duplicates, and check claims against the sources.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b3-0">像<span class='term' data-term='wiki'>维基</span>这样的记忆表示，能帮 Claude 穿行于它不断增长的知识库。</span><span class="s" data-k="representations-b3-1">为了考察维基作为一种记忆表示的价值，我们用了一批内部文档——约 35 万个文件、约 4.2 亿 <span class='term' data-term='token'>token</span>——来自我们五月收购的软件公司 Stainless。</span><span class="s" data-k="representations-b3-2">我们围绕这批语料设计了 25 个问题的评测集，并给 Claude 一个搜索工具去翻找。</span><span class="s" data-k="representations-b3-3">我们还指示 Claude 用「做梦」基于这些文件建一个维基。</span><span class="s" data-k="representations-b3-4">在 128 次会话里，我们让 Opus 5 智能体去翻文件、撰写或修正互相链接的维基页面、合并重复页面，并对照来源核对论断。</span></p></div></div>
+<div class="row" data-rid="representations-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b4-0">Each session built on the progress that agents made in prior sessions, using a shared log to coordinate work.</span> <span class="s" data-k="representations-b4-1">As we scaled dreaming from two sessions to 128, performance on the 25 questions grew from 13% to 48% of <span class='term' data-term='graded-criteria'>graded criteria</span> (Figure 10).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b4-0">每次会话都建立在之前会话的进展之上，并用一份共享日志来协调工作。</span><span class="s" data-k="representations-b4-1">当「做梦」从两次会话扩到 128 次，25 个问题上的表现从满足 13% 的<span class='term' data-term='graded-criteria'>评分要点</span>升到 48%（图 10）。</span></p></div></div>
+<div class="row" data-rid="representations-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b5-0">Claude builds its wikis incrementally.</span> <span class="s" data-k="representations-b5-1">After creating an initial wiki, it uses subsequent rounds of dreaming to add to, edit, or prune it.</span> <span class="s" data-k="representations-b5-2">In the early rounds of dreaming, Claude’s knowledge is like that of a new employee, and its ability to answer questions based on the wiki alone is limited.</span> <span class="s" data-k="representations-b5-3">The more it dreams, the richer its knowledge map grows, like that of a seasoned employee.</span> <span class="s" data-k="representations-b5-4">In our tests, we found that the wiki helped Claude the most when we also gave it access to a search tool.</span> <span class="s" data-k="representations-b5-5">When it used both search and the wiki, Claude’s aggregate score rose from 54% to 61% as that wiki grew, compared with 53% when it had access to the search tool alone.</span> <span class="s" data-k="representations-b5-6">Claude’s best score was 48% when it used only the wiki to answer questions.</span> <span class="s" data-k="representations-b5-7">Using search and the wiki also saved about 20,000 tokens per question.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b5-0">Claude 是逐步搭维基的。</span><span class="s" data-k="representations-b5-1">建好初始维基后，它用后续几轮「做梦」来补充、修改或修剪。</span><span class="s" data-k="representations-b5-2">在「做梦」的头几轮，Claude 的知识像新员工，光靠维基答题的能力有限。</span><span class="s" data-k="representations-b5-3">做梦的轮次越多，它的知识地图越丰富，像老员工那样。</span><span class="s" data-k="representations-b5-4">在测试里我们发现，当我们同时给它搜索工具时，维基的帮助最大。</span><span class="s" data-k="representations-b5-5">同时用搜索和维基时，随着维基长大，Claude 的总分从 54% 升到 61%；只有搜索工具时是 53%。</span><span class="s" data-k="representations-b5-6">只用维基答题时，Claude 的最好成绩是 48%。</span><span class="s" data-k="representations-b5-7">同时用搜索和维基，每道题还省了约 2 万 token。</span></p></div></div>
+<figure class="row wide fig" id="fig10" data-cap="维基长大以后：13% → 48%，以及 54% → 61%"><div class="fig-media"><img class="still" src="media/fig10.webp" loading="lazy" decoding="async" alt="Center: line chart of graded criteria met as wiki generation grows from 2M to 128M dreaming tokens. Wiki plus search tool rises from 54% to 61%, wiki alone rises from 13% to 48%, and the search tool with no wiki is flat at 53%. Left and right: network graphs of an example wiki, with 103 pages and 766 links after 2 sessions and 222 pages and 12,893 links after 128 sessions."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>维基长大以后：13% → 48%，以及 54% → 61%</b>　中间折线：横轴是「做梦」消耗的 token（2M 到 128M，对数刻度），纵轴是 25 个问题里满足的评分要点。两侧是同一个示例维基在 2 次与 128 次会话后的网络图：103 页 766 条链接 → 222 页 12,893 条链接。</p><p class="cap-en">原文图注：Center: line chart of graded criteria met as wiki generation grows from 2M to 128M dreaming tokens. Wiki plus search tool rises from 54% to 61%, wiki alone rises from 13% to 48%, and the search tool with no wiki is flat at 53%. Left and right: network graphs of an example wiki, with 103 pages and 766 links after 2 sessions and 222 pages and 12,893 links after 128 sessions.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>三条线分开看：Wiki + search tool 从 54% 到 61%；Wiki alone 从 13% 到 48%；Search tool, no wiki 是一条 53% 的水平虚线，不随维基长大而变。</li><li>左右两张网络图共用图例：浅灰点是 2 次会话时就有的页，橙点是后来新增的；注意右侧中心密度的变化。</li><li>横轴标着 Log scale，2M→8M→32M→128M 每一格都是 4 倍，别读成线性增长。</li><li>图下一行小字：Budget of 1M tokens per session, not measured spend——「2M」是两轮各 1M 的预算口径。</li></ol><p class="takeaway">一句话：维基单独用能到 48%，配上搜索到 61%，但纯搜索本身就有 53%。</p></details></figcaption></figure>
+<div class="row" data-rid="representations-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b7-0">Center: scores on 25 questions about a corpus of documents from a company as Claude built wikis over sequential sessions.</span> <span class="s" data-k="representations-b7-1">Left and right: an example wiki after two and 128 sessions; each dot is a page, and lines join linked pages.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b7-0">中：Claude 在连续会话里建维基时，对一家公司文档语料的 25 个问题的得分。</span><span class="s" data-k="representations-b7-1">左与右：一个示例维基在两次和 128 次会话后的样子；每个点是一页，连线表示页面之间有链接。</span></p></div></div>
+<div class="row" data-rid="representations-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b8-0">We wanted to test which kinds of tasks benefited from Claude having a wiki.</span> <span class="s" data-k="representations-b8-1">To do this, we used the <a class='lnk' href='https://github.com/harveyai/harvey-labs' target='_blank' rel='noopener' data-link='L17'>Harvey LAB</a> benchmark along with a collection of documents about a merger.</span> <span class="s" data-k="representations-b8-2">The benchmark gives Claude a set of documents and asks Claude to generate a <span class='term' data-term='legal-brief'>legal brief</span> based on their content.</span> <span class="s" data-k="representations-b8-3">The benchmark then grades the brief against a list of criteria.</span> <span class="s" data-k="representations-b8-4">While a tad less engaging, perhaps, than a Pokémon run, these evaluations give us diverse collections of documents to build wikis from.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b8-0">我们想测试哪几类任务能从「Claude 有维基」中受益。</span><span class="s" data-k="representations-b8-1">为此我们用了 <a class='lnk' href='https://github.com/harveyai/harvey-labs' target='_blank' rel='noopener' data-link='L17'>Harvey LAB</a> 基准，外加一批关于一次并购的文档。</span><span class="s" data-k="representations-b8-2">这个基准给 Claude 一组文档，要求它根据内容生成一份<span class='term' data-term='legal-brief'>法律简报</span>。</span><span class="s" data-k="representations-b8-3">然后按一份评分要点清单给简报打分。</span><span class="s" data-k="representations-b8-4">这些评测也许比玩宝可梦枯燥一点，但它们提供了多样的文档集合，可以用来建维基。</span></p></div></div>
+<div class="row" data-rid="representations-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b9-0">We instructed Claude to build a wiki from the documents.</span> <span class="s" data-k="representations-b9-1">We then asked Claude to answer questions (about the merger) or generate legal briefs (the LAB benchmark) both from the wiki and from a direct file search.</span> <span class="s" data-k="representations-b9-2">One test asked 24 questions about the merger (Figure 11, left), more than half of which needed Claude to find information across several documents, and many of which also needed Claude to use judgment or do math.</span> <span class="s" data-k="representations-b9-3">On those items (red and orange lines), Claude scored 87% when it consulted the wiki, compared with 73% when it used search alone.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b9-0">我们指示 Claude 从这些文档建一个维基。</span><span class="s" data-k="representations-b9-1">然后要求 Claude 分别通过维基、以及直接搜文件，来回答（关于这次并购的）问题、或生成法律简报（LAB 基准）。</span><span class="s" data-k="representations-b9-2">其中一项测试问了 24 个关于并购的问题（图 11 左），超过一半要求 Claude 跨好几份文档找信息，很多还需要它做判断或算数。</span><span class="s" data-k="representations-b9-3">在这些条目上（红线和橙线），查维基时 Claude 得 87%，只用搜索时是 73%。</span></p></div></div>
+<figure class="row wide fig" id="fig11" data-cap="两类任务的对照：跨文档综合 vs 单文档检索"><div class="fig-media"><img class="still" src="media/fig11.webp" loading="lazy" decoding="async" alt="Two diagrams linking graded criteria to source documents. Left, the task where the wiki showed more benefit: most of the 24 criteria connect to two or more of 10 documents, and nine need judgment or arithmetic. Right, the task where the wiki showed less benefit: most of the 57 criteria can be found by text search in a single document, usually the deal overview memo."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>两类任务的对照：跨文档综合 vs 单文档检索</b>　两幅桑基图都把「评分条目」连到「满足它所需的来源文档」。左：24 个条目里多数要跨两份以上文档，9 条需要判断或算数；右：57 个条目大多能靠 deal overview memo 一份文档搞定。</p><p class="cap-en">原文图注：Two diagrams linking graded criteria to source documents. Left, the task where the wiki showed more benefit: most of the 24 criteria connect to two or more of 10 documents, and nine need judgment or arithmetic. Right, the task where the wiki showed less benefit: most of the 57 criteria can be found by text search in a single document, usually the deal overview memo.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>先认颜色：灰=一份文档文本搜索即可，橙=要跨多份，红=要判断或算术，虚线=两份里任一份就够。</li><li>左图红线和橙线的密度就是「维基有增益」的部分；右图几乎全是灰色，所以维基没有优势。</li><li>右侧括号里的数字是「有多少条目指向这份文档」：deal overview memo (37)，图下小字说它一份就满足了 57 条里的 31 条。</li><li>图下那行 Class labels are model-assigned 是作者自己的提醒：看形状，别抠单根线。</li></ol><p class="takeaway">一句话：维基帮的是「要综合、要判断」的任务，不是「能搜到」的任务。</p></details></figcaption></figure>
+<div class="row" data-rid="representations-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b11-0">Each panel lists what was graded (left) and the source documents needed to meet each one (right).</span> <span class="s" data-k="representations-b11-1">Left: 24 questions about a merger, which can be answered by looking at mostly public filings.</span> <span class="s" data-k="representations-b11-2">More than half of the criteria required combining information from several documents.</span> <span class="s" data-k="representations-b11-3">Right: a LAB task where the wiki showed no clear gain.</span> <span class="s" data-k="representations-b11-4">Most criteria could be met from a single document.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b11-0">每个面板左列是被打分的条目，右列是满足它所需的来源文档。</span><span class="s" data-k="representations-b11-1">左：24 个关于并购的问题，所需文件大多是公开申报文件。</span><span class="s" data-k="representations-b11-2">超过一半的评分要点需要综合好几份文档的信息。</span><span class="s" data-k="representations-b11-3">右：一项维基没有明显收益的 LAB 任务。</span><span class="s" data-k="representations-b11-4">多数评分要点靠单份文档就能满足。</span></p></div></div>
+<div class="row" data-rid="representations-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b12-0">In other cases, the wiki was less useful.</span> <span class="s" data-k="representations-b12-1">On one LAB task (Figure 11, right), brief criteria often could be retrieved with a text search from a single document, and the wiki showed no clear gain in performance relative to search.</span> <span class="s" data-k="representations-b12-2">On another LAB task, the wiki grew larger than the documents themselves (Figure 12).</span> <span class="s" data-k="representations-b12-3">Like the mapmakers in Borges’s one-paragraph short story “On Exactitude in Science,” who drafted a map so detailed it was as large as the empire it represented, Claude had made an extremely detailed wiki that effectively abstracted nothing.<sup class='tn' data-note='N9'>9</sup></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b12-0">在另一些情况下，维基就没那么有用。</span><span class="s" data-k="representations-b12-1">在一项 LAB 任务里（图 11 右），简报的评分要点常常用文本搜索就能从单份文档里检索到，维基相对搜索没有明显的表现增益。</span><span class="s" data-k="representations-b12-2">在另一项 LAB 任务里，维基长得比文档本身还大（图 12）。</span><span class="s" data-k="representations-b12-3">就像博尔赫斯那篇只有一段的短篇小说《论科学的精确性》里的制图师，画出的地图精细到和它所描绘的帝国一样大；Claude 也做了一个极其详尽的维基，实际上什么也没抽象出来。<sup class='tn' data-note='N9'>9</sup></span></p></div></div>
+<figure class="row wide fig" id="fig12" data-cap="维基比原始文档还大：68 页、255 条链接、203 KB"><div class="fig-media"><img class="still" src="media/fig12.webp" loading="lazy" decoding="async" alt="Diagram of a wiki build and second pass. On the left, a circle holds the corpus: 10 documents, 115 KB of text. An arrow leads to a larger circle holding the wiki built from it: 68 pages, 255 links, and 203 KB, or 1.77 times the corpus. Some of the wiki’s pages have no links."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>维基比原始文档还大：68 页、255 条链接、203 KB</b>　左边一圈是语料（10 份文档、115 KB 文本），右边一圈是从它建出来的维基：68 页、255 条链接、203 KB，是语料的 1.77 倍。灰色小点是没有任何链接的页——它们既不被找到，也不指向别处。</p><p class="cap-en">原文图注：Diagram of a wiki build and second pass. On the left, a circle holds the corpus: 10 documents, 115 KB of text. An arrow leads to a larger circle holding the wiki built from it: 68 pages, 255 links, and 203 KB, or 1.77 times the corpus. Some of the wiki’s pages have no links.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>比较两个圆的面积：右边明显更大，标题下写着 1.77× the corpus。</li><li>看右下角那一片灰色小点：图例说是 Page with no links，这些页等于写了也没人读。</li><li>圆点大小 = 页面大小（Circle area = page size），中间那些大点就是被反复引用的页。</li></ol><p class="takeaway">一句话：不做抽象的维基，只是把原文换了个容器。</p></details></figcaption></figure>
+<div class="row" data-rid="representations-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="representations-b14-0">The wiki grew to be larger than the raw files.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="representations-b14-0">维基长得比原始文件还大。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-promote">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">Dreaming can promote notes up the memory hierarchy</span><span class="h-zh">「做梦」可以把笔记提升到层级顶端</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>顶层是每次会话都会被注入的上下文：省掉搜索，也省掉「知道有东西可搜」。代价是 token 与风险——一条错笔记会跟着每一次会话。所以顶层必须小，Claude Code 的自动记忆只装 MEMORY.md 的前 200 行或 25 KB，当索引用。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="promote-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="promote-b0-0">Dreaming can also float notes to the top of the memory hierarchy, and the agent <span class='term' data-term='harness'>harness</span> can preemptively load them into Claude’s context at the start of every session (Figure 13).</span> <span class="s" data-k="promote-b0-1">This means Claude doesn’t need to search for them, or even to know there’s something to search for.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="promote-b0-0">「做梦」还能把笔记浮到记忆层级的顶层，而智能体的<span class='term' data-term='harness'>运行框架</span>可以在每次会话开始时，把它们预先装进 Claude 的上下文（图 13）。</span><span class="s" data-k="promote-b0-1">这意味着 Claude 不必去搜，甚至不必知道有东西可搜。</span></p></div></div>
+<div class="row" data-rid="promote-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="promote-b1-0">Promoting memories into a new session (a form of <i>context injection</i>) must be done carefully.</span> <span class="s" data-k="promote-b1-1">Injected memories use up valuable tokens, and an incorrect note can be carried into every session.</span> <span class="s" data-k="promote-b1-2">Loading a note also doesn’t guarantee that Claude acts on it: our documentation on <a class='lnk' href='https://code.claude.com/docs/en/memory' target='_blank' rel='noopener' data-link='L18'>Claude Code</a> warns that longer instruction files reduce adherence.</span> <span class="s" data-k="promote-b1-3">So the top layer of the memory hierarchy has to stay relatively small, and much of dreaming’s work here is keeping it that way—by moving some details down the hierarchy and leaving links behind.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="promote-b1-0">把记忆提升进新会话（一种<i>上下文注入</i>）必须小心做。</span><span class="s" data-k="promote-b1-1">注入的记忆会占用宝贵的 token，而一条错误的笔记可能被带进每一次会话。</span><span class="s" data-k="promote-b1-2">加载一条笔记也不保证 Claude 会照它做：我们关于 <a class='lnk' href='https://code.claude.com/docs/en/memory' target='_blank' rel='noopener' data-link='L18'>Claude Code</a> 的文档就警告过，指令文件越长，遵守度越低。</span><span class="s" data-k="promote-b1-3">所以记忆层级的顶层必须保持相对小；而「做梦」在这里的大量工作，就是维持这一点——把一些细节下移到更低层，只留下链接。</span></p></div></div>
+<div class="row" data-rid="promote-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="promote-b2-0"><a class='lnk' href='https://code.claude.com/docs/en/memory' target='_blank' rel='noopener' data-link='L18'>Claude Code’s auto memory</a> keeps its injected layer small in the same way, with Claude maintaining it during the session.</span> <span class="s" data-k="promote-b2-1">Claude doesn’t load all of its auto memory into every session’s context window.</span> <span class="s" data-k="promote-b2-2">It loads only the first 200 lines or 25 KB of `MEMORY.md`.<sup class='tn' data-note='N10'>10</sup></span> <span class="s" data-k="promote-b2-3">This header serves as an index, which shows Claude what it knows and where to find it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="promote-b2-0"><a class='lnk' href='https://code.claude.com/docs/en/memory' target='_blank' rel='noopener' data-link='L18'>Claude Code 的自动记忆</a>也用同样的办法让注入层保持小，由 Claude 在会话期间自己维护。</span><span class="s" data-k="promote-b2-1">Claude 不会把全部自动记忆装进每次会话的上下文窗口。</span><span class="s" data-k="promote-b2-2">它只加载 `MEMORY.md` 的前 200 行或 25 KB。<sup class='tn' data-note='N10'>10</sup></span><span class="s" data-k="promote-b2-3">这个头部充当索引，告诉 Claude 它知道什么、去哪里找。</span></p></div></div>
+<figure class="row wide fig" id="fig13" data-cap="「做梦」的第四种产出：决定顶层注入什么"><div class="fig-media"><img class="still" src="media/fig13.webp" loading="lazy" decoding="async" alt="The memory hierarchy with dreaming, highlighting arrows from transcripts and from memory representations up to the injected context layer at the top, which feeds into the next session."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>「做梦」的第四种产出：决定顶层注入什么</b>　高亮最顶层的 Injected context：箭头从 Transcripts 与 Memory representations 两处上来，再进入 Next session——这就是「预加载」。顶层容量有限，所以它只该放索引与指针。</p><p class="cap-en">原文图注：The memory hierarchy with dreaming, highlighting arrows from transcripts and from memory representations up to the injected context layer at the top, which feeds into the next session.</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>顺着最上方那条橙色箭头：它从记录层越过笔记层与表示层，直达注入层。</li><li>注入层到 Next session 的箭头是唯一的出口——每次新会话开场能「白拿」的只有这一层。</li><li>回想正文的数字：MEMORY.md 只加载前 200 行或 25 KB，这就是「顶层必须小」的具体形态。</li></ol><p class="takeaway">一句话：顶层决定「下一次会话开场就知道什么」。</p></details></figcaption></figure>
+<div class="row" data-rid="promote-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="promote-b4-0">Dreaming can write to the top of the memory hierarchy.</span> <span class="s" data-k="promote-b4-1"><span class='term' data-term='injected-context'>Injected context</span> is loaded into every session, and the layers below it are read or searched when Claude needs them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="promote-b4-0">「做梦」可以写到记忆层级的顶层。</span><span class="s" data-k="promote-b4-1"><span class='term' data-term='injected-context'>注入上下文</span>会装进每一次会话；它下面几层则在 Claude 需要时被读取或搜索。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-focus">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Dreaming can focus memory on a specific goal</span><span class="h-zh">「做梦」可以把记忆聚焦到特定目标</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>记忆长成什么样，取决于指令告诉它「什么才重要」。LAB 的合同任务没写清这一点，几个智能体同写一张共享表，57 条事实只剩 41 条；让 Claude 自己反思失败、重写指令，改成一份合同一页、条款逐字引用，才补到 100%。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="focus-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b0-0">Dreaming can also shape how memory grows.</span> <span class="s" data-k="focus-b0-1">An assistant like <a class='lnk' href='https://support.claude.com/en/articles/17631495-get-started-with-claude-duet' target='_blank' rel='noopener' data-link='L19'>Claude Duet</a>, for example, often benefits from having memories that are organized around the person it’s helping, and dreaming can be tuned to build memory in service of a particular goal.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b0-0">「做梦」还能塑造记忆如何生长。</span><span class="s" data-k="focus-b0-1">比如 <a class='lnk' href='https://support.claude.com/en/articles/17631495-get-started-with-claude-duet' target='_blank' rel='noopener' data-link='L19'>Claude Duet</a> 这类助手，如果记忆围绕它所帮助的那个人来组织，往往更得益；而「做梦」则可以按某个特定目标来调校，让它围绕这个目标建记忆。</span></p></div></div>
+<div class="row" data-rid="focus-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b1-0">The instructions that guide how memory grows differ by task and tell Claude what information actually matters.</span> <span class="s" data-k="focus-b1-1">For example, one task in the LAB benchmark simulates a company acquisition and provides a set of contracts.<sup class='tn' data-note='N11'>11</sup></span> <span class="s" data-k="focus-b1-2">The brief is graded on whether it correctly describes the contract terms.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b1-0">指导记忆如何生长的指令随任务而不同，它们告诉 Claude 哪些信息才真正重要。</span><span class="s" data-k="focus-b1-1">例如，LAB 基准里有一项任务模拟公司收购，并提供一组合同。<sup class='tn' data-note='N11'>11</sup></span><span class="s" data-k="focus-b1-2">简报的评分要点是：它有没有正确描述合同条款。</span></p></div></div>
+<div class="row" data-rid="focus-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b2-0">We started with basic instructions for generating the wiki that didn’t tell Claude <i>how</i> to use the wiki.</span> <span class="s" data-k="focus-b2-1">This task relied heavily on contract terms.</span> <span class="s" data-k="focus-b2-2">While the wiki was being built, several agents wrote to a shared table of contract terms at the same time (Figure 14, left).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b2-0">我们起初用的建维基指令很基础，没有告诉 Claude <i>怎么</i>用这个维基。</span><span class="s" data-k="focus-b2-1">这项任务高度依赖合同条款。</span><span class="s" data-k="focus-b2-2">建维基期间，有几个智能体同时往一张共享的合同条款表里写（图 14 左）。</span></p></div></div>
+<figure class="row wide fig" id="fig14" data-cap="指令改一句：41/57 → 57/57"><div class="fig-media"><img class="still" src="media/fig14.webp" loading="lazy" decoding="async" alt="Two diagrams. Before: four agents write to the same shared page, provisions.md, and one agent’s save erases another’s lines; 41 of 57 graded facts survived. After: four agents each write their own contract’s page, with terms copied word for word; all 57 of 57 graded facts survived."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>指令改一句：41/57 → 57/57</b>　左：四个智能体同时写一张共享表 provisions.md，一个的保存会抹掉另一个的行，57 条被打分的合同事实只剩 41 条。右：一份合同一个页面、一个作者、条款逐字引用，57 条全在。</p><p class="cap-en">原文图注：Two diagrams. Before: four agents write to the same shared page, provisions.md, and one agent’s save erases another’s lines; 41 of 57 graded facts survived. After: four agents each write their own contract’s page, with terms copied word for word; all 57 of 57 graded facts survived.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左图那条汇合的箭头就是问题本身：四条线汇进同一个文件，等于同时写。</li><li>左下红字 Parallel writers collide: one agent's save erases another agent's lines，是失败的直接原因。</li><li>右图文件名就是四份真实合同（apex-distribution-agreement.md 等）；中间说明 Terms copied word-for-word, one writer per page 是两个关键改动。</li><li>底部两块色块对比 41 of 57 graded facts survived 与 All 57 of 57——后者是改指令之后的结果。</li></ol><p class="takeaway">一句话：不是模型变强了，是「页面所有权」与「逐字引用」被写进了指令。</p></details></figcaption></figure>
+<div class="row" data-rid="focus-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b4-0">How many graded contract facts made it into the wiki, before and after instructions changed.</span> <span class="s" data-k="focus-b4-1">Left: several agents writing to one shared page; 41 of 57 facts survived.</span> <span class="s" data-k="focus-b4-2">Right: one agent per contract, each writing its own page and quoting terms word for word; 57 of 57 facts survived.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b4-0">指令改动前后，有多少条被打分的合同事实进了维基。</span><span class="s" data-k="focus-b4-1">左：多个智能体写同一张共享页面；57 条事实里存活 41 条。</span><span class="s" data-k="focus-b4-2">右：每份合同一个智能体、各写各的页面，条款逐字引用；57 条事实全部存活。</span></p></div></div>
+<div class="row" data-rid="focus-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b5-0">The result was a wiki that was missing key facts.</span> <span class="s" data-k="focus-b5-1">When we graded a brief generated from the wiki, Claude had included only 41 of the 57 facts (72%).</span> <span class="s" data-k="focus-b5-2">When we looked at what had gone wrong, we found that the shared table summarized the contract terms poorly and was missing some of them altogether, because agents had overwritten one another’s work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b5-0">结果是一个缺了关键事实的维基。</span><span class="s" data-k="focus-b5-1">我们给基于这个维基生成的简报打分时，Claude 只覆盖了 57 条事实里的 41 条（72%）。</span><span class="s" data-k="focus-b5-2">追查问题出在哪时，我们发现那张共享表对合同条款概括得很差，有些条款干脆整条丢失，因为智能体之间互相覆盖了对方的写入。</span></p></div></div>
+<div class="row" data-rid="focus-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b6-0">The contract terms were the most important part of the wiki, but the instructions didn’t say that.</span> <span class="s" data-k="focus-b6-1">To find better instructions, we ran a loop in which Claude reflected on its failures, proposed a change to the instructions, and rebuilt the wiki.</span> <span class="s" data-k="focus-b6-2">This loop allowed Claude to discover how important it was to follow the contract terms, and it rewrote the instructions for building the wiki accordingly.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b6-0">合同条款是这份维基里最重要的部分，可指令里没这么说。</span><span class="s" data-k="focus-b6-1">为了找到更好的指令，我们跑了一个循环：Claude 反思自己的失败，提出对指令的修改，然后重建维基。</span><span class="s" data-k="focus-b6-2">这个循环让 Claude 自己发现「照着合同条款走」有多重要，并据此重写了建维基的指令。</span></p></div></div>
+<div class="row" data-rid="focus-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="focus-b7-0">Each contract got its own page in the wiki, written by a single agent, which quoted the terms word for word rather than summarizing them into a shared table.</span> <span class="s" data-k="focus-b7-1">When we graded the brief generated from this improved wiki, 100% of the criteria could be met, up from 72%.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="focus-b7-0">每份合同在维基里各有自己的页面，由单个智能体撰写；条款逐字引用，而不是概括进一张共享表。</span><span class="s" data-k="focus-b7-1">给基于这个改进版维基生成的简报打分时，100% 的评分要点都能满足，比之前的 72% 提高了。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-gaps">
+<div class="sec-head"><span class="sec-num">09</span><h2><span class="h-en">Dreaming can fill in gaps a session leaves behind</span><span class="h-zh">「做梦」可以补上单次会话留下的缺口</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>一次会话只看得到自己那点上下文，所以建维基时会出现指向空页面的链接。第二轮「做梦」跨会话看：九条指向「escrow-agreement」的死链被重指到已有的同文档页面，还补了索引等三页。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="gaps-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="gaps-b0-0">When Claude writes memory notes, it sees only the context in <i>that</i> particular session.</span> <span class="s" data-k="gaps-b0-1">Dreaming can search across many sessions to find common patterns or correct common mistakes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="gaps-b0-0">Claude 写记忆笔记时，只看得到<i>那一次</i>会话里的上下文。</span><span class="s" data-k="gaps-b0-1">「做梦」可以跨很多次会话搜索，找出常见模式，或修正常见错误。</span></p></div></div>
+<div class="row" data-rid="gaps-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="gaps-b1-0">When building the wikis for the LAB benchmark (as an example, see Figure 14), sometimes Claude would link to pages that hadn’t yet been created.</span> <span class="s" data-k="gaps-b1-1">A second dreaming pass closed many of these gaps.</span> <span class="s" data-k="gaps-b1-2">On one task (Figure 15), dreaming found nine links to a missing page in the wiki and repointed them to an existing page for the same document.</span> <span class="s" data-k="gaps-b1-3">It also added three new pages, including an index, to improve the wiki.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="gaps-b1-0">为 LAB 基准建维基时（示例见图 14），Claude 有时会链到还没创建的页面。</span><span class="s" data-k="gaps-b1-1">第二轮「做梦」补上了其中很多缺口。</span><span class="s" data-k="gaps-b1-2">在一项任务里（图 15），「做梦」发现维基里有九条链接指向一个不存在的页面，于是把它们改成指向同一份文档已有的页面。</span><span class="s" data-k="gaps-b1-3">它还新增了三个页面（包括一个索引）来改进维基。</span></p></div></div>
+<figure class="row wide fig" id="fig15" data-cap="第二轮「做梦」：九条死链被重指"><div class="fig-media"><img class="still" src="media/fig15.webp" loading="lazy" decoding="async" alt="Two network graphs of a wiki. Before the second pass: 38 entries and 225 links, with nine links from six pages pointing to “escrow-agreement,” a page that doesn’t exist. After: 41 entries and 278 links, with all nine links pointing to “buyer-form-escrow-agreement” and three new pages: index, instructions email, and escalations."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>第二轮「做梦」：九条死链被重指</b>　左：38 个条目、225 条链接，其中九条来自六个页面、指向一个叫 escrow-agreement 的不存在页面。右：41 个条目、278 条链接，九条链接全被重指到已有的 buyer-form-escrow-agreement，另外新增 index、instructions email、escalations 三页。</p><p class="cap-en">原文图注：Two network graphs of a wiki. Before the second pass: 38 entries and 225 links, with nine links from six pages pointing to “escrow-agreement,” a page that doesn’t exist. After: 41 entries and 278 links, with all nine links pointing to “buyer-form-escrow-agreement” and three new pages: index, instructions email, and escalations.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左图左上角那行红字就是病历：Nine links from six pages, but no page by this name。</li><li>左图左侧那团虚线箭头全指向空白——它们落在那个不存在的页上。</li><li>右图把同一批箭头收拢到 buyer-form-escrow-agreement，旁边标着 All nine links now point here。</li><li>图例里橙色圆点 = Written by the second pass，也就是这一轮新增的三页。</li></ol><p class="takeaway">一句话：跨会话的第二轮，补的是单次会话看不见的全局缺口。</p></details></figcaption></figure>
+<div class="row" data-rid="gaps-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="gaps-b3-0">The wiki before and after a second dreaming pass.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="gaps-b3-0">第二轮「做梦」前后的维基。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-outlook">
+<div class="sec-head"><span class="sec-num">10</span><h2><span class="h-en">Thinking backward, looking forward</span><span class="h-zh">向后理解，向前看</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>三个还没答案的问题：记忆该在什么时候写（当场记会分心，后台做梦又不即时）、怎么保新（全量核查不现实，不如聚焦易变信息与节奏）、以及要不要把会话记录搜索当地基。收尾回到开头那句话：只有回头看的时候，才算真正理解。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="outlook-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b0-0">There are many open questions about how to design memory systems for agents.</span> <span class="s" data-k="outlook-b0-1">One is when Claude should create memory.</span> <span class="s" data-k="outlook-b0-2">When Claude works on a task, it can write to a memory store (e.g., a folder, file, or database), capturing salience at the source and making important details immediately available for future turns or sessions.</span> <span class="s" data-k="outlook-b0-3">But logging notes in the moment inevitably draws Claude’s attention away from its main task.</span> <span class="s" data-k="outlook-b0-4">In contrast, dreaming can push memory creation to the background, but any outputs from dreaming may not be immediately accessible to Claude.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b0-0">如何为智能体设计记忆系统，还有很多未解的问题。</span><span class="s" data-k="outlook-b0-1">其一是 Claude 应该在什么时候创建记忆。</span><span class="s" data-k="outlook-b0-2">Claude 干活时，可以往记忆存储里写（比如文件夹、文件或数据库），在源头捕捉显著性，让重要细节立刻可供之后的轮次或会话使用。</span><span class="s" data-k="outlook-b0-3">但当场记录笔记，难免会把 Claude 的注意力从主任务上拉走。</span><span class="s" data-k="outlook-b0-4">相反，「做梦」可以把记忆创建推到后台，但「做梦」的产出未必能立刻被 Claude 用到。</span></p></div></div>
+<div class="row" data-rid="outlook-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b1-0">Another question is how to keep memory reliably up to date.</span> <span class="s" data-k="outlook-b1-1">Claude can make incorrect predictions or write rules to memory that are wrong from the start.</span> <span class="s" data-k="outlook-b1-2">Memory can also drift and become irrelevant as the environment changes.</span> <span class="s" data-k="outlook-b1-3">Dreaming is one way to fix these mistakes (Figure 8), but it requires compute.<sup class='tn' data-note='N12'>12</sup></span> <span class="s" data-k="outlook-b1-4">Directing Claude to continuously check <i>all</i> its memories might not be practical.</span> <span class="s" data-k="outlook-b1-5">It may be important instead to focus dreaming on information that’s likely to change or to carefully tune the cadence of dreaming (e.g., based on how often memories are accessed).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b1-0">另一个问题是如何让记忆可靠地保持最新。</span><span class="s" data-k="outlook-b1-1">Claude 可能做出错误的预测，也可能把一开始就错的规则写进记忆。</span><span class="s" data-k="outlook-b1-2">记忆也可能随环境变化而漂移、变得不相关。</span><span class="s" data-k="outlook-b1-3">「做梦」是修正这类错误的一种办法（图 8），但它需要算力。<sup class='tn' data-note='N12'>12</sup></span><span class="s" data-k="outlook-b1-4">让 Claude 持续检查<i>全部</i>记忆未必可行。</span><span class="s" data-k="outlook-b1-5">更重要的也许是把「做梦」集中在可能变化的信息上，或者仔细调整「做梦」的节奏（比如按记忆被访问的频繁程度）。</span></p></div></div>
+<div class="row" data-rid="outlook-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b2-0">It’s also reasonable to consider transcript search as the foundation of Claude’s memory.</span> <span class="s" data-k="outlook-b2-1">Combining representations (e.g., wikis) with search (Figure 10) can sometimes be effective.</span> <span class="s" data-k="outlook-b2-2">But Claude needs to use compute to maintain memory representations and make sure they don’t accumulate errors or hallucinations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b2-0">把会话记录搜索当作 Claude 记忆的基础，也是合理的。</span><span class="s" data-k="outlook-b2-1">把记忆表示（比如维基）和搜索结合起来（图 10），有时确实有效。</span><span class="s" data-k="outlook-b2-2">但 Claude 需要花算力去维护这些记忆表示，确保它们不会积累错误或幻觉。</span></p></div></div>
+<div class="row" data-rid="outlook-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b3-0">Even though Claude’s judgment about salience has improved, no model can really know what will happen in future turns.</span> <span class="s" data-k="outlook-b3-1">Dreaming gives Claude an opportunity to look <i>backward</i> and use compute to organize its memory, correct mistakes, and maintain representations that allow future sessions to access memory more readily.</span> <span class="s" data-k="outlook-b3-2">Memory systems will evolve as Claude gets more capable, and we still have a lot to learn about designing Claude’s memory systems.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b3-0">尽管 Claude 对显著性的判断已经进步，但没有模型能真正知道未来的轮次会发生什么。</span><span class="s" data-k="outlook-b3-1">「做梦」给了 Claude 一个<i>回头看</i>的机会，用算力整理记忆、修正错误、维护记忆表示，让未来的会话更容易取用记忆。</span><span class="s" data-k="outlook-b3-2">随着 Claude 能力变强，记忆系统也会演进；关于如何设计 Claude 的记忆系统，我们还有很多要学。</span></p></div></div>
+<div class="row" data-rid="outlook-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outlook-b4-0">See our cookbooks for <a class='lnk' href='https://platform.claude.com/cookbook/managed-agents-cma-dreaming-with-a-dynamic-workflow' target='_blank' rel='noopener' data-link='L20'>getting started with dreaming</a> and <a class='lnk' href='https://github.com/anthropics/claude-quickstarts/tree/main/managed-agents/knowledge-wiki' target='_blank' rel='noopener' data-link='L21'>knowledge wikis</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outlook-b4-0">想上手，可以看我们的 cookbook：<a class='lnk' href='https://platform.claude.com/cookbook/managed-agents-cma-dreaming-with-a-dynamic-workflow' target='_blank' rel='noopener' data-link='L20'>做梦入门</a>与<a class='lnk' href='https://github.com/anthropics/claude-quickstarts/tree/main/managed-agents/knowledge-wiki' target='_blank' rel='noopener' data-link='L21'>知识维基</a>。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 22 处正文引用，指向 21 个不同链接；另有 15 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L14"><div class="lnk-top"><span class="lnk-id">L14</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>智能体记忆库（memory stores）</h4><p class="lnk-site">platform.claude.com · Using agent memory</p><p class="lnk-anchors">正文对应：<em>记忆目录</em></p><p><b>这是什么：</b>Managed Agents 记忆库文档：记忆挂进会话沙箱当目录，agent 用普通文件工具读写，改动留不可变版本。</p><p><b>为什么值得点：</b>正文说每个会话都是新的、只靠记忆目录延续，这套机制全在这篇：单条 100 kB、单库一万条、每会话最多 8 个，决定了记忆必须写成很多小文件。</p><p><b>访问说明：</b>直连可达（本机需代理，否则 platform.claude.com 会 307 跳到 www.anthropic.com）；无需登录，Beta 头为 agent-memory-2026-07-22。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>挂载后记忆库作为目录出现在沙箱里，系统提示会自动加一条说明告知位置；自托管沙箱则是先下载到本地再同步。绑定可设只读或读写，文档建议对不可信输入用只读——否则一次注入成功，写进去的内容会被后续会话当可信记忆读。另有不可变版本便于审计与回滚。</p><ul><li>「记忆库是工作区级文本集合，挂载后就是普通目录。」</li><li>「单条上限 100 kB、单库一万条，所以要写小文件。」</li><li>「每会话最多挂 8 个库，默认读写、也可设只读。」</li><li>「不可信输入应挂只读，防注入内容变成可信记忆。」</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/managed-agents/memory" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>做梦（Dreams）</h4><p class="lnk-site">platform.claude.com · Dreams</p><p class="lnk-anchors">正文对应：<em>被称为</em></p><p><b>这是什么：</b>Dreams 文档：一次 dream 读一个已有记忆库加 1 到 100 个会话，产出另一个重组后的记忆库。</p><p><b>为什么值得点：</b>正文那句称为「做梦」就指这里，文档写清了产品形状——异步作业、输入库不改写、输出是新库，所以可以审阅后再采纳。</p><p><b>访问说明：</b>直连可达（本机需代理，否则被 307 驳回）；研究预览需申请权限，但文档本身无需登录。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Dream 读入已有记忆库与 1 到 100 个会话，合并重复项、用最新值换掉过时或矛盾条目、把新洞见浮出来，写进全新的输出库，输入库永不被修改。instructions 只做高层引导，它是综合改写而非逐句编辑器，指定改某一句通常无效。</p><ul><li>「输入是旧库加 1 到 100 个会话，输出是另一个新库。」</li><li>「默认动作：并重复、换过时值、浮出新洞见。」</li><li>「instructions 只做高层综合引导，不能逐句编辑。」</li><li>「研究预览，仅指定模型，ZDR 与 HIPAA 不适用。」</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/managed-agents/dreams" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L20"><div class="lnk-top"><span class="lnk-id">L20</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>用动态工作流做一场梦</h4><p class="lnk-site">platform.claude.com · Dreaming with a dynamic workflow</p><p class="lnk-anchors">正文对应：<em>做梦入门</em></p><p><b>这是什么：</b>Cookbook 教程：用一条动态工作流搭最小可用的 dream，把会话逐份蒸馏成带索引的维基。</p><p><b>为什么值得点：</b>正文结尾的做梦入门链接就是它；文章讲的 dreaming 各部件在这里都有对应代码与提示词，还给了真实价目，能把类比落成可跑的东西。</p><p><b>访问说明：</b>直连 200，无需登录；页面附 GitHub 版 notebook 可下载。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>导出会话成纯文本，在一个会话里描述任务，lead agent 写出工作流并启动；每份转录交给 analyzer 蒸馏成小文件、只增补不覆盖，organizer 收尾，最后只读挂载。示例设三道坎：事实过期、细节埋在工具输出、主题重叠。11 份示例约 0.36 美元、两分半钟。</p><ul><li>「导出会话、逐份蒸馏、organizer 收尾、只读挂载。」</li><li>「analyzer 只增补不覆盖，重叠主题靠追加与链接合并。」</li><li>「示例三道坎：事实过期、细节埋在输出、主题重叠。」</li><li>「可挂 cron 每晚跑，只处理上次之后的会话。」</li></ul></details><a class="lnk-open" href="https://platform.claude.com/cookbook/managed-agents-cma-dreaming-with-a-dynamic-workflow" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L16"><div class="lnk-top"><span class="lnk-id">L16</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>LLM 维基：让模型替你维护知识库</h4><p class="lnk-site">gist.github.com · llm-wiki · GitHub</p><p class="lnk-anchors">正文对应：<em>维基</em></p><p><b>这是什么：</b>Karpathy 提案：不用 RAG 每次重查原文，让 LLM 增量维护一座持久维基。</p><p><b>为什么值得点：</b>正文把 wiki 定义为 Claude 自己写和维护的页面集合，出处就是它；三层结构与收录、提问、体检三种操作，正是文章多会话建维基那套流程的原型。</p><p><b>访问说明：</b>直连可达（本机需代理）；gist 公开，无需登录，文件名 llm-wiki.md。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>区别在于知识编译一次并保持最新，而非每次查询重新推导：新资料进来就更新实体页与主题摘要、标出新旧矛盾，回答过的分析也回填成新页。三层是原始资料不可变、维基由 LLM 独占写、schema 定义约定。靠索引当目录、日志当时间线，上百份资料不必上向量库。</p><ul><li>「知识编译一次并保持最新，这是相对 RAG 的差异。」</li><li>「三层：原始资料、LLM 独占的维基、schema 约定。」</li><li>「索引当目录，日志用统一前缀即可 grep。」</li><li>「定期体检：查矛盾、过时断言、孤儿页与缺交叉引用。」</li></ul></details><a class="lnk-open" href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L21"><div class="lnk-top"><span class="lnk-id">L21</span><span class="chip must">必读</span><span class="chip">建议第 5 个读</span></div><h4>知识维基快速上手</h4><p class="lnk-site">github.com · claude-quickstarts/managed-agents/knowledge-wiki at main · anthropics/claude-quickstarts</p><p class="lnk-anchors">正文对应：<em>知识维基</em></p><p><b>这是什么：</b>Anthropic 快速上手：把语料一次读成记忆库里的 markdown 维基，之后只从维基作答。</p><p><b>为什么值得点：</b>正文结尾另一条链接，也是文章那套多会话建维基最完整的公开实现；README 给了成本与收益——建成约 19 美元、约 240 个问题回本。</p><p><b>访问说明：</b>直连可达（本机需代理）；仓库公开，README、prompts 与 utilities.py 都能直接读。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>卖点是保留来源与冲突：每条事实带出处，矛盾保持矛盾、被取代的数字保持被取代。小模型带维基作答与直接检索原文的大模型差距在 1 个百分点内，价格约十五分之一。工作流分四段：抽取、补缺口、逐条核对、收尾整理。</p><ul><li>「每条事实带出处，冲突与被取代的数字都保留。」</li><li>「小模型加维基对打大模型检索：差 1 个百分点、价约 1/15。」</li><li>「建成一次约 19 美元，约 240 个问题回本。」</li><li>「四段工作流：抽取、补缺口、核对、整理。」</li></ul></details><a class="lnk-open" href="https://github.com/anthropics/claude-quickstarts/tree/main/managed-agents/knowledge-wiki" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L18"><div class="lnk-top"><span class="lnk-id">L18</span><span class="chip must">必读</span><span class="chip">建议第 6 个读</span></div><h4>Claude Code 如何记住你的项目</h4><p class="lnk-site">code.claude.com · How Claude remembers your project</p><p class="lnk-anchors">正文对应：<em>Claude Code</em> <em>Claude Code 的自动记忆</em></p><p><b>这是什么：</b>CLAUDE.md 与自动记忆并存，后者每次会话只加载 MEMORY.md 前 200 行或 25KB。</p><p><b>为什么值得点：</b>正文用它论证注入层必须小；文档把阈值与后果写死——超限的写入仍成功，但超出部分下次加载被丢弃，并回错误要求重写索引。</p><p><b>访问说明：</b>直连可达（本机需代理）；正文较长，自动记忆一节在页面前三分之一。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>两套系统都在会话开始加载，且只当上下文、不是强制配置。自动记忆把笔记按 type 分四类：user 角色偏好、feedback 纠正与确认过的做法、project 代码看不出的决定、reference 外部信息在哪，并跳过能由代码推导的东西。存在本机项目目录，同仓库所有 worktree 共享。</p><ul><li>「人写 CLAUDE.md、Claude 自写自动记忆，都每次加载。」</li><li>「只加载 MEMORY.md 前 200 行或 25KB，超出即丢弃。」</li><li>「笔记四类：user、feedback、project、reference。」</li><li>「同仓库的 worktree 共享一份，但不跨机器同步。」</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/memory" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 7 个读</span></div><h4>睡眠时计算：不止在测试时扩算力</h4><p class="lnk-site">arxiv.org · Sleep-time Compute: Beyond Inference Scaling at Test-time</p><p class="lnk-anchors">正文对应：<em>睡眠时计算</em></p><p><b>这是什么：</b>2025 年 Letta 与伯克利的论文：提问前先离线想，预判会问什么、预计算可复用的量，压低测试时算力。</p><p><b>为什么值得点：</b>正文点名的睡眠时计算就是它，也是全文类比的技术源头；读完能明白离线整理记忆为何可能省算力，而不只是多花一份钱。</p><p><b>访问说明：</b>arXiv 摘要页直连 200，无需登录；PDF 与代码在 github.com/letta-ai/sleep-time-compute。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>查询到达前，模型先对同一份上下文跑一轮睡眠时计算：猜用户会问什么，把中间结论算好。同准确率下测试时算力约降 5 倍；加大睡眠时算力，两个推理任务还能各涨 13% 与 18%。多查询版本摊薄成本，平均每题降 2.5 倍。</p><ul><li>「离线预判并预计算，同准确率约省 5 倍测试时算力。」</li><li>「加大睡眠时算力可再涨 13% 与 18% 准确率。」</li><li>「同类问题摊薄，平均每题成本降 2.5 倍。」</li><li>「收益与提问可预测性相关，越可预测越划算。」</li></ul></details><a class="lnk-open" href="https://arxiv.org/abs/2504.13171" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>压缩（compaction）总览</h4><p class="lnk-site">platform.claude.com · Compaction overview</p><p class="lnk-anchors">正文对应：<em>压缩</em></p><p><b>这是什么：</b>压缩文档：用服务端摘要替换较早轮次把长任务压回上下文窗口，分按需与按阈值两条路线。</p><p><b>为什么值得点：</b>正文把它列为不算 agent memory 的三种机制之一，只给了一个括号定义；读完才知它和做梦的分工——一个丢旧轮次，一个沉淀跨会话知识。</p><p><b>访问说明：</b>直连可达（本机需代理，否则 307 到 www.anthropic.com）；Beta 头 compact-2026-09-04，无需登录。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>按需压缩由你请求摘要，把摘要块放在消息首位替换被总结的轮次，可逐字保留最近几轮、可后台跑、可保留思考块；按阈值压缩设触发点，由接口在普通请求里自动丢弃此前轮次。另一条路是自己写摘要器。</p><ul><li>「用服务端摘要替换旧轮次，换取更长工作窗口。」</li><li>「按需压缩：摘要块放首位，最近几轮可逐字保留。」</li><li>「按阈值压缩：到点自动丢弃前文，不改代码。」</li><li>「按规则清旧工具结果的属于上下文编辑，不做总结。」</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/build-with-claude/compaction" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L13"><div class="lnk-top"><span class="lnk-id">L13</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>Claude 托管智能体总览</h4><p class="lnk-site">platform.claude.com · Claude Managed Agents overview</p><p class="lnk-anchors">正文对应：<em>Claude 托管智能体</em></p><p><b>这是什么：</b>托管智能体总览：Anthropic 托管的 agent harness，围绕智能体、环境、会话、事件四个概念。</p><p><b>为什么值得点：</b>正文实验就跑在它上面——每题开新会话、只有记忆目录延续；读总览才看清会话是新的、记忆是挂载的这个组合怎么成立。</p><p><b>访问说明：</b>直连可达（本机需代理）；Beta 头 managed-agents-2026-04-01，无需登录。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>与消息接口并列：后者把模型调用给你、循环自己写；前者托管 harness、沙箱、工具执行与事件历史，适合几分钟到几小时的异步长任务。顺序是先建智能体（模型、提示、工具、MCP、技能），再建环境（云端或自托管沙箱），再开会话发事件、用流式接口收结果。</p><ul><li>「四概念：智能体、环境、会话、事件。」</li><li>「托管循环、沙箱、工具执行，适合长跑异步任务。」</li><li>「内置 bash、文件读写、glob、grep，自带缓存与压缩。」</li><li>「环境可选云端沙箱或自托管沙箱，满足合规要求。」</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/managed-agents/overview" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip bg">背景</span><span class="chip">建议第 10 个读</span></div><h4>记忆工具（memory tool）</h4><p class="lnk-site">platform.claude.com · Memory tool</p><p class="lnk-anchors">正文对应：<em>写</em></p><p><b>这是什么：</b>记忆工具文档：客户端工具，Claude 用查看、创建等命令操作 /memories 下的文件，跨会话留存。</p><p><b>为什么值得点：</b>正文说 Claude 可以把要点写进记忆库这一处指向它；它给出最朴素形态——文件就在你的存储里，那个路径只是被映射出去的前缀。</p><p><b>访问说明：</b>直连可达（本机需代理）；无需登录，文档含完整的调用与结果示例。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>关键在客户端执行：Claude 只发文件操作请求，你的应用在自有存储上执行并回填结果，数据与位置都由你定。开启后会先查看记忆目录再动手，边做边写。安全要求是所有操作限制在该目录内，防止路径穿越。</p><ul><li>「模型只发命令，真正执行在你的应用里。」</li><li>「/memories 只是前缀，映射到真实存储由你决定。」</li><li>「Claude 先查记忆目录再动手，边做边写。」</li><li>「操作必须限制在记忆目录内，防路径穿越。」</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip bg">背景</span><span class="chip">建议第 11 个读</span></div><h4>持续学习基准 1.0 发布</h4><p class="lnk-site">continual-learning-bench.com · Continual Learning Bench 1.0</p><p class="lnk-anchors">正文对应：<em>持续学习基准（CL-Bench）1.0</em></p><p><b>这是什么：</b>2026 年 5 月发布的持续学习基准：任务序列彼此不独立，允许被测系统在评测中改变自己。</p><p><b>为什么值得点：</b>正文那段数据库任务与六个模型的分数差都源自这里；读它才知道分数怎么算——用增益把本来就强和真学到的分开，这正是那张图的读法。</p><p><b>访问说明：</b>页面靠脚本从 /news/content/cl-bench-1-0.md 加载正文，直接抓页面只有标题；改抓该 markdown 才读到全文。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>主流基准默认模型无状态，做完一题当没发生。它要求任务有潜在结构、有可学习机制、初始留余量，并禁止拿现有基准串起来充数。除累计奖励与成本外另设增益：拿同一系统的无状态版本作对照，量出多少提升真来自先前经验。示例按交互次数计效率，答错满额罚。</p><ul><li>「任务不独立，允许系统在评测中改变自己。」</li><li>「增益用无状态版本作对照，剥离原始能力只留学习。」</li><li>「四准则：留余量、有机制、有结构、人能越做越好。」</li><li>「示例按与环境的交互次数算效率，答错满额罚。」</li></ul></details><a class="lnk-open" href="https://continual-learning-bench.com/news/cl-bench-1-0/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L17"><div class="lnk-top"><span class="lnk-id">L17</span><span class="chip bg">背景</span><span class="chip">建议第 12 个读</span></div><h4>Harvey 法律智能体基准</h4><p class="lnk-site">github.com · GitHub - harveyai/harvey-labs: A benchmark built to evaluate and improve agent capabilities for supporting legal work.</p><p class="lnk-anchors">正文对应：<em>Harvey LAB</em></p><p><b>这是什么：</b>Harvey 开源的法律智能体基准：任务集（指令、文档、评分细则）加执行骨架与打分器，用真实法律工作考 agent。</p><p><b>为什么值得点：</b>正文用它做第二组评估，得出跨多文档的维基更有用；读仓库才知道分数是全通过才记 1.0，这解释了文章为何盯着漏掉的事实数。</p><p><b>访问说明：</b>直连可达（本机需代理）；README 与评测方法文档可读，仓库公开、MIT 许可。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>每个任务在 task.json 里内联等权、通过与不通过的评分细则，没有标准答案文件，每条细则说明评委该看什么。两个大模型评委独立语义打分，不做关键词匹配。全通过制：所有条目都过才记 1.0，漏一条即 0.0。</p><ul><li>「评分细则内联在任务文件里，没有标准答案文件。」</li><li>「两个大模型评委独立语义打分，不用关键词或正则。」</li><li>「全通过制：过一条与否直接决定 1.0 或 0.0。」</li><li>「2010 个任务、24 个以上法律领域，附执行骨架。」</li></ul></details><a class="lnk-open" href="https://github.com/harveyai/harvey-labs" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip bg">背景</span><span class="chip">建议第 13 个读</span></div><h4>睡眠框架：让模型在持续学习中不遗忘</h4><p class="lnk-site">research.google · The sleep framework: A new way for LLMs to retain knowledge in continual learning</p><p class="lnk-anchors">正文对应：<em>做梦</em></p><p><b>这是什么：</b>Google Research 2026 年 10 月的博客：给模型加睡眠期，离线扩容专家、把短期记忆蒸馏进长期参数。</p><p><b>为什么值得点：</b>正文把做梦的命名也挂在这篇上，但它改的是权重而非上下文；读它能划清文章开头那句记忆不含权重变化的界线。</p><p><b>访问说明：</b>本机直连超时，走本地代理 200；无需登录。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>清醒期把信息临时存进高频记忆，睡眠期停止接收输入，打开预分配的专家记忆块，用自生成练习题更新权重。巩固两步：参数扩容把新的低秩专家并入稳定块；知识播种用蒸馏加强化模仿，按语义相似度与编辑距离给奖励；最后突触修剪重置临时参数。</p><ul><li>「睡眠期用自生成练习题离线微调，把上下文写进权重。」</li><li>「两步：参数扩容、知识播种；最后突触修剪重置。」</li><li>「宣称可保住长上下文知识到 1000 万 token。」</li><li>「作者明说只是借神经科学术语，机制不涉生物过程。」</li></ul></details><a class="lnk-open" href="https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip bg">背景</span><span class="chip">建议第 14 个读</span></div><h4>上下文学习与归纳头</h4><p class="lnk-site">anthropic.com · In-context learning and induction heads</p><p class="lnk-anchors">正文对应：<em>上下文学习</em></p><p><b>这是什么：</b>Anthropic 2022 年的机制可解释性研究：定位归纳头这个两级注意力电路，并用它解释上下文学习。</p><p><b>为什么值得点：</b>正文用它界定上下文学习等于单次对话内获得的知识，属被排除的三种机制之一；想知道它在电路层面长什么样，这篇最直接。</p><p><b>访问说明：</b>链接指向的 anthropic.com 落地页正文只有一句「读论文」（抓下来约 248 字符），实质内容在 transformer-circuits.pub 的同名长文。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>前词头把上一个词的信息搬到当前位置，第二个注意力头再用它去找上次这个词之后跟了什么，从而补全重复过的序列。归纳头在两层及以上模型里普遍出现，其形成与训练早期相变重合，也正是上下文学习能力跃升之时。</p><ul><li>「归纳头由前词头与归纳头两级注意力组合，做补全。」</li><li>「只在两层及以上模型出现，单层没有这种组合。」</li><li>「形成与训练早期相变重合，同期上下文学习跃升。」</li><li>「原文链接的落地页几乎是空的，正文在论文站。」</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/research/in-context-learning-and-induction-heads" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 15 个读</span></div><h4>睡眠中系统记忆巩固的机制</h4><p class="lnk-site">nature.com · Mechanisms of systems memory consolidation during sleep</p><p class="lnk-anchors">正文对应：<em>这些经历</em></p><p><b>这是什么：</b>2019 年《自然神经科学》综述：把睡眠巩固拆成海马重放、慢波与纺锤波调控、记忆被抽象三层机制。</p><p><b>为什么值得点：</b>正文说经历被逐渐蒸馏并整合进新皮层，这半句全靠它撑；它讲清重放如何被慢波与纺锤波耦合放大、记忆又怎样从情节变成要点。</p><p><b>访问说明：</b>摘要与图表清单可读，全文需订阅；本地抓取未被拦截，正文为付费墙预览。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>巩固是嵌在全局突触下调里的主动过程：慢波睡眠中海马表征反复重放，既推动依赖海马的记忆也推动不依赖它的记忆；慢振荡、纺锤波与涟漪的相位耦合既调节远隔脑区间信息流，也在皮层造出可塑性窗口；结果是记忆质变成要点式表征。</p><ul><li>「巩固是嵌在突触下调中的主动过程，不是被动沉淀。」</li><li>「慢振荡、纺锤波与涟漪相位耦合，构成传递窗口。」</li><li>「记忆被质变成抽象要点，而非逐字保存。」</li><li>「海马重放同时推动依赖与不依赖海马的两类记忆。」</li></ul></details><a class="lnk-open" href="https://www.nature.com/articles/s41593-019-0467-3" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip bg">背景</span><span class="chip">建议第 16 个读</span></div><h4>海马体与新皮层为何是互补学习系统</h4><p class="lnk-site">stanford.edu · Why There Are Complementary Learning Systems in the Hippocampus and Neocortex</p><p class="lnk-anchors">正文对应：<em>海马体</em></p><p><b>这是什么：</b>1995 年《心理学评论》的奠基论文：海马快速存单次经历，新皮层慢速学习并靠重放编织结构。</p><p><b>为什么值得点：</b>正文第一句说海马在其中扮演核心角色，引的就是它；这篇论证了为什么必须两套系统、为什么重放要交错，读完才明白文章为何拆成捕获与巩固两层。</p><p><b>访问说明：</b>PDF 直连可下（约 5 MB、39 页），无需登录；读摘要与首节即可抓住论证骨架。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>双侧海马损伤造成顺行性遗忘而远期记忆保留，作者用连接主义模型解释：海马用稀疏、模式分离的表征一次学会新事，新皮层靠缓慢交错的权重更新提取统计结构；每次重放把新旧记忆交错送回皮层，皮层只改一点点，于是既吸收新知又不覆盖旧结构。</p><ul><li>「海马单次快速编码，新皮层慢速统计学习。」</li><li>「重放把新记忆交错插入旧记忆，避免灾难性遗忘。」</li><li>「远期记忆是皮层权重累积，近期依赖海马重演。」</li><li>「双侧海马损伤后顺行性遗忘而远端记忆保留。」</li></ul></details><a class="lnk-open" href="https://stanford.edu/~jlmcc/papers/McCMcNaughtonOReilly95.pdf" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 17 个读</span></div><h4>人类休息时的海马重放优先处理学得弱的信息</h4><p class="lnk-site">nature.com · Human hippocampal replay during rest prioritizes weakly learned information and predicts memory performance</p><p class="lnk-anchors">正文对应：<em>休息</em></p><p><b>这是什么：</b>2018 年《自然通讯》研究：用功能磁共振解码人类休息时的海马重放，学得越弱的项目重放越多。</p><p><b>为什么值得点：</b>正文说安静休息时海马重放近期经历，这篇是罕有的人类证据，还回答重放不匀、优先补最脆弱记忆，正好支持文章挑值得记的取舍。</p><p><b>访问说明：</b>开放获取，摘要与正文均可读；本机直连遇 cookie 跳转，跟随后 200。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>被试学 15 个物体后做记忆测验，再在清醒休息期用磁共振模式分析逐物体追踪海马重放：记得差的物体被重放更多。12 小时后重测，重放越多的物体记得越好，而这种跨会话提升只出现在期间睡过觉的被试身上。</p><ul><li>「休息期海马重放可用磁共振逐物体解码。」</li><li>「学得弱的项目重放更多，重放像补短板而非复习。」</li><li>「重放量能预测后续记忆表现。」</li><li>「跨会话记忆提升只在期间睡过觉的人身上出现。」</li></ul></details><a class="lnk-open" href="https://www.nature.com/articles/s41467-018-06213-1" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip">可选</span><span class="chip">建议第 18 个读</span><span class="chip">本区域受限</span></div><h4>海马尖波涟漪如何挑选要被记住的经历</h4><p class="lnk-site">science.org · Selection of experience for memory by hippocampal sharp wave ripples</p><p class="lnk-anchors">正文对应：<em>部分经历</em></p><p><b>这是什么：</b>2024 年《科学》论文：小鼠清醒期海马尖波涟漪挑出部分试次，睡眠期只重放被挑中的片段。</p><p><b>为什么值得点：</b>补足正文只有部分经历被巩固这半句：文章说海马抓经历、只有部分留下，这篇给出怎么挑的机制，即清醒涟漪的内容决定睡眠重放什么。</p><p><b>访问说明：</b>science.org 有 Cloudflare 挑战，直连与代理均 403（只回 Just a moment），全文读不到；本条 digest 依据出版社登记的官方摘要。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>记录小鼠海马大量神经元并降维后发现，连续穿行时群体持续漂移，同时编码地点与事件。在喝到奖励、脑状态切换时出现尖波涟漪，某些试次才有，涟漪里的放电内容可解码出它周围的试次块；睡眠期涟漪继续重放那些清醒时被反复激活的段落。</p><ul><li>「清醒涟漪挑出部分试次，睡眠期只重放被挑中的。」</li><li>「神经元群体连续漂移，同时编码地点与事件。」</li><li>「涟漪放电内容可解码出它前后的试次块。」</li><li>「清醒涟漪的重放内容就是打标签的机制。」</li></ul></details><a class="lnk-open" href="https://www.science.org/doi/10.1126/science.adk8261" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip">可选</span><span class="chip">建议第 19 个读</span></div><h4>突触标签与长时程增强</h4><p class="lnk-site">nature.com · Synaptic tagging and long-term potentiation</p><p class="lnk-anchors">正文对应：<em>一段记忆</em></p><p><b>这是什么：</b>1997 年《自然》短篇通讯：强刺激在突触上留下只存续数小时的标签，把新合成的蛋白就地捕获。</p><p><b>为什么值得点：</b>正文说化学信号可以在经历前后标记一段记忆，标记二字就来自这类工作；它也回答了为什么被标记的记忆在离线期重放得更多。</p><p><b>访问说明：</b>摘要可读，全文需订阅；本机直连遇 cookie 跳转，跟随后 200。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>晚期长时程增强需要新蛋白，而合成在胞体、效应却是输入特异的，于是设想被强化的突触上生成短命标签就地捕获蛋白。实验支持：弱刺激平常只产生早期增强，但若同一群神经元的另一条输入先前被强刺激，弱刺激也能诱发依赖蛋白合成的晚期增强；标签约三小时衰减。</p><ul><li>「晚期增强需要新蛋白，但蛋白在胞体合成。」</li><li>「假说：突触上生成短命标签，就地捕获蛋白。」</li><li>「另一输入先被强刺激，弱刺激也能诱发晚期增强。」</li><li>「标签约三小时衰减，持久性看神经元此前活动。」</li></ul></details><a class="lnk-open" href="https://www.nature.com/articles/385533a0" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L15"><div class="lnk-top"><span class="lnk-id">L15</span><span class="chip">可选</span><span class="chip">建议第 20 个读</span></div><h4>Claude 打宝可梦教给我们的 agent 课</h4><p class="lnk-site">youtube.com · Lessons on AI agents from Claude Plays Pokemon</p><p class="lnk-anchors">正文对应：<em>要求 Claude 在复杂的长时程任务里做导航</em></p><p><b>这是什么：</b>官方 45 分钟对谈：两位研究员复盘 Claude 玩宝可梦，含记忆系统与长期存储一节。</p><p><b>为什么值得点：</b>正文拿它证明宝可梦是长程导航的好测试场；10 分 20 秒起正好讲记忆系统与长期存储，正是文章用全局文件当仪表盘那类做法的背景。</p><p><b>访问说明：</b>页面与元数据可读；字幕下载被限流（429），未取得逐句转录，digest 依据官方标题、简介与章节表。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>对谈按章节推进：为什么选宝可梦——回合制、状态可见、目标可验证；4 分 30 秒讲技术上怎么让它玩；10 分 20 秒专讲记忆与长期存储；之后对比各模型版本表现、讨论如何迁移到真实任务，最后是失败集锦与做 agent 的建议。</p><ul><li>「选宝可梦的理由：回合制、状态可见、目标可验证。」</li><li>「10 分 20 秒一节专讲记忆系统与长期存储。」</li><li>「按模型版本对比表现，并讨论向真实任务迁移。」</li><li>「属工程复盘，无基准数字，可作文章案例背景。」</li></ul></details><a class="lnk-open" href="https://www.youtube.com/watch?v=CXhYDOvgpuU" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L19"><div class="lnk-top"><span class="lnk-id">L19</span><span class="chip">可选</span><span class="chip">建议第 21 个读</span></div><h4>Claude Duet 入门</h4><p class="lnk-site">support.claude.com · Get started with Claude Duet</p><p class="lnk-anchors">正文对应：<em>Claude Duet</em></p><p><b>这是什么：</b>Claude Duet 入门页：研究预览里像给人发消息一样用的助手，能操作已连接的应用，在云端干活。</p><p><b>为什么值得点：</b>正文说 Duet 这类助手受益于围绕人组织记忆，并以此说明做梦可按目标调；读这篇能看到接入条件与美国限定，以及记忆怎么继承。</p><p><b>访问说明：</b>直连 200，无需登录；页面标注本周更新，内容会随预览变化。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>它跑在你的账号上，已有记忆、技能、连接器从第一条消息起就在；主线程一路到底，可分频道但共享同一份记忆，关掉应用也在云端继续。每天早晨给一份简报，白天推进度；较大的活交成文件，成品出现在成品页；发消息、付款、签文件、删除前会先问。</p><ul><li>「跑在你的账号上，记忆、技能、连接器直接继承。」</li><li>「仅美国 Pro、Max、Ultra，走候补名单，团队版未开。」</li><li>「早晨给简报，白天更进度，大活交付为文件。」</li><li>「发送消息、付款、签文件、删除前会先征得同意。」</li></ul></details><a class="lnk-open" href="https://support.claude.com/en/articles/17631495-get-started-with-claude-duet" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 23 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">agent memory</span><span class="gl-zh">智能体记忆</span></div><p class="gl-def">文章定义为从用户互动、被派任务等经验中获得、跨会话保留、可日后读作上下文的知识；明说排除改权重、上下文学习与压缩。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">dreaming</span><span class="gl-zh">做梦</span></div><p class="gl-def">指用空闲算力回看日志与会话记录，纠错、写笔记、造记忆表示，并决定下次预载什么；它在后台跑，产出不一定立刻可用。</p><p class="gl-ana">像人睡觉时大脑把白天的经历慢慢整理成长期知识。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">memory notes</span><span class="gl-zh">记忆笔记</span></div><p class="gl-def">Claude 在会话中把显著发现写进记忆文件夹的短条；文章强调它只看得到写那一刻的上下文，可能一开始就错，也会随环境漂移。</p><p class="gl-ana">像随手贴的便签：好找，但不保证还准。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">transcripts</span><span class="gl-zh">会话记录</span></div><p class="gl-def">图注称其为可搜索的事件日志，记下 Claude 每个会话做过的事；它是校验记忆笔记时的依据，也是做梦的原料。</p><p class="gl-ana">像行车记录仪，事后可以回查。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">memory representations</span><span class="gl-zh">记忆表示</span></div><p class="gl-def">指 Claude 为方便翻记忆而新建的组织结构，典型是 wiki；链接像一张地图，让检索走得更快，但要花算力维护。</p><p class="gl-ana">像给书库编目录并加交叉引用。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">wiki</span><span class="gl-zh">维基</span></div><p class="gl-def">Claude 自己写并维护、互相链接的页面集合，汇集它对某主题所知；链接等于一张可检索记忆的地图，但它也可能膨胀到比原文还大。</p><p class="gl-ana">像一张越画越细、彼此链接的地图。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">injected context</span><span class="gl-zh">注入上下文</span></div><p class="gl-def">指每个会话开头由运行框架抢先载入的记忆层，Claude 不用搜索、甚至不必知道有东西可搜；它吃 token，必须保持很小。</p><p class="gl-ana">像每天开工时摆在手边的提要卡。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">salience</span><span class="gl-zh">显著性</span></div><p class="gl-def">指 Claude 当场判断什么值得记；实验发现强模型自由判断比预设规则更有效，「只记失败」这类规则反而削弱收益。</p><p class="gl-ana">像编辑判断哪句话值得进标题。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">consolidation</span><span class="gl-zh">巩固</span></div><p class="gl-def">指部分经历被巩固成长时知识的过程，人脑多在离线时发生；文章把做梦比作智能体版：从日志里提炼笔记与表示。</p><p class="gl-ana">像把当天的录像剪进长期档案。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">replay</span><span class="gl-zh">重放</span></div><p class="gl-def">指海马体在睡眠和安静休息时反复回放近期经历；被标记为重要的记忆回放得更频繁，从而稳定并整合进长期记忆。</p><p class="gl-ana">像大脑在离线时反复回放同一段经历。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">hippocampus</span><span class="gl-zh">海马体</span></div><p class="gl-def">文章说它当场捕捉经历，让记忆快速形成、立刻可用；但它只管录入，长期知识要靠离线巩固进新皮层。</p><p class="gl-ana">像临时便签本：存得快，但不长久。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">neocortex</span><span class="gl-zh">新皮层</span></div><p class="gl-def">文章称它是存放我们多数「知识」的脑区；离线时海马体回放经历，慢慢把它们提炼并整合到这里。</p><p class="gl-ana">像脑子里那只长期档案柜。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口</span></div><p class="gl-def">指模型一次能装下的上下文容量；文章说压缩是为了在新窗口里接着干，并明确把它排除在智能体记忆之外。</p><p class="gl-ana">像一张只摊得开几页的桌面。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">in-context learning</span><span class="gl-zh">上下文学习</span></div><p class="gl-def">指单次对话之内获得的知识；文章把它与跨会话保留的智能体记忆并列为不同机制，只有后者算记忆。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compaction</span><span class="gl-zh">压缩</span></div><p class="gl-def">指 Claude 写摘要替换较早的对话轮次，好在新上下文窗口继续工作；文章明确不把它算作智能体记忆。</p><p class="gl-ana">像把旧对话压成一页摘要。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">sleep-time compute</span><span class="gl-zh">睡眠时计算</span></div><p class="gl-def">Letta 与 UC Berkeley 提出：让模型在交互之间的空闲时间重整已有上下文；文章把它看作做梦这个想法的出处。</p><p class="gl-ana">像下班后留在工位上整理材料。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CL-Bench</span><span class="gl-zh">CL-Bench</span></div><p class="gl-def">持续学习基准，测智能体能否靠记忆完成长程任务；文章的数据库问答要求答错后记录、立论、验证并写成规则。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">memory directory</span><span class="gl-zh">记忆目录</span></div><p class="gl-def">跨会话持久、可读可写的文件夹，是文章多个实验里 Claude 唯一的记忆载体；放多少文件、怎么组织直接影响表现。</p><p class="gl-ana">像跨会话共用的一个文件柜。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">运行框架</span></div><p class="gl-def">指包在模型外、驱动智能体的那层装置：管会话循环与工具，并在每轮开头把注入上下文预载进来。</p><p class="gl-ana">像舞台的灯光与提词器，不是演员。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">learning loop</span><span class="gl-zh">学习闭环</span></div><p class="gl-def">指答错后记录失败、提出猜想、动手验证，再把结论写成下次可用的规则；文章说 Opus 5 是第一个真正闭环的模型。</p><p class="gl-ana">像复盘、立论、验证再改规则的循环。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">graded criteria</span><span class="gl-zh">评分要点</span></div><p class="gl-def">指评测里逐条打分的项目，如简报该覆盖哪些事实；文章用命中比例衡量 wiki 的价值，25 题里从 13% 升到 48%。</p><p class="gl-ana">像阅卷时逐条对照的得分点。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">legal brief</span><span class="gl-zh">法律简报</span></div><p class="gl-def">指 Harvey LAB 要求 Claude 依据给定文件写出、再按清单判分的法律文书；文章用它比较 wiki 与纯搜索的表现。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">token</span><span class="gl-zh">token</span></div><p class="gl-def">模型读写上下文的最小计量单位，大致相当于一个词或词的一部分。本文用它衡量两件事的成本：把记忆注入每次会话，以及用「做梦」维护记忆。</p><p class="gl-ana">像按字数收费：字越多，钱和注意力都越贵。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>开篇那句克尔凯郭尔</h4><p>原文是 life can only be understood backward, but it must be lived forward，出自克尔凯郭尔的日记。作者拿它当全文骨架：记忆系统总是先有经历、后有整理——「做梦」就是把「向后理解」变成一个可以随时调度的计算动作。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>大脑类比到哪里为止</h4><p>海马体与新皮层的分工只是类比来源，不是等价关系：人的「巩固」是生物过程，有睡眠这种硬节律；智能体的巩固是一次随时可跑的计算任务，也没有必须等到的「夜里」。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>「智能体记忆」的边界很窄</h4><p>本文的记忆只算跨会话保留、之后能回读的上下文。改权重属于训练；上下文学习只在单次对话内；压缩是给同一个会话腾地方——这三者都不算记忆。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>CL-Bench 的关键设置</h4><p>每题都从一个全新会话开始，模型手里唯一的跨会话线索就是那个记忆目录。所以得分提升只能归因于它自己写进记忆的东西，而不是上下文里残留的痕迹。题目说的「长时程」，指要连着答几十道题、靠记忆跨题积累，而不是单题里推理得更久。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>「第 10,000 步」是什么口径</h4><p>步指智能体在游戏里的一次动作，翻菜单、读记忆这些也算。比较的两段运行都截在约第 10,000 步，比的是「同样的步数下，记忆长什么样」，不是「谁玩得久」。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>为什么「只记录失败」反而更差</h4><p>这条规则替模型决定了什么值得记，砍掉了它自己判断显著性的空间。图 5 右量的是「有记忆相对无记忆的增益变化」：Opus 5 −0.234、Opus 4.7 −0.150——负号表示增益被吃掉。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>月见山这一段的地理</h4><p>月见山（Mt. Moon）在深灰市（Pewter City）与华蓝市（Cerulean City）之间，洞内有一段单向崖边，掉下去会回到山前那条路。原文引用的是游戏内文本，所以 Mt Moon 有时不带句点。</p></div></div><div class="note-item"><div class="note-n">08</div><div><h4>维基（wiki）在这篇文章里指什么</h4><p>链接指向 Karpathy 那份「用 wiki 组织知识」的 gist。本文的用法更具体：页面由 Claude 自己写、自己连，链接就是检索路径。注意两个口径——13%→48% 是「只用维基」，54%→61% 是「搜索 + 维基」。</p></div></div><div class="note-item"><div class="note-n">09</div><div><h4>博尔赫斯那个地图</h4><p>《论科学的精确性》里，制图师把地图画得和帝国一样大，后代只能让地图烂在地里。作者用它形容一种失败：维基如果只做搬运、不做抽象，就不比原始文档更有用。</p></div></div><div class="note-item"><div class="note-n">10</div><div><h4>200 行 / 25 KB 怎么理解</h4><p>两个上限哪个先到算哪个：MEMORY.md 只把头部当索引用。超出的部分并没有丢，仍然留在文件里，需要时再读——这正是「顶层小、细节下沉、链接留下」的具体实现。</p></div></div><div class="note-item"><div class="note-n">11</div><div><h4>LAB 基准是什么</h4><p>Harvey 的法律任务基准：给一组文档，要求写法律简报，再按评分要点逐条打分。本文借它做了两类任务——并购问答（要跨文档综合）与合同条款描述（要逐字保真）。</p></div></div><div class="note-item"><div class="note-n">12</div><div><h4>图 8 的位置</h4><p>正文直到最后的讨论部分才提 Figure 8，指的是前面那张「向华蓝市推进」的折线图（本页图 8）：它同时画出「做梦修正后」「原始记忆」「无记忆」三条曲线。</p></div></div></div></section><footer><p>原文 2026-11-06 发布于 Anthropic Research（原文未署个人作者）。本页译文、速览与译注由译者制作；英文列逐字照录原文，只做了一处排版处理：原文的图注排在图片下方，本页并入图区。</p><p>原文：<a href="https://www.anthropic.com/research/components-of-agent-memory" target="_blank" rel="noopener">The components of agent memory</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-memory-notes"><span class="dot">●</span>记忆笔记</a><a class="l2" href="#s-prediction"><span class="dot">●</span>记忆可以是对未来需求的预测</a><a class="l2" href="#s-salience"><span class="dot">●</span>Claude 学会了判断显著性</a><a class="l2" href="#s-steering"><span class="dot">●</span>引导 Claude 写记忆</a><a class="l2" href="#s-correct"><span class="dot">●</span>「做梦」可以修正记忆</a><a class="l2" href="#s-representations"><span class="dot">●</span>「做梦」可以搭出新的记忆表示</a><a class="l2" href="#s-promote"><span class="dot">●</span>「做梦」可以把笔记提升到层级顶端</a><a class="l2" href="#s-focus"><span class="dot">●</span>「做梦」可以把记忆聚焦到特定目标</a><a class="l2" href="#s-gaps"><span class="dot">●</span>「做梦」可以补上单次会话留下的缺口</a><a class="l2" href="#s-outlook"><span class="dot">●</span>向后理解，向前看</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L14":{"title_zh":"智能体记忆库（memory stores）","title_en":"Using agent memory","site":"platform.claude.com","what_zh":"Managed Agents 记忆库文档：记忆挂进会话沙箱当目录，agent 用普通文件工具读写，改动留不可变版本。","why_zh":"正文说每个会话都是新的、只靠记忆目录延续，这套机制全在这篇：单条 100 kB、单库一万条、每会话最多 8 个，决定了记忆必须写成很多小文件。","tier":"必读","order":1,"url":"https://platform.claude.com/docs/en/managed-agents/memory"},"L6":{"title_zh":"做梦（Dreams）","title_en":"Dreams","site":"platform.claude.com","what_zh":"Dreams 文档：一次 dream 读一个已有记忆库加 1 到 100 个会话，产出另一个重组后的记忆库。","why_zh":"正文那句称为「做梦」就指这里，文档写清了产品形状——异步作业、输入库不改写、输出是新库，所以可以审阅后再采纳。","tier":"必读","order":2,"url":"https://platform.claude.com/docs/en/managed-agents/dreams"},"L20":{"title_zh":"用动态工作流做一场梦","title_en":"Dreaming with a dynamic workflow","site":"platform.claude.com","what_zh":"Cookbook 教程：用一条动态工作流搭最小可用的 dream，把会话逐份蒸馏成带索引的维基。","why_zh":"正文结尾的做梦入门链接就是它；文章讲的 dreaming 各部件在这里都有对应代码与提示词，还给了真实价目，能把类比落成可跑的东西。","tier":"必读","order":3,"url":"https://platform.claude.com/cookbook/managed-agents-cma-dreaming-with-a-dynamic-workflow"},"L16":{"title_zh":"LLM 维基：让模型替你维护知识库","title_en":"llm-wiki · GitHub","site":"gist.github.com","what_zh":"Karpathy 提案：不用 RAG 每次重查原文，让 LLM 增量维护一座持久维基。","why_zh":"正文把 wiki 定义为 Claude 自己写和维护的页面集合，出处就是它；三层结构与收录、提问、体检三种操作，正是文章多会话建维基那套流程的原型。","tier":"必读","order":4,"url":"https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f"},"L21":{"title_zh":"知识维基快速上手","title_en":"claude-quickstarts/managed-agents/knowledge-wiki at main · anthropics/claude-quickstarts","site":"github.com","what_zh":"Anthropic 快速上手：把语料一次读成记忆库里的 markdown 维基，之后只从维基作答。","why_zh":"正文结尾另一条链接，也是文章那套多会话建维基最完整的公开实现；README 给了成本与收益——建成约 19 美元、约 240 个问题回本。","tier":"必读","order":5,"url":"https://github.com/anthropics/claude-quickstarts/tree/main/managed-agents/knowledge-wiki"},"L18":{"title_zh":"Claude Code 如何记住你的项目","title_en":"How Claude remembers your project","site":"code.claude.com","what_zh":"CLAUDE.md 与自动记忆并存，后者每次会话只加载 MEMORY.md 前 200 行或 25KB。","why_zh":"正文用它论证注入层必须小；文档把阈值与后果写死——超限的写入仍成功，但超出部分下次加载被丢弃，并回错误要求重写索引。","tier":"必读","order":6,"url":"https://code.claude.com/docs/en/memory"},"L5":{"title_zh":"睡眠时计算：不止在测试时扩算力","title_en":"Sleep-time Compute: Beyond Inference Scaling at Test-time","site":"arxiv.org","what_zh":"2025 年 Letta 与伯克利的论文：提问前先离线想，预判会问什么、预计算可复用的量，压低测试时算力。","why_zh":"正文点名的睡眠时计算就是它，也是全文类比的技术源头；读完能明白离线整理记忆为何可能省算力，而不只是多花一份钱。","tier":"必读","order":7,"url":"https://arxiv.org/abs/2504.13171"},"L9":{"title_zh":"压缩（compaction）总览","title_en":"Compaction overview","site":"platform.claude.com","what_zh":"压缩文档：用服务端摘要替换较早轮次把长任务压回上下文窗口，分按需与按阈值两条路线。","why_zh":"正文把它列为不算 agent memory 的三种机制之一，只给了一个括号定义；读完才知它和做梦的分工——一个丢旧轮次，一个沉淀跨会话知识。","tier":"背景","order":8,"url":"https://platform.claude.com/docs/en/build-with-claude/compaction"},"L13":{"title_zh":"Claude 托管智能体总览","title_en":"Claude Managed Agents overview","site":"platform.claude.com","what_zh":"托管智能体总览：Anthropic 托管的 agent harness，围绕智能体、环境、会话、事件四个概念。","why_zh":"正文实验就跑在它上面——每题开新会话、只有记忆目录延续；读总览才看清会话是新的、记忆是挂载的这个组合怎么成立。","tier":"背景","order":9,"url":"https://platform.claude.com/docs/en/managed-agents/overview"},"L11":{"title_zh":"记忆工具（memory tool）","title_en":"Memory tool","site":"platform.claude.com","what_zh":"记忆工具文档：客户端工具，Claude 用查看、创建等命令操作 /memories 下的文件，跨会话留存。","why_zh":"正文说 Claude 可以把要点写进记忆库这一处指向它；它给出最朴素形态——文件就在你的存储里，那个路径只是被映射出去的前缀。","tier":"背景","order":10,"url":"https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool"},"L12":{"title_zh":"持续学习基准 1.0 发布","title_en":"Continual Learning Bench 1.0","site":"continual-learning-bench.com","what_zh":"2026 年 5 月发布的持续学习基准：任务序列彼此不独立，允许被测系统在评测中改变自己。","why_zh":"正文那段数据库任务与六个模型的分数差都源自这里；读它才知道分数怎么算——用增益把本来就强和真学到的分开，这正是那张图的读法。","tier":"背景","order":11,"url":"https://continual-learning-bench.com/news/cl-bench-1-0/"},"L17":{"title_zh":"Harvey 法律智能体基准","title_en":"GitHub - harveyai/harvey-labs: A benchmark built to evaluate and improve agent capabilities for supporting legal work.","site":"github.com","what_zh":"Harvey 开源的法律智能体基准：任务集（指令、文档、评分细则）加执行骨架与打分器，用真实法律工作考 agent。","why_zh":"正文用它做第二组评估，得出跨多文档的维基更有用；读仓库才知道分数是全通过才记 1.0，这解释了文章为何盯着漏掉的事实数。","tier":"背景","order":12,"url":"https://github.com/harveyai/harvey-labs"},"L7":{"title_zh":"睡眠框架：让模型在持续学习中不遗忘","title_en":"The sleep framework: A new way for LLMs to retain knowledge in continual learning","site":"research.google","what_zh":"Google Research 2026 年 10 月的博客：给模型加睡眠期，离线扩容专家、把短期记忆蒸馏进长期参数。","why_zh":"正文把做梦的命名也挂在这篇上，但它改的是权重而非上下文；读它能划清文章开头那句记忆不含权重变化的界线。","tier":"背景","order":13,"url":"https://research.google/blog/the-sleep-framework-a-new-way-for-llms-to-retain-knowledge-in-continual-learning/"},"L8":{"title_zh":"上下文学习与归纳头","title_en":"In-context learning and induction heads","site":"anthropic.com","what_zh":"Anthropic 2022 年的机制可解释性研究：定位归纳头这个两级注意力电路，并用它解释上下文学习。","why_zh":"正文用它界定上下文学习等于单次对话内获得的知识，属被排除的三种机制之一；想知道它在电路层面长什么样，这篇最直接。","tier":"背景","order":14,"url":"https://www.anthropic.com/research/in-context-learning-and-induction-heads"},"L4":{"title_zh":"睡眠中系统记忆巩固的机制","title_en":"Mechanisms of systems memory consolidation during sleep","site":"nature.com","what_zh":"2019 年《自然神经科学》综述：把睡眠巩固拆成海马重放、慢波与纺锤波调控、记忆被抽象三层机制。","why_zh":"正文说经历被逐渐蒸馏并整合进新皮层，这半句全靠它撑；它讲清重放如何被慢波与纺锤波耦合放大、记忆又怎样从情节变成要点。","tier":"背景","order":15,"url":"https://www.nature.com/articles/s41593-019-0467-3"},"L1":{"title_zh":"海马体与新皮层为何是互补学习系统","title_en":"Why There Are Complementary Learning Systems in the Hippocampus and Neocortex","site":"stanford.edu","what_zh":"1995 年《心理学评论》的奠基论文：海马快速存单次经历，新皮层慢速学习并靠重放编织结构。","why_zh":"正文第一句说海马在其中扮演核心角色，引的就是它；这篇论证了为什么必须两套系统、为什么重放要交错，读完才明白文章为何拆成捕获与巩固两层。","tier":"背景","order":16,"url":"https://stanford.edu/~jlmcc/papers/McCMcNaughtonOReilly95.pdf"},"L3":{"title_zh":"人类休息时的海马重放优先处理学得弱的信息","title_en":"Human hippocampal replay during rest prioritizes weakly learned information and predicts memory performance","site":"nature.com","what_zh":"2018 年《自然通讯》研究：用功能磁共振解码人类休息时的海马重放，学得越弱的项目重放越多。","why_zh":"正文说安静休息时海马重放近期经历，这篇是罕有的人类证据，还回答重放不匀、优先补最脆弱记忆，正好支持文章挑值得记的取舍。","tier":"背景","order":17,"url":"https://www.nature.com/articles/s41467-018-06213-1"},"L2":{"title_zh":"海马尖波涟漪如何挑选要被记住的经历","title_en":"Selection of experience for memory by hippocampal sharp wave ripples","site":"science.org","what_zh":"2024 年《科学》论文：小鼠清醒期海马尖波涟漪挑出部分试次，睡眠期只重放被挑中的片段。","why_zh":"补足正文只有部分经历被巩固这半句：文章说海马抓经历、只有部分留下，这篇给出怎么挑的机制，即清醒涟漪的内容决定睡眠重放什么。","tier":"可选","order":18,"url":"https://www.science.org/doi/10.1126/science.adk8261"},"L10":{"title_zh":"突触标签与长时程增强","title_en":"Synaptic tagging and long-term potentiation","site":"nature.com","what_zh":"1997 年《自然》短篇通讯：强刺激在突触上留下只存续数小时的标签，把新合成的蛋白就地捕获。","why_zh":"正文说化学信号可以在经历前后标记一段记忆，标记二字就来自这类工作；它也回答了为什么被标记的记忆在离线期重放得更多。","tier":"可选","order":19,"url":"https://www.nature.com/articles/385533a0"},"L15":{"title_zh":"Claude 打宝可梦教给我们的 agent 课","title_en":"Lessons on AI agents from Claude Plays Pokemon","site":"youtube.com","what_zh":"官方 45 分钟对谈：两位研究员复盘 Claude 玩宝可梦，含记忆系统与长期存储一节。","why_zh":"正文拿它证明宝可梦是长程导航的好测试场；10 分 20 秒起正好讲记忆系统与长期存储，正是文章用全局文件当仪表盘那类做法的背景。","tier":"可选","order":20,"url":"https://www.youtube.com/watch?v=CXhYDOvgpuU"},"L19":{"title_zh":"Claude Duet 入门","title_en":"Get started with Claude Duet","site":"support.claude.com","what_zh":"Claude Duet 入门页：研究预览里像给人发消息一样用的助手，能操作已连接的应用，在云端干活。","why_zh":"正文说 Duet 这类助手受益于围绕人组织记忆，并以此说明做梦可按目标调；读这篇能看到接入条件与美国限定，以及记忆怎么继承。","tier":"可选","order":21,"url":"https://support.claude.com/en/articles/17631495-get-started-with-claude-duet"}},"terms":{"agent-memory":{"en":"agent memory","zh":"智能体记忆","def_zh":"文章定义为从用户互动、被派任务等经验中获得、跨会话保留、可日后读作上下文的知识；明说排除改权重、上下文学习与压缩。","analogy_zh":""},"dreaming":{"en":"dreaming","zh":"做梦","def_zh":"指用空闲算力回看日志与会话记录，纠错、写笔记、造记忆表示，并决定下次预载什么；它在后台跑，产出不一定立刻可用。","analogy_zh":"像人睡觉时大脑把白天的经历慢慢整理成长期知识。"},"memory-notes":{"en":"memory notes","zh":"记忆笔记","def_zh":"Claude 在会话中把显著发现写进记忆文件夹的短条；文章强调它只看得到写那一刻的上下文，可能一开始就错，也会随环境漂移。","analogy_zh":"像随手贴的便签：好找，但不保证还准。"},"transcripts":{"en":"transcripts","zh":"会话记录","def_zh":"图注称其为可搜索的事件日志，记下 Claude 每个会话做过的事；它是校验记忆笔记时的依据，也是做梦的原料。","analogy_zh":"像行车记录仪，事后可以回查。"},"representations":{"en":"memory representations","zh":"记忆表示","def_zh":"指 Claude 为方便翻记忆而新建的组织结构，典型是 wiki；链接像一张地图，让检索走得更快，但要花算力维护。","analogy_zh":"像给书库编目录并加交叉引用。"},"wiki":{"en":"wiki","zh":"维基","def_zh":"Claude 自己写并维护、互相链接的页面集合，汇集它对某主题所知；链接等于一张可检索记忆的地图，但它也可能膨胀到比原文还大。","analogy_zh":"像一张越画越细、彼此链接的地图。"},"injected-context":{"en":"injected context","zh":"注入上下文","def_zh":"指每个会话开头由运行框架抢先载入的记忆层，Claude 不用搜索、甚至不必知道有东西可搜；它吃 token，必须保持很小。","analogy_zh":"像每天开工时摆在手边的提要卡。"},"salience":{"en":"salience","zh":"显著性","def_zh":"指 Claude 当场判断什么值得记；实验发现强模型自由判断比预设规则更有效，「只记失败」这类规则反而削弱收益。","analogy_zh":"像编辑判断哪句话值得进标题。"},"consolidation":{"en":"consolidation","zh":"巩固","def_zh":"指部分经历被巩固成长时知识的过程，人脑多在离线时发生；文章把做梦比作智能体版：从日志里提炼笔记与表示。","analogy_zh":"像把当天的录像剪进长期档案。"},"replay":{"en":"replay","zh":"重放","def_zh":"指海马体在睡眠和安静休息时反复回放近期经历；被标记为重要的记忆回放得更频繁，从而稳定并整合进长期记忆。","analogy_zh":"像大脑在离线时反复回放同一段经历。"},"hippocampus":{"en":"hippocampus","zh":"海马体","def_zh":"文章说它当场捕捉经历，让记忆快速形成、立刻可用；但它只管录入，长期知识要靠离线巩固进新皮层。","analogy_zh":"像临时便签本：存得快，但不长久。"},"neocortex":{"en":"neocortex","zh":"新皮层","def_zh":"文章称它是存放我们多数「知识」的脑区；离线时海马体回放经历，慢慢把它们提炼并整合到这里。","analogy_zh":"像脑子里那只长期档案柜。"},"context-window":{"en":"context window","zh":"上下文窗口","def_zh":"指模型一次能装下的上下文容量；文章说压缩是为了在新窗口里接着干，并明确把它排除在智能体记忆之外。","analogy_zh":"像一张只摊得开几页的桌面。"},"in-context-learning":{"en":"in-context learning","zh":"上下文学习","def_zh":"指单次对话之内获得的知识；文章把它与跨会话保留的智能体记忆并列为不同机制，只有后者算记忆。","analogy_zh":""},"compaction":{"en":"compaction","zh":"压缩","def_zh":"指 Claude 写摘要替换较早的对话轮次，好在新上下文窗口继续工作；文章明确不把它算作智能体记忆。","analogy_zh":"像把旧对话压成一页摘要。"},"sleep-time-compute":{"en":"sleep-time compute","zh":"睡眠时计算","def_zh":"Letta 与 UC Berkeley 提出：让模型在交互之间的空闲时间重整已有上下文；文章把它看作做梦这个想法的出处。","analogy_zh":"像下班后留在工位上整理材料。"},"cl-bench":{"en":"CL-Bench","zh":"CL-Bench","def_zh":"持续学习基准，测智能体能否靠记忆完成长程任务；文章的数据库问答要求答错后记录、立论、验证并写成规则。","analogy_zh":""},"memory-directory":{"en":"memory directory","zh":"记忆目录","def_zh":"跨会话持久、可读可写的文件夹，是文章多个实验里 Claude 唯一的记忆载体；放多少文件、怎么组织直接影响表现。","analogy_zh":"像跨会话共用的一个文件柜。"},"harness":{"en":"harness","zh":"运行框架","def_zh":"指包在模型外、驱动智能体的那层装置：管会话循环与工具，并在每轮开头把注入上下文预载进来。","analogy_zh":"像舞台的灯光与提词器，不是演员。"},"learning-loop":{"en":"learning loop","zh":"学习闭环","def_zh":"指答错后记录失败、提出猜想、动手验证，再把结论写成下次可用的规则；文章说 Opus 5 是第一个真正闭环的模型。","analogy_zh":"像复盘、立论、验证再改规则的循环。"},"graded-criteria":{"en":"graded criteria","zh":"评分要点","def_zh":"指评测里逐条打分的项目，如简报该覆盖哪些事实；文章用命中比例衡量 wiki 的价值，25 题里从 13% 升到 48%。","analogy_zh":"像阅卷时逐条对照的得分点。"},"legal-brief":{"en":"legal brief","zh":"法律简报","def_zh":"指 Harvey LAB 要求 Claude 依据给定文件写出、再按清单判分的法律文书；文章用它比较 wiki 与纯搜索的表现。","analogy_zh":""},"token":{"en":"token","zh":"token","def_zh":"模型读写上下文的最小计量单位，大致相当于一个词或词的一部分。本文用它衡量两件事的成本：把记忆注入每次会话，以及用「做梦」维护记忆。","analogy_zh":"像按字数收费：字越多，钱和注意力都越贵。"}},"notes":{"N1":{"title_zh":"开篇那句克尔凯郭尔","body_zh":"原文是 life can only be understood backward, but it must be lived forward，出自克尔凯郭尔的日记。作者拿它当全文骨架：记忆系统总是先有经历、后有整理——「做梦」就是把「向后理解」变成一个可以随时调度的计算动作。"},"N2":{"title_zh":"大脑类比到哪里为止","body_zh":"海马体与新皮层的分工只是类比来源，不是等价关系：人的「巩固」是生物过程，有睡眠这种硬节律；智能体的巩固是一次随时可跑的计算任务，也没有必须等到的「夜里」。"},"N3":{"title_zh":"「智能体记忆」的边界很窄","body_zh":"本文的记忆只算跨会话保留、之后能回读的上下文。改权重属于训练；上下文学习只在单次对话内；压缩是给同一个会话腾地方——这三者都不算记忆。"},"N4":{"title_zh":"CL-Bench 的关键设置","body_zh":"每题都从一个全新会话开始，模型手里唯一的跨会话线索就是那个记忆目录。所以得分提升只能归因于它自己写进记忆的东西，而不是上下文里残留的痕迹。题目说的「长时程」，指要连着答几十道题、靠记忆跨题积累，而不是单题里推理得更久。"},"N5":{"title_zh":"「第 10,000 步」是什么口径","body_zh":"步指智能体在游戏里的一次动作，翻菜单、读记忆这些也算。比较的两段运行都截在约第 10,000 步，比的是「同样的步数下，记忆长什么样」，不是「谁玩得久」。"},"N6":{"title_zh":"为什么「只记录失败」反而更差","body_zh":"这条规则替模型决定了什么值得记，砍掉了它自己判断显著性的空间。图 5 右量的是「有记忆相对无记忆的增益变化」：Opus 5 −0.234、Opus 4.7 −0.150——负号表示增益被吃掉。"},"N7":{"title_zh":"月见山这一段的地理","body_zh":"月见山（Mt. Moon）在深灰市（Pewter City）与华蓝市（Cerulean City）之间，洞内有一段单向崖边，掉下去会回到山前那条路。原文引用的是游戏内文本，所以 Mt Moon 有时不带句点。"},"N8":{"title_zh":"维基（wiki）在这篇文章里指什么","body_zh":"链接指向 Karpathy 那份「用 wiki 组织知识」的 gist。本文的用法更具体：页面由 Claude 自己写、自己连，链接就是检索路径。注意两个口径——13%→48% 是「只用维基」，54%→61% 是「搜索 + 维基」。"},"N9":{"title_zh":"博尔赫斯那个地图","body_zh":"《论科学的精确性》里，制图师把地图画得和帝国一样大，后代只能让地图烂在地里。作者用它形容一种失败：维基如果只做搬运、不做抽象，就不比原始文档更有用。"},"N10":{"title_zh":"200 行 / 25 KB 怎么理解","body_zh":"两个上限哪个先到算哪个：MEMORY.md 只把头部当索引用。超出的部分并没有丢，仍然留在文件里，需要时再读——这正是「顶层小、细节下沉、链接留下」的具体实现。"},"N11":{"title_zh":"LAB 基准是什么","body_zh":"Harvey 的法律任务基准：给一组文档，要求写法律简报，再按评分要点逐条打分。本文借它做了两类任务——并购问答（要跨文档综合）与合同条款描述（要逐字保真）。"},"N12":{"title_zh":"图 8 的位置","body_zh":"正文直到最后的讨论部分才提 Figure 8，指的是前面那张「向华蓝市推进」的折线图（本页图 8）：它同时画出「做梦修正后」「原始记忆」「无记忆」三条曲线。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
