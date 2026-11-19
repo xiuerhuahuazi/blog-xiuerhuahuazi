@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>构建 Claude Code 的教训：提示缓存决定一切｜Lessons from building Claude Code: Prompt caching is everything</title>
+<meta name="description" content="构建 Claude Code 的教训：提示缓存决定一切｜Lessons from building Claude Code: Prompt caching is everything：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/prompt-caching/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="构建 Claude Code 的教训：提示缓存决定一切">
+<meta property="og:description" content="Anthropic 团队讲怎么把「缓存命中率」当成可用性来经营：提示词怎么排、为什么中途不能换模型和工具、压缩为什么要沿用父对话的前缀——以及为什么最直觉的做法往往最贵。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/prompt-caching/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">claude.dev · Engineering（作者 Thariq Shihipar） · 2026-04-30</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Lessons from building Claude Code: Prompt caching is everything</span><span class="h1-zh">构建 Claude Code 的教训：提示缓存决定一切</span></h1><div class="hero-meta"><span>原文 1390 词</span><span>中文 2800 字</span><span>逐句对照 <i>69</i> 句</span><span>预计 6 分钟</span><span><a href="https://claude.dev/blog/lessons-from-building-claude-code-prompt-caching-is-everything/" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 4 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：提示缓存的规则只有一条——前缀匹配。所以「怎么排」和「什么不许动」比「写得多好」更影响成本。</li><li><b>排布</b>：静态在前、动态在后：系统提示词与工具 → CLAUDE.md → 会话上下文 → 对话消息。这套顺序很脆：加个时戳、打乱工具顺序，就全废。</li><li><b>三条禁令</b>：信息过期用消息传（别改系统提示词）；中途别换模型（缓存按模型各算各的）；中途别增删工具（工具属于前缀）。计划模式与工具搜索都是围绕这条约束设计出来的。</li><li><b>压缩的坑</b>：朴素做法是另发一个不带工具的摘要调用——前缀从第一个 token 就分叉，整段对话按未缓存价格计费。正确做法是沿用父对话完全相同的系统提示词、上下文与工具，只把压缩提示追加成一条新用户消息。</li></ul><div class="compare"><div class="cmp"><h3>直觉做法</h3><ol><li>信息过期就改系统提示词，改成最新的</li><li>简单问题切便宜的小模型来答</li><li>进入计划模式就把工具集换成只读的</li><li>压缩时另发一个「总结一下」的调用，省事</li></ol></div><div class="cmp win"><h3>本文的做法</h3><ol><li>在下一条用户消息或工具结果里带一个 system-reminder 标签</li><li>要换模型就用子智能体做交接，别在主对话里切</li><li>工具集不变，把 EnterPlanMode / ExitPlanMode 做成工具</li><li>沿用父对话完全相同的系统提示词与工具，只追加压缩提示</li></ol></div></div><p class="ov-foot cmp-foot">对照表是译者按原文整理，不是原文自带的表格。</p><p class="ov-foot">读法建议：如果你只能记一条，记「前缀匹配 → 一切顺序都围绕它排」；如果你在动手实现压缩或子智能体，直接读第五节和第六节。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Best practices for optimizing <span class='term' data-term='prompt_caching'>prompt caching</span> in Claude Code, including how to most effectively structure your prompt, use tools, and layer on <span class='term' data-term='compaction'>compaction</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">在 Claude Code 里优化<span class='term' data-term='prompt_caching'>提示缓存</span>（prompt caching）的实践要点：怎么排布提示词最有效、怎么用工具、怎么在<span class='term' data-term='compaction'>压缩</span>（compaction）上叠加处理。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">It is often said in engineering that “cache rules everything around me”, and the same rule holds for agents.</span> <span class="s" data-k="intro-b1-1">Long running agentic products like Claude Code are made feasible by <a class='lnk' href='https://x.com/RLanceMartin/status/2024573404888911886' target='_blank' rel='noopener' data-link='L1'><b>prompt caching</b></a> which allows us to reuse computation from previous roundtrips and significantly decrease latency and cost.</span> <span class="s" data-k="intro-b1-2">At Claude Code, we build our entire harness around prompt caching.</span> <span class="s" data-k="intro-b1-3">A high prompt <span class='term' data-term='cache_hit'>cache hit</span> rate decreases costs and helps us create more generous rate limits for our subscription plans, so we run alerts on our prompt cache hit rate and declare SEVs if they're too low.</span> <span class="s" data-k="intro-b1-4">These are the (often unintuitive) lessons we've learned from optimizing prompt caching at scale.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">工程界常说「cache rules everything around me」（缓存统治我周遭的一切），这条规律对智能体同样成立。</span><span class="s" data-k="intro-b1-1">像 Claude Code 这种长时间运行的智能体产品之所以可行，靠的是<a class='lnk' href='https://x.com/RLanceMartin/status/2024573404888911886' target='_blank' rel='noopener' data-link='L1'><b>提示缓存</b></a>：它让我们复用前几轮往返的计算，大幅降低延迟与成本。</span><span class="s" data-k="intro-b1-2">在 Claude Code 里，我们整套运行框架都是围绕提示缓存搭起来的。</span><span class="s" data-k="intro-b1-3">缓存<span class='term' data-term='cache_hit'>命中率</span>高，成本就低，我们也能给订阅套餐设更宽松的速率上限；所以我们给缓存命中率配了告警，命中率过低就按 SEV（严重事故）处理。</span><span class="s" data-k="intro-b1-4">下面这些是我们在规模化优化提示缓存时学到的教训（往往反直觉）。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-layout">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Lay out your prompt for caching</span><span class="h-zh">为缓存排布你的提示词</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>提示缓存是前缀匹配，所以顺序决定成本：静态系统提示词 → CLAUDE.md → 会话上下文 → 对话消息。这套顺序很容易被无意破坏——一个时戳、一次工具顺序打乱，就全废。</p></div>
+<div class="reader-body">
+<figure class="row wide fig" id="fig1" data-cap="系统提示词的四层排布"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="FIG A Claude Code's system prompt is organized so the stable pieces stay cached and only the conversation itself grows turn by turn."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>系统提示词的四层排布</b>　从上到下四层：&lt;b&gt;Static system prompt&lt;/b&gt; 与工具（base system instructions and tools，全局缓存）→ &lt;b&gt;CLAUDE.md&lt;/b&gt; 与 memory（按项目缓存）→ &lt;b&gt;Session context&lt;/b&gt;（env、MCP、输出风格等，按会话缓存）→ &lt;b&gt;Conversation messages&lt;/b&gt;（每轮都在增长）。</p><p class="cap-en">原文图注：FIG A Claude Code's system prompt is organized so the stable pieces stay cached and only the conversation itself grows turn by turn.</p><details class="howto" open><summary>这张图怎么看（0 条）</summary><ol></ol></details></figcaption></figure>
+<div class="row" data-rid="layout-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layout-b1-0">Prompt caching works by <span class='term' data-term='prefix_match'>prefix matching</span>—the API caches everything from the start of the request up to each `<span class='term' data-term='cache_control'>cache_control</span>` breakpoint.</span> <span class="s" data-k="layout-b1-1">This means the order you put things in matters enormously, you want as many of your requests to share a prefix as possible.</span> <span class="s" data-k="layout-b1-2">How you structure a prompt matters for output quality too, not just cache hits — the <a class='lnk' href='https://claude.com/blog/best-practices-for-prompt-engineering' target='_blank' rel='noopener' data-link='L2'>prompt engineering fundamentals</a> are the other half of the discipline.</span> <span class="s" data-k="layout-b1-3">The best way to do this is static content first, dynamic content last.</span> <span class="s" data-k="layout-b1-4">For <a class='lnk' href='https://claude.com/product/claude-code' target='_blank' rel='noopener' data-link='L3'>Claude Code</a> this looks like:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layout-b1-0">提示缓存的原理是<span class='term' data-term='prefix_match'>前缀匹配</span>——API 会从请求开头一直缓存到每个 `<span class='term' data-term='cache_control'>cache_control</span>` 断点。</span><span class="s" data-k="layout-b1-1">这意味着你把东西放的顺序极其重要：你希望尽可能多的请求共享同一段前缀。</span><span class="s" data-k="layout-b1-2">提示词怎么排布，不只影响缓存命中，也影响输出质量——<a class='lnk' href='https://claude.com/blog/best-practices-for-prompt-engineering' target='_blank' rel='noopener' data-link='L2'>提示词工程的基本功</a>是这套功夫的另一半。</span><span class="s" data-k="layout-b1-3">最好的做法是静态内容在前、动态内容在后。</span><span class="s" data-k="layout-b1-4">对 <a class='lnk' href='https://claude.com/product/claude-code' target='_blank' rel='noopener' data-link='L3'>Claude Code</a> 来说，顺序是这样的：</span></p></div></div>
+<div class="row" data-rid="layout-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layout-b2-0">1. <b>Static <span class='term' data-term='system_prompt'>system prompt</span></b> & Tools (globally cached)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layout-b2-0">1. <b>静态<span class='term' data-term='system_prompt'>系统提示词</span></b>与工具定义（全局缓存）</span></p></div></div>
+<div class="row" data-rid="layout-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layout-b3-0">2. <b>CLAUDE.md</b> (cached within a project)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layout-b3-0">2. <b>CLAUDE.md</b>（在一个项目内缓存）</span></p></div></div>
+<div class="row" data-rid="layout-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layout-b4-0">3. <b>Session context</b> (cached within a session)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layout-b4-0">3. <b>会话上下文</b>（在一次会话内缓存）</span></p></div></div>
+<div class="row" data-rid="layout-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layout-b5-0">4. <b>Conversation messages</b></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layout-b5-0">4. <b>对话消息</b></span></p></div></div>
+<div class="row" data-rid="layout-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="layout-b6-0">This way we maximize how many sessions share cache hits.</span> <span class="s" data-k="layout-b6-1">But this approach can be surprisingly fragile.</span> <span class="s" data-k="layout-b6-2">We’ve broken this ordering before for a variety of reasons, including: putting an in-depth timestamp in the static system prompt, shuffling tool order definitions non-deterministically, and updating parameters of tools (e.g., what agents the Agent tool can call).</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="layout-b6-0">这样我们就能让尽可能多的会话共享缓存命中。</span><span class="s" data-k="layout-b6-1">但这套做法出人意料地脆。</span><span class="s" data-k="layout-b6-2">我们以前因为各种原因破坏过这个顺序，包括：在静态系统提示词里塞了一个精确到分钟的时戳、不确定性地打乱了工具定义的顺序、以及更新工具的某些参数（比如 Agent 工具能调用哪些智能体）。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-messages">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Use messages for updates</span><span class="h-zh">用消息传递更新</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>信息过期时，改提示词会造成缓存未命中。正确做法是在下一轮的用户消息或工具结果里带一个 &lt;system-reminder&gt; 标签，把新信息交给模型。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="messages-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="messages-b0-0">There may be times when the information you put in your prompt becomes out of date, for example if you have the time or if the user changes a file.</span> <span class="s" data-k="messages-b0-1">It may be tempting to update the prompt, but that would result in a cache miss and could end up being quite expensive for the user.</span> <span class="s" data-k="messages-b0-2">Consider if you can pass in this information via messages in the agent’s next turn instead.</span> <span class="s" data-k="messages-b0-3">In Claude Code, we add a system-reminder tag in the next user message or tool result with the updated information for the model, which helps preserve the cache.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="messages-b0-0">有时你放进提示词的信息会过期，比如你放了当前时间，或者用户改了一个文件。</span><span class="s" data-k="messages-b0-1">把提示词更新一下很诱人，但那会造成缓存未命中，对用户来说可能相当贵。</span><span class="s" data-k="messages-b0-2">可以先想想：能不能在智能体的下一轮里，用消息把这些信息传进去？</span><span class="s" data-k="messages-b0-3">在 Claude Code 里，我们在下一条用户消息或工具结果里加一个 `<system-reminder>` 标签，把更新后的信息带给模型，这样能保住缓存。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-models">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Don't change models mid-session</span><span class="h-zh">不要在会话中途换模型</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>缓存按模型各算各的。聊到 100k token 再切 Haiku，反而比让 Opus 答更贵，因为要给 Haiku 重建缓存。真要换，用子智能体做交接。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="models-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="models-b0-0">Prompt caches are unique to models and this can make the math of prompt caching quite unintuitive.</span> <span class="s" data-k="models-b0-1">For example, if you're 100k tokens into a conversation with Opus and want to ask a question that is fairly easy to answer, it would actually be more expensive to switch to Haiku than to have Opus answer, because we would need to rebuild the prompt cache for Haiku.</span> <span class="s" data-k="models-b0-2">If you need to switch models, the best way to do it is with <span class='term' data-term='subagent'>subagents</span>; extending the above example, you could deploy a subagent that prompts Opus to prepare a “hand-off” message to another model on the task that it needs to get done.</span> <span class="s" data-k="models-b0-3">We do this often with the Claude Code’s Explore agents, which use Haiku.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="models-b0-0">提示缓存是按模型各算各的，这让缓存的账算起来很反直觉。</span><span class="s" data-k="models-b0-1">比如你跟 Opus 已经聊了 100k token，这时想问一个挺好回答的问题，切到 Haiku 反而比让 Opus 回答更贵，因为我们得为 Haiku 重建提示缓存。</span><span class="s" data-k="models-b0-2">如果确实需要换模型，最好的方式是用<span class='term' data-term='subagent'>子智能体</span>；接着上面的例子，你可以派一个子智能体，让它提示 Opus 写一条「交接」消息给另一个模型，说明它需要完成的任务。</span><span class="s" data-k="models-b0-3">Claude Code 的 Explore 智能体就常这么干，它们用的是 Haiku。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-tools">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Never add or remove tools mid-session</span><span class="h-zh">永远不要在会话中途增删工具</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>工具属于被缓存的前缀，增删一次就废掉整段对话的缓存。计划模式的做法是「工具集不变，把 EnterPlanMode / ExitPlanMode 做成工具」；工具太多则用 defer_loading 发轻量桩，让模型按需发现。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="tools-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tools-b0-0">Changing the tool set in the middle of a conversation is one of the most common ways people break prompt caching.</span> <span class="s" data-k="tools-b0-1">It seems intuitive—you should only give the model tools you think it needs right now.</span> <span class="s" data-k="tools-b0-2">But because tools are part of the cached prefix, adding or removing a tool invalidates the cache for the entire conversation.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tools-b0-0">在对话中途更换工具集，是人们最常踩的破坏提示缓存的坑之一。</span><span class="s" data-k="tools-b0-1">这看起来理所当然——你只该给模型它当下需要的工具。</span><span class="s" data-k="tools-b0-2">但工具属于被缓存的前缀，增删一个工具会让整段对话的缓存全部失效。</span></p></div></div>
+<div class="row h3row wide" id="h-tools-b1"><h3><span class='h3-en'>Using Plan Mode to design around the cache</span><span class='h3-zh'>用计划模式绕开缓存约束做设计</span></h3></div>
+<div class="row" data-rid="tools-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tools-b2-0"><a class='lnk' href='https://code.claude.com/docs/en/common-workflows' target='_blank' rel='noopener' data-link='L4'>Plan Mode</a> is a great example of designing features around caching constraints.</span> <span class="s" data-k="tools-b2-1">The intuitive approach would be: when the user enters <span class='term' data-term='plan_mode'>plan mode</span>, swap out the tool set to only include read-only tools, but that would break the cache.</span> <span class="s" data-k="tools-b2-2">Instead, we keep <i>all</i> tools in the request at all times and use EnterPlanMode and ExitPlanMode as tools themselves.</span> <span class="s" data-k="tools-b2-3">When the user toggles Plan Mode on, the agent gets a system message explaining that it's in Plan Mode and what the instructions are: explore the codebase, don't edit files, and call ExitPlanMode when the plan is complete.</span> <span class="s" data-k="tools-b2-4">The tool definitions never change.</span> <span class="s" data-k="tools-b2-5">This has a bonus benefit: because EnterPlanMode is a tool the model can call itself, it can autonomously enter plan mode when it detects a hard problem, without any cache break.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tools-b2-0"><a class='lnk' href='https://code.claude.com/docs/en/common-workflows' target='_blank' rel='noopener' data-link='L4'>计划模式（Plan Mode）</a>就是围绕缓存约束设计功能的一个好例子。</span><span class="s" data-k="tools-b2-1">直觉做法是：用户进入<span class='term' data-term='plan_mode'>计划模式</span>时，把工具集换成只含只读工具，但那样会破坏缓存。</span><span class="s" data-k="tools-b2-2">我们的做法是让请求里<i>始终</i>带着全部工具，而把 EnterPlanMode 和 ExitPlanMode 本身做成工具。</span><span class="s" data-k="tools-b2-3">当用户打开计划模式，智能体会收到一条系统消息，说明它现在处于计划模式以及该做什么：探索代码库、不要改文件、计划完成后调用 ExitPlanMode。</span><span class="s" data-k="tools-b2-4">工具定义从不改变。</span><span class="s" data-k="tools-b2-5">这还有个额外好处：因为 EnterPlanMode 是模型自己能调用的工具，它可以在发现难题时自主进入计划模式，而不破坏缓存。</span></p></div></div>
+<div class="row h3row wide" id="h-tools-b3"><h3><span class='h3-en'>Use tool search to defer instead of remove</span><span class='h3-zh'>用工具搜索延迟加载，而不是删除</span></h3></div>
+<div class="row" data-rid="tools-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tools-b4-0">The same principle applies to our <a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L5'>tool search tool</a>.</span> <span class="s" data-k="tools-b4-1">Claude Code can have dozens of MCP tools loaded, and including all of them in every request would be expensive, but removing them mid-conversation would break the cache.</span> <span class="s" data-k="tools-b4-2">Our solution: `<span class='term' data-term='defer_loading'>defer_loading</span>`.</span> <span class="s" data-k="tools-b4-3">Instead of removing tools, we send lightweight stubs ( just the tool name, with `defer_loading: true`) that the model can “discover” via tool search when needed.</span> <span class="s" data-k="tools-b4-4">The full tool schemas are only loaded when the model selects them.</span> <span class="s" data-k="tools-b4-5">This keeps the cached prefix stable because the same stubs are always present in the same order.</span> <span class="s" data-k="tools-b4-6">You can also use the <a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L5'>tool search tool</a> through our API to simplify this.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tools-b4-0">同样的原则也适用于我们的<a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L5'>工具搜索工具</a>。</span><span class="s" data-k="tools-b4-1">Claude Code 可能加载了几十个 MCP 工具，把它们全放进每个请求里太贵，而在对话中途删掉它们又会破坏缓存。</span><span class="s" data-k="tools-b4-2">我们的解法是：`defer_loading`。</span><span class="s" data-k="tools-b4-3">我们不删工具，而是发送轻量的桩（只带工具名，加上 `defer_loading: true`），模型需要时可以通过工具搜索去「发现」它们。</span><span class="s" data-k="tools-b4-4">完整的工具 schema 只在模型选中它们时才加载。</span><span class="s" data-k="tools-b4-5">这样被缓存的前缀就稳定了：同一批桩，永远以同样的顺序存在。</span><span class="s" data-k="tools-b4-6">你也可以通过我们的 API 使用<a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L5'>工具搜索工具</a>，省掉这些麻烦。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-compact">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Compacting without breaking the cache</span><span class="h-zh">压缩而不破坏缓存</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>朴素做法是另发一个不带工具的摘要调用——那会让前缀从第一个 token 就分叉，整段对话按未缓存价格计费。正确做法是沿用父对话完全相同的系统提示词与工具，把压缩提示追加为一条新的用户消息。</p></div>
+<div class="reader-body">
+<figure class="row wide fig" id="fig2" data-cap="压缩怎么不破坏缓存"><div class="fig-media"><img class="still" src="media/fig2.webp" loading="lazy" decoding="async" alt="FIG B When the context window fills up, Claude Code forks a cached call to summarize the conversation, then resumes with the summary in place of the original messages."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>压缩怎么不破坏缓存</b>　上半 Before：系统提示词与工具，加上许多轮对话，上下文窗口快满了。中间是一次 fork 出来的压缩调用：复用同一段前缀，于是命中缓存、价格只有十分之一；它追加一句 Summarize this conversation，返回约 20k token 的摘要。下半 After：新会话带着摘要继续，原文消息被替换。</p><p class="cap-en">原文图注：FIG B When the context window fills up, Claude Code forks a cached call to summarize the conversation, then resumes with the summary in place of the original messages.</p><details class="howto" open><summary>这张图怎么看（0 条）</summary><ol></ol></details></figcaption></figure>
+<div class="row" data-rid="compact-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="compact-b1-0"><a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction' target='_blank' rel='noopener' data-link='L6'>Compaction</a> is what happens when you run out of the <span class='term' data-term='context_window'>context window</span>.</span> <span class="s" data-k="compact-b1-1">We summarize the conversation so far and continue a new session with that summary.</span> <span class="s" data-k="compact-b1-2">Compaction interacts with prompt caching in ways that are easy to get wrong.</span> <span class="s" data-k="compact-b1-3">To compact a conversation, you have to send the full conversation to the model so it can write a summary.</span> <span class="s" data-k="compact-b1-4">The simplest way to do that is a separate API call with its own system prompt (something like “summarize this”) and no tools attached, but that's exactly where the cost trap is.</span> <span class="s" data-k="compact-b1-5">Prompt caching only applies when a request's prefix matches what's already cached, byte for byte, from the start.</span> <span class="s" data-k="compact-b1-6">Your main conversation is cached under one system prompt and tool set; the summarization call uses a different system prompt and no tools, so the prefixes diverge at the very first token and none of the cache applies.</span> <span class="s" data-k="compact-b1-7">You end up paying the full, uncached input rate for the entire conversation you're sending in — and the longer the conversation (i.e., the more you need compaction in the first place), the more expensive that one call becomes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="compact-b1-0"><a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction' target='_blank' rel='noopener' data-link='L6'>压缩（compaction）</a>发生在<span class='term' data-term='context_window'>上下文窗口</span>用满的时候。</span><span class="s" data-k="compact-b1-1">我们把到目前为止的对话摘要出来，用这份摘要开一段新会话继续。</span><span class="s" data-k="compact-b1-2">压缩与提示缓存之间的互动，很容易做错。</span><span class="s" data-k="compact-b1-3">要压缩一段对话，你得把整段对话发给模型，它才能写摘要。</span><span class="s" data-k="compact-b1-4">最简单的做法是另发一个 API 调用，用自己的一套系统提示词（类似「把这段总结一下」），不挂任何工具——而成本陷阱正出在这里。</span><span class="s" data-k="compact-b1-5">提示缓存只在请求的前缀与已缓存内容从头逐字节一致时才生效。</span><span class="s" data-k="compact-b1-6">你的主对话是在一套系统提示词和工具集下被缓存的；摘要调用用的是另一套系统提示词、没有工具，于是前缀从第一个 token 就分叉，缓存一点儿也用不上。</span><span class="s" data-k="compact-b1-7">结果就是：你发进去的整段对话，全按未缓存的完整输入价格计费——对话越长（也就是你越需要压缩），那一次调用就越贵。</span></p></div></div>
+<div class="row h3row wide" id="h-compact-b2"><h3><span class='h3-en'>The solution: cache-safe forking</span><span class='h3-zh'>解法：对缓存安全的分叉</span></h3></div>
+<div class="row" data-rid="compact-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="compact-b3-0">When we run compaction, we use the <i>exact same</i> system prompt, user context, system context, and tool definitions as the parent conversation.</span> <span class="s" data-k="compact-b3-1">We prepend the parent's conversation messages, then append the compaction prompt as a new user message at the end.</span> <span class="s" data-k="compact-b3-2">From the API's perspective, this request looks nearly identical to the parent's last request—same prefix, same tools, same history—so the cached prefix is reused.</span> <span class="s" data-k="compact-b3-3">The only new tokens are the compaction prompt itself.</span> <span class="s" data-k="compact-b3-4">This does mean however that we need to save a “compaction buffer” so that we have enough room in the context window to include the compact message and the summary output tokens.</span> <span class="s" data-k="compact-b3-5">Compaction is tricky but luckily, you don't need to learn these lessons yourself—based on our learnings from Claude Code we built <a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction#prompt-caching' target='_blank' rel='noopener' data-link='L7'>compaction</a> directly into the API, so you can apply these patterns in your own applications.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="compact-b3-0">我们做压缩时，用的是与父对话<i>完全相同</i>的系统提示词、用户上下文、系统上下文和工具定义。</span><span class="s" data-k="compact-b3-1">我们把父对话的消息放在前面，再把压缩提示作为一条新的用户消息追加到末尾。</span><span class="s" data-k="compact-b3-2">从 API 的角度看，这个请求和父对话的最后一个请求几乎一模一样——同样的前缀、同样的工具、同样的历史——所以被缓存的前缀能复用。</span><span class="s" data-k="compact-b3-3">唯一的新 token 就是压缩提示本身。</span><span class="s" data-k="compact-b3-4">不过这也意味着我们得留出一块「压缩缓冲」，让上下文窗口里有足够空间容纳压缩消息和摘要输出的 token。</span><span class="s" data-k="compact-b3-5">压缩很微妙，但好在你不必自己踩这些坑——基于在 Claude Code 上学到的经验，我们直接把<a class='lnk' href='https://platform.claude.com/docs/en/build-with-claude/compaction#prompt-caching' target='_blank' rel='noopener' data-link='L7'>压缩</a>做进了 API，你可以把这些模式用到自己的应用里。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-lessons">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Lessons learned</span><span class="h-zh">五条经验</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>前缀匹配、用消息而非改系统提示词、中途不换工具与模型、把缓存命中率当可用性监控、分叉操作必须共享父级前缀。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="lessons-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b0-0">Here are a few patterns we’ve found useful for optimizing prompt caching when building an agent:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b0-0">以下是我们在造智能体时，优化提示缓存觉得有用的一些模式：</span></p></div></div>
+<div class="row" data-rid="lessons-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b1-0">1. <b>Prompt caching is a prefix match.</b> Any change anywhere in the prefix invalidates everything after it.</span> <span class="s" data-k="lessons-b1-1">Design your entire system around this constraint.</span> <span class="s" data-k="lessons-b1-2">Get the ordering right and most of the caching works for free.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b1-0">1. <b>提示缓存是前缀匹配。</b>前缀里任何位置一改，它后面全部失效。</span><span class="s" data-k="lessons-b1-1">把整个系统围绕这条约束来设计。</span><span class="s" data-k="lessons-b1-2">顺序排对了，绝大部分缓存就是免费的。</span></p></div></div>
+<div class="row" data-rid="lessons-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b2-0">2. <b>Use messages instead of system prompt changes</b>.</span> <span class="s" data-k="lessons-b2-1">You may be tempted to edit the system prompt to do things like entering plan mode, changing the date, etc. but it would actually be better to insert these into messages during the conversation.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b2-0">2. <b>用消息，而不是改系统提示词。</b></span><span class="s" data-k="lessons-b2-1">你可能会想去改系统提示词来做这些事，比如进入计划模式、改日期等等，但其实更好的做法是在对话过程中把它们插进消息里。</span></p></div></div>
+<div class="row" data-rid="lessons-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b3-0">3. <b>Don't change tools or models mid-conversation.</b> Use tools to model state transitions (like plan mode) rather than changing the tool set.</span> <span class="s" data-k="lessons-b3-1">Defer tool loading instead of removing tools.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b3-0">3. <b>不要在对话中途更换工具或模型。</b>用具（tool）来表达状态转换（比如计划模式），而不是换工具集。</span><span class="s" data-k="lessons-b3-1">延迟加载工具，而不是删掉工具。</span></p></div></div>
+<div class="row" data-rid="lessons-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b4-0">4. <b>Monitor your cache hit rate like you monitor uptime.</b> We alert on cache breaks and treat them as incidents. <a class='lnk' href='https://claude.dev/blog/what-a-task-costs-on-opus-5-5/' target='_blank' rel='noopener' data-link='L8'>A few percentage points of cache miss rate</a> can dramatically affect cost and latency.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b4-0">4. <b>像监控可用性那样监控你的缓存命中率。</b>我们给缓存失效配告警，把它当事故处理。<a class='lnk' href='https://claude.dev/blog/what-a-task-costs-on-opus-5-5/' target='_blank' rel='noopener' data-link='L8'>几个百分点的缓存未命中率</a>就能显著影响成本与延迟。</span></p></div></div>
+<div class="row" data-rid="lessons-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b5-0">5. <b>Fork operations need to share the parent's prefix.</b> If you need to run a side computation (compaction, summarization, skill execution), use identical cache-safe parameters so you get cache hits on the parent's prefix.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b5-0">5. <b>分叉出来的操作必须共享父级前缀。</b>如果你要跑一段旁路计算（压缩、摘要、执行技能），就用完全一致、对缓存安全的参数，这样才能命中父级前缀。</span></p></div></div>
+<div class="row" data-rid="lessons-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="lessons-b6-0">Claude Code is built around prompt caching from day one; for the best results when building an agent, we suggest you do, too.</span> <span class="s" data-k="lessons-b6-1"><a class='lnk' href='https://code.claude.com/docs/en/overview' target='_blank' rel='noopener' data-link='L9'><i>Get started</i></a> <i>with Claude Code today.</i></span> <span class="s" data-k="lessons-b6-2"><i>This article was written by Thariq Shihipar, a member of technical staff on the Claude Code team.</i></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="lessons-b6-0">Claude Code 从第一天起就是围绕提示缓存建的；想造出最好的智能体，我们建议你也这么做。</span><span class="s" data-k="lessons-b6-1">今天就来<a class='lnk' href='https://code.claude.com/docs/en/overview' target='_blank' rel='noopener' data-link='L9'>上手</a> Claude Code。</span><span class="s" data-k="lessons-b6-2">本文由 Claude Code 团队技术成员 Thariq Shihipar 撰写。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 10 处正文引用，指向 9 个不同链接；另有 2 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>提示缓存图解</h4><p class="lnk-site">x.com · A visual guide to prompt caching</p><p class="lnk-anchors">正文对应：<em>提示缓存</em></p><p><b>这是什么：</b>一篇把提示缓存讲成图的长贴：断点在哪、命中怎么算。</p><p><b>为什么值得点：</b>文章通篇默认你懂基本机制。不熟的话先看这份图解，后面的「为什么顺序重要」才有画面感。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把请求看成一段文本，断点之前的都进缓存；下一请求若前缀一致，直接复用，价格与延迟都降一个档。</p><ul><li>断点即边界</li><li>前缀一致才命中</li><li>命中省时省钱</li></ul></details><a class="lnk-open" href="https://x.com/RLanceMartin/status/2024573404888911886" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>常用工作流（含计划模式）</h4><p class="lnk-site">code.claude.com · Common workflows</p><p class="lnk-anchors">正文对应：<em>计划模式（Plan Mode）</em></p><p><b>这是什么：</b>官方文档：计划模式等日常用法。</p><p><b>为什么值得点：</b>文章用它当「围绕缓存约束设计功能」的范例；看文档能知道它实际怎么被用户开关。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>先只读探索、写出计划、确认后再动手；实现上是两个工具（进入/退出），而不是换一套工具集。</p><ul><li>只读探索</li><li>计划需确认</li><li>用工具而非换工具集</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/common-workflows" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>工具搜索工具</h4><p class="lnk-site">platform.claude.com · Tool search tool</p><p class="lnk-anchors">正文对应：<em>工具搜索工具</em></p><p><b>这是什么：</b>官方文档：怎么让模型按需发现工具，而不是一次性全塞进请求。</p><p><b>为什么值得点：</b>文章「用工具搜索延迟加载，而不是删除」一节的全部技术依据。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>先给轻量桩（名字 + defer_loading），模型选中后再加载完整 schema；前缀因此保持稳定，上下文也不被撑爆。</p><ul><li>轻量桩</li><li>选中才加载 schema</li><li>前缀稳定</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>压缩（API 能力）</h4><p class="lnk-site">platform.claude.com · Compaction</p><p class="lnk-anchors">正文对应：<em>压缩（compaction）</em></p><p><b>这是什么：</b>官方文档：API 层的压缩怎么工作、参数是什么。</p><p><b>为什么值得点：</b>文章第五节讲的是「自己实现会踩什么坑」；这一页是已经替你处理好的版本。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>上下文接近上限时自动摘要并续接会话；命中缓存的前提是沿用同一前缀，这件事 API 已经内建。</p><ul><li>接近上限时触发</li><li>摘要后继续</li><li>内建缓存复用</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/build-with-claude/compaction" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span></div><h4>一项任务在 Opus 5.5 上要花多少钱</h4><p class="lnk-site">claude.dev · What a task costs on Opus 5.5</p><p class="lnk-anchors">正文对应：<em>几个百分点的缓存未命中率</em></p><p><b>这是什么：</b>同站文章：把一次任务的 token 账单拆开算给你看。</p><p><b>为什么值得点：</b>文章说「几个百分点就能显著影响成本」，这一篇给的是具体数字，能让你对量级有感觉。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>输入、缓存读取、缓存写入、输出四类 token 单价不同；缓存命中率高时，账单主要是「便宜的那一档」。</p><ul><li>四类 token 单价不同</li><li>命中率决定账单结构</li><li>长会话放大差异</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/what-a-task-costs-on-opus-5-5/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>提示词工程最佳实践</h4><p class="lnk-site">claude.com · Best practices for prompt engineering</p><p class="lnk-anchors">正文对应：<em>提示词工程的基本功</em></p><p><b>这是什么：</b>官方文章：怎么写提示词才清楚、稳定、可复用。</p><p><b>为什么值得点：</b>文章一句话把两件事并列了：排布影响缓存，也影响输出质量。这一篇管的是后者。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>指令前置、给例子、明确输出格式、把规则写成可勾选的条目；模糊的提示词会让模型的输出也难以评测。</p><ul><li>指令前置</li><li>例子比形容词有用</li><li>输出格式要写死</li></ul></details><a class="lnk-open" href="https://claude.com/blog/best-practices-for-prompt-engineering" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>Claude Code 产品页</h4><p class="lnk-site">claude.com · Claude Code</p><p class="lnk-anchors">正文对应：<em>Claude Code</em></p><p><b>这是什么：</b>产品介绍：这个终端内的编码智能体。</p><p><b>为什么值得点：</b>文章讲的每一层排布都是它的真实结构；对着产品用一遍，再回来看这张图会更清楚。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>长时间运行的编码智能体，每天大量请求，所以缓存命中率对成本尤其关键。</p><ul><li>长会话</li><li>高频请求</li><li>缓存敏感</li></ul></details><a class="lnk-open" href="https://claude.com/product/claude-code" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip">可选</span><span class="chip">建议第 5 个读</span></div><h4>压缩与提示缓存（同页锚点）</h4><p class="lnk-site">platform.claude.com · Compaction and prompt caching</p><p class="lnk-anchors">正文对应：<em>压缩</em></p><p><b>这是什么：</b>上面那页里专讲「压缩怎么和缓存配合」的一节。</p><p><b>为什么值得点：</b>文章第五节末尾说「我们把这些模式做进了 API」——具体规则就在这个锚点里。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>压缩调用复用父对话的前缀，只新增压缩提示本身那点 token；因此价格接近「只付新增部分」。</p><ul><li>复用父前缀</li><li>只付新增 token</li><li>需留缓冲</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/build-with-claude/compaction#prompt-caching" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip">可选</span><span class="chip">建议第 7 个读</span></div><h4>Claude Code 总览</h4><p class="lnk-site">code.claude.com · Claude Code overview</p><p class="lnk-anchors">正文对应：<em>上手</em></p><p><b>这是什么：</b>官方总览：安装、基本用法、能力边界。</p><p><b>为什么值得点：</b>读完全文想动手试「排布 + 缓存」这件事，从这里开始最快。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>一份入门文档：装好、跑起来、看它怎么用工具；本文讲的系统提示词分层，在真实使用中能直接被感受到。</p><ul><li>安装与首次运行</li><li>工具与权限</li><li>会话与压缩</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/overview" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 11 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">prompt caching</span><span class="gl-zh">提示缓存</span></div><p class="gl-def">API 把请求开头那段内容缓存下来，下次请求如果开头逐字节相同，就跳过重算、直接复用。省的是钱和时间，前提是「开头别动」。</p><p class="gl-ana">像每次都从同一页开始背同一段课文，背过的部分不用重背。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">prefix match</span><span class="gl-zh">前缀匹配</span></div><p class="gl-def">缓存只认「从头开始逐字节一致」的前缀。中间任何一处改动，它后面的全部失效——这就是全文所有设计的出发点。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">system prompt</span><span class="gl-zh">系统提示词</span></div><p class="gl-def">请求最前面那段固定指令：角色、规则、工具定义。它被全局缓存，所以最不该放会变的东西（时间戳、随机顺序）。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">cache_control</span><span class="gl-zh">cache_control</span></div><p class="gl-def">请求里标记「缓存到这儿为止」的断点。缓存是分段存的，所以断点放在哪，决定了复用的粒度。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compaction</span><span class="gl-zh">压缩</span></div><p class="gl-def">上下文窗满时，把之前的对话摘要成一段，用它开新会话继续。它天生和缓存冲突：换一套提示词去总结，前缀就分叉了。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">plan mode</span><span class="gl-zh">计划模式</span></div><p class="gl-def">只读探索、先写计划的模式。文章拿它当范例：不能靠换工具集来切换状态，否则缓存全废——要把状态切换做成工具。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tool search tool</span><span class="gl-zh">工具搜索</span></div><p class="gl-def">让模型在需要时自行「发现」工具的机制：请求里只放轻量桩，选中后才加载完整 schema。目的是不删工具、也不撑爆上下文。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">defer_loading</span><span class="gl-zh">延迟加载</span></div><p class="gl-def">工具桩上的一个标记：先不把 schema 放进请求，等模型通过工具搜索选中它再加载。这样被缓存的前缀保持稳定。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">cache hit rate</span><span class="gl-zh">命中率</span></div><p class="gl-def">请求里有多少比例命中了缓存。作者把它当可用性指标监控：掉几个百分点，成本和延迟就会明显跳升。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">subagent</span><span class="gl-zh">子智能体</span></div><p class="gl-def">独立实例、独立缓存。所以「换模型」的正确做法是派一个子智能体做交接，而不是在主对话里直接切模型。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口</span></div><p class="gl-def">一次能装下的 token 上限。压缩就是为了在窗口快满时腾地方，同时还得留出「压缩缓冲」给摘要本身。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>为什么中途切小模型反而更贵</h4><p>缓存是「按模型」各存一份的。主对话在 Opus 上已经缓存了 100k token，切到 Haiku 时那份缓存用不上，得从头重建——于是你既付了 Opus 已产生的部分，又付了 Haiku 的全量输入。这就是文章说「反直觉」的地方。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>缓存未命中为什么会当事故处理</h4><p>作者说他们给命中率配告警、低了就按 SEV 处理，因为缓存失效不是「慢一点」，而是成本与延迟同时跳一个量级；对订阅制产品，它直接决定能不能给出宽松的速率上限。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>「压缩缓冲」是什么</h4><p>既然压缩要沿用父对话的前缀，就必须在上下文窗口里预留出空间：压缩提示本身、以及摘要输出都要 token。不留这块缓冲，压缩调用会在中途撞上窗口上限。</p></div></div></div></section><footer><p>原文 © Anthropic / claude.dev，作者 Thariq Shihipar，2026-04-30。本页为英中逐句对照的学习用译本；速览、对照表、要点与译注为译者所加，原文没有。</p><p>原文：<a href="https://claude.dev/blog/lessons-from-building-claude-code-prompt-caching-is-everything/" target="_blank" rel="noopener">Lessons from building Claude Code: Prompt caching is everything</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-layout"><span class="dot">●</span>为缓存排布你的提示词</a><a class="l2" href="#s-messages"><span class="dot">●</span>用消息传递更新</a><a class="l2" href="#s-models"><span class="dot">●</span>不要在会话中途换模型</a><a class="l2" href="#s-tools"><span class="dot">●</span>永远不要在会话中途增删工具</a><a class="l3" href="#h-tools-b1"><span class="dot">●</span>用计划模式绕开缓存约束做设计</a><a class="l3" href="#h-tools-b3"><span class="dot">●</span>用工具搜索延迟加载，而不是删除</a><a class="l2" href="#s-compact"><span class="dot">●</span>压缩而不破坏缓存</a><a class="l3" href="#h-compact-b2"><span class="dot">●</span>解法：对缓存安全的分叉</a><a class="l2" href="#s-lessons"><span class="dot">●</span>五条经验</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"提示缓存图解","title_en":"A visual guide to prompt caching","site":"x.com","what_zh":"一篇把提示缓存讲成图的长贴：断点在哪、命中怎么算。","why_zh":"文章通篇默认你懂基本机制。不熟的话先看这份图解，后面的「为什么顺序重要」才有画面感。","tier":"必读","order":1,"url":"https://x.com/RLanceMartin/status/2024573404888911886"},"L2":{"title_zh":"提示词工程最佳实践","title_en":"Best practices for prompt engineering","site":"claude.com","what_zh":"官方文章：怎么写提示词才清楚、稳定、可复用。","why_zh":"文章一句话把两件事并列了：排布影响缓存，也影响输出质量。这一篇管的是后者。","tier":"背景","order":8,"url":"https://claude.com/blog/best-practices-for-prompt-engineering"},"L3":{"title_zh":"Claude Code 产品页","title_en":"Claude Code","site":"claude.com","what_zh":"产品介绍：这个终端内的编码智能体。","why_zh":"文章讲的每一层排布都是它的真实结构；对着产品用一遍，再回来看这张图会更清楚。","tier":"背景","order":9,"url":"https://claude.com/product/claude-code"},"L4":{"title_zh":"常用工作流（含计划模式）","title_en":"Common workflows","site":"code.claude.com","what_zh":"官方文档：计划模式等日常用法。","why_zh":"文章用它当「围绕缓存约束设计功能」的范例；看文档能知道它实际怎么被用户开关。","tier":"必读","order":2,"url":"https://code.claude.com/docs/en/common-workflows"},"L5":{"title_zh":"工具搜索工具","title_en":"Tool search tool","site":"platform.claude.com","what_zh":"官方文档：怎么让模型按需发现工具，而不是一次性全塞进请求。","why_zh":"文章「用工具搜索延迟加载，而不是删除」一节的全部技术依据。","tier":"必读","order":3,"url":"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool"},"L6":{"title_zh":"压缩（API 能力）","title_en":"Compaction","site":"platform.claude.com","what_zh":"官方文档：API 层的压缩怎么工作、参数是什么。","why_zh":"文章第五节讲的是「自己实现会踩什么坑」；这一页是已经替你处理好的版本。","tier":"必读","order":4,"url":"https://platform.claude.com/docs/en/build-with-claude/compaction"},"L7":{"title_zh":"压缩与提示缓存（同页锚点）","title_en":"Compaction and prompt caching","site":"platform.claude.com","what_zh":"上面那页里专讲「压缩怎么和缓存配合」的一节。","why_zh":"文章第五节末尾说「我们把这些模式做进了 API」——具体规则就在这个锚点里。","tier":"可选","order":5,"url":"https://platform.claude.com/docs/en/build-with-claude/compaction#prompt-caching"},"L8":{"title_zh":"一项任务在 Opus 5.5 上要花多少钱","title_en":"What a task costs on Opus 5.5","site":"claude.dev","what_zh":"同站文章：把一次任务的 token 账单拆开算给你看。","why_zh":"文章说「几个百分点就能显著影响成本」，这一篇给的是具体数字，能让你对量级有感觉。","tier":"背景","order":6,"url":"https://claude.dev/blog/what-a-task-costs-on-opus-5-5/"},"L9":{"title_zh":"Claude Code 总览","title_en":"Claude Code overview","site":"code.claude.com","what_zh":"官方总览：安装、基本用法、能力边界。","why_zh":"读完全文想动手试「排布 + 缓存」这件事，从这里开始最快。","tier":"可选","order":7,"url":"https://code.claude.com/docs/en/overview"}},"terms":{"prompt_caching":{"en":"prompt caching","zh":"提示缓存","def_zh":"API 把请求开头那段内容缓存下来，下次请求如果开头逐字节相同，就跳过重算、直接复用。省的是钱和时间，前提是「开头别动」。","analogy_zh":"像每次都从同一页开始背同一段课文，背过的部分不用重背。"},"prefix_match":{"en":"prefix match","zh":"前缀匹配","def_zh":"缓存只认「从头开始逐字节一致」的前缀。中间任何一处改动，它后面的全部失效——这就是全文所有设计的出发点。"},"system_prompt":{"en":"system prompt","zh":"系统提示词","def_zh":"请求最前面那段固定指令：角色、规则、工具定义。它被全局缓存，所以最不该放会变的东西（时间戳、随机顺序）。"},"cache_control":{"en":"cache_control","zh":"cache_control","def_zh":"请求里标记「缓存到这儿为止」的断点。缓存是分段存的，所以断点放在哪，决定了复用的粒度。"},"compaction":{"en":"compaction","zh":"压缩","def_zh":"上下文窗满时，把之前的对话摘要成一段，用它开新会话继续。它天生和缓存冲突：换一套提示词去总结，前缀就分叉了。"},"plan_mode":{"en":"plan mode","zh":"计划模式","def_zh":"只读探索、先写计划的模式。文章拿它当范例：不能靠换工具集来切换状态，否则缓存全废——要把状态切换做成工具。"},"tool_search":{"en":"tool search tool","zh":"工具搜索","def_zh":"让模型在需要时自行「发现」工具的机制：请求里只放轻量桩，选中后才加载完整 schema。目的是不删工具、也不撑爆上下文。"},"defer_loading":{"en":"defer_loading","zh":"延迟加载","def_zh":"工具桩上的一个标记：先不把 schema 放进请求，等模型通过工具搜索选中它再加载。这样被缓存的前缀保持稳定。"},"cache_hit":{"en":"cache hit rate","zh":"命中率","def_zh":"请求里有多少比例命中了缓存。作者把它当可用性指标监控：掉几个百分点，成本和延迟就会明显跳升。"},"subagent":{"en":"subagent","zh":"子智能体","def_zh":"独立实例、独立缓存。所以「换模型」的正确做法是派一个子智能体做交接，而不是在主对话里直接切模型。"},"context_window":{"en":"context window","zh":"上下文窗口","def_zh":"一次能装下的 token 上限。压缩就是为了在窗口快满时腾地方，同时还得留出「压缩缓冲」给摘要本身。"}},"notes":{"N1":{"title_zh":"为什么中途切小模型反而更贵","body_zh":"缓存是「按模型」各存一份的。主对话在 Opus 上已经缓存了 100k token，切到 Haiku 时那份缓存用不上，得从头重建——于是你既付了 Opus 已产生的部分，又付了 Haiku 的全量输入。这就是文章说「反直觉」的地方。"},"N2":{"title_zh":"缓存未命中为什么会当事故处理","body_zh":"作者说他们给命中率配告警、低了就按 SEV 处理，因为缓存失效不是「慢一点」，而是成本与延迟同时跳一个量级；对订阅制产品，它直接决定能不能给出宽松的速率上限。"},"N3":{"title_zh":"「压缩缓冲」是什么","body_zh":"既然压缩要沿用父对话的前缀，就必须在上下文窗口里预留出空间：压缩提示本身、以及摘要输出都要 token。不留这块缓冲，压缩调用会在中途撞上窗口上限。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
