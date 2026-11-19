@@ -199,6 +199,24 @@
    "featured": false
   },
   {
+   "slug": "finding-unknowns",
+   "title_zh": "Fable 实战指南：找出你的未知",
+   "title_en": "A Field Guide to Fable: Finding Your Unknowns",
+   "source_url": "https://x.com/trq212/article/2073100352921215386",
+   "org": "Thariq（@trq212）· Anthropic",
+   "published": "2026-07-04",
+   "read_min": 11,
+   "category": "智能体协作",
+   "blurb": "强模型下卡住你的不是能力，是你讲不清的「未知」。地图不是实地，四格拆解，加上实现前、中、后八种把未知挖出来的动作。",
+   "pairs": 128,
+   "words": 2080,
+   "chars": 4300,
+   "terms": 21,
+   "figures": 5,
+   "cover": "media/cover.jpg",
+   "featured": false
+  },
+  {
    "slug": "loop-engineering",
    "title_zh": "循环工程的艺术：四层循环，让智能体越跑越好",
    "title_en": "The Art of Loop Engineering",
