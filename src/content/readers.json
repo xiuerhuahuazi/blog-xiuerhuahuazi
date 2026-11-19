@@ -109,6 +109,24 @@
    "featured": false
   },
   {
+   "slug": "agent-memory",
+   "title_zh": "智能体记忆的组成：Claude 怎样用「做梦」整理记忆",
+   "title_en": "The components of agent memory",
+   "source_url": "https://www.anthropic.com/research/components-of-agent-memory",
+   "org": "Anthropic · Research",
+   "published": "2026-11-06",
+   "read_min": 17,
+   "category": "上下文工程",
+   "blurb": "记忆不是存得越多越好。文章把智能体记忆拆成四层——会话记录、记忆笔记、记忆表示（维基）、注入上下文，再给一个贯穿四层的离线动作「做梦」；拿 CL-Bench、宝可梦红、4.2 亿 token 文档库与法律简报逐层验证。",
+   "pairs": 207,
+   "words": 3950,
+   "chars": 8100,
+   "terms": 23,
+   "figures": 15,
+   "cover": "media/cover.webp",
+   "featured": false
+  },
+  {
    "slug": "super-agent-design",
    "title_zh": "探索超级智能体的设计：走向更自主的智能体系统",
    "title_en": "Exploring Super-agent Design: Towards a More Autonomous Agent System",
