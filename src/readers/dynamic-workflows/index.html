@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>为每个任务现搭一套运行框架：Claude Code 的动态工作流｜A harness for every task: dynamic workflows in Claude Code</title>
+<meta name="description" content="为每个任务现搭一套运行框架：Claude Code 的动态工作流｜A harness for every task: dynamic workflows in Claude Code：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/dynamic-workflows/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="为每个任务现搭一套运行框架：Claude Code 的动态工作流">
+<meta property="og:description" content="Anthropic 团队讲清新功能：让 Claude 针对眼前这一个任务，现场写一段 JavaScript 去调度一群子智能体——六种可组合的模式、十类真实场景、四条搭建建议，以及什么时候根本不该用。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/dynamic-workflows/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">claude.dev · Agents（作者 Thariq Shihipar、Sid Bidasaria） · 2026-06-02</p><h1 class="h1-wrap"><span class="h1-en" lang="en">A harness for every task: dynamic workflows in Claude Code</span><span class="h1-zh">为每个任务现搭一套运行框架：Claude Code 的动态工作流</span></h1><div class="hero-meta"><span>原文 2310 词</span><span>中文 4800 字</span><span>逐句对照 <i>116</i> 句</span><span>预计 11 分钟</span><span><a href="https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 4 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：与其让 Claude 在同一个上下文窗口里既计划又执行，不如让它写一段脚本，把活分给一群上下文独立、目标聚焦的子智能体。这段脚本就是「动态工作流」。</li><li><b>它解决什么</b>：长任务会露出三种失败模式——智能体性怠工（50 项只做 35 项就宣布完成）、自我偏好偏差（偏爱自己的结论）、目标漂移（多轮后忘了初衷，压缩之后尤甚）。工作流从结构上避开它们。</li><li><b>怎么用</b>：直接让 Claude 建一个工作流，或在提示词里加触发词 <code>ultracode</code>。脚本里只有三块积木：<code>agent()</code> 派一个子智能体，<code>parallel()</code> 并行，<code>pipeline()</code> 串流；Claude 还会替每个智能体挑模型、决定是否隔离到独立 worktree。</li><li><b>代价</b>：更费 token，而且不是每个任务都需要。作者的判断标准很朴素——「这个常规编码任务，真的需要更多算力吗？」</li></ul><div class="compare"><div class="cmp"><h3>静态工作流（Agent SDK / claude -p）</h3><ol><li>先写好流程，再让 Claude 走</li><li>要覆盖所有边界情况，所以必须通用</li><li>同一个问题，产出一份通用研究报告</li><li>并行度、模型、隔离方式都写死在流程里</li></ol></div><div class="cmp win"><h3>动态工作流（本文）</h3><ol><li>Claude 按眼前任务现场写流程</li><li>只为这一个任务服务，可以很专用</li><li>同一个问题，产出一份具体建议</li><li>每个子智能体的模型与 worktree 隔离由 Claude 决定</li></ol></div></div><p class="ov-foot cmp-foot">对照表是译者按原文（尤其第四节与 FIG B）整理，不是原文自带的表格。</p><p class="ov-foot">读法建议：想马上用，读第一节的八条示例提示词加第五节六种模式；想知道原理，读第二、三节；想抄工程细节，直接跳到第八节的四条建议。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Claude Code can now write and orchestrate its own multi-agent <span class='term' data-term='harness'>harness</span> on the fly.</span> <span class="s" data-k="intro-b0-1">Here's how <span class='term' data-term='dynamic_workflow'>dynamic workflows</span> work, and the patterns that get the most out of them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">Claude Code 现在可以临场写出并调度自己的多智能体<span class='term' data-term='harness'>运行框架</span>。</span><span class="s" data-k="intro-b0-1">下面讲<span class='term' data-term='dynamic_workflow'>动态工作流</span>怎么运作，以及最能发挥它的几种模式。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">Last week, we released <a class='lnk' href='https://code.claude.com/docs/en/workflows' target='_blank' rel='noopener' data-link='L1'>dynamic workflows</a> in Claude Code.</span> <span class="s" data-k="intro-b1-1">Claude can now write its own <a class='lnk' href='https://code.claude.com/docs/en/glossary#agentic-harness' target='_blank' rel='noopener' data-link='L2'>harness</a> on the fly, custom-built for the task at hand.</span> <span class="s" data-k="intro-b1-2">While the default <a class='lnk' href='https://claude.com/product/claude-code' target='_blank' rel='noopener' data-link='L3'>Claude Code</a> harness is built for coding, it is also useful for many other types of tasks because, as it turns out, many tasks resemble coding tasks.</span> <span class="s" data-k="intro-b1-3">But there are certain classes of tasks where we have had to build custom harnesses on top of Claude Code to achieve peak performance such as <a class='lnk' href='https://support.claude.com/en/articles/11088861-using-research-on-claude' target='_blank' rel='noopener' data-link='L4'>Research</a>, <a class='lnk' href='https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code' target='_blank' rel='noopener' data-link='L5'>security analysis</a>, <a class='lnk' href='https://code.claude.com/docs/en/agent-teams' target='_blank' rel='noopener' data-link='L6'>agent teams</a>, or <a class='lnk' href='https://code.claude.com/docs/en/code-review' target='_blank' rel='noopener' data-link='L7'>Code Review</a>.</span> <span class="s" data-k="intro-b1-4">Workflows allow you to dynamically create harnesses built on top of Claude Code that enable Claude to solve all of those problems more natively.</span> <span class="s" data-k="intro-b1-5">You can also share and reuse these workflows with others.</span> <span class="s" data-k="intro-b1-6">In this article, I’ll cover my initial workflows experiences and learnings so you can best take full advantage.</span> <span class="s" data-k="intro-b1-7">Keep in mind, best practices are still developing: dynamic workflows often use more <span class='term' data-term='token'>tokens</span> and are best suited for complex, high value tasks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">上周我们在 Claude Code 里发布了<a class='lnk' href='https://code.claude.com/docs/en/workflows' target='_blank' rel='noopener' data-link='L1'>动态工作流（dynamic workflows）</a>。</span><span class="s" data-k="intro-b1-1">Claude 现在能按眼前的任务，临场写一套专属的<a class='lnk' href='https://code.claude.com/docs/en/glossary#agentic-harness' target='_blank' rel='noopener' data-link='L2'>运行框架（harness）</a>。</span><span class="s" data-k="intro-b1-2">默认的 <a class='lnk' href='https://claude.com/product/claude-code' target='_blank' rel='noopener' data-link='L3'>Claude Code</a> 运行框架是为写代码打造的，但它对很多其他类型的任务同样好用——因为事实证明，很多任务本来就长得像编码任务。</span><span class="s" data-k="intro-b1-3">但有几类任务，我们必须在 Claude Code 之上自建运行框架才能达到最佳效果，比如<a class='lnk' href='https://support.claude.com/en/articles/11088861-using-research-on-claude' target='_blank' rel='noopener' data-link='L4'>研究</a>、<a class='lnk' href='https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code' target='_blank' rel='noopener' data-link='L5'>安全分析</a>、<a class='lnk' href='https://code.claude.com/docs/en/agent-teams' target='_blank' rel='noopener' data-link='L6'>智能体团队</a>，或<a class='lnk' href='https://code.claude.com/docs/en/code-review' target='_blank' rel='noopener' data-link='L7'>代码审查</a>。</span><span class="s" data-k="intro-b1-4">工作流让你能在 Claude Code 之上动态创建运行框架，让 Claude 更原生地解决这些问题。</span><span class="s" data-k="intro-b1-5">你还可以把这些工作流分享给别人、重复使用。</span><span class="s" data-k="intro-b1-6">本文会讲我最初使用工作流的经验和心得，帮你把它用到最充分。</span><span class="s" data-k="intro-b1-7">先提醒一句：最佳实践还在形成中——动态工作流往往更费 <span class='term' data-term='token'>token</span>，最适合复杂、高价值的任务。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-prompts">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Example prompts</span><span class="h-zh">示例提示词</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>先看八条能直接照抄的提示词。它们覆盖了复现偶发失败、翻历史会话找纠正、跨系统挖根因、多视角拆方案、批量排序加复核、以及把草稿逐条核对代码库——共同点是「一个提示词就能让 Claude 自己搭出结构」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="prompts-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b0-0">Before diving into the technical details, I’d like to start with several example prompts to get you thinking about the possibilities with workflows:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b0-0">进入技术细节之前，先给你几条示例提示词，让你感受一下工作流能做什么：</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b1-0">“This test fails maybe 1 in 50 runs.</span> <span class="s" data-k="prompts-b1-1">Set up a workflow to reproduce it.</span> <span class="s" data-k="prompts-b1-2">Form competing theories about the race, and don't stop until one theory survives the evidence.“</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b1-0">「这个测试大概跑 50 次会失败 1 次。</span><span class="s" data-k="prompts-b1-1">搭一个工作流把它复现出来。</span><span class="s" data-k="prompts-b1-2">对这场竞态提出几个互相竞争的理论，直到有一个理论扛住了所有证据。」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b2-0">“Using a workflow, go through my last 50 sessions and mine them for corrections I keep making and turn the recurring ones into `CLAUDE.md` rules”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b2-0">「用工作流翻我最近 50 次会话，挖出我反复在纠正的那些点，把反复出现的部分写成 `CLAUDE.md` 规则」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b3-0">“Use a workflow to dig through #incidents in Slack for the past six months and find recurring root causes where nobody has filed a ticket.“</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b3-0">「用工作流翻 Slack 里 #incidents 频道最近半年的记录，找出反复出现、却没人建单的根因。」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b4-0">“Take my business plan and run a workflow where different agents tear it apart from an investor's, a customer's, and a competitor's perspective.”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b4-0">「拿我的商业计划书跑一个工作流，让不同智能体分别从投资人、客户、竞争对手的角度把它拆一遍。」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b5-0">“Here's a folder of 80 resumes, use a workflow to rank them for the backend role and double-check the top ten.</span> <span class="s" data-k="prompts-b5-1">Interview me using the AskUserQuestion tool for a <span class='term' data-term='rubric'>rubric</span>.“</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b5-0">「这是一个装了 80 份简历的文件夹，用工作流给后端岗位排序，再把前十名复核一遍。</span><span class="s" data-k="prompts-b5-1">用 AskUserQuestion 工具采访我，得出一套<span class='term' data-term='rubric'>评分标准</span>。」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b6-0">“I need a name for this CLI tool.</span> <span class="s" data-k="prompts-b6-1">Use a workflow to brainstorm a bunch of options and run a <span class='term' data-term='tournament'>tournament</span> to pick the top 3.“</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b6-0">「我要给这个命令行工具起个名字。</span><span class="s" data-k="prompts-b6-1">用工作流先脑暴一堆候选，再跑一场<span class='term' data-term='tournament'>锦标赛</span>选出前三个。」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b7-0">“Use a workflow to rename our User model to Account everywhere.”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b7-0">「用工作流把我们的 User 模型在所有地方重命名为 Account。」</span></p></div></div></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="prompts-b8-0">“Go through my blog post draft and verify every technical claim against the codebase using a workflow, I don't want to ship anything wrong.“</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="prompts-b8-0">「用工作流把我博客草稿里每一条技术论断都对着代码库验证一遍，我不想发布任何错误的东西。」</span></p></div></div></div></div>
+</div>
+</section>
+<section class="sec" id="s-how">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">How dynamic workflows work</span><span class="h-zh">动态工作流怎么运作</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>动态工作流就是一个 JavaScript 文件，里面的 agent() 派生单个子智能体，parallel() 与 pipeline() 把调用组合起来；它还能替每个智能体挑模型、决定是否隔离到独立 worktree，被打断后可以续跑。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="how-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b0-0">Dynamic workflows execute a javascript file with a few special functions that help spawn and coordinate <a class='lnk' href='https://code.claude.com/docs/en/sub-agents' target='_blank' rel='noopener' data-link='L8'>subagents</a>:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b0-0">动态工作流执行的是一个 JavaScript 文件，其中有几个特殊函数，用来派生和协调<a class='lnk' href='https://code.claude.com/docs/en/sub-agents' target='_blank' rel='noopener' data-link='L8'>子智能体</a>：</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="三块积木：agent / parallel / pipeline"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="FIG A The three building blocks of a workflow script: agent() spawns one subagent; parallel() and pipeline() compose many."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>三块积木：agent / parallel / pipeline</b>　工作流脚本只有三块基本积木：agent() 派生一个子智能体，parallel() 与 pipeline() 把多个调用组合起来。上半部分写的是 agent(prompt, opts) 的选项：prompt 是唯一必填输入，schema 让它返回校验过的 JSON，model 在 opus / sonnet / haiku 之间选，isolation 决定跑在 worktree 还是 remote，agentType 用来选某个子智能体。下半部分才是组合：parallel() 扇出并等全部结束，pipeline() 逐项往下走。</p><p class="cap-en">原文图注：FIG A The three building blocks of a workflow script: agent() spawns one subagent; parallel() and pipeline() compose many.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>上半部分是 `agent(prompt, opts)`：`prompt` 是唯一必填项，`schema` 让返回值必须是校验过的 JSON，`model` 在 opus / sonnet / haiku 之间挑，`isolation` 决定跑在 worktree 还是 remote。</li><li>`agentType` 那一栏指的是可以指定某个已定义的子智能体，而不是临时起一个通用智能体。</li><li>下半部分才是组合：`parallel()` 把多个调用扇出并等全部结束，`pipeline()` 让每一项流式走完同一条链。</li><li>读这张图只需要记住一句话：一个工作流脚本只有三块积木，复杂结构都是它们的组合。</li></ol><p class="takeaway">一句话：工作流脚本只有三块积木：一个派生、一个并行、一个串流。</p></details></figcaption></figure>
+<div class="row" data-rid="how-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="how-b2-0">Dynamic workflows also include standard JavaScript functions like JSON, Math, and Array, to help process data.</span> <span class="s" data-k="how-b2-1">It’s particularly useful to know that dynamic workflows can decide which models an agent uses and whether <span class='term' data-term='subagent'>subagents</span> are run in their own <span class='term' data-term='worktree'>worktree</span>, allowing Claude to choose the intelligence level and isolation needed.</span> <span class="s" data-k="how-b2-2">If a workflow is interrupted, for example by user action or quitting the terminal, resuming the session will allow the workflow to pick up where it left off.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="how-b2-0">动态工作流里也能用标准 JavaScript 函数，比如 JSON、Math 和 Array，用来处理数据。</span><span class="s" data-k="how-b2-1">值得特别知道的一点：动态工作流可以决定每个智能体用哪个模型，以及<span class='term' data-term='subagent'>子智能体</span>是否各自跑在独立的 <span class='term' data-term='worktree'>worktree</span> 里——让 Claude 自己选所需的智能水平和隔离程度。</span><span class="s" data-k="how-b2-2">如果工作流被打断（比如用户操作或关掉终端），恢复会话后工作流会从断点继续。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-why">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Why dynamic workflows</span><span class="h-zh">为什么要动态工作流</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>默认运行框架要求「计划」和「执行」挤在同一个上下文窗口里，长任务就会露出三种失败模式：智能体性怠工、自我偏好偏差、目标漂移。工作流把工作拆给上下文独立、目标聚焦的子智能体，从结构上避开它们。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="why-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="why-b0-0">When you ask the default Claude Code harness to do a task, it needs to both plan and execute in the same <span class='term' data-term='context_window'>context window</span>.</span> <span class="s" data-k="why-b0-1">For many coding tasks, this is highly effective, but it can break down over long-running, massively parallel, highly structured and/or <span class='term' data-term='adversarial'>adversarial</span> tasks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="why-b0-0">当你把任务交给默认的 Claude Code 运行框架时，它得在同一个<span class='term' data-term='context_window'>上下文窗口</span>里既做计划又做执行。</span><span class="s" data-k="why-b0-1">对很多编码任务，这非常有效；但碰上长时间运行、大规模并行、高度结构化或<span class='term' data-term='adversarial'>对抗性</span>的任务，就会撑不住。</span></p></div></div>
+<div class="row" data-rid="why-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="why-b1-0">This is because the longer Claude works on a complex task in a single context window, the more it becomes susceptible to a few specific failure modes:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="why-b1-0">原因是：Claude 在单个上下文窗口里干复杂任务干得越久，就越容易落入几种特定的失败模式：</span></p></div></div>
+<div class="row" data-rid="why-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="why-b2-0-0"><b>Agentic laziness</b> refers to when Claude stops before finishing a particularly complex, multi-part task and declares the job done after partial progress, for example addressing 35 of the 50 items in a security review.</span></li><li><span class="s" data-k="why-b2-1-0"><b>Self-preferential bias</b> refers to Claude’s tendency to prefer its own results or findings, especially when asked to verify or judge them against a rubric.</span></li><li><span class="s" data-k="why-b2-2-0"><b><span class='term' data-term='goal_drift'>Goal drift</span></b> refers to the gradual loss of fidelity to the original objective across many turns, especially after <span class='term' data-term='compaction'>compaction</span>.</span> <span class="s" data-k="why-b2-2-1">Each summarization step is lossy, and details like edge-case requirements or “don't do X” constraints can get lost.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="why-b2-0-0"><b>智能体性怠工</b>（agentic laziness）：Claude 在一项特别复杂、由多部分组成的任务上，做到一半就宣布完成，比如安全审查 50 项只处理了 35 项。</span></li><li><span class="s" data-k="why-b2-1-0"><b>自我偏好偏差</b>（self-preferential bias）：Claude 倾向于偏爱自己的结果或发现，尤其是被要求按评分标准验证或评判自己时。</span></li><li><span class="s" data-k="why-b2-2-0"><b><span class='term' data-term='goal_drift'>目标漂移</span></b>（goal drift）：在许多轮之后逐渐偏离最初的目标，<span class='term' data-term='compaction'>压缩</span>（compaction）之后尤其明显。</span><span class="s" data-k="why-b2-2-1">每一次摘要都是有损的，边界情况的要求、以及「不要做 X」这类约束，很容易在过程中丢掉。</span></li></ul></div></div>
+<div class="row" data-rid="why-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="why-b3-0">Creating a workflow helps combat these by orchestrating separate Claude subagents with their own context windows and focused, isolated goals.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="why-b3-0">建一个工作流能对抗这些：它调度多个各自拥有独立上下文窗口、目标聚焦且隔离的 Claude 子智能体。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-static">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Dynamic vs static workflows</span><span class="h-zh">动态与静态工作流的区别</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>静态工作流（Agent SDK、claude -p）必须覆盖所有边界情况，所以趋于通用；动态工作流则是 Claude 现写一套只为眼前任务服务的运行框架。两者的差别就是「通用研究报告」和「具体建议」的差别。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="static-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="static-b0-0">You may have previously created a static workflow using the Claude Agent SDK or `claude -p` to coordinate multiple instances of Claude Code together.</span> <span class="s" data-k="static-b0-1">But because static workflows need to work for all edge cases, they are usually more generic.</span> <span class="s" data-k="static-b0-2">With <a class='lnk' href='https://www.anthropic.com/news/claude-opus-4-8' target='_blank' rel='noopener' data-link='L9'>Claude Opus 4.8</a> and dynamic workflows, Claude is now intelligent enough to write a custom harness tailor-made for your use case.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="static-b0-0">你以前可能用 Claude Agent SDK 或 `claude -p` 建过静态工作流，把多个 Claude Code 实例协调起来。</span><span class="s" data-k="static-b0-1">但静态工作流得覆盖所有边界情况，所以通常更通用。</span><span class="s" data-k="static-b0-2">有了 <a class='lnk' href='https://www.anthropic.com/news/claude-opus-4-8' target='_blank' rel='noopener' data-link='L9'>Claude Opus 4.8</a> 和动态工作流，Claude 现在聪明到能为你的具体场景现写一套量身定制的运行框架。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="静态运行框架 vs 动态工作流"><div class="fig-media"><img class="still" src="media/fig2.webp" loading="lazy" decoding="async" alt="FIG B A static harness runs the same steps for every question; a dynamic workflow is shaped to the one in front of it."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>静态运行框架 vs 动态工作流</b>　同一个问题「我们的结账服务要不要换供应商？」，两种处理方式。左边 STATIC HARNESS：跑五次网络搜索、抓结果、验证、汇总，产出一份通用的研究报告（generic research report）。右边 DYNAMIC WORKFLOW：先去读账单代码，再把每个功能对着新供应商的文档逐条查，最后给出一份具体建议（a specific recommendation）。</p><p class="cap-en">原文图注：FIG B A static harness runs the same steps for every question; a dynamic workflow is shaped to the one in front of it.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左边标题是 STATIC HARNESS：五个方框依次是 web search → fetch → verify → summarize，箭头一路向下，终点写着 generic research report。</li><li>右边标题是 DYNAMIC WORKFLOW：第一格换成「读账单代码」，第二格是「逐条对着新供应商文档核对」，终点写着 a specific recommendation。</li><li>同一句问题（顶部那句 Should we migrate…）在两侧被处理成两种产物，这就是「通用 vs 专用」的差别。</li><li>注意两边的分支数量：静态是固定五步，动态多出一路并行核对——成本差异就在这里。</li></ol><p class="takeaway">一句话：同一句问题，静态框架给通用报告，动态工作流给具体建议。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-patterns">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Helpful patterns when using dynamic workflows</span><span class="h-zh">值得组合的六种模式</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>分类再行动、扇出再汇总、对抗性验证、生成再筛选、锦标赛、循环到完成——这六种模式可以单独用，也可以拼在一起。理解它们是为了在提示词里给出方向，而不是背术语。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="patterns-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b0-0">You can start using dynamic workflows just by asking Claude to make one, or by using the trigger word “`ultracode`” to ensure that Claude Code creates a workflow.</span> <span class="s" data-k="patterns-b0-1">But building a mental model for how dynamic workflows work will help you understand when to use them and how you might nudge Claude via prompts.</span> <span class="s" data-k="patterns-b0-2">There are a few common patterns that Claude might use and compose together when building workflows:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b0-0">你只要让 Claude 做一个工作流就能用上动态工作流，也可以用触发词「`ultracode`」确保 Claude Code 一定会建工作流。</span><span class="s" data-k="patterns-b0-1">但先在脑子里建立「动态工作流怎么运作」的模型，能帮你判断何时该用它、以及怎么通过提示词去引导 Claude。</span><span class="s" data-k="patterns-b0-2">Claude 在搭工作流时会用到、并把它们组合起来的常见模式有这么几种：</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="六种可组合的工作流模式"><div class="fig-media"><img class="still" src="media/fig3.webp" loading="lazy" decoding="async" alt="FIG C Six workflow patterns Claude composes from."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>六种可组合的工作流模式</b>　六宫格，每格一个模式：Classify-And-Act（先分类再行动）、Fanout-And-Synthesize（扇出再汇总）、Adversarial Verification（对抗性验证）、Generate-And-Filter（生成再筛选）、Tournament（锦标赛）、Loop Until Done（循环到完成为止）。标题就是模式名，格子里是极简示意。</p><p class="cap-en">原文图注：FIG C Six workflow patterns Claude composes from.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>六个格子的标题分别是 Classify-And-Act、Fanout-And-Synthesize、Adversarial Verification、Generate-And-Filter、Tournament、Loop Until Done。</li><li>前两个是「分工」类：先分类再路由，或先扇出再汇总；第三、四个是「互相审查」类：一个挑错，一个筛优。</li><li>Tournament 那格画的是两两比较的淘汰结构；Loop Until Done 那格画的是带回环的箭头，直到满足停止条件。</li><li>六格之间没有箭头，说明它们可以自由组合——真实工作流常常是「先分类，再扇出，最后对抗性验证」。</li></ol><p class="takeaway">一句话：六种模式可以单独用，更常被组合起来用。</p></details></figcaption></figure>
+<div class="row h3row wide" id="h-patterns-b2"><h3><span class='h3-en'>Classify-and-act</span><span class='h3-zh'>分类再行动</span></h3></div>
+<div class="row" data-rid="patterns-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b3-0">Use a classifier agent to decide on the type of task, and then route to different agents or behavior based on the task.</span> <span class="s" data-k="patterns-b3-1">Or, use a classifier at the end to determine output.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b3-0">用一个分类器智能体判断任务类型，再按类型把任务路由到不同的智能体或行为。</span><span class="s" data-k="patterns-b3-1">也可以在最后用一个分类器来决定输出。</span></p></div></div>
+<div class="row h3row wide" id="h-patterns-b4"><h3><span class='h3-en'>Fan-out-and-synthesize</span><span class='h3-zh'>扇出再汇总</span></h3></div>
+<div class="row" data-rid="patterns-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b5-0">Split up a task into many smaller steps, run an agent on each step and then synthesize those results.</span> <span class="s" data-k="patterns-b5-1">This is particularly useful for when there are a large number of smaller steps, or when each step benefits from its own clean context window so they don't interfere or cross-contaminate.</span> <span class="s" data-k="patterns-b5-2">The synthesize step is a barrier—it waits for all the <span class='term' data-term='fan_out'>fan-out</span> agents, then merges their structured outputs into one result.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b5-0">把任务拆成许多更小的步骤，每一步跑一个智能体，然后把结果汇总。</span><span class="s" data-k="patterns-b5-1">当步骤数量很多，或者每一步都受益于自己干净的上下文窗口（互不干扰、不交叉污染）时，这特别有用。</span><span class="s" data-k="patterns-b5-2">汇总这一步是个屏障——它等所有<span class='term' data-term='fan_out'>扇出</span>智能体结束，再把它们各自的结构化输出合并成一个结果。</span></p></div></div>
+<div class="row h3row wide" id="h-patterns-b6"><h3><span class='h3-en'>Adversarial verification</span><span class='h3-zh'>对抗性验证</span></h3></div>
+<div class="row" data-rid="patterns-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b7-0">For each spawned agent, run a separate spawned agent to adversarially verify its output against a rubric or criteria.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b7-0">为每个派生出来的智能体，再派一个独立智能体，按评分标准或判据对抗性地验证它的输出。</span></p></div></div>
+<div class="row h3row wide" id="h-patterns-b8"><h3><span class='h3-en'>Generate-and-filter</span><span class='h3-zh'>生成再筛选</span></h3></div>
+<div class="row" data-rid="patterns-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b9-0">Generate a number of ideas on a topic and then filter them by a rubric or by verification, dedupe duplicates and return only the highest quality, tested ideas.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b9-0">就一个题目生成一批想法，再按评分标准或验证结果筛掉，去重，只留下质量最高、经过检验的想法。</span></p></div></div>
+<div class="row h3row wide" id="h-patterns-b10"><h3><span class='h3-en'>Tournament</span><span class='h3-zh'>锦标赛</span></h3></div>
+<div class="row" data-rid="patterns-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b11-0">Instead of dividing the work, have agents compete on it.</span> <span class="s" data-k="patterns-b11-1">Spawn N agents that each attempt the same task using different approaches.</span> <span class="s" data-k="patterns-b11-2">Prompts or models then judge the results in a pairwise fashion using a judging agent until you have a winner.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b11-0">不划分工作，而是让智能体在同一件事上竞争。</span><span class="s" data-k="patterns-b11-1">派生 N 个智能体，每个用不同方法做同一项任务。</span><span class="s" data-k="patterns-b11-2">再由提示词或模型以两两对比的方式评判结果，直到决出胜者。</span></p></div></div>
+<div class="row h3row wide" id="h-patterns-b12"><h3><span class='h3-en'>Loop until done</span><span class='h3-zh'>循环到完成</span></h3></div>
+<div class="row" data-rid="patterns-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="patterns-b13-0">For tasks with an unknown amount of work, loop spawning agents until a stop condition is met (no new findings, or no more errors in the logs) instead of a fixed number of passes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="patterns-b13-0">对于工作量未知的任务，循环派生智能体，直到满足停止条件（没有新发现，或日志里不再有错误），而不是跑固定轮数。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-cases">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Use cases</span><span class="h-zh">能用在什么地方</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>作者给了十类场景：大规模迁移、深度研究、深度验证、排序、规则遵循、根因排查、大规模分诊、探索与品味、评测、模型路由。每一类都写清了「拆成什么单位、派多少智能体、怎么合并」。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="cases-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b0-0">Think creatively of when and how to ask Claude Code to make dynamic workflows.</span> <span class="s" data-k="cases-b0-1">I’ve found that workflows are sometimes even more useful for non-technical work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b0-0">想清楚何时、以及怎样让 Claude Code 去搭动态工作流，这需要一点想象力。</span><span class="s" data-k="cases-b0-1">我发现工作流有时对非技术工作更有用。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b1"><h3><span class='h3-en'>Migrations and refactors</span><span class='h3-zh'>迁移与重构</span></h3></div>
+<div class="row" data-rid="cases-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b2-0"><a class='lnk' href='https://bun.com/' target='_blank' rel='noopener' data-link='L10'>Bun</a> was rewritten from Zig to Rust using workflows.</span> <span class="s" data-k="cases-b2-1">You can read more about how that was done in <a class='lnk' href='https://x.com/jarredsumner/status/2060050578026189172' target='_blank' rel='noopener' data-link='L11'>Jarred’s thread</a> or see how we run <a class='lnk' href='https://claude.com/blog/ai-code-migration' target='_blank' rel='noopener' data-link='L12'>AI code migrations</a> across million-line codebases.</span> <span class="s" data-k="cases-b2-2">The key is to break down the task into a series of steps that need to be operated on for example callsites, failing tests, modules, etc.</span> <span class="s" data-k="cases-b2-3">Spin off a subagent for every fix in a worktree to make the fix, then have another agent adversarially review, and merge them.</span> <span class="s" data-k="cases-b2-4">Consider telling the agent not to use resource intensive commands so that you can maximally parallelize without running out of resources on your machine.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b2-0"><a class='lnk' href='https://bun.com/' target='_blank' rel='noopener' data-link='L10'>Bun</a> 就是从 Zig 迁到 Rust 时用工作流完成的。</span><span class="s" data-k="cases-b2-1">具体怎么做的，可以看 <a class='lnk' href='https://x.com/jarredsumner/status/2060050578026189172' target='_blank' rel='noopener' data-link='L11'>Jarred 的帖子</a>，或看我们怎么在百万行级代码库上做 <a class='lnk' href='https://claude.com/blog/ai-code-migration' target='_blank' rel='noopener' data-link='L12'>AI 代码迁移</a>。</span><span class="s" data-k="cases-b2-2">关键在于把任务拆成一串要处理的单位，比如调用点、失败的测试、模块等等。</span><span class="s" data-k="cases-b2-3">为每一处修复派生一个子智能体，在各自的 worktree 里改完，再由另一个智能体对抗性审查，最后合并。</span><span class="s" data-k="cases-b2-4">可以考虑告诉智能体别用吃资源的命令，这样你就能最大限度并行，而不会把本机资源用光。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b3"><h3><span class='h3-en'>Deep research</span><span class='h3-zh'>深度研究</span></h3></div>
+<div class="row" data-rid="cases-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b4-0">We published a deep research skill (`/deep-research`) inside Claude Code that uses dynamic workflows.</span> <span class="s" data-k="cases-b4-1">Specifically, it fans-out web searches, fetches sources, adversarially verifies their claims, and synthesizes a cited report.</span> <span class="s" data-k="cases-b4-2">But you may do this sort of research for more than just web searches.</span> <span class="s" data-k="cases-b4-3">For example, asking Claude to compile a status report from context in Slack or to research how a feature works by exploring a codebase in-depth.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b4-0">我们在 Claude Code 里发布了一个深度研究技能（`/deep-research`），用的就是动态工作流。</span><span class="s" data-k="cases-b4-1">具体说，它扇出网络搜索、抓取来源、对每一条论断做对抗性验证，最后汇总成一份带引用的报告。</span><span class="s" data-k="cases-b4-2">但这种研究不只是网络搜索。</span><span class="s" data-k="cases-b4-3">比如让 Claude 从 Slack 里的上下文汇编一份状态报告，或深入探索代码库，弄清某个功能是怎么实现的。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b5"><h3><span class='h3-en'>Deep verification</span><span class='h3-zh'>深度验证</span></h3></div>
+<figure class="row wide fig" id="fig4" data-cap="深度验证：每条论断一个检查者"><div class="fig-media"><img class="still" src="media/fig4.webp" loading="lazy" decoding="async" alt="FIG D Deep verification: one checker agent per factual claim, with an optional source auditor behind each."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>深度验证：每条论断一个检查者</b>　一份报告（Report）先进 Claim extractor，被拆成若干条论断，再扇出到 Claim checker 1..N；每个检查者后面可选挂一个 Source auditor 核实来源，最后汇成 Verified report。</p><p class="cap-en">原文图注：FIG D Deep verification: one checker agent per factual claim, with an optional source auditor behind each.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>最左边是 Report（一份待核对的报告），第一个处理节点是 Claim extractor。</li><li>从 extractor 向右扇出到 Claim checker 1 到 N，每个检查者只负责一条论断。</li><li>每个 checker 后面挂着一个可选的 Source auditor，用来核实这条论断的来源质量。</li><li>所有分支最后汇成一个 Verified report——这就是「一条论断一个智能体」的物理形态。</li></ol><p class="takeaway">一句话：一条论断一个检查者，来源质量再单独审。</p></details></figcaption></figure>
+<div class="row" data-rid="cases-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b7-0">On the other hand, if you have a report where you want to check and source every factual claim that it references you may want to generate a workflow which has one agent identify all of the factual claims and then spin off a subagent to check each one in-detail.</span> <span class="s" data-k="cases-b7-1">You could also have a verification agent check the source subagent to make sure its source is high quality.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b7-0">反过来，如果你有一份报告，想逐条核对并标注它引用的每一个事实论断，你可能会想要一个工作流：让一个智能体找出所有事实论断，再为每一条派生一个子智能体去做细致核查。</span><span class="s" data-k="cases-b7-1">你还可以再配一个核查智能体去检查负责找来源的子智能体，确认它的来源质量足够高。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b8"><h3><span class='h3-en'>Sorting</span><span class='h3-zh'>排序</span></h3></div>
+<figure class="row wide fig" id="fig5" data-cap="锦标赛排序：1,000 条怎么排"><div class="fig-media"><img class="still" src="media/fig5.webp" loading="lazy" decoding="async" alt="FIG E A tournament sort: every comparison gets a fresh agent, so no single context has to hold all 1,000 items."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>锦标赛排序：1,000 条怎么排</b>　1,000 条条目进入对阵图：第一轮两两配对，每次比较都用一个全新的智能体；胜者进第二轮、再比、最后一决胜负，输出是排好序的列表（Sorted）。关键是没有任何一个上下文需要装下全部 1,000 条。</p><p class="cap-en">原文图注：FIG E A tournament sort: every comparison gets a fresh agent, so no single context has to hold all 1,000 items.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>最左边是 1,000 items 进入对阵图，第一轮把它们两两配对。</li><li>每一场比较旁边都标着 fresh agent：比较双方不共享上下文，避免被上一场的印象污染。</li><li>胜者向上进入第二轮、半决赛、决赛，路径是一条收窄的漏斗。</li><li>最右边输出 Sorted：全程没有任何一个上下文需要装下全部 1,000 条。</li></ol><p class="takeaway">一句话：比较次数变多，但没有任何一个上下文被撑爆。</p></details></figcaption></figure>
+<div class="row" data-rid="cases-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b10-0">You may have a list of items that you want to sort by some qualitative measurement that you believe that Claude Code is good at evaluating, for example: support tickets sorted by severity of the bug.</span> <span class="s" data-k="cases-b10-1">But if you try to sort 1000+ rows in one prompt, quality degrades and it won't fit in context.</span> <span class="s" data-k="cases-b10-2">Instead run a tournament, a pipeline of pairwise-comparison agents (comparative judgment is more reliable than absolute scoring), or bucket-rank in parallel then merge.</span> <span class="s" data-k="cases-b10-3">Each comparison is its own agent, so the deterministic loop holds the bracket and only the running order stays in context.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b10-0">你可能有一堆条目，想按某些你认为 Claude Code 擅长评估的定性指标排序，比如：按 bug 的严重程度给支持工单排序。</span><span class="s" data-k="cases-b10-1">但如果你试图在一次提示里排 1000 行以上，质量会下降，而且根本放不进上下文。</span><span class="s" data-k="cases-b10-2">更好的做法是跑一场锦标赛——一串两两比较的智能体（比较判断比绝对打分更可靠）；或者并行做分桶排序，再合并。</span><span class="s" data-k="cases-b10-3">每次比较都是它自己的智能体，确定性的循环只负责维护对阵表，上下文里只留当前的对局。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b11"><h3><span class='h3-en'>Memory and rule adherence</span><span class='h3-zh'>记忆与规则遵循</span></h3></div>
+<figure class="row wide fig" id="fig6" data-cap="按规则逐条审查，再由怀疑者复核"><div class="fig-media"><img class="still" src="media/fig6.webp" loading="lazy" decoding="async" alt="FIG F Rule-by-rule review: one verifier per rule in a clean context, then a skeptic filters the flags."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>按规则逐条审查，再由怀疑者复核</b>　左边是一份 diff：+142 行、−87 行。中间是五条规则，一条规则一个验证智能体；其中两条在 line 42 和 line 90 上标了红，其余回来说干净。右边是一个 skeptic（怀疑者）智能体，逐条重读这些标记，把真违规和误报分开，最后只剩 Confirmed violations。</p><p class="cap-en">原文图注：FIG F Rule-by-rule review: one verifier per rule in a clean context, then a skeptic filters the flags.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左边是 diff：+142 行新增、−87 行删除，中间五条规则各配一个 verifier 智能体。</li><li>被标红的两处落在 line 42 与 line 90，其余三条回来说「干净」。</li><li>右边的 skeptic 智能体逐条重读这些标记，判「真违规」还是「误报」。</li><li>终点写着 Confirmed violations only——留下来的才是要改的。</li></ol><p class="takeaway">一句话：先逐条查，再让怀疑者过滤误报。</p></details></figcaption></figure>
+<div class="row" data-rid="cases-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b13-0">If you have a particular set of rules that you find Claude misses or struggles with, even when put into the `CLAUDE.mds`, create a workflow with a list of rules that must be checked by verifier agents—one verifier per rule.</span> <span class="s" data-k="cases-b13-1">Creating a skeptic persona subagent to review the rules to make sure they are in line will help avoid too many false positives.</span> <span class="s" data-k="cases-b13-2">The reverse direction works too: mine your recent sessions and code review comments for corrections you keep making, cluster them with parallel agents, adversarially verify each candidate (would this rule have prevented a real mistake?), and then distill the survivors back into a `CLAUDE.md`.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b13-0">如果你有一组特定规则，发现 Claude 老是漏、或者即便写进 `CLAUDE.md` 也做不好，那就建一个工作流，把规则列成清单，让验证智能体逐条检查——一条规则一个验证者。</span><span class="s" data-k="cases-b13-1">再建一个「怀疑者」人格的子智能体去复核这些规则是否站得住，能帮你避免太多误报。</span><span class="s" data-k="cases-b13-2">反方向也成立：翻你最近的会话和代码审查意见，挖出你反复在纠正的点，用并行智能体聚类，再对每个候选规则做对抗性验证（这条规则真能挡住一次真实的错误吗？），最后把活下来的写回 `CLAUDE.md`。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b14"><h3><span class='h3-en'>Root-cause investigation</span><span class='h3-zh'>根因排查</span></h3></div>
+<div class="row" data-rid="cases-b15"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b15-0">Debugging works best when you come up with several independent hypotheses and test them, but if you’re only using one context window, Claude can run into self-preferential bias.</span> <span class="s" data-k="cases-b15-1">A workflow can structurally prevent this by spinning up agents to generate hypotheses from disjoint evidence.</span> <span class="s" data-k="cases-b15-2">For example, separate agents for logs, files, and data.</span> <span class="s" data-k="cases-b15-3">Each hypothesis can then face a panel of verifiers and refuters.</span> <span class="s" data-k="cases-b15-4">This isn't just for code.</span> <span class="s" data-k="cases-b15-5">Workflows can be used for sales (why did sales drop in March?), data engineering (why did this pipeline fail?), or any post-mortem exercise.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b15-0">调试最有效的做法，是想出几个互相独立的假设再分别验证；但如果你只有一个上下文窗口，Claude 容易陷进自我偏好偏差。</span><span class="s" data-k="cases-b15-1">工作流可以从结构上防止这一点：派生智能体，让它们从彼此不重叠的证据里各自提出假设。</span><span class="s" data-k="cases-b15-2">比如日志、文件、数据各派一个智能体。</span><span class="s" data-k="cases-b15-3">然后每个假设都要面对一组验证者和反驳者。</span><span class="s" data-k="cases-b15-4">这并不只适用于代码。</span><span class="s" data-k="cases-b15-5">工作流可以用在销售（三月销量为什么掉了？）、数据工程（这条管道为什么失败？），或任何复盘场合。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b16"><h3><span class='h3-en'>Triaging at scale</span><span class='h3-zh'>大规模分诊</span></h3></div>
+<figure class="row wide fig" id="fig7" data-cap="先隔离，再行动"><div class="fig-media"><img class="still" src="media/fig7.webp" loading="lazy" decoding="async" alt="FIG G Quarantine, then act: reader agents touch untrusted content with no privileges; the actor agent only ever sees their summaries."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>先隔离，再行动</b>　左边 Quarantine zone（隔离区）：不可信的支持工单、bug 报告、用户反馈进来，里面只有只读工具；reader agents 负责分类、跟已跟踪项去重、只输出结构化摘要。右边 Trusted zone（可信区）：持有高权限工具的 actor agent 只看到这些摘要，据此采取动作。</p><p class="cap-en">原文图注：FIG G Quarantine, then act: reader agents touch untrusted content with no privileges; the actor agent only ever sees their summaries.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左边 Quarantine zone：不可信的工单、bug 报告、用户反馈进来，框内工具标着 read-only。</li><li>中间的 reader agents 负责分类、去重，只输出结构化摘要——它们没有任何写权限。</li><li>右边 Trusted zone 里是 actor agent，工具是高权限的，但它只看到左边递过来的摘要。</li><li>两个区域之间是一堵明确的墙：读不可信内容的人，不能同时拥有动手的权限。</li></ol><p class="takeaway">一句话：读不可信内容的人不许动手，动手的人只读摘要。</p></details></figcaption></figure>
+<div class="row" data-rid="cases-b18"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b18-0">Every team has a support queue, bug reports, or some other backlog that cannot be fully processed by humans.</span> <span class="s" data-k="cases-b18-1">A triage workflow classifies each item, dedupes against what's already tracked, and takes action.</span> <span class="s" data-k="cases-b18-2">This could mean attempting the fix or escalating to a human user.</span> <span class="s" data-k="cases-b18-3">A useful pattern for triage workflows is quarantine.</span> <span class="s" data-k="cases-b18-4">This involves barring the agents that read untrusted public content from taking high-privilege actions, which are instead done by the agents in charge of acting on the information.</span> <span class="s" data-k="cases-b18-5">Pair triage workflows with /loop to have Claude do this continuously.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b18-0">每个团队都有支持队列、bug 报告，或某些其他人力处理不完的积压。</span><span class="s" data-k="cases-b18-1">一个分诊工作流会给每个条目分类、跟已有记录去重，然后采取动作。</span><span class="s" data-k="cases-b18-2">这个动作可能是尝试修复，也可能是升级给人。</span><span class="s" data-k="cases-b18-3">分诊工作流有个好用的模式叫隔离（quarantine）。</span><span class="s" data-k="cases-b18-4">具体做法是不让读取不可信公开内容的智能体拥有高权限操作，那些操作交给专门负责依据信息行动的智能体去做。</span><span class="s" data-k="cases-b18-5">把分诊工作流和 /loop 搭配，就能让 Claude 持续做这件事。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b19"><h3><span class='h3-en'>Exploration and taste</span><span class='h3-zh'>探索与品味</span></h3></div>
+<div class="row" data-rid="cases-b20"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b20-0">Workflows can be useful when exploring different approaches to a solution, especially when it is taste based, like design or naming, and would benefit from a rubric.</span> <span class="s" data-k="cases-b20-1">Try asking Claude to explore a bunch of solutions, and give a review agent a rubric for what a good solution looks like.</span> <span class="s" data-k="cases-b20-2">The task is complete when the review agent feels like it has met the criteria.</span> <span class="s" data-k="cases-b20-3">Solutions can also be ordered or selected via a tournament based on the rubric.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b20-0">探索同一个问题的不同解法时，工作流也有用，尤其当解法是品味问题（比如设计、命名），并且能受益于一套评分标准。</span><span class="s" data-k="cases-b20-1">可以试着让 Claude 探索一批解法，再给一个评审智能体一套「好解法长什么样」的评分标准。</span><span class="s" data-k="cases-b20-2">当评审智能体觉得满足了判据，任务就算完成。</span><span class="s" data-k="cases-b20-3">也可以按评分标准，通过锦标赛来排序或挑选解法。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b21"><h3><span class='h3-en'>Evals</span><span class='h3-zh'>评测</span></h3></div>
+<div class="row" data-rid="cases-b22"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b22-0">You can run lightweight evals for particular tasks by spinning off separate agents in a worktree and then spinning off comparison agents to compare and grade the specific outputs against a rubric.</span> <span class="s" data-k="cases-b22-1">For example, <a class='lnk' href='https://claude.dev/blog/automating-eval-design-and-hillclimbing/' target='_blank' rel='noopener' data-link='L13'>evaluating and then refining a skill</a> you’ve created against a particular criteria.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b22-0">你可以为特定任务跑轻量评测：在 worktree 里派生若干独立智能体，再派生比较智能体，按评分标准对比并给具体输出打分。</span><span class="s" data-k="cases-b22-1">比如，按某个特定判据<a class='lnk' href='https://claude.dev/blog/automating-eval-design-and-hillclimbing/' target='_blank' rel='noopener' data-link='L13'>评测并打磨你写的一个技能</a>。</span></p></div></div>
+<div class="row h3row wide" id="h-cases-b23"><h3><span class='h3-en'>Model and intelligence routing</span><span class='h3-zh'>模型与智能路由</span></h3></div>
+<div class="row" data-rid="cases-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cases-b24-0">Create a classifier agent tuned to your tasks that decides which model to use.</span> <span class="s" data-k="cases-b24-1">This can be helpful when your task will involve many tool calls and conducting research prior to execution can identify the best model for the job.</span> <span class="s" data-k="cases-b24-2">For example, the best model for the task “explain how the auth module works” depends on how many files in the auth module there are and the shape of the codebase.</span> <span class="s" data-k="cases-b24-3">A classifier agent can do this research and then <a class='lnk' href='https://claude.dev/blog/building-with-claude-sonnet-5-5/' target='_blank' rel='noopener' data-link='L14'>route to Sonnet or Opus</a> based on the expected complexity of the task.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cases-b24-0">建一个针对你任务调好的分类器智能体，由它决定用哪个模型。</span><span class="s" data-k="cases-b24-1">当你的任务包含大量工具调用时，这个很有用：执行前先做一轮研究，能找出最合适的模型。</span><span class="s" data-k="cases-b24-2">比如「讲讲 auth 模块怎么工作」这个任务，最佳模型取决于 auth 模块里有多少文件、代码库长什么形状。</span><span class="s" data-k="cases-b24-3">分类器智能体可以先做这轮研究，再按任务预期的复杂度<a class='lnk' href='https://claude.dev/blog/building-with-claude-sonnet-5-5/' target='_blank' rel='noopener' data-link='L14'>路由到 Sonnet 或 Opus</a>。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-limit">
+<div class="sec-head"><span class="sec-num">07</span><h2><span class="h-en">When not to use dynamic workflows</span><span class="h-zh">什么时候不该用</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>工作流是新东西，不是每个任务都需要它，而且往往明显更费 token。常规编码任务先问一句「真的需要更多算力吗」；同样的判断在架构层也成立——并行和专业化得先挣回协调成本。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="limit-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="limit-b0-0">Workflows are new.</span> <span class="s" data-k="limit-b0-1">While there are many use cases where it will create outsized results, they are not needed for every task and may end up using significantly more tokens.</span> <span class="s" data-k="limit-b0-2">It’s best to use workflows creatively to push Claude Code in ways that you haven’t previously.</span> <span class="s" data-k="limit-b0-3">For regular coding tasks, try and ask yourself: does it really need more compute?</span> <span class="s" data-k="limit-b0-4">For example, most traditional coding tasks do not need a panel of 5 reviewers.</span> <span class="s" data-k="limit-b0-5">The same judgment applies one level up, at the architecture layer: the <a class='lnk' href='https://claude.com/blog/building-multi-agent-systems-when-and-how-to-use-them' target='_blank' rel='noopener' data-link='L15'>multi-agent vs single agent</a> decision follows similar logic — parallelism and specialization have to earn their coordination cost.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="limit-b0-0">工作流是新的东西。</span><span class="s" data-k="limit-b0-1">虽然有很多场景它能带来超额收益，但它并非每个任务都需要，而且可能显著多花 token。</span><span class="s" data-k="limit-b0-2">最好的用法是有创意地用工作流，把 Claude Code 推到以前推不到的地方。</span><span class="s" data-k="limit-b0-3">对常规编码任务，先问自己一句：它真的需要更多算力吗？</span><span class="s" data-k="limit-b0-4">比如大多数传统编码任务并不需要五个评审组成的评审团。</span><span class="s" data-k="limit-b0-5">同样的判断也适用于上一层，即架构层：<a class='lnk' href='https://claude.com/blog/building-multi-agent-systems-when-and-how-to-use-them' target='_blank' rel='noopener' data-link='L15'>多智能体与单智能体</a>的取舍遵循相似的逻辑——并行和专业化，得先挣回它们的协调成本。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-tips">
+<div class="sec-head"><span class="sec-num">08</span><h2><span class="h-en">Tips for building dynamic workflows</span><span class="h-zh">搭工作流的具体建议</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>四条实操：提示词要写细、可以配 /loop 与 /goal、能设 token 预算、能把运行存下来当技能分发。分发那条尤其值得看：把 JavaScript 文件放进技能目录，并在 SKILL.md 里当模板引用。</p></div>
+<div class="reader-body">
+<div class="row h3row wide" id="h-tips-b0"><h3><span class='h3-en'>Prompting</span><span class='h3-zh'>提示词怎么写</span></h3></div>
+<div class="row" data-rid="tips-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tips-b1-0">Detailed prompting, using the specific techniques we described above, for dynamic workflows creates the best results.</span> <span class="s" data-k="tips-b1-1">Workflows are not just for large tasks.</span> <span class="s" data-k="tips-b1-2">You can prompt the model to use a “quick workflow.” For example, you can create a quick adversarial review of an assumption.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tips-b1-0">用上面讲到的具体技巧，为动态工作流写细致的提示词，效果最好。</span><span class="s" data-k="tips-b1-1">工作流不只是为大任务准备的。</span><span class="s" data-k="tips-b1-2">你可以让模型跑一个「快速工作流」，比如对某个假设做一次快速的对抗性审查。</span></p></div></div>
+<div class="row h3row wide" id="h-tips-b2"><h3><span class='h3-en'>Combine with /goal and /loop</span><span class='h3-zh'>和 /goal、/loop 搭配</span></h3></div>
+<div class="row" data-rid="tips-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tips-b3-0">When using workflows that can be repeated, for example triage, research, or verification, pair them with `/loop` to be <a class='lnk' href='https://claude.com/resources/articles/getting-started-with-loops' target='_blank' rel='noopener' data-link='L16'>run at regular intervals</a>, and /goal to set a hard completion requirement.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tips-b3-0">对于那些可以重复的工作流，比如分诊、研究、验证，把它们和 `/loop` 搭配就能<a class='lnk' href='https://claude.com/resources/articles/getting-started-with-loops' target='_blank' rel='noopener' data-link='L16'>定期运行</a>，再用 /goal 设一个硬性的完成条件。</span></p></div></div>
+<div class="row h3row wide" id="h-tips-b4"><h3><span class='h3-en'>Token usage budgets</span><span class='h3-zh'>token 预算</span></h3></div>
+<div class="row" data-rid="tips-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tips-b5-0">You can set explicit token usage budgets for dynamic workflows to limit how many tokens a task uses.</span> <span class="s" data-k="tips-b5-1">You can prompt it with a budget like: “use 10k tokens,” which will set the cap.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tips-b5-0">你可以给动态工作流设定明确的 token 预算，限制一项任务能花多少 token。</span><span class="s" data-k="tips-b5-1">可以在提示里直接给预算，比如「用 10k token」，它就会把这个上限设好。</span></p></div></div>
+<div class="row h3row wide" id="h-tips-b6"><h3><span class='h3-en'>Saving and sharing dynamic workflows</span><span class='h3-zh'>保存与分享工作流</span></h3></div>
+<div class="row" data-rid="tips-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tips-b7-0">You can save workflows by pressing “s” in the workflow menu.</span> <span class="s" data-k="tips-b7-1">You can check these into `~/.claude/workflows` or distribute them via a skill.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tips-b7-0">在工作流菜单里按「s」就能保存工作流。</span><span class="s" data-k="tips-b7-1">你可以把它们提交到 `~/.claude/workflows`，或通过技能分发出去。</span></p></div></div>
+<figure class="row wide fig" id="fig8" data-cap="Dynamic workflows 面板"><div class="fig-media"><img class="still" src="media/fig8.webp" loading="lazy" decoding="async" alt="FIG H The dynamic workflows panel — press s to save a run as a reusable workflow."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Dynamic workflows 面板</b>　Claude Code 里的 Dynamic workflows 面板列出三次运行：review-changes（14 个智能体、482k token、6m 12s）、find-flaky-tests（6 个智能体，仍在运行）、deep-research（22 个智能体、1.1M token、11m 3s）。底部是按键提示：select、enter view、s save、esc 退回。</p><p class="cap-en">原文图注：FIG H The dynamic workflows panel — press s to save a run as a reusable workflow.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>三行分别是 review-changes（14 agents、482k tokens、6m 12s）、find-flaky-tests（6 agents，仍在跑）、deep-research（22 agents、1.1M、11m 3s）。</li><li>每行都给出智能体数量与 token 总量，这是判断「这个工作流值不值」最直接的两个数。</li><li>底部按键提示：select 选择、enter view 进入查看、s save 存成可复用工作流、esc 退回。</li><li>「s save」就是正文那句「按 s 保存」的出处。</li></ol><p class="takeaway">一句话：面板上两个数最有用：几个智能体、花了多少 token。</p></details></figcaption></figure>
+<div class="row" data-rid="tips-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tips-b9-0">To share them via a skill, put your JavaScript workflow files in the skill folder and reference them in the `SKILL.md`.</span> <span class="s" data-k="tips-b9-1">To allow for more flexibility, you may want to prompt Claude to think of the workflows in the skill as a template instead of a script that needs to be run verbatim.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tips-b9-0">通过技能分享的做法是：把 JavaScript 工作流文件放进技能目录，并在 `SKILL.md` 里引用它们。</span><span class="s" data-k="tips-b9-1">为了留出更大灵活度，你可以提示 Claude 把技能里的工作流当成模板，而不是必须照字面执行的脚本。</span></p></div></div>
+<figure class="row wide fig" id="fig9" data-cap="用技能分发工作流"><div class="fig-media"><img class="still" src="media/fig9.webp" loading="lazy" decoding="async" alt="A skill folder at ~/.claude/skills/deep-verify/ containing SKILL.md, verify-claims.workflow.js and rubric.md, beside the SKILL.md contents, which reference./verify-claims.workflow.js to check each claim with its own subagent."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>用技能分发工作流</b>　一个技能文件夹 ~/.claude/skills/deep-verify/，里面三样东西：SKILL.md、verify-claims.workflow.js、rubric.md；右边是 SKILL.md 的内容，它引用 ./verify-claims.workflow.js，让每一条 claim 各自用一个子智能体去查。</p><p class="cap-en">原文图注：A skill folder at ~/.claude/skills/deep-verify/ containing SKILL.md, verify-claims.workflow.js and rubric.md, beside the SKILL.md contents, which reference./verify-claims.workflow.js to check each claim with its own subagent.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左边是 ~/.claude/skills/deep-verify/ 目录：SKILL.md、verify-claims.workflow.js、rubric.md 三个文件。</li><li>右边是 SKILL.md 的内容，其中一行写着 ./verify-claims.workflow.js。</li><li>这条相对路径让技能指向同目录下的工作流脚本——分发靠的就是这个引用。</li><li>rubric.md 是给每条 claim 打分的判据，说明技能可以把「脚本 + 标准」一起打包。</li></ol><p class="takeaway">一句话：技能把脚本与判据打包，靠一条相对路径接通。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-discovery">
+<div class="sec-head"><span class="sec-num">09</span><h2><span class="h-en">A new starting point for discovery</span><span class="h-zh">一个重新出发的起点</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>作者把工作流当成探索的起点而不是终点：怎么用还在被发现中，欢迎把发现告诉他们。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="discovery-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="discovery-b0-0">Workflows are a helpful new way to extend Claude Code.</span> <span class="s" data-k="discovery-b0-1">I encourage you to think of them as a starting point to explore new ways to use Claude to help accomplish your tasks.</span> <span class="s" data-k="discovery-b0-2">There is still much to discover in how to use them best.</span> <span class="s" data-k="discovery-b0-3">Let me know what you find.</span> <span class="s" data-k="discovery-b0-4"><i>For principles on what belongs in a harness in the first place, see our three</i> <a class='lnk' href='https://claude.com/blog/harnessing-claudes-intelligence' target='_blank' rel='noopener' data-link='L17'><i>harness design patterns</i></a> <i>for building with Claude.</i></span> <span class="s" data-k="discovery-b0-5"><i>This article was written by Thariq Shihipar and Sid Bidasaria, members of technical staff at Anthropic working on Claude Code.</i></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="discovery-b0-0">工作流是扩展 Claude Code 的一个有用的新方式。</span><span class="s" data-k="discovery-b0-1">我建议你把它当成一个起点，去探索用 Claude 完成任务的新办法。</span><span class="s" data-k="discovery-b0-2">关于怎么用得最好，还有很多可挖。</span><span class="s" data-k="discovery-b0-3">你发现什么，欢迎告诉我。</span><span class="s" data-k="discovery-b0-4">想知道一套运行框架里本该放什么，可以看我们为 Claude 写的三种 <a class='lnk' href='https://claude.com/blog/harnessing-claudes-intelligence' target='_blank' rel='noopener' data-link='L17'>运行框架设计模式</a>。</span><span class="s" data-k="discovery-b0-5">本文由 Anthropic 技术团队成员 Thariq Shihipar 与 Sid Bidasaria 撰写，他们工作于 Claude Code。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 17 处正文引用，指向 17 个不同链接；另有 9 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>动态工作流（官方文档）</h4><p class="lnk-site">code.claude.com · Dynamic workflows</p><p class="lnk-anchors">正文对应：<em>动态工作流（dynamic workflows）</em></p><p><b>这是什么：</b>官方文档：怎么在 Claude Code 里触发、查看、保存、再用一个动态工作流。</p><p><b>为什么值得点：</b>本文是概念与场景，这一页是操作手册——`ultracode` 触发词、运行面板、保存成技能都在这里。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>在提示词里点明要「用工作流」，或加触发词 `ultracode`；运行中的工作流会出现在面板里，可实时看每个智能体在干什么；按 s 保存成可复用工作流。</p><ul><li>触发方式：提示词或 ultracode</li><li>运行面板可观察</li><li>可保存、可复用</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/workflows" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>运行框架（术语解释）</h4><p class="lnk-site">code.claude.com · Agentic harness</p><p class="lnk-anchors">正文对应：<em>运行框架（harness）</em></p><p><b>这是什么：</b>官方术语表条目，一句话定义：包住模型的这层循环、提示词与工具编排。</p><p><b>为什么值得点：</b>全文的核心词就是它。先接受「模型 ≠ 运行框架」这个区分，才看得懂为什么「现搭一套」有价值。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>harness 指模型之外的调度层：怎么拼提示词、给哪些工具、结果怎么回灌。同一模型不同 harness，能力差别可以很大。</p><ul><li>模型与调度层分离</li><li>决定工具与提示词</li><li>可被动态构造</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/glossary#agentic-harness" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>代码审查</h4><p class="lnk-site">code.claude.com · Code review</p><p class="lnk-anchors">正文对应：<em>代码审查</em></p><p><b>这是什么：</b>官方文档：Claude Code 的代码审查功能怎么开、怎么定制。</p><p><b>为什么值得点：</b>文章里「一条规则一个验证者」的做法，在这条产品线上已经落地；想直接抄作业从这里开始。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>审查可按项目规则定制，问题分等级；配合本文的对抗性验证模式，可以让审查者与被审者分开。</p><ul><li>可定制规则</li><li>问题分级</li><li>可与验证智能体配合</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/code-review" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>子智能体</h4><p class="lnk-site">code.claude.com · Subagents</p><p class="lnk-anchors">正文对应：<em>子智能体</em></p><p><b>这是什么：</b>官方文档：子智能体是什么、怎么定义、有哪些隔离与工具选项。</p><p><b>为什么值得点：</b>本文所有模式都建立在子智能体之上；agent() 的 opts（model、isolation、agentType）就是这一页里的字段。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>子智能体有自己的上下文与工具集；可以指定模型、跑在独立 worktree 或远端；主智能体只收到它的最终结果。</p><ul><li>独立上下文</li><li>可指定模型</li><li>worktree / remote 隔离</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/sub-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L15"><div class="lnk-top"><span class="lnk-id">L15</span><span class="chip must">必读</span><span class="chip">建议第 6 个读</span></div><h4>多智能体系统：何时用、怎么用</h4><p class="lnk-site">claude.com · Building multi-agent systems: when and how to use them</p><p class="lnk-anchors">正文对应：<em>多智能体与单智能体</em></p><p><b>这是什么：</b>官方文章：多智能体什么时候划算、什么时候是纯浪费。</p><p><b>为什么值得点：</b>本文那句「并行和专业化得先挣回协调成本」就出自这套判断，想省 token 值得读。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>并行的收益来自「可独立拆分的子任务」；协调、汇总、冲突处理都是成本。子任务耦合度高时，单智能体反而更好。</p><ul><li>先算协调成本</li><li>任务可独立才并行</li><li>耦合高就别拆</li></ul></details><a class="lnk-open" href="https://claude.com/blog/building-multi-agent-systems-when-and-how-to-use-them" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L17"><div class="lnk-top"><span class="lnk-id">L17</span><span class="chip must">必读</span><span class="chip">建议第 15 个读</span></div><h4>驾驭 Claude 的智能：三种运行框架设计模式</h4><p class="lnk-site">claude.com · Harnessing Claude's intelligence</p><p class="lnk-anchors">正文对应：<em>运行框架设计模式</em></p><p><b>这是什么：</b>官方文章：一套运行框架里该有什么，作者给了三种基本模式。</p><p><b>为什么值得点：</b>本文结尾明确指路：想知道「框架里本来就该放什么」，看这一篇；它和动态工作流是「常备」与「临时」的关系。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>三种模式分别解决上下文怎么给、工具怎么排、验证怎么插；先有稳定的基础框架，再谈针对单个任务临时改造。</p><ul><li>上下文、工具、验证三件事</li><li>先有基础框架</li><li>再谈临时改造</li></ul></details><a class="lnk-open" href="https://claude.com/blog/harnessing-claudes-intelligence" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>用 Claude 做代码迁移</h4><p class="lnk-site">claude.com · AI code migration</p><p class="lnk-anchors">正文对应：<em>AI 代码迁移</em></p><p><b>这是什么：</b>官方文章：百万行级代码库怎么用 Claude 迁移。</p><p><b>为什么值得点：</b>本文「迁移与重构」一节的方法论来源，想知道「拆成什么单位」可以看这篇。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把迁移拆成「建映射 → 分批改 → 每批验证」；以行为不变为目标，差异逐条确认。</p><ul><li>行为不变为目标</li><li>分批迁移分批验证</li><li>差异清单</li></ul></details><a class="lnk-open" href="https://claude.com/blog/ai-code-migration" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip bg">背景</span><span class="chip">建议第 7 个读</span></div><h4>智能体团队</h4><p class="lnk-site">code.claude.com · Agent teams</p><p class="lnk-anchors">正文对应：<em>智能体团队</em></p><p><b>这是什么：</b>官方文档：多个 Claude 实例如何分工、通信、汇总。</p><p><b>为什么值得点：</b>动态工作流本质上是「按需临时组队」，这一页讲的是常驻团队怎么运作，可以对照看。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把任务拆给多个实例并行做，各自有上下文，最后汇总；难点在分工边界与结果合并，而不在并行本身。</p><ul><li>多实例并行</li><li>上下文隔离</li><li>合并是难点</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/agent-teams" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>Claude Code 里的自动化安全审查</h4><p class="lnk-site">support.claude.com · Automated security reviews in Claude Code</p><p class="lnk-anchors">正文对应：<em>安全分析</em></p><p><b>这是什么：</b>官方帮助文：用 Claude Code 做自动化安全审查的用法与边界。</p><p><b>为什么值得点：</b>文章举的第一个「必须自建运行框架」的例子就是它，也解释了「50 项只做 35 项」那种怠工为什么危险。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把安全审查拆成可逐条核对的检查项，交由智能体批量执行；产出要能对应到具体行与具体规则，否则无法复核。</p><ul><li>逐条核对</li><li>对应到行与规则</li><li>批量但可复核</li></ul></details><a class="lnk-open" href="https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>Claude Code 产品页</h4><p class="lnk-site">claude.com · Claude Code</p><p class="lnk-anchors">正文对应：<em>Claude Code</em></p><p><b>这是什么：</b>产品介绍页：这个在终端里写代码的智能体是什么、能做什么。</p><p><b>为什么值得点：</b>本文所有工作流都跑在 Claude Code 里，没上手过的话先看这一页。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>终端内的编码智能体，能读代码库、改文件、跑命令、调工具；本文的动态工作流是它的一项扩展能力。</p><ul><li>终端内运行</li><li>可读写代码库</li><li>支持子智能体与工作流</li></ul></details><a class="lnk-open" href="https://claude.com/product/claude-code" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 10 个读</span></div><h4>在 Claude 里使用研究功能</h4><p class="lnk-site">support.claude.com · Using research on Claude</p><p class="lnk-anchors">正文对应：<em>研究</em></p><p><b>这是什么：</b>官方帮助文：Claude 的「研究」功能怎么用、产出长什么样。</p><p><b>为什么值得点：</b>文章说研究类任务是自建运行框架的典型场景；这一篇是那条产品线的入口。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>多步检索加综合，产出带引用的报告；适合需要跨多个来源取证的问题。</p><ul><li>多步检索</li><li>带引用的输出</li><li>适合取证型问题</li></ul></details><a class="lnk-open" href="https://support.claude.com/en/articles/11088861-using-research-on-claude" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 11 个读</span></div><h4>Claude Opus 4.8 发布说明</h4><p class="lnk-site">anthropic.com · Claude Opus 4.8</p><p class="lnk-anchors">正文对应：<em>Claude Opus 4.8</em></p><p><b>这是什么：</b>模型发布公告：能力、上下文、可用性。</p><p><b>为什么值得点：</b>文章把「能现写一套运行框架」归因于这一代模型的能力提升，这是那个说法的出处。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>新一代旗舰模型；本文强调的不是跑分，而是「足以自己设计调度结构」这一质变。</p><ul><li>能力代际提升</li><li>可自主设计流程</li><li>支持子智能体编排</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/news/claude-opus-4-8" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L13"><div class="lnk-top"><span class="lnk-id">L13</span><span class="chip bg">背景</span><span class="chip">建议第 12 个读</span></div><h4>自动设计评测并爬山优化</h4><p class="lnk-site">claude.dev · Automating eval design and hillclimbing</p><p class="lnk-anchors">正文对应：<em>评测并打磨你写的一个技能</em></p><p><b>这是什么：</b>同站文章：怎么让智能体自己设计评测集，再据此迭代改进一个技能。</p><p><b>为什么值得点：</b>本文「评测」一节只给了思路，这一篇给的是可执行流程。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>先让模型生成候选评测项，再由评分者筛选；然后按失败项小步改进，像爬山一样逐轮提升。</p><ul><li>自动生成评测项</li><li>按判据筛选</li><li>小步迭代</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/automating-eval-design-and-hillclimbing/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L16"><div class="lnk-top"><span class="lnk-id">L16</span><span class="chip bg">背景</span><span class="chip">建议第 14 个读</span></div><h4>循环入门</h4><p class="lnk-site">claude.com · Getting started with loops</p><p class="lnk-anchors">正文对应：<em>定期运行</em></p><p><b>这是什么：</b>官方文章：`/loop` 怎么用，让一件事按间隔反复跑。</p><p><b>为什么值得点：</b>文章建议把分诊、研究、验证这类可重复的工作流配 `/loop`，这一篇是具体做法。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>给一个间隔与一个任务，Claude 会周期性地重跑；适合巡检、分诊、监控类工作，注意给停止条件，否则会一直跑。</p><ul><li>按间隔重跑</li><li>需设停止条件</li><li>适合巡检类任务</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/getting-started-with-loops" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L14"><div class="lnk-top"><span class="lnk-id">L14</span><span class="chip">可选</span><span class="chip">建议第 13 个读</span></div><h4>用 Claude Sonnet 5.5 构建</h4><p class="lnk-site">claude.dev · Building with Claude Sonnet 5.5</p><p class="lnk-anchors">正文对应：<em>路由到 Sonnet 或 Opus</em></p><p><b>这是什么：</b>同站文章：什么任务交给 Sonnet、什么留给 Opus，以及怎么判断。</p><p><b>为什么值得点：</b>本文最后一类场景「模型与智能路由」说的就是这件事，这一篇是它的展开。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>按任务复杂度与工具调用量选模型：大量机械调用交给便宜模型，设计类判断留给贵的；路由器本身也要能被评测。</p><ul><li>按复杂度分流</li><li>路由器可评测</li><li>成本与质量权衡</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/building-with-claude-sonnet-5-5/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip">可选</span><span class="chip">建议第 16 个读</span></div><h4>Bun（JS 运行时）</h4><p class="lnk-site">bun.com · Bun</p><p class="lnk-anchors">正文对应：<em>Bun</em></p><p><b>这是什么：</b>Bun 官网：那个用 Zig 写的 JavaScript 运行时。</p><p><b>为什么值得点：</b>文章举它作为「用工作流完成语言迁移」的实例——从 Zig 重写成 Rust，规模足够说明问题。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>JavaScript/TypeScript 运行时与包管理器，原用 Zig 实现；文章说它整体迁到了 Rust，过程由工作流驱动。</p><ul><li>Zig → Rust 迁移案例</li><li>大规模重构</li><li>工作流驱动</li></ul></details><a class="lnk-open" href="https://bun.com/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip">可选</span><span class="chip">建议第 17 个读</span></div><h4>Jarred Sumner 谈 Bun 的重写</h4><p class="lnk-site">x.com · Jarred Sumner on the Bun rewrite</p><p class="lnk-anchors">正文对应：<em>Jarred 的帖子</em></p><p><b>这是什么：</b>Bun 作者本人发的长贴，讲这次迁移怎么做的。</p><p><b>为什么值得点：</b>文章只给了一句结论，细节（怎么分批、怎么验证、翻车在哪）都在这条帖子里。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>第一手复盘：按模块与调用点分批迁移、每批跑同一套验证、人工确认差异后再合并。</p><ul><li>按单位分批</li><li>批量验证</li><li>人工确认差异</li></ul></details><a class="lnk-open" href="https://x.com/jarredsumner/status/2060050578026189172" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 12 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">运行框架</span></div><p class="gl-def">包在模型外面的一层「脚手架」：负责拼提示词、给工具、处理结果、调度子智能体。同一个模型换一套运行框架，能干的活就不一样。</p><p class="gl-ana">像给同一台发动机装不同的底盘：发动机没变，能跑的路变了。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">dynamic workflow</span><span class="gl-zh">动态工作流</span></div><p class="gl-def">Claude 针对眼前这一个任务现场写的一段 JavaScript，用 agent() / parallel() / pipeline() 去调度一群子智能体，而不是走一套事先写死的流程。</p><p class="gl-ana">像临时组一个项目组，而不是照公司组织架构层层转办。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">subagent</span><span class="gl-zh">子智能体</span></div><p class="gl-def">由主智能体派生出来的独立 Claude 实例，拥有自己的上下文窗口和聚焦目标。上下文不共享，正是它能避免污染与漂移的原因。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口</span></div><p class="gl-def">模型一次能看到的全部 token 额度。装得越满，越容易丢细节、越容易漂移；这篇文章的核心手法就是「把工作分给多个窗口」。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">fan-out</span><span class="gl-zh">扇出</span></div><p class="gl-def">一次派出很多并行子智能体，让它们各干一块。扇出的反面是汇总（synthesize）——那一步要等所有扇出结束，所以是屏障。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tournament</span><span class="gl-zh">锦标赛</span></div><p class="gl-def">把排序变成一串两两比较：每次比较派一个全新智能体，胜者进下一轮。适合量大到一次装不进上下文、又要按某种质量排序的清单。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">adversarial verification</span><span class="gl-zh">对抗性</span></div><p class="gl-def">专门派一个智能体去挑另一个智能体的毛病，按评分标准或判据找漏洞，而不是让它自评。目的是抵消「自我偏好偏差」。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">worktree</span><span class="gl-zh">worktree</span></div><p class="gl-def">Git 的机制：一个仓库同时挂多个工作目录，各有独立分支与改动。让每个改代码的子智能体各占一个，就不会互相覆盖文件。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rubric</span><span class="gl-zh">评分标准</span></div><p class="gl-def">把「好」拆成若干条可勾选的判据。智能体互相评审时，有 rubric 才判得稳；没有就只能凭感觉说「这个看起来更好」。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compaction</span><span class="gl-zh">压缩</span></div><p class="gl-def">上下文快满时，把之前的对话摘要成一段，用它开新会话继续。摘要本身是有损的，所以文章把「压缩后的目标漂移」单列成一种失败模式。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">goal drift</span><span class="gl-zh">目标漂移</span></div><p class="gl-def">轮次一多，逐渐偏离最初的目标；压缩之后尤其明显（「不要做 X」这类约束最先丢）。工作流用「每个子智能体只看一小块」来缓解。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">token</span><span class="gl-zh">token</span></div><p class="gl-def">模型计费与上下文占用的最小单位，约等于一个词的一小段。动态工作流更费 token，因为它在并行跑很多个上下文。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>worktree 是什么，为什么值得隔离</h4><p>worktree 是 Git 的一项能力：同一个仓库可以同时挂在多个工作目录上，各有独立的分支与未提交改动。文章让每个修 bug 的子智能体各占一个 worktree，好处是它们互不覆盖对方的文件；最后由一个智能体审查再合并。代价是磁盘与合并冲突要自己管。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>「扇出」与「屏障」</h4><p>fan-out（扇出）指一次派出很多并行子智能体；synthesize（汇总）那一步叫屏障（barrier），因为它必须等所有扇出的智能体都结束才能合并。这也是并行工作流最容易误用的地方：屏障前的步骤越多，等待越久。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>为什么锦标赛比打分可靠</h4><p>文章说 comparative judgment（两两比较）比 absolute scoring（绝对打分）可靠：模型很难稳定地给「7 分还是 8 分」，但判断「A 和 B 哪个更好」要稳得多。代价是比较次数是 O(n log n) 级别，所以每次比较都用全新智能体、上下文里只留当前这一对。</p></div></div></div></section><footer><p>原文 © Anthropic / claude.dev，作者 Thariq Shihipar 与 Sid Bidasaria，2026-06-02。本页为英中逐句对照的学习用译本；速览、对照表、要点与译注为译者所加，原文没有。</p><p>原文：<a href="https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/" target="_blank" rel="noopener">A harness for every task: dynamic workflows in Claude Code</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-prompts"><span class="dot">●</span>示例提示词</a><a class="l2" href="#s-how"><span class="dot">●</span>动态工作流怎么运作</a><a class="l2" href="#s-why"><span class="dot">●</span>为什么要动态工作流</a><a class="l2" href="#s-static"><span class="dot">●</span>动态与静态工作流的区别</a><a class="l2" href="#s-patterns"><span class="dot">●</span>值得组合的六种模式</a><a class="l3" href="#h-patterns-b2"><span class="dot">●</span>分类再行动</a><a class="l3" href="#h-patterns-b4"><span class="dot">●</span>扇出再汇总</a><a class="l3" href="#h-patterns-b6"><span class="dot">●</span>对抗性验证</a><a class="l3" href="#h-patterns-b8"><span class="dot">●</span>生成再筛选</a><a class="l3" href="#h-patterns-b10"><span class="dot">●</span>锦标赛</a><a class="l3" href="#h-patterns-b12"><span class="dot">●</span>循环到完成</a><a class="l2" href="#s-cases"><span class="dot">●</span>能用在什么地方</a><a class="l3" href="#h-cases-b1"><span class="dot">●</span>迁移与重构</a><a class="l3" href="#h-cases-b3"><span class="dot">●</span>深度研究</a><a class="l3" href="#h-cases-b5"><span class="dot">●</span>深度验证</a><a class="l3" href="#h-cases-b8"><span class="dot">●</span>排序</a><a class="l3" href="#h-cases-b11"><span class="dot">●</span>记忆与规则遵循</a><a class="l3" href="#h-cases-b14"><span class="dot">●</span>根因排查</a><a class="l3" href="#h-cases-b16"><span class="dot">●</span>大规模分诊</a><a class="l3" href="#h-cases-b19"><span class="dot">●</span>探索与品味</a><a class="l3" href="#h-cases-b21"><span class="dot">●</span>评测</a><a class="l3" href="#h-cases-b23"><span class="dot">●</span>模型与智能路由</a><a class="l2" href="#s-limit"><span class="dot">●</span>什么时候不该用</a><a class="l2" href="#s-tips"><span class="dot">●</span>搭工作流的具体建议</a><a class="l3" href="#h-tips-b0"><span class="dot">●</span>提示词怎么写</a><a class="l3" href="#h-tips-b2"><span class="dot">●</span>和 /goal、/loop 搭配</a><a class="l3" href="#h-tips-b4"><span class="dot">●</span>token 预算</a><a class="l3" href="#h-tips-b6"><span class="dot">●</span>保存与分享工作流</a><a class="l2" href="#s-discovery"><span class="dot">●</span>一个重新出发的起点</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"动态工作流（官方文档）","title_en":"Dynamic workflows","site":"code.claude.com","what_zh":"官方文档：怎么在 Claude Code 里触发、查看、保存、再用一个动态工作流。","why_zh":"本文是概念与场景，这一页是操作手册——`ultracode` 触发词、运行面板、保存成技能都在这里。","tier":"必读","order":1,"url":"https://code.claude.com/docs/en/workflows"},"L2":{"title_zh":"运行框架（术语解释）","title_en":"Agentic harness","site":"code.claude.com","what_zh":"官方术语表条目，一句话定义：包住模型的这层循环、提示词与工具编排。","why_zh":"全文的核心词就是它。先接受「模型 ≠ 运行框架」这个区分，才看得懂为什么「现搭一套」有价值。","tier":"必读","order":2,"url":"https://code.claude.com/docs/en/glossary#agentic-harness"},"L3":{"title_zh":"Claude Code 产品页","title_en":"Claude Code","site":"claude.com","what_zh":"产品介绍页：这个在终端里写代码的智能体是什么、能做什么。","why_zh":"本文所有工作流都跑在 Claude Code 里，没上手过的话先看这一页。","tier":"背景","order":9,"url":"https://claude.com/product/claude-code"},"L4":{"title_zh":"在 Claude 里使用研究功能","title_en":"Using research on Claude","site":"support.claude.com","what_zh":"官方帮助文：Claude 的「研究」功能怎么用、产出长什么样。","why_zh":"文章说研究类任务是自建运行框架的典型场景；这一篇是那条产品线的入口。","tier":"背景","order":10,"url":"https://support.claude.com/en/articles/11088861-using-research-on-claude"},"L5":{"title_zh":"Claude Code 里的自动化安全审查","title_en":"Automated security reviews in Claude Code","site":"support.claude.com","what_zh":"官方帮助文：用 Claude Code 做自动化安全审查的用法与边界。","why_zh":"文章举的第一个「必须自建运行框架」的例子就是它，也解释了「50 项只做 35 项」那种怠工为什么危险。","tier":"背景","order":8,"url":"https://support.claude.com/en/articles/11932705-automated-security-reviews-in-claude-code"},"L6":{"title_zh":"智能体团队","title_en":"Agent teams","site":"code.claude.com","what_zh":"官方文档：多个 Claude 实例如何分工、通信、汇总。","why_zh":"动态工作流本质上是「按需临时组队」，这一页讲的是常驻团队怎么运作，可以对照看。","tier":"背景","order":7,"url":"https://code.claude.com/docs/en/agent-teams"},"L7":{"title_zh":"代码审查","title_en":"Code review","site":"code.claude.com","what_zh":"官方文档：Claude Code 的代码审查功能怎么开、怎么定制。","why_zh":"文章里「一条规则一个验证者」的做法，在这条产品线上已经落地；想直接抄作业从这里开始。","tier":"必读","order":3,"url":"https://code.claude.com/docs/en/code-review"},"L8":{"title_zh":"子智能体","title_en":"Subagents","site":"code.claude.com","what_zh":"官方文档：子智能体是什么、怎么定义、有哪些隔离与工具选项。","why_zh":"本文所有模式都建立在子智能体之上；agent() 的 opts（model、isolation、agentType）就是这一页里的字段。","tier":"必读","order":4,"url":"https://code.claude.com/docs/en/sub-agents"},"L9":{"title_zh":"Claude Opus 4.8 发布说明","title_en":"Claude Opus 4.8","site":"anthropic.com","what_zh":"模型发布公告：能力、上下文、可用性。","why_zh":"文章把「能现写一套运行框架」归因于这一代模型的能力提升，这是那个说法的出处。","tier":"背景","order":11,"url":"https://www.anthropic.com/news/claude-opus-4-8"},"L10":{"title_zh":"Bun（JS 运行时）","title_en":"Bun","site":"bun.com","what_zh":"Bun 官网：那个用 Zig 写的 JavaScript 运行时。","why_zh":"文章举它作为「用工作流完成语言迁移」的实例——从 Zig 重写成 Rust，规模足够说明问题。","tier":"可选","order":16,"url":"https://bun.com/"},"L11":{"title_zh":"Jarred Sumner 谈 Bun 的重写","title_en":"Jarred Sumner on the Bun rewrite","site":"x.com","what_zh":"Bun 作者本人发的长贴，讲这次迁移怎么做的。","why_zh":"文章只给了一句结论，细节（怎么分批、怎么验证、翻车在哪）都在这条帖子里。","tier":"可选","order":17,"url":"https://x.com/jarredsumner/status/2060050578026189172"},"L12":{"title_zh":"用 Claude 做代码迁移","title_en":"AI code migration","site":"claude.com","what_zh":"官方文章：百万行级代码库怎么用 Claude 迁移。","why_zh":"本文「迁移与重构」一节的方法论来源，想知道「拆成什么单位」可以看这篇。","tier":"背景","order":5,"url":"https://claude.com/blog/ai-code-migration"},"L13":{"title_zh":"自动设计评测并爬山优化","title_en":"Automating eval design and hillclimbing","site":"claude.dev","what_zh":"同站文章：怎么让智能体自己设计评测集，再据此迭代改进一个技能。","why_zh":"本文「评测」一节只给了思路，这一篇给的是可执行流程。","tier":"背景","order":12,"url":"https://claude.dev/blog/automating-eval-design-and-hillclimbing/"},"L14":{"title_zh":"用 Claude Sonnet 5.5 构建","title_en":"Building with Claude Sonnet 5.5","site":"claude.dev","what_zh":"同站文章：什么任务交给 Sonnet、什么留给 Opus，以及怎么判断。","why_zh":"本文最后一类场景「模型与智能路由」说的就是这件事，这一篇是它的展开。","tier":"可选","order":13,"url":"https://claude.dev/blog/building-with-claude-sonnet-5-5/"},"L15":{"title_zh":"多智能体系统：何时用、怎么用","title_en":"Building multi-agent systems: when and how to use them","site":"claude.com","what_zh":"官方文章：多智能体什么时候划算、什么时候是纯浪费。","why_zh":"本文那句「并行和专业化得先挣回协调成本」就出自这套判断，想省 token 值得读。","tier":"必读","order":6,"url":"https://claude.com/blog/building-multi-agent-systems-when-and-how-to-use-them"},"L16":{"title_zh":"循环入门","title_en":"Getting started with loops","site":"claude.com","what_zh":"官方文章：`/loop` 怎么用，让一件事按间隔反复跑。","why_zh":"文章建议把分诊、研究、验证这类可重复的工作流配 `/loop`，这一篇是具体做法。","tier":"背景","order":14,"url":"https://claude.com/resources/articles/getting-started-with-loops"},"L17":{"title_zh":"驾驭 Claude 的智能：三种运行框架设计模式","title_en":"Harnessing Claude's intelligence","site":"claude.com","what_zh":"官方文章：一套运行框架里该有什么，作者给了三种基本模式。","why_zh":"本文结尾明确指路：想知道「框架里本来就该放什么」，看这一篇；它和动态工作流是「常备」与「临时」的关系。","tier":"必读","order":15,"url":"https://claude.com/blog/harnessing-claudes-intelligence"}},"terms":{"harness":{"en":"harness","zh":"运行框架","def_zh":"包在模型外面的一层「脚手架」：负责拼提示词、给工具、处理结果、调度子智能体。同一个模型换一套运行框架，能干的活就不一样。","analogy_zh":"像给同一台发动机装不同的底盘：发动机没变，能跑的路变了。"},"dynamic_workflow":{"en":"dynamic workflow","zh":"动态工作流","def_zh":"Claude 针对眼前这一个任务现场写的一段 JavaScript，用 agent() / parallel() / pipeline() 去调度一群子智能体，而不是走一套事先写死的流程。","analogy_zh":"像临时组一个项目组，而不是照公司组织架构层层转办。"},"subagent":{"en":"subagent","zh":"子智能体","def_zh":"由主智能体派生出来的独立 Claude 实例，拥有自己的上下文窗口和聚焦目标。上下文不共享，正是它能避免污染与漂移的原因。"},"context_window":{"en":"context window","zh":"上下文窗口","def_zh":"模型一次能看到的全部 token 额度。装得越满，越容易丢细节、越容易漂移；这篇文章的核心手法就是「把工作分给多个窗口」。"},"fan_out":{"en":"fan-out","zh":"扇出","def_zh":"一次派出很多并行子智能体，让它们各干一块。扇出的反面是汇总（synthesize）——那一步要等所有扇出结束，所以是屏障。"},"tournament":{"en":"tournament","zh":"锦标赛","def_zh":"把排序变成一串两两比较：每次比较派一个全新智能体，胜者进下一轮。适合量大到一次装不进上下文、又要按某种质量排序的清单。"},"adversarial":{"en":"adversarial verification","zh":"对抗性","def_zh":"专门派一个智能体去挑另一个智能体的毛病，按评分标准或判据找漏洞，而不是让它自评。目的是抵消「自我偏好偏差」。"},"worktree":{"en":"worktree","zh":"worktree","def_zh":"Git 的机制：一个仓库同时挂多个工作目录，各有独立分支与改动。让每个改代码的子智能体各占一个，就不会互相覆盖文件。"},"rubric":{"en":"rubric","zh":"评分标准","def_zh":"把「好」拆成若干条可勾选的判据。智能体互相评审时，有 rubric 才判得稳；没有就只能凭感觉说「这个看起来更好」。"},"compaction":{"en":"compaction","zh":"压缩","def_zh":"上下文快满时，把之前的对话摘要成一段，用它开新会话继续。摘要本身是有损的，所以文章把「压缩后的目标漂移」单列成一种失败模式。"},"goal_drift":{"en":"goal drift","zh":"目标漂移","def_zh":"轮次一多，逐渐偏离最初的目标；压缩之后尤其明显（「不要做 X」这类约束最先丢）。工作流用「每个子智能体只看一小块」来缓解。"},"token":{"en":"token","zh":"token","def_zh":"模型计费与上下文占用的最小单位，约等于一个词的一小段。动态工作流更费 token，因为它在并行跑很多个上下文。"}},"notes":{"N1":{"title_zh":"worktree 是什么，为什么值得隔离","body_zh":"worktree 是 Git 的一项能力：同一个仓库可以同时挂在多个工作目录上，各有独立的分支与未提交改动。文章让每个修 bug 的子智能体各占一个 worktree，好处是它们互不覆盖对方的文件；最后由一个智能体审查再合并。代价是磁盘与合并冲突要自己管。"},"N2":{"title_zh":"「扇出」与「屏障」","body_zh":"fan-out（扇出）指一次派出很多并行子智能体；synthesize（汇总）那一步叫屏障（barrier），因为它必须等所有扇出的智能体都结束才能合并。这也是并行工作流最容易误用的地方：屏障前的步骤越多，等待越久。"},"N3":{"title_zh":"为什么锦标赛比打分可靠","body_zh":"文章说 comparative judgment（两两比较）比 absolute scoring（绝对打分）可靠：模型很难稳定地给「7 分还是 8 分」，但判断「A 和 B 哪个更好」要稳得多。代价是比较次数是 O(n log n) 级别，所以每次比较都用全新智能体、上下文里只留当前这一对。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
