@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>用「混沌循环」把 Claude Docs 的发布扛住：20 亿次请求里的 60 次服务器错误｜Using a “chaos loop” to harden the Claude Docs launch: 60 server errors across billions of requests</title>
+<meta name="description" content="用「混沌循环」把 Claude Docs 的发布扛住：20 亿次请求里的 60 次服务器错误｜Using a “chaos loop” to harden the Claude Docs launch: 60 server errors across billions of requests：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/chaos-loop-docs/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="用「混沌循环」把 Claude Docs 的发布扛住：20 亿次请求里的 60 次服务器错误">
+<meta property="og:description" content="Anthropic 工程复盘：发布前三周，把一个概念验证推成能扛住 460 万份文档的服务。做法不是加班，而是让 Claude 在预发集群上连续两周故意把服务弄坏、读遥测、提修复；人只负责那几件难以撤销的决定。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/chaos-loop-docs/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">claude.dev · Engineering（作者 Vivek Nair） · 2026-11-17</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Using a “chaos loop” to harden the Claude Docs launch: 60 server errors across billions of requests</span><span class="h1-zh">用「混沌循环」把 Claude Docs 的发布扛住：20 亿次请求里的 60 次服务器错误</span></h1><div class="hero-meta"><span>原文 2130 词</span><span>中文 4500 字</span><span>逐句对照 <i>123</i> 句</span><span>预计 9 分钟</span><span><a href="https://claude.dev/blog/chaos-loop-claude-docs-launch/" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 4 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：发布前的「抗压能力」可以变成一场自己跑的实验——把服务弄坏、读遥测、提修复，循环两周。结果是 20 亿次请求只有 60 次服务器错误，9 月推生产 629 次、零回滚。</li><li><b>循环长什么样</b>：挑场景 → 跑测试载体 → 读遥测 → 给选项 → 人拍板 → 部署到预发 → 重跑。最忙一周同时约 11 个子智能体，峰值 30 个；难以撤销的决定（schema、键布局、存储方式）留给人。</li><li><b>两个前提</b>：一是让服务「可读」——Claude 边跑边补遥测，任何异常都能追到某个具体代码或设计决定；二是技术选型选「量得到就能追回」的，于是有了 Rust、无垃圾回收、依赖压到最少。</li><li><b>代价</b>：8 月底到发布日约 12.5 万美元推理费；作者估计小团队版本两周冲刺只要 3,000–10,000 美元，步骤在文末。</li></ul><div class="compare"><div class="cmp"><h3>常见做法</h3><ol><li>用几百个内部用户压一压，凭感觉决定放量速度</li><li>出了故障再补日志，事后回溯</li><li>挑语言看人写起来顺不顺，依赖能用就行</li><li>难以撤销的改动也交给智能体自己决定</li></ol></div><div class="cmp win"><h3>本文的做法</h3><ol><li>在镜像生产的预发集群上造百万级合成文档，故意弄坏</li><li>边跑边补遥测，异常必须能追到具体代码</li><li>挑「Claude 最容易测量」的栈：Rust、少依赖、无 GC</li><li>schema 与存储这类决定，停下来给人几个选项</li></ol></div></div><p class="ov-foot cmp-foot">对照表由译者按原文整理，原文没有这张表。</p><p class="ov-foot">读法建议：想抄做法，直接看第一节的循环图与最后一节的五步；想理解「为什么这次行」，看「为什么现在才行」里关于目标漂移的那段。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>发布前三周，Claude Docs 还只是单节点上的概念验证。作者把「扛不扛得住」这件事变成一场可以自己跑的实验：在预发集群上让 Claude 连续两周故意弄坏服务、读遥测、提修复，人只在难以撤销的决定上点头。</p></div>
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Claude Docs is a doc editor that you, your teammates, and Claude all work in together.</span> <span class="s" data-k="intro-b0-1">The interesting part is that a Claude session anywhere, from chat to Claude Code, can open the same doc and read, write, and comment in it live, right next to you.</span> <span class="s" data-k="intro-b0-2">We released Docs on September 16, 2026.</span> <span class="s" data-k="intro-b0-3">This post is about the service that runs underneath it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">Claude Docs 是一个文档编辑器，你、你的同事和 Claude 都在里面一起工作。</span><span class="s" data-k="intro-b0-1">有意思的地方在于：任何一个 Claude 会话——从聊天到 Claude Code——都能打开同一份文档，就在你旁边实时读取、写入、评论。</span><span class="s" data-k="intro-b0-2">我们在 2026 年 9 月 16 日发布了 Docs。</span><span class="s" data-k="intro-b0-3">这篇讲的是它底下跑的那套服务。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">Three weeks before Claude Docs opened to the public, it was running as a proof of concept on a single node, used by a few thousand people inside Anthropic.</span> <span class="s" data-k="intro-b1-1">We were racing toward an ambitious launch date, and our own estimate said we'd see millions of docs within the first few days.</span> <span class="s" data-k="intro-b1-2">We launched on September 16.</span> <span class="s" data-k="intro-b1-3">By September 22, people had created over 4.6 million docs.</span> <span class="s" data-k="intro-b1-4">Across 2 billion requests we saw only 60 server errors, and we never had to roll back.</span> <span class="s" data-k="intro-b1-5">The whole Docs service ran on about 50 memory-optimized <span class='term' data-term='pod'>pods</span>.</span> <span class="s" data-k="intro-b1-6">Two decisions got us there:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">在 Claude Docs 对外开放的三周前，它还只是一个跑在单节点上的概念验证，用户是 Anthropic 内部几千人。</span><span class="s" data-k="intro-b1-1">当时我们正冲着一个野心不小的发布日赶工，而我们自己的估算说，头几天就会看到上百万份文档。</span><span class="s" data-k="intro-b1-2">我们在 9 月 16 日发布。</span><span class="s" data-k="intro-b1-3">到 9 月 22 日，人们已经创建了超过 460 万份文档。</span><span class="s" data-k="intro-b1-4">在 20 亿次请求里，我们只看到 60 次服务器错误，而且从未需要回滚。</span><span class="s" data-k="intro-b1-5">整个 Docs 服务跑在大约 50 个内存优化型 <span class='term' data-term='pod'>pod</span> 上。</span><span class="s" data-k="intro-b1-6">把这件事做成的，是两个决定：</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="intro-b2-0-0"><b>A <span class='term' data-term='chaos_loop'>chaos loop</span> at launch scale.</b> We set up a test <span class='term' data-term='harness'>harness</span> on our staging environment where Claude ran constantly for two weeks to try and break the service.</span> <span class="s" data-k="intro-b2-0-1">It load tested every part of our infrastructure and fixed whatever fell over.</span></li><li><span class="s" data-k="intro-b2-1-0"><b>Improving legibility to Claude.</b> Claude could only close the loop effectively on fixes if our system produced accurate <span class='term' data-term='telemetry'>telemetry</span> every iteration.</span> <span class="s" data-k="intro-b2-1-1">We made a call early to avoid any runtime that uses memory or CPU in ways our code can't easily control (e.g. runtimes with <span class='term' data-term='gc'>garbage collection</span>).</span> <span class="s" data-k="intro-b2-1-2">When a telemetry signal looked concerning, Claude could easily trace it to a bug or a specific design decision.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="intro-b2-0-0"><b>一场发布规模的<span class='term' data-term='chaos_loop'>混沌循环</span>。</b>我们在预发环境上搭了一个<span class='term' data-term='harness'>测试载体</span>，让 Claude 连续跑两周，专门去把服务弄坏。</span><span class="s" data-k="intro-b2-0-1">它对我们基础设施的每个部分做负载测试，并把倒下的东西修好。</span></li><li><span class="s" data-k="intro-b2-1-0"><b>让服务对 Claude 更可读。</b>只有当我们的系统每一轮都产出准确的<span class='term' data-term='telemetry'>遥测</span>，Claude 才能有效地把修复这件事闭合成环。</span><span class="s" data-k="intro-b2-1-1">我们很早就做了一个决定：避开那些内存或 CPU 使用方式我们控制不住的运行时（比如带<span class='term' data-term='gc'>垃圾回收</span>的运行时）。</span><span class="s" data-k="intro-b2-1-2">当某个遥测信号看起来不对劲，Claude 就能轻松地把它追溯到某个 bug，或某个具体的设计决定上。</span></li></ul></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">But honestly, this only worked because our frontier models have gotten much better recently (I used an internal research model roughly comparable to Claude Fable 5.2).</span> <span class="s" data-k="intro-b3-1">In our experience, they can now stick with one goal through a run like this for weeks, which is what helped us hit launch scale in a tight timeline.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">但说实话，这件事之所以成立，只是因为我们最新的前沿模型最近变强了很多（我用的是一个内部研究模型，大致相当于 Claude Fable 5.2）。</span><span class="s" data-k="intro-b3-1">按我们的经验，它们现在能在这样一次运行里连着几周咬住同一个目标，这正是我们能在这么紧的时间线里做到发布规模的原因。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-loop">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">The chaos loop</span><span class="h-zh">混沌循环</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>循环本身很简单：挑场景 → 跑测试载体 → 读遥测 → 提选项 → 人拍板 → 部署到预发 → 重跑。难点不在循环，而在让它一次跑两周都不跑偏，并且把「难以撤销的决定」留给人。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="loop-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b0-0">A few thousand internal users on one machine told us nothing about whether the service would survive launch, and we obviously didn't have launch traffic to test with.</span> <span class="s" data-k="loop-b0-1">We wanted real evidence to decide how fast we could roll out.</span> <span class="s" data-k="loop-b0-2">So on September 4, about two weeks before launch, I had Claude drive a staging cluster that mirrored production at over a million synthetic docs a day and break core components on purpose.</span> <span class="s" data-k="loop-b0-3">And then...</span> <span class="s" data-k="loop-b0-4">I just left it running (I've included the full cost at the end of this article).</span> <span class="s" data-k="loop-b0-5">My setup was pretty simple.</span> <span class="s" data-k="loop-b0-6">The loop was a session in Claude Code that I left running: pick a scenario, run the harness, read the telemetry, propose a fix, ship it to staging, repeat.</span> <span class="s" data-k="loop-b0-7">That session acted as a coordinator and handed most of the work to sub-agents.</span> <span class="s" data-k="loop-b0-8">In the busiest week, that usually meant about 11 sub-agents running at a time, and 30 at the peak.</span> <span class="s" data-k="loop-b0-9">The coordinator also talked to our internal variant of Claude Tag (beta) via the Slack MCP to learn from other infrastructure teams at Anthropic who had scaled similar services.</span> <span class="s" data-k="loop-b0-10">Their agents checked our scaling approach for pitfalls they’d already hit.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b0-0">一台机器上几千个内部用户，完全说明不了这服务能不能扛住发布，而我们显然也没有发布流量可以拿来测。</span><span class="s" data-k="loop-b0-1">我们想要真实的证据，来决定能多快地把量放上去。</span><span class="s" data-k="loop-b0-2">于是在 9 月 4 日，也就是发布前大约两周，我让 Claude 去驱动一个镜像了生产环境的预发集群，每天造一百万份以上的合成文档，并故意弄坏核心组件。</span><span class="s" data-k="loop-b0-3">然后……</span><span class="s" data-k="loop-b0-4">我就只是让它一直跑着（这篇文章末尾我列出了完整的花费）。</span><span class="s" data-k="loop-b0-5">我的搭法很简单。</span><span class="s" data-k="loop-b0-6">这个循环，就是我在 Claude Code 里一直开着的一个会话：挑一个场景、跑测试载体、读遥测、提修复方案、发到预发、重复。</span><span class="s" data-k="loop-b0-7">那个会话充当调度者，把大部分活派给子智能体。</span><span class="s" data-k="loop-b0-8">最忙的一周，通常同时有大约 11 个子智能体在跑，峰值到 30 个。</span><span class="s" data-k="loop-b0-9">调度者还通过 Slack MCP，跟我们的内部版 Claude Tag（beta）聊，去向 Anthropic 内部其他扩展过类似服务的团队取经。</span><span class="s" data-k="loop-b0-10">他们的智能体拿自己踩过的坑，来检查我们的扩展方案。</span></p></div></div>
+<div class="row" data-rid="loop-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b1-0">The fun part was picking scenarios I thought were paranoid:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b1-0">有意思的部分，是挑那些我认为偏执的场景：</span></p></div></div>
+<div class="row" data-rid="loop-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="loop-b2-0-0">10M new docs created in a single day</span></li><li><span class="s" data-k="loop-b2-1-0">22,000 live connections reconnecting at once</span></li><li><span class="s" data-k="loop-b2-2-0">One hot doc with hundreds of viewers, a server killed while it was still loading a doc, and the database stalling</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="loop-b2-0-0">单日新建 1000 万份文档</span></li><li><span class="s" data-k="loop-b2-1-0">22,000 条实时连接同时重连</span></li><li><span class="s" data-k="loop-b2-2-0">一份有几百人围观的热文档，加上一台服务器在还在加载文档时被杀掉，数据库再卡住</span></li></ul></div></div>
+<div class="row" data-rid="loop-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b3-0">Each iteration looked the same.</span> <span class="s" data-k="loop-b3-1">Our testing harness selected a feature like document creation and pushed creation to saturation.</span> <span class="s" data-k="loop-b3-2">Claude then read telemetry using the Datadog MCP and came back with a short menu of options and a recommendation.</span> <span class="s" data-k="loop-b3-3">If the recommendation was easy to undo, Claude wrote and deployed the change to staging and reran the test.</span> <span class="s" data-k="loop-b3-4">We had telemetry on every operation the service ran.</span> <span class="s" data-k="loop-b3-5">Every database query, for example, reported its name and how many rows it scanned versus how many it returned, so Claude could spot a bad query and rewrite it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b3-0">每一轮看起来都一样。</span><span class="s" data-k="loop-b3-1">我们的测试载体挑一个功能，比如文档创建，把创建打到饱和。</span><span class="s" data-k="loop-b3-2">然后 Claude 用 Datadog MCP 读遥测，回来给出一个短短的选项菜单和一条推荐。</span><span class="s" data-k="loop-b3-3">如果推荐的做法容易撤销，Claude 就写好改动、部署到预发，再重跑测试。</span><span class="s" data-k="loop-b3-4">服务跑的每一个操作，我们都有遥测。</span><span class="s" data-k="loop-b3-5">比如每一次数据库查询，都会报告它的名字、扫了多少行、返回了多少行，这样 Claude 就能发现坏的查询并把它重写。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="循环的一轮：两个决定由人来做"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="FIG 1 One iteration of the loop, with two decisions made by a person"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>循环的一轮：两个决定由人来做</b>　一个八步的环，左上角的图例区分「Claude 做的」与「你做的」。上半圈向右：测试载体加负载 → Claude 读遥测 → Claude 给出选项 → 你挑一个；下半圈向左：Claude 写改动 → 另开一个会话审查 → 你批准 → Claude 部署到预发，再回到测试载体。环中央写着两条不变量：打开要快、确认过的编辑不能丢。</p><p class="cap-en">原文图注：FIG 1 One iteration of the loop, with two decisions made by a person</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>先看图例：蓝点是 Claude，橙点是你。整圈里只有两个橙点——「You pick one」和「You approve」，其余都是 Claude 在做。</li><li>再看环中央那两行小字：「Opens instantly」和「Check that no confirmed edit was lost」，这是全程必须成立的两条不变量，不是某一轮的检查项。</li><li>注意「Reviews it / in a separate session」：审查发生在另一个会话里，写代码的会话不能自己给自己打分。</li><li>最后看「Deploys to staging」回到「Harness adds load」的那条箭头：一轮结束就是下一轮的输入。</li></ol><p class="takeaway">一句话：一圈里人只出现两次：挑方案、批方案。其余是机器在跑，而这两次恰好都在难撤销的岔口上。</p></details></figcaption></figure>
+<div class="row" data-rid="loop-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b5-0">Before the loop started, I told Claude which decisions needed my approval; basically anything hard to undo, like changing the database <span class='term' data-term='schema'>schema</span> or key layout, or changing how a doc is stored and materialized.</span> <span class="s" data-k="loop-b5-1">When Claude ran into one of those, it stopped and asked me, usually with a recommendation that I ended up approving.</span> <span class="s" data-k="loop-b5-2">Schema changes were the classic case where I wanted to be consulted: there are usually a few reasonable answers, and changing directions is often painful.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b5-0">在循环开始之前，我告诉过 Claude 哪些决定需要我来批：基本上就是任何难以撤销的事，比如改数据库 <span class='term' data-term='schema'>schema</span>、改键的布局，或者改一份文档如何存储与物化。</span><span class="s" data-k="loop-b5-1">当 Claude 撞上这类决定，它会停下来问我，通常还带着一条推荐，而我最后大多批了。</span><span class="s" data-k="loop-b5-2">schema 改动是我最想被征询的典型情况：通常有好几个都说得通的答案，而中途换方向往往很痛。</span></p></div></div>
+<div class="row" data-rid="loop-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b6-0">And during the whole testing process, Claude had to conform to two invariants:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b6-0">而且在整个测试过程中，Claude 必须遵守两条不变量：</span></p></div></div>
+<div class="row" data-rid="loop-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b7-0">1. Docs had to open almost instantly (even ones with a long history)</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b7-0">1. 文档必须几乎瞬间打开（历史很长的也一样）</span></p></div></div>
+<div class="row" data-rid="loop-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="loop-b8-0">2. Once the server acknowledged an edit, tests had to show the edit was still there</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="loop-b8-0">2. 服务器一旦确认了某次编辑，测试就必须证明确实没丢</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-legible">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Making the service legible to Claude</span><span class="h-zh">让服务对 Claude 可读</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>两个手段：一是诊断循环，让 Claude 边跑边补遥测；二是技术选型只挑「它量得到的数字都能追回我们写的代码」的那类——Rust、无垃圾回收、依赖压到最少。内存从 3 GB 修到 180 MB 就是这条路的产物。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="legible-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="legible-b0-0">My colleague Felix Rieseberg recently wrote <a class='lnk' href='https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/' target='_blank' rel='noopener' data-link='L1'>a tutorial on being more ambitious with models</a>.</span> <span class="s" data-k="legible-b0-1">His main idea is to raise the “altitude” you prompt Claude at: ask for the <i>outcome</i> you want, not the individual task.</span> <span class="s" data-k="legible-b0-2">So instead of asking Claude to fix individual crashes, you ask it to make your app crash-free. (Our own apps aren't all the way there yet, but this is how we're making real progress.) To work at that altitude, though, you have to set up your code so Claude can pull crash reports on its own and run a harness that reproduces each crash and checks the fix.</span> <span class="s" data-k="legible-b0-3">For us, the outcome was a service that could handle launch.</span> <span class="s" data-k="legible-b0-4">To get there, we did two things to make the service as legible to Claude as we could:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="legible-b0-0">我的同事 Felix Rieseberg 最近写了一篇<a class='lnk' href='https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/' target='_blank' rel='noopener' data-link='L1'>关于「对模型更野心一点」的教程</a>。</span><span class="s" data-k="legible-b0-1">他的核心想法是抬高你给 Claude 下指令的「高度」：要那个你想要的<i>结果</i>，而不是一个个具体任务。</span><span class="s" data-k="legible-b0-2">所以，与其让 Claude 去修一个个具体的崩溃，不如让它把你的应用做成「不崩溃」。（我们自己的应用也还没完全做到，但这正是我们取得实质进展的方式。）</span><span class="s" data-k="legible-b0-3">对我们来说，那个结果就是一套能扛住发布的服务。</span><span class="s" data-k="legible-b0-4">为了做到，我们做了两件事，让服务尽可能地对 Claude「可读」：</span></p></div></div>
+<div class="row" data-rid="legible-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="legible-b1-0-0"><b>A diagnostic loop.</b> Claude read the telemetry on every iteration and added whatever it thought was missing.</span></li><li><span class="s" data-k="legible-b1-1-0"><b>Legible technology choices.</b> We picked a runtime and dependencies so any number Claude measured traced back to code we wrote.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="legible-b1-0-0"><b>一个诊断循环。</b>Claude 每一轮都读遥测，并把任何它觉得缺的东西加上。</span></li><li><span class="s" data-k="legible-b1-1-0"><b>可读的技术选型。</b>我们这样挑运行时和依赖：Claude 量到的任何数字，都能追溯回我们写的代码。</span></li></ul></div></div>
+<div class="row h3row wide" id="h-legible-b2"><h3><span class='h3-en'>A diagnostic loop</span><span class='h3-zh'>诊断循环</span></h3></div>
+<div class="row" data-rid="legible-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="legible-b3-0">Every iteration, Claude read the telemetry and added whatever it thought was missing.</span> <span class="s" data-k="legible-b3-1">Writing telemetry by hand is tedious, so in practice most telemetry would go in after something broke.</span> <span class="s" data-k="legible-b3-2">Now Claude just writes it as it goes.</span> <span class="s" data-k="legible-b3-3">Memory is the best example.</span> <span class="s" data-k="legible-b3-4">Early in the harness run, one large doc was using about 3 GB on its pod (not a fun number to see).</span> <span class="s" data-k="legible-b3-5">Claude’s first stab at fixing it was to shrink one of our caches so our server would evict docs sooner.</span> <span class="s" data-k="legible-b3-6">The next harness run showed the memory was actually in a <i>separate</i> cache inside one of our dependencies, so Claude dropped the change.</span> <span class="s" data-k="legible-b3-7">From there Claude kept narrowing it down with finer-grained memory profiling.</span> <span class="s" data-k="legible-b3-8">Eventually it found that every keystroke was copying the doc into several different data structures, adding a few MB each time.</span> <span class="s" data-k="legible-b3-9">Claude switched those structures to <span class='term' data-term='cow'>copy-on-write</span>, so they now share one reference instead of each holding its own copy.</span> <span class="s" data-k="legible-b3-10">After about three days of iterating, that doc topped out around 180 MB, and our estimate of what we’d need for launch dropped from more than 500 memory-optimized pods to about 50.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="legible-b3-0">每一轮，Claude 读遥测，并把任何它觉得缺的加上。</span><span class="s" data-k="legible-b3-1">手写遥测很枯燥，所以实际上大部分遥测都是出了问题之后才补上的。</span><span class="s" data-k="legible-b3-2">现在 Claude 只是随跑随写。</span><span class="s" data-k="legible-b3-3">内存是最好的例子。</span><span class="s" data-k="legible-b3-4">在测试载体跑起来的早期，有一份大文档在它的 pod 上占了约 3 GB（这不是一个让人开心的数字）。</span><span class="s" data-k="legible-b3-5">Claude 第一次动手修，是缩小我们其中一个缓存，好让服务器更早地把文档淘汰掉。</span><span class="s" data-k="legible-b3-6">下一轮测试显示，内存其实落在某个依赖里<i>另一个</i>缓存里，于是 Claude 撤掉了这个改动。</span><span class="s" data-k="legible-b3-7">从那儿开始，Claude 用越来越细的内存剖析，一层层收窄范围。</span><span class="s" data-k="legible-b3-8">最后它发现，每一次按键都把文档复制进好几个不同的数据结构里，每次多出几 MB。</span><span class="s" data-k="legible-b3-9">Claude 把这些结构改成<span class='term' data-term='cow'>写时复制</span>（copy-on-write），于是它们共享同一份引用，而不是各持一份拷贝。</span><span class="s" data-k="legible-b3-10">迭代了大约三天后，那份文档的峰值降到 180 MB 左右，而我们对发布所需资源的估算，从 500 多个内存优化型 pod 降到约 50 个。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="诊断循环：缺什么遥测就补什么"><div class="fig-media"><img class="still" src="media/fig2.webp" loading="lazy" decoding="async" alt="FIG 2 The diagnostic loop"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>诊断循环：缺什么遥测就补什么</b>　六步的环：测试载体给服务施压 → 服务上报遥测 → Claude 读遥测并把它追到一个原因 → Claude 补上缺的东西（这一步被高亮）→ Claude 修掉它，或者把错误的猜测丢掉 → Claude 部署并重跑；难以撤销的改动先交给你。</p><p class="cap-en">原文图注：FIG 2 The diagnostic loop</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>高亮的那一格「Claude adds what’s missing」是这轮的重点：遥测不是一开始就齐的，是 Claude 边跑边补出来的。</li><li>紧接着的「Claude fixes it / or drops a wrong guess」说明允许猜错——猜错就撤，不必硬圆。</li><li>最下面「hard-to-undo changes go to you first」与图 1 的「You approve」是同一道闸门，在这里被压成一行小字。</li></ol><p class="takeaway">一句话：越是量不准的地方，越要先补观测能力，再谈优化。</p></details></figcaption></figure>
+<div class="row h3row wide" id="h-legible-b5"><h3><span class='h3-en'>Legible technology choices</span><span class='h3-zh'>让技术选型「可读」</span></h3></div>
+<div class="row" data-rid="legible-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="legible-b6-0">We were picky about the service’s runtime and dependencies.</span> <span class="s" data-k="legible-b6-1">We wanted any number Claude measured to trace back to code we wrote.</span> <span class="s" data-k="legible-b6-2">This is because our models hill climb best with a clean signal.</span> <span class="s" data-k="legible-b6-3">We expected a garbage collector to add noise, because memory and latency shift on the collector’s schedule.</span> <span class="s" data-k="legible-b6-4">Two choices helped the most.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="legible-b6-0">我们对这套服务的运行时和依赖很挑剔。</span><span class="s" data-k="legible-b6-1">我们希望 Claude 量到的任何数字，都能追溯回我们写的代码。</span><span class="s" data-k="legible-b6-2">这是因为我们的模型在信号干净时爬山爬得最好。</span><span class="s" data-k="legible-b6-3">我们预计垃圾回收会制造噪声，因为内存与延迟会按回收器自己的节奏变化。</span><span class="s" data-k="legible-b6-4">有两个选择帮助最大。</span></p></div></div>
+<div class="row" data-rid="legible-b7"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="legible-b7-0-0"><b>We wrote the service in Rust</b>.</span> <span class="s" data-k="legible-b7-0-1">With no garbage collector, all of a doc’s memory sits in structures we defined, so when it grew, Claude could point to the one responsible, change it, and see whether memory came down on the next iteration.</span> <span class="s" data-k="legible-b7-0-2">We have great Go tooling at Anthropic too, and we didn’t bake off the two languages, so this is our experience with Rust.</span> <span class="s" data-k="legible-b7-0-3">What I did appreciate, coming from past work in Go, was how little I had to think about memory sticking around after my code was done with it.</span></li><li><span class="s" data-k="legible-b7-1-0"><b>We also kept dependencies to a minimum</b>.</span> <span class="s" data-k="legible-b7-1-1">Every library brings data structures we didn’t write and can’t easily account for.</span> <span class="s" data-k="legible-b7-1-2">For the few we really needed, we vendored the code so we could read and measure it ourselves.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="legible-b7-0-0"><b>我们用 Rust 写了这套服务</b>。</span><span class="s" data-k="legible-b7-0-1">没有垃圾回收，一份文档的全部内存都躺在我们自己定义的结构里；所以当它涨起来时，Claude 能指出是哪一处结构负责，改掉它，再看下一轮内存有没有降下来。</span><span class="s" data-k="legible-b7-0-2">在 Anthropic，我们也有很好的 Go 工具链，而且我们并没有让这两种语言正式比过，所以这只是我们在 Rust 上的经验。</span><span class="s" data-k="legible-b7-0-3">从过去用 Go 的经验出发，我真正欣赏的是：代码用完某块内存之后，我不太需要去想它还会不会赖着不走。</span></li><li><span class="s" data-k="legible-b7-1-0"><b>我们还把依赖压到最少</b>。</span><span class="s" data-k="legible-b7-1-1">每个库都会带来我们没写、也不容易解释清楚的数据结构。</span><span class="s" data-k="legible-b7-1-2">对少数真正需要的库，我们把代码 vendor 进来，好自己读、自己测。</span></li></ul></div></div>
+<div class="row" data-rid="legible-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="legible-b8-0">Rust is hard for people to write, and a few years ago that would have weighed heavily on the choice.</span> <span class="s" data-k="legible-b8-1">Claude writes it and most other languages fine, so that matters a lot less now.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="legible-b8-0">Rust 对人来说不好写，几年前这会严重拖累这个选择。</span><span class="s" data-k="legible-b8-1">Claude 写它、也写大多数其它语言都没问题，所以这一点现在没那么重要了。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="技术选型：能解释的内存，与解释不了的内存"><div class="fig-media"><img class="still" src="media/fig3.webp" loading="lazy" decoding="async" alt="FIG 3 Legible technology choices: memory our code can explain, and memory it can't"><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>技术选型：能解释的内存，与解释不了的内存</b>　上下两条平行车道。上面「What we chose」：Rust、极少依赖 → 内存都在我们自己的结构里 → Claude 找到原因 → 修复容易验证（打勾）。下面「What we avoided」并注明「a bet, not a test」（是押注，不是测试）：垃圾回收 + 别人写的库 → 我们解释不了的内存 → 信号更吵、更难追回自己的代码（打叉）。</p><p class="cap-en">原文图注：FIG 3 Legible technology choices: memory our code can explain, and memory it can't</p><details class="howto" open><summary>这张图怎么看（3 条）</summary><ol><li>先读下面那条车道的副标题「a bet, not a test」：作者并不声称 GC 一定更差，只是没把它当已验证的结论。</li><li>再看两列车道的箭头是对应的：上一行的「memory sits in our own structures」正对着下一行的「Memory we can’t account for」。</li><li>最后一格是判据：上一行「Fixes are easy to check」打勾，下一行「A noisier signal / harder to trace to our code」打叉。</li></ol><p class="takeaway">一句话：选栈的标准不是「哪个更强」，而是「哪个能让模型把每个数字追回某段代码」。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-launch">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Launch week</span><span class="h-zh">发布周</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>结果：30 小时破百万份文档，9 月 22 日过 460 万，20 亿请求只 60 次服务器错误，9 月推生产 629 次、零回滚。排练过的十个故障场景，有七个真的发生了——但修复早已在开关后面等着。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="launch-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="launch-b0-0">The service held at launch scale.</span> <span class="s" data-k="launch-b0-1">The first million docs showed up in about 30 hours, and we were past 4.6 million by September 22.</span> <span class="s" data-k="launch-b0-2">We rolled prod 629 times in September and never once rolled back.</span> <span class="s" data-k="launch-b0-3">Launch week felt weirdly familiar.</span> <span class="s" data-k="launch-b0-4">Claude is great at imagining ways a service can fail and had planned for most of them well before launch.</span> <span class="s" data-k="launch-b0-5">Seven of the ten scenarios we’d rehearsed on staging actually happened in prod.</span> <span class="s" data-k="launch-b0-6">By then the harness had already put staging through most of it, and Claude had shipped the fixes behind <span class='term' data-term='runtime_flag'>runtime flags</span>.</span> <span class="s" data-k="launch-b0-7">When part of the infra ran into pressure, we usually just flipped a flag.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="launch-b0-0">这套服务在发布规模上稳住了。</span><span class="s" data-k="launch-b0-1">第一百万份文档在大约 30 小时里出现，到 9 月 22 日我们已经超过 460 万。</span><span class="s" data-k="launch-b0-2">9 月里我们向生产推了 629 次，从未回滚过一次。</span><span class="s" data-k="launch-b0-3">发布周的感觉，莫名地眼熟。</span><span class="s" data-k="launch-b0-4">Claude 很擅长想象一个服务会怎么挂掉，而且在发布之前，它已经把其中大部分都准备好了。</span><span class="s" data-k="launch-b0-5">我们在预发排练过的十个场景里，有七个真的在生产里发生了。</span><span class="s" data-k="launch-b0-6">到那时，测试载体已经把预发推过其中大部分，Claude 也早把修复放在<span class='term' data-term='runtime_flag'>运行时开关</span>后面发好了。</span><span class="s" data-k="launch-b0-7">当某一部分基础设施吃紧时，我们通常只是拧一下开关。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-why">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Why this works now</span><span class="h-zh">为什么现在才行</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>几个月前做不成，因为旧模型在长循环里会「目标漂移」；新模型能在多次上下文压缩后仍守住不变量。Vercel 也用类似打法把 Turborepo 提速最多 96%。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="why-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="why-b0-0">A few months ago this probably wouldn’t have worked.</span> <span class="s" data-k="why-b0-1">Older models were fine at reading telemetry through an MCP server, but ten or twenty iterations into a long loop, they’d start forgetting what we were optimizing for, and I’d end up restating the goal.</span> <span class="s" data-k="why-b0-2">Other Anthropic employees have called this <a class='lnk' href='https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/#why-dynamic-workflows' target='_blank' rel='noopener' data-link='L2'>goal drift</a>.</span> <span class="s" data-k="why-b0-3">Our newer frontier models are built for long-running work.</span> <span class="s" data-k="why-b0-4">Claude held all of our invariants across many <span class='term' data-term='compaction'>compactions</span>, and I never had to repeat them.</span> <span class="s" data-k="why-b0-5">We're not the only ones doing this, either.</span> <span class="s" data-k="why-b0-6">Vercel <a class='lnk' href='https://vercel.com/blog/making-turborepo-ninety-six-percent-faster-with-agents-sandboxes-and-humans' target='_blank' rel='noopener' data-link='L3'>made Turborepo up to 96% faster</a> with a supervised agent loop a lot like ours.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="why-b0-0">几个月前，这件事大概做不成。</span><span class="s" data-k="why-b0-1">更早的模型读 MCP 服务器给的遥测是没问题的，但在一个长循环跑到第十、二十轮之后，它们就开始忘了我们在优化什么，我得反复重述目标。</span><span class="s" data-k="why-b0-2">Anthropic 的其他同事把这叫作<a class='lnk' href='https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/#why-dynamic-workflows' target='_blank' rel='noopener' data-link='L2'>目标漂移</a>。</span><span class="s" data-k="why-b0-3">我们更新的前沿模型，是为长时间运行的工作打造的。</span><span class="s" data-k="why-b0-4">在很多次<span class='term' data-term='compaction'>上下文压缩</span>（compaction）之后，Claude 仍然守住我们所有的不变量，我从不需要重复。</span><span class="s" data-k="why-b0-5">做这件事的也不只有我们。</span><span class="s" data-k="why-b0-6">Vercel 用一套跟我们的很像的、有人监督的智能体循环，<a class='lnk' href='https://vercel.com/blog/making-turborepo-ninety-six-percent-faster-with-agents-sandboxes-and-humans' target='_blank' rel='noopener' data-link='L3'>把 Turborepo 提速了最多 96%</a>。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-cost">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">What it cost</span><span class="h-zh">花了多少钱</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>8 月底到发布日大约 125,000 美元推理费，作者估计换成两年前要一个团队做半年；其中相当一部分花在只有超大发布才需要的基础设施上，以及摸索流程时烧掉的 token。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="cost-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="cost-b0-0">At Claude Fable 5.2's API list price (as of November 2026), I used roughly $125,000 of inference from the end of August to launch day.</span> <span class="s" data-k="cost-b0-1">A couple of years ago, work on this scale I'd guess would have taken a team of engineers about six months.</span> <span class="s" data-k="cost-b0-2">Most of that went to reading telemetry, writing proposals, generating fixes, and reviewing code.</span> <span class="s" data-k="cost-b0-3">A couple of things about the cost:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="cost-b0-0">按 Claude Fable 5.2 的 API 标价（截至 2026 年 11 月），从 8 月底到发布日，我大约用掉了 125,000 美元的推理费用。</span><span class="s" data-k="cost-b0-1">搁在两年前，这种规模的工作，我猜得一个工程师团队做上大约六个月。</span><span class="s" data-k="cost-b0-2">大部分钱花在读遥测、写方案、生成修复和审代码上。</span><span class="s" data-k="cost-b0-3">关于这笔花费，有几点要说：</span></p></div></div>
+<div class="row" data-rid="cost-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="cost-b1-0-0"><b>Our launch was particularly massive.</b> A good chunk of the money went into infrastructure that only makes sense at that scale, and that infrastructure took more inference to reason about.</span> <span class="s" data-k="cost-b1-0-1">Claude had to think a lot harder about how a growing set of services fit together and all the ways they could fail.</span></li><li><span class="s" data-k="cost-b1-1-0"><b>I also burned a lot of tokens figuring out the process.</b> The loop ran nonstop while I was experimenting with the setup.</span> <span class="s" data-k="cost-b1-1-1">Knowing what I know now, I think we could have spent about half as much.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="cost-b1-0-0"><b>我们的发布规模特别大。</b>相当一部分钱花在了只有那个规模才说得通的基础设施上，而这些基础设施本身就需要更多推理去琢磨。</span><span class="s" data-k="cost-b1-0-1">Claude 得费更多脑筋去想：一组不断变多的服务怎么拼在一起，以及它们可能以哪些方式失败。</span></li><li><span class="s" data-k="cost-b1-1-0"><b>我也烧了很多 token 去摸索流程。</b>在我试验这套搭法的时候，循环是一直不停地跑的。</span><span class="s" data-k="cost-b1-1-1">以我现在知道的，我觉得可以只花大约一半。</span></li></ul></div></div>
+</div>
+</section>
+<section class="sec" id="s-try">
+<div class="sec-head"><span class="sec-num">06</span><h2><span class="h-en">Trying this out</span><span class="h-zh">怎么自己试一次</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>小团队版本估 3,000–10,000 美元。五步：给遥测、写压测脚本故意打坏、选 Claude 好测的技术栈、先写下不变量、把不可撤销的决定留给人。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="try-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b0-0">This works for much smaller services too, and it should cost a lot less.</span> <span class="s" data-k="try-b0-1">To get a rough number, I priced out a classic small team stack: a couple of reasonably sized Kubernetes nodes and a Postgres instance.</span> <span class="s" data-k="try-b0-2">Then I went through the changes I landed between the end of August and launch day and removed the work that setup wouldn’t need:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b0-0">这套做法对规模小得多的服务也成立，而且应该便宜得多。</span><span class="s" data-k="try-b0-1">为了得到一个大概的数，我按一个经典的小团队技术栈估了价：两台规格合理的 Kubernetes 节点，加一个 Postgres 实例。</span><span class="s" data-k="try-b0-2">然后我把从 8 月底到发布日落地的那些改动过了一遍，把那个技术栈不需要的工作去掉：</span></p></div></div>
+<div class="row" data-rid="try-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="try-b1-0-0">Fitting in with our other internal services</span></li><li><span class="s" data-k="try-b1-1-0">Client and product work that was intermixed with the scale work</span></li><li><span class="s" data-k="try-b1-2-0">Running across many pods</span></li><li><span class="s" data-k="try-b1-3-0">Fine-grained rate limiting</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="try-b1-0-0">跟其它内部服务对接</span></li><li><span class="s" data-k="try-b1-1-0">与规模工作混在一起的客户端和产品工作</span></li><li><span class="s" data-k="try-b1-2-0">跨很多 pod 运行</span></li><li><span class="s" data-k="try-b1-3-0">细粒度限流</span></li></ul></div></div>
+<div class="row" data-rid="try-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b2-0">About a third of the changes were left.</span> <span class="s" data-k="try-b2-1">Scaling our spend down to that third and taking out the mistakes I made while I was still figuring out the setup, I’d put a two week push like this one at $3,000 to $10,000 at the same list price (I haven’t actually run this, so it’s only a rough sense).</span> <span class="s" data-k="try-b2-2">The steps below assume one engineer with Claude Code, a staging environment, and an observability provider.</span> <span class="s" data-k="try-b2-3">The coordinator and sub-agents helped speed up the process, but if you find they’re burning too many tokens per hour, going back to a single agent should also work quite well.</span> <span class="s" data-k="try-b2-4">If you want to try it:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b2-0">大约三分之一的改动留下了。</span><span class="s" data-k="try-b2-1">把花费按这个三分之一等比缩下去，再扣掉我摸索阶段犯的那些错，我估这样两周的冲刺，按同样的标价大概要 3,000 到 10,000 美元（我并没有真跑过，所以这只是个粗略的感觉）。</span><span class="s" data-k="try-b2-2">下面这些步骤，假设你有一个工程师、一个预发环境和一个可观测性服务商。</span><span class="s" data-k="try-b2-3">调度者和子智能体帮我们加快了流程，但如果你发现它们每小时烧的 token 太多，退回单智能体应该也相当好用。</span><span class="s" data-k="try-b2-4">如果你想试试：</span></p></div></div>
+<div class="row" data-rid="try-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b3-0">1. Give Claude access to your telemetry.</span> <span class="s" data-k="try-b3-1">Most observability providers have an MCP server that Claude can use.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b3-0">1. 把遥测的访问权限交给 Claude。</span><span class="s" data-k="try-b3-1">大多数可观测性服务商都有 MCP 服务器，Claude 可以直接用。</span></p></div></div>
+<div class="row" data-rid="try-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b4-0">2. Have Claude write a load script that throws ten times your real traffic at the staging copy of the service and breaks things on purpose.</span> <span class="s" data-k="try-b4-1">Killing an instance, stalling the database, and deploying in the middle of a spike are good places to start.</span> <span class="s" data-k="try-b4-2">Then let Claude keep fixing whatever falls over.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b4-0">2. 让 Claude 写一个压测脚本，把真实流量的十倍打到服务的预发副本上，并故意弄坏东西。</span><span class="s" data-k="try-b4-1">杀掉一个实例、让数据库卡住、在流量尖峰中间做部署，都是不错的起点。</span><span class="s" data-k="try-b4-2">然后就让它一直修，直到没什么倒下了。</span></p></div></div>
+<div class="row" data-rid="try-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b5-0">3. When you’re picking your stack, lean toward whatever Claude can measure most easily.</span> <span class="s" data-k="try-b5-1">For us that was Rust and as few dependencies as possible.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b5-0">3. 在挑技术栈时，偏向那些 Claude 最容易测量的东西。</span><span class="s" data-k="try-b5-1">对我们来说就是 Rust，以及尽可能少的依赖。</span></p></div></div>
+<div class="row" data-rid="try-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b6-0">4. Before you start, write down your most important technical invariants and give them to Claude.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b6-0">4. 开始之前，把你最重要的技术不变量写下来，交给 Claude。</span></p></div></div>
+<div class="row" data-rid="try-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b7-0">5. For anything that’s hard to undo, have Claude stop and give you a few options with a clear recommendation.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b7-0">5. 对任何难以撤销的事，让 Claude 停下来，给你几个选项和一条明确的推荐。</span></p></div></div>
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b8-0"><i>Huge thanks to the Docs team, who landed thousands of editor fixes in the same three weeks, and to the platform and storage teams who built everything this sits on.</i></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b8-0"><i>非常感谢 Docs 团队——同一段三周里，他们落地了上千处编辑器修复；也感谢平台与存储团队，这套东西坐落在他们建的一切之上。</i></span></p></div></div></div></div>
+<div class="row" data-rid="try-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="try-b9-0"><b>Further reading.</b> <a class='lnk' href='https://claude.dev/blog/how-we-made-claude-ai-faster/' target='_blank' rel='noopener' data-link='L4'>How we made claude.ai 3x faster in two weeks</a> (claude.dev) · <a class='lnk' href='https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/' target='_blank' rel='noopener' data-link='L5'>A harness for every task: dynamic workflows in Claude Code</a> (claude.dev), on <span class='term' data-term='goal_drift'>goal drift</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="try-b9-0"><b>延伸阅读。</b><a class='lnk' href='https://claude.dev/blog/how-we-made-claude-ai-faster/' target='_blank' rel='noopener' data-link='L4'>我们如何在两周内把 claude.ai 提速 3 倍</a>（claude.dev）· <a class='lnk' href='https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/' target='_blank' rel='noopener' data-link='L5'>给每个任务一个测试载体：Claude Code 里的动态工作流</a>（claude.dev），讲的是<span class='term' data-term='goal_drift'>目标漂移</span>。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文的引用合并后指向 5 个不同目的地。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>更野心一点：写给「和模型一起干活的人」的教程</h4><p class="lnk-site">felixrieseberg.com · How to be more ambitious: a tutorial for humans with models</p><p class="lnk-anchors">正文对应：<em>关于「对模型更野心一点」的教程</em></p><p><b>这是什么：</b>Felix Rieseberg 的教程：把给模型的指令从「做这个任务」抬到「要这个结果」。</p><p><b>为什么值得点：</b>本文「提高高度（altitude）」这个说法就来自这里；理解它，才看得懂为什么要让 Claude 去「让应用不崩溃」而不是「修第 37 号崩溃」。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>别把模型当执行器，要给它目标与验收标准：说清结果长什么样、怎么验证，让它自己拆步骤；任务级指令会让模型停在「看起来做完了」。</p><ul><li>从任务升到结果</li><li>同时交出验收标准</li><li>让模型自己拆解与迭代</li></ul></details><a class="lnk-open" href="https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>用智能体、沙箱和人，把 Turborepo 提速 96%</h4><p class="lnk-site">vercel.com · Making Turborepo 96% faster with agents, sandboxes, and humans</p><p class="lnk-anchors">正文对应：<em>把 Turborepo 提速了最多 96%</em></p><p><b>这是什么：</b>Vercel 的同类实践：让智能体在沙箱里跑性能实验，人来把关方向。</p><p><b>为什么值得点：</b>本文用它证明「不是只有我们在这么做」；想看看换一个团队、换一套基础设施，这个循环长什么样，就读这篇。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把性能优化拆成可自动跑的基准实验，智能体在沙箱里反复试，人只审方向与合并；关键仍是「有可信的测量」和「改动可以快速撤销」。</p><ul><li>沙箱里跑基准</li><li>人审方向</li><li>可信测量是前提</li></ul></details><a class="lnk-open" href="https://vercel.com/blog/making-turborepo-ninety-six-percent-faster-with-agents-sandboxes-and-humans" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip bg">背景</span><span class="chip">建议第 3 个读</span></div><h4>给每个任务一个测试载体：Claude Code 里的动态工作流</h4><p class="lnk-site">claude.dev · A harness for every task: dynamic workflows in Claude Code</p><p class="lnk-anchors">正文对应：<em>目标漂移</em></p><p><b>这是什么：</b>claude.dev 上讨论动态工作流的文章，锚点直接指向其中「为什么会漂」的那一节。</p><p><b>为什么值得点：</b>本文把「旧模型会目标漂移」当成关键对比项，这一节是那个说法的出处，讲清了漂移是怎么发生的。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>长循环里，每一轮都在改写上下文，最初的目标被一轮轮压缩稀释；解法是把目标写成可检查的不变量，并在每轮开头重新锚定。</p><ul><li>漂移来自上下文一轮轮改写</li><li>把目标写成可检查的不变量</li><li>每轮重新锚定</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/#why-dynamic-workflows" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>给每个任务一个测试载体：Claude Code 里的动态工作流</h4><p class="lnk-site">claude.dev · A harness for every task: dynamic workflows in Claude Code</p><p class="lnk-anchors">正文对应：<em>给每个任务一个测试载体：Claude Code 里的动态工作流</em></p><p><b>这是什么：</b>讲「为每个任务现搭一个可运行、可验证的工作流」的文章。</p><p><b>为什么值得点：</b>本文的循环本质上就是一个动态工作流；这篇讲的是它在 Claude Code 里的一般形态，也是「目标漂移」一节的出处。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>按任务现场生成工作流：定义目标、定义验收、把验证步骤做成可执行的一步；工作流本身可以被下一轮复用和修剪。</p><ul><li>按任务现搭工作流</li><li>验证步骤要可执行</li><li>工作流会被复用与修剪</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip">可选</span><span class="chip">建议第 4 个读</span></div><h4>我们如何在两周内把 claude.ai 提速 3 倍</h4><p class="lnk-site">claude.dev · How we made claude.ai 3x faster in two weeks</p><p class="lnk-anchors">正文对应：<em>我们如何在两周内把 claude.ai 提速 3 倍</em></p><p><b>这是什么：</b>同一站点的另一篇工程复盘：两周内把 claude.ai 提速三倍。</p><p><b>为什么值得点：</b>作者把它列为延伸阅读，因为方法论相近：先建立可信测量，再让改动快速落地与回退。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>先找瓶颈再动手；把优化拆成可独立验证的小改动；用真实流量验证，而不是只看合成基准。</p><ul><li>先测量后优化</li><li>小步改动、快速验证</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/how-we-made-claude-ai-faster/" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 10 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">chaos loop</span><span class="gl-zh">混沌循环</span></div><p class="gl-def">在预发环境上持续制造故障、读遥测、提修复、再重跑的循环，直到服务在饱和与故障下站得住。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">telemetry</span><span class="gl-zh">遥测</span></div><p class="gl-def">服务自己上报的运行数据：延迟、内存、每次查询扫了多少行、返回了多少行。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">测试载体（harness）</span></div><p class="gl-def">包住被测服务的脚手架：负责加负载、挑场景、跑测试、收结果。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">pod</span><span class="gl-zh">pod</span></div><p class="gl-def">Kubernetes 里最小的调度单位，一个 pod 通常装一个服务实例；「内存优化型」指机型配比偏内存。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">copy-on-write</span><span class="gl-zh">写时复制</span></div><p class="gl-def">多份数据先共享同一块内存，谁要改才复制一份。省内存，也省掉每次按键都整份复制。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">garbage collector</span><span class="gl-zh">垃圾回收</span></div><p class="gl-def">运行时自动回收不再使用的内存。代价是回收时机由它决定，内存与延迟会出现噪声。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compaction</span><span class="gl-zh">上下文压缩</span></div><p class="gl-def">会话变长后把早期内容压成摘要，给新的上下文腾位置；压缩会丢细节，是长循环的主要风险之一。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">goal drift</span><span class="gl-zh">目标漂移</span></div><p class="gl-def">长循环跑久了，模型忘了最初要优化的目标，需要人反复重述。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">runtime flag</span><span class="gl-zh">运行时开关</span></div><p class="gl-def">不改代码、只改一个开关就能启用或停用某段逻辑；发布周「拧一下开关」靠的就是它。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">schema</span><span class="gl-zh">schema（数据结构定义）</span></div><p class="gl-def">数据库里表、字段、键的定义。改它往往牵一发动全身，所以文章把它列为必须人类拍板的决定。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>目标漂移（goal drift）</h4><p>长循环跑到十几二十轮后，模型开始忘记最初要优化的是什么，需要人反复重述目标。文章把「新模型能在多次上下文压缩后仍守住不变量」当成这次能成的前提。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>上下文压缩（compaction）</h4><p>会话变长后把早期内容压成摘要，腾出上下文窗口。压缩会丢细节，所以「压缩很多次之后还记得不变量」才值得单独拿出来说。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>为什么要在意「可读」</h4><p>这里的可读不是文档写得好，而是「Claude 量到的每个数字都能追回到某段代码或某个设计决定」。做不到，遥测再全也只是噪声，循环就闭不上。</p></div></div></div></section><footer><p>原文 © Anthropic / claude.dev，作者 Vivek Nair，2026-11-17。本页为英中逐句对照的学习用译本；速览、要点与译注为译者所加，原文没有。</p><p>原文：<a href="https://claude.dev/blog/chaos-loop-claude-docs-launch/" target="_blank" rel="noopener">Using a “chaos loop” to harden the Claude Docs launch: 60 server errors across billions of requests</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-loop"><span class="dot">●</span>混沌循环</a><a class="l2" href="#s-legible"><span class="dot">●</span>让服务对 Claude 可读</a><a class="l3" href="#h-legible-b2"><span class="dot">●</span>诊断循环</a><a class="l3" href="#h-legible-b5"><span class="dot">●</span>让技术选型「可读」</a><a class="l2" href="#s-launch"><span class="dot">●</span>发布周</a><a class="l2" href="#s-why"><span class="dot">●</span>为什么现在才行</a><a class="l2" href="#s-cost"><span class="dot">●</span>花了多少钱</a><a class="l2" href="#s-try"><span class="dot">●</span>怎么自己试一次</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"更野心一点：写给「和模型一起干活的人」的教程","title_en":"How to be more ambitious: a tutorial for humans with models","site":"felixrieseberg.com","what_zh":"Felix Rieseberg 的教程：把给模型的指令从「做这个任务」抬到「要这个结果」。","why_zh":"本文「提高高度（altitude）」这个说法就来自这里；理解它，才看得懂为什么要让 Claude 去「让应用不崩溃」而不是「修第 37 号崩溃」。","tier":"必读","order":1,"url":"https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/"},"L2":{"title_zh":"给每个任务一个测试载体：Claude Code 里的动态工作流","title_en":"A harness for every task: dynamic workflows in Claude Code","site":"claude.dev","what_zh":"claude.dev 上讨论动态工作流的文章，锚点直接指向其中「为什么会漂」的那一节。","why_zh":"本文把「旧模型会目标漂移」当成关键对比项，这一节是那个说法的出处，讲清了漂移是怎么发生的。","tier":"背景","order":3,"url":"https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/#why-dynamic-workflows"},"L3":{"title_zh":"用智能体、沙箱和人，把 Turborepo 提速 96%","title_en":"Making Turborepo 96% faster with agents, sandboxes, and humans","site":"vercel.com","what_zh":"Vercel 的同类实践：让智能体在沙箱里跑性能实验，人来把关方向。","why_zh":"本文用它证明「不是只有我们在这么做」；想看看换一个团队、换一套基础设施，这个循环长什么样，就读这篇。","tier":"必读","order":2,"url":"https://vercel.com/blog/making-turborepo-ninety-six-percent-faster-with-agents-sandboxes-and-humans"},"L4":{"title_zh":"我们如何在两周内把 claude.ai 提速 3 倍","title_en":"How we made claude.ai 3x faster in two weeks","site":"claude.dev","what_zh":"同一站点的另一篇工程复盘：两周内把 claude.ai 提速三倍。","why_zh":"作者把它列为延伸阅读，因为方法论相近：先建立可信测量，再让改动快速落地与回退。","tier":"可选","order":4,"url":"https://claude.dev/blog/how-we-made-claude-ai-faster/"},"L5":{"title_zh":"给每个任务一个测试载体：Claude Code 里的动态工作流","title_en":"A harness for every task: dynamic workflows in Claude Code","site":"claude.dev","what_zh":"讲「为每个任务现搭一个可运行、可验证的工作流」的文章。","why_zh":"本文的循环本质上就是一个动态工作流；这篇讲的是它在 Claude Code 里的一般形态，也是「目标漂移」一节的出处。","tier":"背景","order":5,"url":"https://claude.dev/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code/"}},"terms":{"chaos_loop":{"en":"chaos loop","zh":"混沌循环","def_zh":"在预发环境上持续制造故障、读遥测、提修复、再重跑的循环，直到服务在饱和与故障下站得住。"},"telemetry":{"en":"telemetry","zh":"遥测","def_zh":"服务自己上报的运行数据：延迟、内存、每次查询扫了多少行、返回了多少行。"},"harness":{"en":"harness","zh":"测试载体（harness）","def_zh":"包住被测服务的脚手架：负责加负载、挑场景、跑测试、收结果。"},"pod":{"en":"pod","zh":"pod","def_zh":"Kubernetes 里最小的调度单位，一个 pod 通常装一个服务实例；「内存优化型」指机型配比偏内存。"},"cow":{"en":"copy-on-write","zh":"写时复制","def_zh":"多份数据先共享同一块内存，谁要改才复制一份。省内存，也省掉每次按键都整份复制。"},"gc":{"en":"garbage collector","zh":"垃圾回收","def_zh":"运行时自动回收不再使用的内存。代价是回收时机由它决定，内存与延迟会出现噪声。"},"compaction":{"en":"compaction","zh":"上下文压缩","def_zh":"会话变长后把早期内容压成摘要，给新的上下文腾位置；压缩会丢细节，是长循环的主要风险之一。"},"goal_drift":{"en":"goal drift","zh":"目标漂移","def_zh":"长循环跑久了，模型忘了最初要优化的目标，需要人反复重述。"},"runtime_flag":{"en":"runtime flag","zh":"运行时开关","def_zh":"不改代码、只改一个开关就能启用或停用某段逻辑；发布周「拧一下开关」靠的就是它。"},"schema":{"en":"schema","zh":"schema（数据结构定义）","def_zh":"数据库里表、字段、键的定义。改它往往牵一发动全身，所以文章把它列为必须人类拍板的决定。"}},"notes":{"N1":{"title_zh":"目标漂移（goal drift）","body_zh":"长循环跑到十几二十轮后，模型开始忘记最初要优化的是什么，需要人反复重述目标。文章把「新模型能在多次上下文压缩后仍守住不变量」当成这次能成的前提。"},"N2":{"title_zh":"上下文压缩（compaction）","body_zh":"会话变长后把早期内容压成摘要，腾出上下文窗口。压缩会丢细节，所以「压缩很多次之后还记得不变量」才值得单独拿出来说。"},"N3":{"title_zh":"为什么要在意「可读」","body_zh":"这里的可读不是文档写得好，而是「Claude 量到的每个数字都能追回到某段代码或某个设计决定」。做不到，遥测再全也只是噪声，循环就闭不上。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

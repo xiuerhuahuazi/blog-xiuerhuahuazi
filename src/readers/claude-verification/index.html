@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Code 团队怎么想「验证」这件事｜How the Claude Code team thinks about verification</title>
+<meta name="description" content="Claude Code 团队怎么想「验证」这件事｜How the Claude Code team thinks about verification：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-verification/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="Claude Code 团队怎么想「验证」这件事">
+<meta property="og:description" content="Anthropic 的工程复盘：端到端、属性、差分三类测试各自解决什么，以及团队做了哪八件事，让自己的验证器保持诚实——它不能修改审判它的检查，失败要有可读的上下文，漏掉的 bug 要变成规则。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/claude-verification/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">claude.dev · Engineering（作者 Addy Osmani） · 2026-11-16</p><h1 class="h1-wrap"><span class="h1-en" lang="en">How the Claude Code team thinks about verification</span><span class="h1-zh">Claude Code 团队怎么想「验证」这件事</span></h1><div class="hero-meta"><span>原文 2170 词</span><span>中文 4600 字</span><span>逐句对照 <i>123</i> 句</span><span>预计 10 分钟</span><span><a href="https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 4 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：能不能让智能体自己拿出证据，决定了你能并行跑几个 Claude。文章内部测试里，让独立的评分者按评分标准判分，比普通提示循环把成功率最多提高了 10 个百分点。</li><li><b>三类值得投入的测试</b>：端到端最难被骗（要么整个功能能用，要么不能用）；属性测试用人想不到的边界输入去试；差分测试拿旧系统当标准答案，专治大规模迁移。</li><li><b>团队自己的八条做法</b>：端到端跑起来比测试重要；检查器由代码负责人写；39 项可靠性清单按 diff 触发、每次只查 3–10 条；只调主审查者不叠加；检查不能被它所检查的改动修改；新闸门先跑 observe 模式；用真实回滚与打回来评测审查者；漏掉的 bug 要变成规则。</li><li><b>成本侧的一句话</b>：验证层要当系统经营——隔离权限、对着真 bug 打分、记录教训并定期修剪，否则规则和测试只会一直变多。</li></ul><div class="compare"><div class="cmp"><h3>常见做法</h3><ol><li>只跑单元测试，快、稳，但可能通过了功能还是坏的</li><li>审查靠叠加更多人，越堆越贵</li><li>检查规则写在哪都行，改代码的人顺手也能改</li><li>新闸门一上来就强制拦提交</li></ol></div><div class="cmp win"><h3>本文的做法</h3><ol><li>以端到端为主，属性与差分补齐边界与迁移</li><li>只调主审查者，用 REVIEW.md 告诉它该看什么</li><li>规则放在改动动不了的分支，只从基线读</li><li>先 observe 记录误报，再进 enforce；被拦两次就放行</li></ol></div></div><p class="ov-foot cmp-foot">对照表是译者按原文整理，不是原文自带的表格。</p><p class="ov-foot">读法建议：想直接抄作业，读第二节的三类测试与第三节的八条做法；想理解为什么现在可行，留意最后一节「让验证层守规矩」的那几句。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>核心论断：能不能让智能体自己拿出证据，决定了你同时能跑几个 Claude。验证的成本已经从「每次人工检查」变成「写一次、跑很多次的软件」；再把验证结果回灌成规则，才算把循环闭上。</p></div>
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">How <span class='term' data-term='e2e'>end-to-end</span>, property and <span class='term' data-term='differential_test'>differential tests</span> let coding agents verify their work with evidence, and what the Claude Code team does to keep its verifiers honest.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0"><span class='term' data-term='e2e'>端到端</span>测试、属性测试与<span class='term' data-term='differential_test'>差分测试</span>，如何让编码智能体用证据验证自己的工作；以及 Claude Code 团队做了哪些事，让自家的验证器保持诚实。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">On the Claude Code team, the vast majority of our code (~90%) is written and <a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>reviewed by Claude</a>.</span> <span class="s" data-k="intro-b1-1">At this scale, how we equip our agents to verify their work with evidence becomes extremely important.</span> <span class="s" data-k="intro-b1-2"><span class='term' data-term='verification_loop'>Verification loops</span> are the building block that lets you delegate more work to Claude.</span> <span class="s" data-k="intro-b1-3">Without them, you can really only run one or two Claudes at a time, because you have to check everything yourself.</span> <span class="s" data-k="intro-b1-4">With them, you can run dozens or hundreds in parallel.</span> <span class="s" data-k="intro-b1-5">That’s because giving agents a <a class='lnk' href='https://claude.com/blog/building-verification-loops-in-claude-code-with-skills' target='_blank' rel='noopener' data-link='L2'>way to verify their output</a> is an effective way to improve quality.</span> <span class="s" data-k="intro-b1-6">In internal testing around structured file generation, having a separate grader check Claude’s work against a <span class='term' data-term='rubric'>rubric</span> <a class='lnk' href='https://claude.com/blog/claude-managed-agents' target='_blank' rel='noopener' data-link='L3'>improved task success by up to 10 points</a> over a standard prompting loop, with the largest gains on the hardest problems.</span> <span class="s" data-k="intro-b1-7">What was once expensive to verify (tests, benchmarks, specs, real end-to-end runs) is now cheap to request from an agent.</span> <span class="s" data-k="intro-b1-8">Like code, agents can quickly generate tests, benchmarks, and specs.</span> <span class="s" data-k="intro-b1-9">And once generated, these tests and benchmarks run as software so they can be run frequently without using many additional tokens.</span> <span class="s" data-k="intro-b1-10">You can also close the verification loop by using the results to improve the agent’s performance on that task.</span> <span class="s" data-k="intro-b1-11">For example, if an agent repeatedly fails a test that checks logs for user data, you can create a hook or a more explicit rule in your CLAUDE.md to avoid future issues.</span> <span class="s" data-k="intro-b1-12">This (mostly) stops issues from happening again.</span> <span class="s" data-k="intro-b1-13">So if verification is critical to producing quality code at a high velocity, what types of tests should you use and how should you apply them across your pipeline?</span> <span class="s" data-k="intro-b1-14">This article answers those questions and also shares the process used by the Claude Code team.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">在 Claude Code 团队，我们绝大部分的代码（约 90%）由 Claude 编写，也由 Claude <a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>审查</a>。</span><span class="s" data-k="intro-b1-1">在这样的规模下，怎么让智能体拿得出证据来验证自己的工作，就变得极其重要。</span><span class="s" data-k="intro-b1-2"><span class='term' data-term='verification_loop'>验证循环</span>是让你能把更多工作委派给 Claude 的那块基石。</span><span class="s" data-k="intro-b1-3">没有它们，你实际上只能同时跑一两个 Claude，因为每一件事都得你自己检查。</span><span class="s" data-k="intro-b1-4">有了它们，你可以并行跑几十个甚至几百个。</span><span class="s" data-k="intro-b1-5">原因在于，给智能体一条<a class='lnk' href='https://claude.com/blog/building-verification-loops-in-claude-code-with-skills' target='_blank' rel='noopener' data-link='L2'>验证自己输出的途径</a>，是提升质量的有效办法。</span><span class="s" data-k="intro-b1-6">在围绕结构化文件生成的内部测试里，让一个独立的评分者对照<span class='term' data-term='rubric'>评分标准</span>来检查 Claude 的工作，比标准的提示循环<a class='lnk' href='https://claude.com/blog/claude-managed-agents' target='_blank' rel='noopener' data-link='L3'>把任务成功率最多提升了 10 个百分点</a>，而越难的问题收益越大。</span><span class="s" data-k="intro-b1-7">过去验证起来很贵的东西（测试、基准、规格、真实的端到端运行），现在请智能体去做并不贵。</span><span class="s" data-k="intro-b1-8">和写代码一样，智能体可以很快生成测试、基准和规格。</span><span class="s" data-k="intro-b1-9">而且一旦生成，这些测试和基准就以软件的形式运行，因此可以频繁地跑，而不必消耗太多额外的 token。</span><span class="s" data-k="intro-b1-10">你还可以把验证循环闭上：用结果去改善智能体在那项任务上的表现。</span><span class="s" data-k="intro-b1-11">举个例子，如果有个智能体反复通不过一项检查日志里是否出现用户数据的测试，你可以在 CLAUDE.md 里加一个钩子、或者写一条更明确的规则，来避免以后再出问题。</span><span class="s" data-k="intro-b1-12">这（大体上）能让同类问题不再发生。</span><span class="s" data-k="intro-b1-13">那么，如果验证对高速产出高质量代码如此关键，你该用哪几类测试，又该怎样把它们贯穿到整条流水线？</span><span class="s" data-k="intro-b1-14">本文回答这些问题，同时分享 Claude Code 团队自己用的流程。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-tests">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Not all tests are created equal: 3 tests worth investing in</span><span class="h-zh">不是所有测试生而平等：三类值得投入的测试</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>选测试先看失败模式：不稳定会让智能体学会重跑，太慢会让它少测。三类值得投入——端到端最不容易被骗；属性测试补上人想不到的边界；差分测试拿旧系统当标准答案。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="tests-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tests-b0-0">No matter which test type you choose, there are a few failure modes to avoid.</span> <span class="s" data-k="tests-b0-1">If your tests are <span class='term' data-term='flaky'>flaky</span> you’ll train the agent to run them again rather than fixing the failing code.</span> <span class="s" data-k="tests-b0-2">If your tests are slow, the agent will do fewer tests across batches which can make pinpointing issues difficult.</span> <span class="s" data-k="tests-b0-3">Heavier tests are best deployed before you’ve committed the changes.</span> <span class="s" data-k="tests-b0-4">Now, here are the three types of tests I think are most worth investing in.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tests-b0-0">不管你选哪一类测试，都有几种失败模式要避开。</span><span class="s" data-k="tests-b0-1">测试如果<span class='term' data-term='flaky'>不稳定</span>（flaky），你就是在训练智能体重跑测试，而不是去修真正出错的那段代码。</span><span class="s" data-k="tests-b0-2">测试如果太慢，智能体在批次之间就会跑得更少，定位问题也会变得更难。</span><span class="s" data-k="tests-b0-3">更重的测试，最好放在你提交改动之前跑。</span><span class="s" data-k="tests-b0-4">下面是我认为最值得投入的三类测试。</span></p></div></div>
+<div class="row h3row wide" id="h-tests-b1"><h3><span class='h3-en'>E2E tests</span><span class='h3-zh'>端到端（E2E）测试</span></h3></div>
+<div class="row" data-rid="tests-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tests-b2-0">If you have to focus on one test type, pick end-to-end.</span> <span class="s" data-k="tests-b2-1">These tests describe real user flows like adding an item to a cart, checking out, and moving to a confirmation page.</span> <span class="s" data-k="tests-b2-2">The reason E2E tests are so effective is that they are difficult to fool–either the whole feature works or it doesn't.</span> <span class="s" data-k="tests-b2-3">They also have definitive done criteria and can concretely tell you what’s broken.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tests-b2-0">如果只能押一类测试，那就选端到端。</span><span class="s" data-k="tests-b2-1">这类测试描述真实的用户流程，比如把商品加进购物车、结账、跳到确认页。</span><span class="s" data-k="tests-b2-2">E2E 测试之所以有效，是因为它很难被骗过——整个功能要么能用，要么不能用。</span><span class="s" data-k="tests-b2-3">它们还有明确的完成标准，并且能具体告诉你哪里坏了。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="单元测试失败 vs 端到端测试失败"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="FIG A A unit test may show “Error: Timeout after 30 seconds,” but an end-to-end test can show a screenshot with a description of what’s broken."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>单元测试失败 vs 端到端测试失败</b>　左边是单元测试失败：只有一行「Error: Timeout after 30s」，caption 写着「像蒙着眼打枪，没有步骤、没有轨迹」。右边是端到端测试失败：给出分步轨迹（注册 ✓、加购 ✓、结账 ✗、确认页未到达）、一张结账页截图，并明确指出「Place order 按钮一直灰着，因为支付表单没加载」。</p><p class="cap-en">原文图注：FIG A A unit test may show “Error: Timeout after 30 seconds,” but an end-to-end test can show a screenshot with a description of what’s broken.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>先看左侧标题「UNIT TEST FAILURE」：终端里只有 FAIL 与 Error: Timeout after 30s，你将拿不到任何关于「哪一步坏了」的信息。</li><li>再看右侧「END-TO-END TEST FAILURE」：TRACE 一栏用 ✓/✗ 标出注册、加购、结账、确认页四步，✗ 落在 Checkout。</li><li>SCREENSHOT 一栏是 shop.example/checkout 的真实截图，Payment 表单下方红字写着 “Payment form failed to load”。</li><li>底部「WHAT STEP FAILED」把结论写成一句话：Place order 一直不可点，因为支付表单从未加载。</li></ol><p class="takeaway">一句话：端到端测试的产出不是「失败了」，而是「哪一步、为什么、长什么样」。</p></details></figcaption></figure>
+<div class="row" data-rid="tests-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tests-b4-0">While unit tests are faster and less flaky, it’s possible to pass them and still break the feature.</span> <span class="s" data-k="tests-b4-1">This is because both the agent and the test don’t understand the full task.</span> <span class="s" data-k="tests-b4-2">With E2E tests, it is effective to give your agent hands and eyes on the real running system.</span> <span class="s" data-k="tests-b4-3">You can use a skill to boot, drive, and inspect the app with tools like <a class='lnk' href='https://chromedevtools.github.io/devtools-protocol/' target='_blank' rel='noopener' data-link='L4'>CDP</a>, simulators, or API <span class='term' data-term='harness'>harnesses</span>.</span> <span class="s" data-k="tests-b4-4">The <span class='term' data-term='feature_map'>feature map</span> can serve as a guide and grading rubric for agents as they typically list features from the user’s point of view with descriptions of paths, keyboard shortcuts, selectors, and expected results.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tests-b4-0">单元测试更快、也更不容易不稳定，但它是可能通过了、功能却仍然是坏的。</span><span class="s" data-k="tests-b4-1">这是因为智能体和测试都没有理解完整的任务。</span><span class="s" data-k="tests-b4-2">用 E2E 测试，很有效的一点是让智能体在真正跑起来的系统上「有手有眼」。</span><span class="s" data-k="tests-b4-3">你可以用一个技能，借 <a class='lnk' href='https://chromedevtools.github.io/devtools-protocol/' target='_blank' rel='noopener' data-link='L4'>CDP</a>、模拟器或 API harness 这类工具，把应用启动、驱动起来并检查一遍。</span><span class="s" data-k="tests-b4-4"><span class='term' data-term='feature_map'>功能地图</span>可以当作智能体的引导和评分标准，因为它通常从用户视角列出功能，并描述路径、快捷键、选择器和预期结果。</span></p></div></div>
+<div class="row h3row wide" id="h-tests-b5"><h3><span class='h3-en'>Property tests: constraints that can’t break</span><span class='h3-zh'>属性测试：不会破的约束</span></h3></div>
+<div class="row" data-rid="tests-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tests-b6-0">A lot of tests are based on what you thought might go wrong.</span> <span class="s" data-k="tests-b6-1"><span class='term' data-term='property_test'>Property tests</span> look at the edge cases that people tend to miss, which is where agents often fail.</span> <span class="s" data-k="tests-b6-2">You start by writing a statement you think can’t fail and then use a test library (<a class='lnk' href='https://fast-check.dev/' target='_blank' rel='noopener' data-link='L5'>fast-check</a> for JS/TS, <a class='lnk' href='https://hypothesis.readthedocs.io/en/latest/' target='_blank' rel='noopener' data-link='L6'>Hypothesis</a> for Python, <a class='lnk' href='https://proptest-rs.github.io/proptest/' target='_blank' rel='noopener' data-link='L7'>proptest</a> for Rust, etc.) to generate thousands of inputs that try to prove otherwise.</span> <span class="s" data-k="tests-b6-3">There are many properties in virtually every software project like:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tests-b6-0">很多测试是建立在「你预想可能会出什么错」之上的。</span><span class="s" data-k="tests-b6-1"><span class='term' data-term='property_test'>属性测试</span>看的是人们往往漏掉的边界情况，而这些地方恰恰是智能体经常出错的地方。</span><span class="s" data-k="tests-b6-2">你先写一句你认为不可能失败的陈述，然后用一个测试库（JS/TS 用 <a class='lnk' href='https://fast-check.dev/' target='_blank' rel='noopener' data-link='L5'>fast-check</a>，Python 用 <a class='lnk' href='https://hypothesis.readthedocs.io/en/latest/' target='_blank' rel='noopener' data-link='L6'>Hypothesis</a>，Rust 用 <a class='lnk' href='https://proptest-rs.github.io/proptest/' target='_blank' rel='noopener' data-link='L7'>proptest</a>，等等）生成成千上万个输入，设法证明它错。</span><span class="s" data-k="tests-b6-3">几乎每个软件项目里都有很多这样的属性，比如：</span></p></div></div>
+<div class="row" data-rid="tests-b7"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="tests-b7-0-0"><b>Round-trip encoding</b>: “if you encode X then decode it back, you get X.” This works for parsing and serialization as well.</span></li><li><span class="s" data-k="tests-b7-1-0"><b>Invariants</b>: Things that must always be true, like “account balance can never become negative.”</span></li><li><span class="s" data-k="tests-b7-2-0"><b>Idempotency</b>: Doing an action (migration, normalization, retry) twice has the same effect as doing it once.</span></li><li><span class="s" data-k="tests-b7-3-0"><b>Equivalence</b>: Optimized code produces the same result as naive but correct code.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="tests-b7-0-0"><b>往返编码</b>：「把 X 编码、再解码回来，得到的还是 X。」解析与序列化也适用。</span></li><li><span class="s" data-k="tests-b7-1-0"><b>不变量</b>：必须始终为真的事，比如「账户余额绝不会变成负数」。</span></li><li><span class="s" data-k="tests-b7-2-0"><b>幂等性</b>：同一个动作（迁移、归一化、重试）做两次，效果与做一次相同。</span></li><li><span class="s" data-k="tests-b7-3-0"><b>等价性</b>：优化后的代码产生的结果，与朴素但正确的代码相同。</span></li></ul></div></div>
+<div class="row" data-rid="tests-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tests-b8-0">Property libraries are a great way to keep agents honest by using edge cases that aren’t created with the same bias as the agent that created the original code.</span> <span class="s" data-k="tests-b8-1">They are also particularly helpful for rewrites when the spec has drifted from production behavior and is no longer a reliable source for verification.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tests-b8-0">属性测试库是让智能体保持诚实的好办法：它用的边界情况，不会带着「写下原始代码的那个智能体」的偏见。</span><span class="s" data-k="tests-b8-1">在重写时它尤其有用——此时的规格已经偏离了生产环境的行为，不再是可靠的验证依据。</span></p></div></div>
+<div class="row h3row wide" id="h-tests-b9"><h3><span class='h3-en'>Differential tests: the old system is the oracle</span><span class='h3-zh'>差分测试：让旧系统当标准答案</span></h3></div>
+<div class="row" data-rid="tests-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tests-b10-0">Differential tests are particularly effective for <a class='lnk' href='https://claude.com/resources/articles/ai-code-migration' target='_blank' rel='noopener' data-link='L8'>large-scale migration</a> use cases where functionality is expected to remain the same.</span> <span class="s" data-k="tests-b10-1">For these tests, you run both the old system and the new system with the same inputs and see if you get different results.</span> <span class="s" data-k="tests-b10-2">If you do, there is a bug or breaking change that needs to be fixed.</span> <span class="s" data-k="tests-b10-3">The key for differential tests is to use randomly generated inputs or a sample of production traffic.</span> <span class="s" data-k="tests-b10-4">You’ll also want to normalize irrelevant factors like whitespace and keep a list of approved changes for situations where the new environment should differ from the old.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tests-b10-0">差分测试对<a class='lnk' href='https://claude.com/resources/articles/ai-code-migration' target='_blank' rel='noopener' data-link='L8'>大规模迁移</a>这类场景特别有效，因为这类场景里功能理应是保持不变的。</span><span class="s" data-k="tests-b10-1">做法是：用同一批输入，同时跑旧系统和新系统，看结果是否有差异。</span><span class="s" data-k="tests-b10-2">如果有差异，就说明存在一个 bug，或者一处需要修的破坏性变更。</span><span class="s" data-k="tests-b10-3">差分测试的关键，是用随机生成的输入，或者生产流量的一份样本。</span><span class="s" data-k="tests-b10-4">你还会想把无关因素（比如空白）归一化，并维护一份「已批准的变更」清单，用于那些新环境本来就该与旧环境不同的情形。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-team">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">How the Claude Code team thinks about verification</span><span class="h-zh">Claude Code 团队怎么想「验证」这件事</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>八条做法：端到端跑起来比测试重要；检查器归代码负责人；39 项清单只在 diff 命中时触发；只调主审查者而不叠加；检查不能被被检查的改动修改；新闸门先用 observe 模式；拿真实回滚做评测；漏掉的 bug 变成规则。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="team-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b0-0">We have previously written about <a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>how code review works at Anthropic</a>, but this article aims to go deeper on how we verify our work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b0-0">我们之前写过<a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>Anthropic 的代码审查是怎么做的</a>，但这篇想更深入地讲我们怎么验证自己的工作。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b1"><h3><span class='h3-en'>Verification means running the change</span><span class='h3-zh'>验证，就是把改动真的跑起来</span></h3></div>
+<div class="row" data-rid="team-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b2-0">Running the app end to end matters more than tests.</span> <span class="s" data-k="team-b2-1">You wouldn't ship an iOS change without trying it in a simulator, and the same goes for Claude.</span> <span class="s" data-k="team-b2-2">Claude can test the whole app the way a human or QA engineer would.</span> <span class="s" data-k="team-b2-3">Ask it to use the Claude Chrome extension for web changes, an iOS or Android MCP for mobile, computer use for desktop, or to run the service locally for backend work.</span> <span class="s" data-k="team-b2-4">To codify how to start the simulator or run your app, create a skill called verify.</span> <span class="s" data-k="team-b2-5">Put it in a.claude/skills/ folder in your repo, as close to the relevant code as you can, and add as many as you need.</span> <span class="s" data-k="team-b2-6">Claude knows to use the verify skill before committing changes.</span> <span class="s" data-k="team-b2-7">Then invest in making your verify skill fast and reliable.</span> <span class="s" data-k="team-b2-8">Ask Claude to iterate on it and stress test it.</span> <span class="s" data-k="team-b2-9">It's your <span class='term' data-term='smoke_test'>smoke test</span> harness, so you want it rock solid.</span> <span class="s" data-k="team-b2-10">When you give Claude a way to smoke test its changes end to end, you get much better results.</span> <span class="s" data-k="team-b2-11">You'll see it iterate and catch real mistakes faster, the way a human would.</span> <span class="s" data-k="team-b2-12">This is how we test nearly all changes at Anthropic.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b2-0">端到端地把应用跑起来，比测试本身更重要。</span><span class="s" data-k="team-b2-1">你不会没在模拟器里试过就发布一个 iOS 改动，对 Claude 也是如此。</span><span class="s" data-k="team-b2-2">Claude 可以像人、或者像 QA 工程师那样，把整个应用测一遍。</span><span class="s" data-k="team-b2-3">网页改动，让它用 Claude Chrome 扩展；移动端，用对应平台的 iOS 或 Android MCP；桌面端，用 computer use；后端工作，就在本地把服务跑起来。</span><span class="s" data-k="team-b2-4">要把「怎么启动模拟器、怎么跑应用」写成规程，就建一个叫 verify 的技能。</span><span class="s" data-k="team-b2-5">把它放进仓库里的 .claude/skills/ 文件夹，尽量靠近相关的代码，需要几个就建几个。</span><span class="s" data-k="team-b2-6">Claude 知道要在提交改动之前先用 verify 技能。</span><span class="s" data-k="team-b2-7">接下来要投入的，是让这个 verify 技能又快又可靠。</span><span class="s" data-k="team-b2-8">让 Claude 反复迭代它、压测它。</span><span class="s" data-k="team-b2-9">这是你的<span class='term' data-term='smoke_test'>冒烟测试</span>载体，所以要它足够结实。</span><span class="s" data-k="team-b2-10">当你给了 Claude 一条端到端冒烟测试自己改动的途径，结果会好得多。</span><span class="s" data-k="team-b2-11">你会看到它像人一样反复迭代，更快地抓到真正的错误。</span><span class="s" data-k="team-b2-12">我们在 Anthropic 几乎所有的改动都是这样测的。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b3"><h3><span class='h3-en'>Failing tests require human attention</span><span class='h3-zh'>失败的测试需要人来介入</span></h3></div>
+<div class="row" data-rid="team-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b4-0">Nobody can read every change, so we use failures as one way to decide what needs a person.</span> <span class="s" data-k="team-b4-1">Claude runs the checks and tries to fix anything that fails.</span> <span class="s" data-k="team-b4-2">If a check is still failing after three rounds, Claude stops and brings in a human.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b4-0">没人能读完每一处改动，所以我们把「失败」当作决定哪一处需要人来看的一种办法。</span><span class="s" data-k="team-b4-1">Claude 跑检查，并尝试修掉任何失败的东西。</span><span class="s" data-k="team-b4-2">如果三轮之后检查仍然失败，Claude 就停下，把人类叫来。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b5"><h3><span class='h3-en'>Code owners write their own checks</span><span class='h3-zh'>代码负责人自己写检查</span></h3></div>
+<div class="row" data-rid="team-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b6-0">The people who own the code write the checks for it, and refine them until they flag what the owner would flag.</span> <span class="s" data-k="team-b6-1">When a check pulls in a reviewer, it should say why, so they don't have to work it out from the diff.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b6-0">代码的负责人自己写对应的检查，并不断打磨，直到它挑出的问题，正是负责人会挑出的那些。</span><span class="s" data-k="team-b6-1">当某项检查把审查者拉进来时，它应该说清为什么，这样审查者不必自己从 diff 里推断。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b7"><h3><span class='h3-en'>Reliability checks trigger on the diff</span><span class='h3-zh'>可靠性检查按 diff 触发</span></h3></div>
+<div class="row" data-rid="team-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b8-0">We maintain a reliability checklist with 39 items, each with a trigger that can be read from a diff, a check, and the incidents or PRs behind it.</span> <span class="s" data-k="team-b8-1">One is “--resume loads old transcripts.” When session storage or message types change, we ask whether a new field loads safely, since older transcripts won’t have it.</span> <span class="s" data-k="team-b8-2">Claude reads the diff and checks only the items whose trigger matches–usually 3 to 10–so nobody has to memorize past outages.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b8-0">我们维护一份 39 项的可靠性清单，每一项都带一个能从 diff 读出来的触发条件、一项检查，以及它背后的那次故障或那个 PR。</span><span class="s" data-k="team-b8-1">其中一条是「--resume 能加载旧对话记录」。当会话存储或消息类型发生变化时，我们会问：新加的字段能不能安全加载，因为更早的对话记录里并没有它。</span><span class="s" data-k="team-b8-2">Claude 读 diff，只检查触发条件对得上的那几项——通常是 3 到 10 项——这样没人需要背下过去所有的故障。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b9"><h3><span class='h3-en'>One reviewer, multiple rounds</span><span class='h3-zh'>一个审查者，多轮累积</span></h3></div>
+<div class="row" data-rid="team-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b10-0">We don't try to improve reviews by stacking on more reviewers.</span> <span class="s" data-k="team-b10-1">Adding a second, more expensive, reviewer on top of the primary one is often a worse approach than tuning the primary.</span> <span class="s" data-k="team-b10-2">Instead, we have a <a class='lnk' href='https://code.claude.com/docs/en/code-review-customize' target='_blank' rel='noopener' data-link='L9'>REVIEW.md</a> that says what the reviewer should pay attention to for this code.</span> <span class="s" data-k="team-b10-3">We also think review and verification rounds should build on each other.</span> <span class="s" data-k="team-b10-4">We point each pass at context from earlier rounds and past failures rather than re-checking everything from scratch.</span> <span class="s" data-k="team-b10-5">It’s cheaper and finds more.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b10-0">我们不靠堆更多审查者来改善审查。</span><span class="s" data-k="team-b10-1">在主审查者之上再加一个更贵的第二审查者，往往不如把主审查者调好。</span><span class="s" data-k="team-b10-2">取而代之的是，我们有一份 <a class='lnk' href='https://code.claude.com/docs/en/code-review-customize' target='_blank' rel='noopener' data-link='L9'>REVIEW.md</a>，说明针对这份代码，审查者该注意什么。</span><span class="s" data-k="team-b10-3">我们也认为，审查与验证的轮次应该互相累积。</span><span class="s" data-k="team-b10-4">每一轮都指向之前轮次的上下文和过去的失败，而不是把一切从头重查一遍。</span><span class="s" data-k="team-b10-5">这样更便宜，也能找到更多问题。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b11"><h3><span class='h3-en'>Changes can't modify their own checks</span><span class='h3-zh'>改动不能修改审判它的检查</span></h3></div>
+<div class="row" data-rid="team-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b12-0">If a change can modify the check that judges it, the check is broken.</span> <span class="s" data-k="team-b12-1">Code Review reads the REVIEW.md file from the base or default branch, <a class='lnk' href='https://code.claude.com/docs/en/code-review-customize' target='_blank' rel='noopener' data-link='L9'>never from the pull request's changes</a>.</span> <span class="s" data-k="team-b12-2">The Claude Code team ensures the rules that gate changes are on a branch that the change can't modify.</span> <span class="s" data-k="team-b12-3">The Claude Code team also reserves reviews for commits.</span> <span class="s" data-k="team-b12-4">If someone's pushing while the review is happening, then the review result is no longer useful.</span> <span class="s" data-k="team-b12-5">A passing review on an out-of-date commit means nothing.</span> <span class="s" data-k="team-b12-6">The team also runs cheap checks first.</span> <span class="s" data-k="team-b12-7">If an agent pushes before testing locally, it has spent shared review and CI time when it could have caught the bug itself.</span> <span class="s" data-k="team-b12-8">On our team, Claude runs the tests, build, and linter before opening a pull request.</span> <span class="s" data-k="team-b12-9">You can enforce this with a <a class='lnk' href='https://code.claude.com/docs/en/hooks' target='_blank' rel='noopener' data-link='L10'>hook</a> that runs the tests when Claude finishes, or a <a class='lnk' href='https://code.claude.com/docs/en/goal' target='_blank' rel='noopener' data-link='L11'>/goal</a> of a passing test suite.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b12-0">如果一处改动能修改审判它的那项检查，那这项检查就是坏的。</span><span class="s" data-k="team-b12-1">Code Review 从基线分支或默认分支读取 REVIEW.md 文件，<a class='lnk' href='https://code.claude.com/docs/en/code-review-customize' target='_blank' rel='noopener' data-link='L9'>决不从 PR 里的改动读</a>。</span><span class="s" data-k="team-b12-2">Claude Code 团队会确保「把关改动的规则」放在一个改动本身动不了的分支上。</span><span class="s" data-k="team-b12-3">Claude Code 团队还把审查与具体的提交绑定。</span><span class="s" data-k="team-b12-4">如果审查进行时还有人正在推代码，那这次审查结果就没用了。</span><span class="s" data-k="team-b12-5">对一份已经过期的提交给出通过的审查，毫无意义。</span><span class="s" data-k="team-b12-6">团队也会先跑便宜的检查。</span><span class="s" data-k="team-b12-7">如果智能体没在本地测过就推上去，它就消耗了共享的审查与 CI 时间，而这个 bug 它本可以自己抓到。</span><span class="s" data-k="team-b12-8">在我们团队，Claude 会在开 PR 之前跑测试、构建和 linter。</span><span class="s" data-k="team-b12-9">你可以用一个 <a class='lnk' href='https://code.claude.com/docs/en/hooks' target='_blank' rel='noopener' data-link='L10'>钩子</a>在 Claude 完成时自动跑测试来强制这一点，或者设一个「测试全过」的 <a class='lnk' href='https://code.claude.com/docs/en/goal' target='_blank' rel='noopener' data-link='L11'>/goal</a>。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b13"><h3><span class='h3-en'>Start a new gate in observe mode</span><span class='h3-zh'>新闸门先用 observe 模式跑</span></h3></div>
+<div class="row" data-rid="team-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b14-0">In our own repos, we stamp each commit with how it was verified.</span> <span class="s" data-k="team-b14-1">The stamp even includes “none” so we can query for commits that weren't verified.</span> <span class="s" data-k="team-b14-2">We've also created a commit gate that can block a commit if the session did not contain /code-review or /verify.</span> <span class="s" data-k="team-b14-3">We've set it up with off, observe, and enforce modes.</span> <span class="s" data-k="team-b14-4">Observe mode will log what would have been blocked, so that we can review any false positives and ensure no one is impacted.</span> <span class="s" data-k="team-b14-5">Enforce mode will block the commit.</span> <span class="s" data-k="team-b14-6">Any commit can carry an explanation in its message as to why it didn't get verified.</span> <span class="s" data-k="team-b14-7">If commits have been blocked twice in the session, the next one will be allowed through so Claude doesn't get stuck – Claude Code isn't perfect.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b14-0">在我们自己的仓库里，我们给每个提交打上一个标签，写明它是怎么被验证的。</span><span class="s" data-k="team-b14-1">这个标签甚至包括「none」，这样我们就能查出那些没经过验证的提交。</span><span class="s" data-k="team-b14-2">我们还做了一个提交闸门：如果这次会话里没有出现 /code-review 或 /verify，它就能拦下这次提交。</span><span class="s" data-k="team-b14-3">我们给它设了 off、observe、enforce 三种模式。</span><span class="s" data-k="team-b14-4">observe 模式会记录「本来会被拦下什么」，这样我们能复查误报，确保没人被误伤。</span><span class="s" data-k="team-b14-5">enforce 模式会直接拦下这次提交。</span><span class="s" data-k="team-b14-6">任何提交都可以在提交信息里说明，自己为什么没被验证。</span><span class="s" data-k="team-b14-7">如果这次会话里已经被拦下两次，下一次就会放行，免得 Claude 卡死——Claude Code 并不完美。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b15"><h3><span class='h3-en'>Test your checks on what actually matters</span><span class='h3-zh'>拿真正要紧的东西来测你的检查</span></h3></div>
+<div class="row" data-rid="team-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b16-0">The Claude Code team also regularly reviews the reviewers.</span> <span class="s" data-k="team-b16-1">We track how many merged changes were reverted, how many changes a maintainer rejected before merging, and a size-matched subset of changes that have stayed clean.</span> <span class="s" data-k="team-b16-2">This can also be done with a formal evaluation.</span> <span class="s" data-k="team-b16-3">In our <a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>code review post</a>, we described how the Code Review team has set up an evaluation based on previous incidents and reverts.</span> <span class="s" data-k="team-b16-4">They recreate the repo to the state at the time of review for each example, and provide a one-sentence answer key to what the bug was.</span> <span class="s" data-k="team-b16-5">Only findings that correctly describe the bug in question get points.</span> <span class="s" data-k="team-b16-6">They use merged and stable changes as a control to prevent over-flagging.</span> <span class="s" data-k="team-b16-7">Their tuning set is split out from the fixed test set they use to evaluate their system.</span> <span class="s" data-k="team-b16-8">They also evaluated the <span class='term' data-term='recall'>recall rate</span> for raw findings, post-verification, and final review separately.</span> <span class="s" data-k="team-b16-9">This lets them see if the system is losing bugs it had already found.</span> <span class="s" data-k="team-b16-10">Any evaluation that treats all these as one end-to-end score won't capture this nuance.</span> <span class="s" data-k="team-b16-11">In addition to validity, the other dimension we care about is how important it is to make the change.</span> <span class="s" data-k="team-b16-12">A good reviewer will catch most things that are technically correct, but people care about whether a given bug is a must-fix, a should-fix, or a nit.</span> <span class="s" data-k="team-b16-13">Code Review has this exact idea, and it will tag things as <a class='lnk' href='https://code.claude.com/docs/en/code-review-pull-requests' target='_blank' rel='noopener' data-link='L12'>Important, Nit or Pre-existing</a>.</span> <span class="s" data-k="team-b16-14">The “pre-existing” tag means that the reviewer shouldn't hold the author responsible for something that was already a bug.</span> <span class="s" data-k="team-b16-15">Finally, the Claude Code team tunes recall up to the point where the next improvement would be <span class='term' data-term='overfitting'>overfitting</span> to the eval rather than actually catching bugs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b16-0">Claude Code 团队也会定期审查「审查者」。</span><span class="s" data-k="team-b16-1">我们统计有多少已合并的改动被回滚、有多少改动在合并前被维护者打回，以及一个规模匹配、始终保持干净的改动子集。</span><span class="s" data-k="team-b16-2">这也可以做成一次正式的评测。</span><span class="s" data-k="team-b16-3">在我们的<a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>代码审查那篇文章</a>里，我们讲过 Code Review 团队如何基于既往故障与回滚搭起一套评测。</span><span class="s" data-k="team-b16-4">他们为每个样例把仓库重建到审查当时的那个状态，并提供一句话的答案，说明那个 bug 是什么。</span><span class="s" data-k="team-b16-5">只有正确描述了那个 bug 的发现，才算得分。</span><span class="s" data-k="team-b16-6">他们用已合并且稳定的改动作为对照组，防止系统过度挑刺。</span><span class="s" data-k="team-b16-7">调参集与用来评估系统的固定测试集是分开的。</span><span class="s" data-k="team-b16-8">他们还分别评估了原始发现、验证之后、最终审查这三个阶段的<span class='term' data-term='recall'>召回率</span>。</span><span class="s" data-k="team-b16-9">这样就能看出，系统是否在丢它本来已经找到的 bug。</span><span class="s" data-k="team-b16-10">任何把它们合成一个端到端总分的评测，都看不出这层区别。</span><span class="s" data-k="team-b16-11">除了「对不对」，我们在意的另一个维度是「这个改动有多重要」。</span><span class="s" data-k="team-b16-12">好的审查者会抓到大多数技术上正确的问题，但人们真正在意的是：某个 bug 是必须修（must-fix）、应该修（should-fix），还是吹毛求疵（nit）。</span><span class="s" data-k="team-b16-13">Code Review 就有这个思路，它会把问题标成<a class='lnk' href='https://code.claude.com/docs/en/code-review-pull-requests' target='_blank' rel='noopener' data-link='L12'>重要、小问题、或既有问题</a>。</span><span class="s" data-k="team-b16-14">「既有问题」（pre-existing）这个标签的意思是：审查者不该让作者为一个本来就存在的 bug 负责。</span><span class="s" data-k="team-b16-15">最后，Claude Code 团队会把召回率一路往上调，直到再往上就是在对评测<span class='term' data-term='overfitting'>过拟合</span>，而不是真的多抓到 bug。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b17"><h3><span class='h3-en'>Turn misses into rules</span><span class='h3-zh'>把漏掉变成规则</span></h3></div>
+<div class="row" data-rid="team-b18"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b18-0">In the Claude Code repo, we have two methods of turning missed cases into rules.</span> <span class="s" data-k="team-b18-1">The first is extracting patterns in human code review comments and PR reverts to identify common issues.</span> <span class="s" data-k="team-b18-2">These must occur in at least two PRs and be identifiable from a diff to be considered a potential rule.</span> <span class="s" data-k="team-b18-3">Three agents will try to disprove them, and they will be reviewed and approved by a human in a PR.</span> <span class="s" data-k="team-b18-4">The second method is replaying three bug finders against a PR that is associated with a known incident.</span> <span class="s" data-k="team-b18-5">If at least two find the bug, it's a detectable bug.</span> <span class="s" data-k="team-b18-6">If the bug is missed on a small diff, this is a gap that is worth turning into a rule in REVIEW.md.</span> <span class="s" data-k="team-b18-7">Flaky tests get the same treatment.</span> <span class="s" data-k="team-b18-8">Claude can't skip them, add sleeps or retry until they pass.</span> <span class="s" data-k="team-b18-9">If it can't find the root cause, it deletes the test and writes down why.</span> <span class="s" data-k="team-b18-10">Rules need cleaning up too.</span> <span class="s" data-k="team-b18-11">Test suites, verification steps and.md files only grow if you let them, so we tidy them up on a routine.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b18-0">在 Claude Code 仓库里，我们有两种把「漏掉的案例」变成规则的方法。</span><span class="s" data-k="team-b18-1">第一种是从人工代码审查评论和 PR 回滚里提取模式，找出常见问题。</span><span class="s" data-k="team-b18-2">这些问题必须至少在两个 PR 里出现过、并且能从 diff 上看出来，才会被当作候选规则。</span><span class="s" data-k="team-b18-3">会有三个智能体尝试证伪它们，最后由一个人类在 PR 里审查并批准。</span><span class="s" data-k="team-b18-4">第二种办法，是把三个 bug 查找器对着一个与已知故障相关的 PR 重放。</span><span class="s" data-k="team-b18-5">如果至少有两个找出了那个 bug，它就是「可被检出」的 bug。</span><span class="s" data-k="team-b18-6">如果在一个小 diff 上漏掉了它，这就是一处值得写进 REVIEW.md 的规则空白。</span><span class="s" data-k="team-b18-7">不稳定的测试也照同样处理。</span><span class="s" data-k="team-b18-8">Claude 不能跳过它们、加 sleep，或者一直重试到通过。</span><span class="s" data-k="team-b18-9">如果找不到根因，它就删掉这个测试，并把原因写下来。</span><span class="s" data-k="team-b18-10">规则也需要清理。</span><span class="s" data-k="team-b18-11">测试集、验证步骤和 .md 文件，只要你不管就会一直长，所以我们按常规去收拾它们。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-outcome">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Good tests, good results</span><span class="h-zh">好测试，好结果</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>收束成一条：把验证层当成一个有权限边界的系统来经营——隔离它的权限、对着真 bug 打分、记下并定期修剪教训。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="outcome-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="outcome-b0-0">We’ve found that giving your agent a way to verify its work with a strong feedback loop makes all the difference.</span> <span class="s" data-k="outcome-b0-1">Treat your verification layer like you would any other system.</span> <span class="s" data-k="outcome-b0-2">Keep it out of reach of the changes they judge, grade them against the bugs that mattered to you, and write down lessons when they miss something so that it doesn’t happen more than once, and prune those lessons so they stay worth running.</span> <span class="s" data-k="outcome-b0-3">Do that and your job shifts from reading every diff to defining what “done” looks like and reviewing the evidence, which is what lets you run many Claudes at once.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="outcome-b0-0">我们发现，给智能体一条带强反馈回路的自我验证途径，差别是决定性的。</span><span class="s" data-k="outcome-b0-1">把验证层当成任何一个别的系统来对待。</span><span class="s" data-k="outcome-b0-2">让它够不着它所审判的那些改动；用它去对着你在意的那些 bug 打分；它漏了的时候把教训写下来，让同一件事不会发生第二次；再修剪这些教训，让它们始终值得跑。</span><span class="s" data-k="outcome-b0-3">做到这些，你的工作就从「读每一份 diff」变成「定义「完成」长什么样，并审阅证据」——而这，正是让你能同时跑很多个 Claude 的原因。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文的引用合并后指向 12 个不同目的地。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>Claude Code 团队怎么做代码审查</h4><p class="lnk-site">claude.dev · How the Claude Code team does code review</p><p class="lnk-anchors">正文对应：<em>审查</em></p><p><b>这是什么：</b>同一团队的前一篇：当 Claude 写掉约 90% 的代码，审查这件事被重新设计成什么样子。</p><p><b>为什么值得点：</b>本文后半段所有做法（REVIEW.md、Important/Nit 标签、评测方式）都源自这套审查系统，先读它能省掉一半疑问。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Claude 写的代码由 Claude 先审；审查规则写在基线分支的 REVIEW.md 里，PR 改不到它；发现的问题分「重要 / 小问题 / 既有问题」三档，既有问题不算作者的责任。</p><ul><li>审查规则与代码分离，改动无法修改审判它的规则</li><li>问题按重要程度分级，降低噪声</li><li>用历史故障与回滚做评测集</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/solving-code-review-at-anthropic/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>用技能在 Claude Code 里搭验证循环</h4><p class="lnk-site">claude.com · Building verification loops in Claude Code with skills</p><p class="lnk-anchors">正文对应：<em>验证自己输出的途径</em></p><p><b>这是什么：</b>官方实操文：怎么把一个可重复的验证流程写成一个技能，让 Claude 每次改完自动跑。</p><p><b>为什么值得点：</b>本文说「验证循环是基石」，这一篇讲的是怎么在 Claude Code 里把它真正搭起来。</p><p><b>访问说明：</b>原链接跳转到 claude.com/resources/articles/ 同名文章。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把验证步骤（启动、跑测试、截图比对）写成 .claude/skills/ 下的技能；模型在提交前主动调用；技能要快、要稳，因为它同时是你的冒烟测试载体。</p><ul><li>验证流程固化成技能</li><li>提交前自动调用</li><li>速度与稳定性优先于覆盖面</li></ul></details><a class="lnk-open" href="https://claude.com/blog/building-verification-loops-in-claude-code-with-skills" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>定制代码审查（REVIEW.md）</h4><p class="lnk-site">code.claude.com · Customize code review</p><p class="lnk-anchors">正文对应：<em>REVIEW.md</em></p><p><b>这是什么：</b>官方文档：REVIEW.md 怎么写，才能告诉审查者针对这份代码该注意什么。</p><p><b>为什么值得点：</b>本文两条做法直接依赖它：规则只从基线分支读、漏掉的 bug 变成规则写回这里。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把项目特有的审查要点写进 REVIEW.md（放在基线分支）；审查时按这份文件判断，PR 里的改动无法替换它。</p><ul><li>规则与代码同仓但分权</li><li>从基线分支读取</li><li>可写项目特有的坑</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/code-review-customize" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>用 Claude 做代码迁移</h4><p class="lnk-site">claude.com · AI code migration</p><p class="lnk-anchors">正文对应：<em>大规模迁移</em></p><p><b>这是什么：</b>官方文章：把一套代码库迁到新框架/新语言时，怎么让 Claude 分批搬运并保留行为一致。</p><p><b>为什么值得点：</b>差分测试最典型的用武之地就是这种迁移——功能不该变，旧系统正好当标准答案。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>迁移拆成「建映射 → 分批改 → 每批跑同一套验证」；用旧实现作为行为基准，差异逐条确认后再合并。</p><ul><li>以行为不变为目标</li><li>分批迁移、分批验证</li><li>差异需要人工确认清单</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/ai-code-migration" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span></div><h4>Claude 托管智能体</h4><p class="lnk-site">claude.com · Claude managed agents</p><p class="lnk-anchors">正文对应：<em>把任务成功率最多提升了 10 个百分点</em></p><p><b>这是什么：</b>介绍托管式智能体（agent 由平台托管运行）的官方文章，本文引用的「独立评分者提升 10 个百分点」出自这里的内部测试。</p><p><b>为什么值得点：</b>本文最硬的那个数字在这里，想核对「评分者为什么有效」可以点开看上下文。</p><p><b>访问说明：</b>原链接跳转到 claude.com/resources/articles/claude-managed-agents。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>把「干活」和「判分」分开：执行者写、评分者按评分标准检查，比让同一个模型自评更稳；在结构化文件生成任务上提升最明显。</p><ul><li>执行与评分分离</li><li>评分标准先行</li><li>难任务收益更大</li></ul></details><a class="lnk-open" href="https://claude.com/blog/claude-managed-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 7 个读</span></div><h4>Chrome 开发者工具协议</h4><p class="lnk-site">chromedevtools.github.io · Chrome DevTools Protocol</p><p class="lnk-anchors">正文对应：<em>CDP</em></p><p><b>这是什么：</b>用程序控制 Chrome 的官方协议文档：开页面、点按钮、抓截图、读状态。</p><p><b>为什么值得点：</b>文章说「给智能体手和眼」，CDP 就是那双手：没有它，端到端测试只能靠人点。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>基于 WebSocket 的 JSON 协议，按域划分（Page、Runtime、Input 等）；能模拟输入、截屏、读取 DOM 与网络事件，是 headless 端到端测试的底层能力。</p><ul><li>Page / Runtime / Input 三个域最常用</li><li>可截图与读取控制台</li><li>无头浏览器测试的共同底座</li></ul></details><a class="lnk-open" href="https://chromedevtools.github.io/devtools-protocol/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>钩子（Hooks）</h4><p class="lnk-site">code.claude.com · Hooks</p><p class="lnk-anchors">正文对应：<em>钩子</em></p><p><b>这是什么：</b>官方文档：在 Claude 完成某个动作前后自动执行命令，比如跑测试、跑 linter。</p><p><b>为什么值得点：</b>文章用它来强制「先本地测过再推」，是把纪律变成机制的那一环。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>在 SessionStart、PreToolUse、Stop 等事件上挂命令；退出码非零可以阻止动作继续，适合做「测试不过不许提交」。</p><ul><li>按事件触发</li><li>退出码可阻断</li><li>适合做本地闸门</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/hooks" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip bg">背景</span><span class="chip">建议第 12 个读</span></div><h4>/goal 指令</h4><p class="lnk-site">code.claude.com · /goal</p><p class="lnk-anchors">正文对应：<em>/goal</em></p><p><b>这是什么：</b>官方文档：给会话设一个可验证的目标，让 Claude 持续朝它推进。</p><p><b>为什么值得点：</b>文章给的另一种强制方式：不挂钩子，而是把「测试全过」写成目标。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>用 /goal 声明完成条件，模型会围绕这个条件循环；条件要能被命令验证，否则会变成空话。</p><ul><li>目标是可验证的</li><li>贯穿整个会话</li><li>与钩子互补</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/goal" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip">可选</span><span class="chip">建议第 4 个读</span></div><h4>PR 上的代码审查</h4><p class="lnk-site">code.claude.com · Code review on pull requests</p><p class="lnk-anchors">正文对应：<em>重要、小问题、或既有问题</em></p><p><b>这是什么：</b>官方文档：Code Review 在 PR 上怎么工作，包括问题的三个等级标签。</p><p><b>为什么值得点：</b>文章说「好的审查者不只判对错，还判重不重要」，这三个标签就是那套分级的具体定义。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>发现分 Important（必须处理）、Nit（可改可不改）、Pre-existing（改动前就存在，不算作者的责任）；等级决定要不要拦合并。</p><ul><li>三级分类</li><li>既有问题不归咎作者</li><li>与合并闸门联动</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/code-review-pull-requests" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip">可选</span><span class="chip">建议第 9 个读</span></div><h4>fast-check（JS/TS 属性测试库）</h4><p class="lnk-site">fast-check.dev · fast-check</p><p class="lnk-anchors">正文对应：<em>fast-check</em></p><p><b>这是什么：</b>JavaScript/TypeScript 的属性测试库，自动生成输入并自动收缩到最小反例。</p><p><b>为什么值得点：</b>本文「属性测试」一节的动手入口：想试一条「编码再解码」的规律，用它最快。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>写一条 property，库会生成上千组随机输入；失败时自动 shrink 到最小反例，直接给你能复现的一段输入。</p><ul><li>自动生成与收缩</li><li>与 Jest/Vitest 集成</li><li>可指定 arbitraries 控制输入分布</li></ul></details><a class="lnk-open" href="https://fast-check.dev/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip">可选</span><span class="chip">建议第 10 个读</span></div><h4>Hypothesis（Python 属性测试库）</h4><p class="lnk-site">hypothesis.readthedocs.io · Hypothesis</p><p class="lnk-anchors">正文对应：<em>Hypothesis</em></p><p><b>这是什么：</b>Python 里最常用的属性测试库，用 @given 装饰器把普通测试变成「对任意输入都要成立」。</p><p><b>为什么值得点：</b>本文给 Python 项目指的那条路；它的失败输出会直接给你一段可复现的输入。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>用 @given 声明输入类型范围，库自动生成并寻找反例；配合 .example() 与数据库可复现历史失败。</p><ul><li>@given + strategies</li><li>失败自动最小化</li><li>可与 pytest 混用</li></ul></details><a class="lnk-open" href="https://hypothesis.readthedocs.io/en/latest/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip">可选</span><span class="chip">建议第 11 个读</span></div><h4>proptest（Rust 属性测试库）</h4><p class="lnk-site">proptest-rs.github.io · proptest</p><p class="lnk-anchors">正文对应：<em>proptest</em></p><p><b>这是什么：</b>Rust 的属性测试库，风格接近 Hypothesis，用 strategy 描述输入空间。</p><p><b>为什么值得点：</b>文章给 Rust 项目指的路；下一篇「混沌循环」里服务正是用 Rust 写的，两者可以对照看。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>用 strategy 组合出输入分布，proptest! 宏写断言；失败会持久化回归用例到 proptest-regressions 文件。</p><ul><li>strategy 组合输入</li><li>自动收缩</li><li>回归用例落盘</li></ul></details><a class="lnk-open" href="https://proptest-rs.github.io/proptest/" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 12 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">verification loop</span><span class="gl-zh">验证循环</span></div><p class="gl-def">让智能体自己跑检查、看结果、再改，直到通过的闭环。它是并行委派更多工作的前提。</p><p class="gl-ana">像写完代码顺手按下编译键，而不是等人来读。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">E2E test</span><span class="gl-zh">端到端测试</span></div><p class="gl-def">从用户视角把整条流程跑一遍（加购、结账、确认页），只有整个功能可用才算通过。</p><p class="gl-ana">不是检查每个零件，而是把车真的开一圈。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">flaky</span><span class="gl-zh">不稳定测试</span></div><p class="gl-def">同一份代码，时过时不过的测试。它会让智能体学会「重跑」而不是修 bug。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">property test</span><span class="gl-zh">属性测试</span></div><p class="gl-def">先写一条认为不可能失败的规律，再用测试库生成成千上万个输入去试图证伪。</p><p class="gl-ana">不是抽查几个样例，而是请人专门来找反例。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">differential test</span><span class="gl-zh">差分测试</span></div><p class="gl-def">同一批输入同时喂给旧系统和新系统，比对结果；有差异就是 bug 或破坏性变更。</p><p class="gl-ana">旧系统就是那把标准尺。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">oracle</span><span class="gl-zh">标准答案（oracle）</span></div><p class="gl-def">测试里用来判定对错的那个「正确答案」来源。差分测试把旧系统的输出当成它。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">rubric</span><span class="gl-zh">评分标准</span></div><p class="gl-def">把主观质量拆成若干条可勾选的判据，让评分者按条目打分而不是凭感觉。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">feature map</span><span class="gl-zh">功能地图</span></div><p class="gl-def">从用户视角列出的功能清单，带路径、快捷键、选择器和预期结果，可直接当评分标准用。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">smoke test</span><span class="gl-zh">冒烟测试</span></div><p class="gl-def">改动后先把应用跑起来、走一遍主路径，确认没有冒烟的地方。文章建议固化成 verify 技能。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">测试载体（harness）</span></div><p class="gl-def">包住被测系统的脚手架：负责启动、喂输入、收结果，让测试可以重复跑。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">recall</span><span class="gl-zh">召回率</span></div><p class="gl-def">真正存在的 bug 里，被系统找出来的比例。文章要求分别统计原始发现、验证后、最终审查三个阶段的召回率。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">overfitting</span><span class="gl-zh">过拟合</span></div><p class="gl-def">为了迎合评测集而调参，分数上去了，真实场景里却没多抓到 bug。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>不稳定测试（flaky）为什么危险</h4><p>一个时好时坏的测试，会让智能体学到「重跑一遍就好了」，而不是去修代码。文章把它列为第一号要避开的失败模式：不稳定本身就是 bug，要修掉或删掉，不能留着。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>这里的 skill 指什么</h4><p>Claude Code 里的「技能」是仓库内的一份说明加脚本，放在 .claude/skills/ 下。模型在相关任务（尤其提交之前）会主动调用它。文章建议把「怎么启动应用、怎么跑一遍」写成 verify 技能，等于把冒烟测试固化成可复用的工具。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>39 项清单「按 diff 触发」</h4><p>每一项都写了触发条件（比如会话存储或消息类型变了）。Claude 读 diff，只查触发条件命中的那几条，通常是 3 到 10 条。这样既不用人背历史故障，也不会每次把所有历史故障都查一遍。</p></div></div></div></section><footer><p>原文 © Anthropic / claude.dev，作者 Addy Osmani，2026-11-16。本页为英中逐句对照的学习用译本；速览、要点与译注为译者所加，原文没有。</p><p>原文：<a href="https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/" target="_blank" rel="noopener">How the Claude Code team thinks about verification</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-tests"><span class="dot">●</span>不是所有测试生而平等：三类值得投入的测试</a><a class="l3" href="#h-tests-b1"><span class="dot">●</span>端到端（E2E）测试</a><a class="l3" href="#h-tests-b5"><span class="dot">●</span>属性测试：不会破的约束</a><a class="l3" href="#h-tests-b9"><span class="dot">●</span>差分测试：让旧系统当标准答案</a><a class="l2" href="#s-team"><span class="dot">●</span>Claude Code 团队怎么想「验证」这件事</a><a class="l3" href="#h-team-b1"><span class="dot">●</span>验证，就是把改动真的跑起来</a><a class="l3" href="#h-team-b3"><span class="dot">●</span>失败的测试需要人来介入</a><a class="l3" href="#h-team-b5"><span class="dot">●</span>代码负责人自己写检查</a><a class="l3" href="#h-team-b7"><span class="dot">●</span>可靠性检查按 diff 触发</a><a class="l3" href="#h-team-b9"><span class="dot">●</span>一个审查者，多轮累积</a><a class="l3" href="#h-team-b11"><span class="dot">●</span>改动不能修改审判它的检查</a><a class="l3" href="#h-team-b13"><span class="dot">●</span>新闸门先用 observe 模式跑</a><a class="l3" href="#h-team-b15"><span class="dot">●</span>拿真正要紧的东西来测你的检查</a><a class="l3" href="#h-team-b17"><span class="dot">●</span>把漏掉变成规则</a><a class="l2" href="#s-outcome"><span class="dot">●</span>好测试，好结果</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"Claude Code 团队怎么做代码审查","title_en":"How the Claude Code team does code review","site":"claude.dev","what_zh":"同一团队的前一篇：当 Claude 写掉约 90% 的代码，审查这件事被重新设计成什么样子。","why_zh":"本文后半段所有做法（REVIEW.md、Important/Nit 标签、评测方式）都源自这套审查系统，先读它能省掉一半疑问。","tier":"必读","order":1,"url":"https://claude.dev/blog/solving-code-review-at-anthropic/"},"L2":{"title_zh":"用技能在 Claude Code 里搭验证循环","title_en":"Building verification loops in Claude Code with skills","site":"claude.com","what_zh":"官方实操文：怎么把一个可重复的验证流程写成一个技能，让 Claude 每次改完自动跑。","why_zh":"本文说「验证循环是基石」，这一篇讲的是怎么在 Claude Code 里把它真正搭起来。","tier":"必读","order":2,"url":"https://claude.com/blog/building-verification-loops-in-claude-code-with-skills"},"L3":{"title_zh":"Claude 托管智能体","title_en":"Claude managed agents","site":"claude.com","what_zh":"介绍托管式智能体（agent 由平台托管运行）的官方文章，本文引用的「独立评分者提升 10 个百分点」出自这里的内部测试。","why_zh":"本文最硬的那个数字在这里，想核对「评分者为什么有效」可以点开看上下文。","tier":"背景","order":6,"url":"https://claude.com/blog/claude-managed-agents"},"L4":{"title_zh":"Chrome 开发者工具协议","title_en":"Chrome DevTools Protocol","site":"chromedevtools.github.io","what_zh":"用程序控制 Chrome 的官方协议文档：开页面、点按钮、抓截图、读状态。","why_zh":"文章说「给智能体手和眼」，CDP 就是那双手：没有它，端到端测试只能靠人点。","tier":"背景","order":7,"url":"https://chromedevtools.github.io/devtools-protocol/"},"L5":{"title_zh":"fast-check（JS/TS 属性测试库）","title_en":"fast-check","site":"fast-check.dev","what_zh":"JavaScript/TypeScript 的属性测试库，自动生成输入并自动收缩到最小反例。","why_zh":"本文「属性测试」一节的动手入口：想试一条「编码再解码」的规律，用它最快。","tier":"可选","order":9,"url":"https://fast-check.dev/"},"L6":{"title_zh":"Hypothesis（Python 属性测试库）","title_en":"Hypothesis","site":"hypothesis.readthedocs.io","what_zh":"Python 里最常用的属性测试库，用 @given 装饰器把普通测试变成「对任意输入都要成立」。","why_zh":"本文给 Python 项目指的那条路；它的失败输出会直接给你一段可复现的输入。","tier":"可选","order":10,"url":"https://hypothesis.readthedocs.io/en/latest/"},"L7":{"title_zh":"proptest（Rust 属性测试库）","title_en":"proptest","site":"proptest-rs.github.io","what_zh":"Rust 的属性测试库，风格接近 Hypothesis，用 strategy 描述输入空间。","why_zh":"文章给 Rust 项目指的路；下一篇「混沌循环」里服务正是用 Rust 写的，两者可以对照看。","tier":"可选","order":11,"url":"https://proptest-rs.github.io/proptest/"},"L8":{"title_zh":"用 Claude 做代码迁移","title_en":"AI code migration","site":"claude.com","what_zh":"官方文章：把一套代码库迁到新框架/新语言时，怎么让 Claude 分批搬运并保留行为一致。","why_zh":"差分测试最典型的用武之地就是这种迁移——功能不该变，旧系统正好当标准答案。","tier":"背景","order":5,"url":"https://claude.com/resources/articles/ai-code-migration"},"L9":{"title_zh":"定制代码审查（REVIEW.md）","title_en":"Customize code review","site":"code.claude.com","what_zh":"官方文档：REVIEW.md 怎么写，才能告诉审查者针对这份代码该注意什么。","why_zh":"本文两条做法直接依赖它：规则只从基线分支读、漏掉的 bug 变成规则写回这里。","tier":"必读","order":3,"url":"https://code.claude.com/docs/en/code-review-customize"},"L10":{"title_zh":"钩子（Hooks）","title_en":"Hooks","site":"code.claude.com","what_zh":"官方文档：在 Claude 完成某个动作前后自动执行命令，比如跑测试、跑 linter。","why_zh":"文章用它来强制「先本地测过再推」，是把纪律变成机制的那一环。","tier":"背景","order":8,"url":"https://code.claude.com/docs/en/hooks"},"L11":{"title_zh":"/goal 指令","title_en":"/goal","site":"code.claude.com","what_zh":"官方文档：给会话设一个可验证的目标，让 Claude 持续朝它推进。","why_zh":"文章给的另一种强制方式：不挂钩子，而是把「测试全过」写成目标。","tier":"背景","order":12,"url":"https://code.claude.com/docs/en/goal"},"L12":{"title_zh":"PR 上的代码审查","title_en":"Code review on pull requests","site":"code.claude.com","what_zh":"官方文档：Code Review 在 PR 上怎么工作，包括问题的三个等级标签。","why_zh":"文章说「好的审查者不只判对错，还判重不重要」，这三个标签就是那套分级的具体定义。","tier":"可选","order":4,"url":"https://code.claude.com/docs/en/code-review-pull-requests"}},"terms":{"verification_loop":{"en":"verification loop","zh":"验证循环","def_zh":"让智能体自己跑检查、看结果、再改，直到通过的闭环。它是并行委派更多工作的前提。","analogy_zh":"像写完代码顺手按下编译键，而不是等人来读。"},"e2e":{"en":"E2E test","zh":"端到端测试","def_zh":"从用户视角把整条流程跑一遍（加购、结账、确认页），只有整个功能可用才算通过。","analogy_zh":"不是检查每个零件，而是把车真的开一圈。"},"flaky":{"en":"flaky","zh":"不稳定测试","def_zh":"同一份代码，时过时不过的测试。它会让智能体学会「重跑」而不是修 bug。"},"property_test":{"en":"property test","zh":"属性测试","def_zh":"先写一条认为不可能失败的规律，再用测试库生成成千上万个输入去试图证伪。","analogy_zh":"不是抽查几个样例，而是请人专门来找反例。"},"differential_test":{"en":"differential test","zh":"差分测试","def_zh":"同一批输入同时喂给旧系统和新系统，比对结果；有差异就是 bug 或破坏性变更。","analogy_zh":"旧系统就是那把标准尺。"},"oracle":{"en":"oracle","zh":"标准答案（oracle）","def_zh":"测试里用来判定对错的那个「正确答案」来源。差分测试把旧系统的输出当成它。"},"rubric":{"en":"rubric","zh":"评分标准","def_zh":"把主观质量拆成若干条可勾选的判据，让评分者按条目打分而不是凭感觉。"},"feature_map":{"en":"feature map","zh":"功能地图","def_zh":"从用户视角列出的功能清单，带路径、快捷键、选择器和预期结果，可直接当评分标准用。"},"smoke_test":{"en":"smoke test","zh":"冒烟测试","def_zh":"改动后先把应用跑起来、走一遍主路径，确认没有冒烟的地方。文章建议固化成 verify 技能。"},"harness":{"en":"harness","zh":"测试载体（harness）","def_zh":"包住被测系统的脚手架：负责启动、喂输入、收结果，让测试可以重复跑。"},"recall":{"en":"recall","zh":"召回率","def_zh":"真正存在的 bug 里，被系统找出来的比例。文章要求分别统计原始发现、验证后、最终审查三个阶段的召回率。"},"overfitting":{"en":"overfitting","zh":"过拟合","def_zh":"为了迎合评测集而调参，分数上去了，真实场景里却没多抓到 bug。"}},"notes":{"N1":{"title_zh":"不稳定测试（flaky）为什么危险","body_zh":"一个时好时坏的测试，会让智能体学到「重跑一遍就好了」，而不是去修代码。文章把它列为第一号要避开的失败模式：不稳定本身就是 bug，要修掉或删掉，不能留着。"},"N2":{"title_zh":"这里的 skill 指什么","body_zh":"Claude Code 里的「技能」是仓库内的一份说明加脚本，放在 .claude/skills/ 下。模型在相关任务（尤其提交之前）会主动调用它。文章建议把「怎么启动应用、怎么跑一遍」写成 verify 技能，等于把冒烟测试固化成可复用的工具。"},"N3":{"title_zh":"39 项清单「按 diff 触发」","body_zh":"每一项都写了触发条件（比如会话存储或消息类型变了）。Claude 读 diff，只查触发条件命中的那几条，通常是 3 到 10 条。这样既不用人背历史故障，也不会每次把所有历史故障都查一遍。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
