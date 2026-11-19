@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>扩展托管智能体：把「大脑」和「双手」拆开｜Scaling Managed Agents: Decoupling the brain from the hands</title>
+<meta name="description" content="扩展托管智能体：把「大脑」和「双手」拆开｜Scaling Managed Agents: Decoupling the brain from the hands：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/managed-agents/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="扩展托管智能体：把「大脑」和「双手」拆开">
+<meta property="og:description" content="Agent 的会话、运行框架与沙箱，该不该塞进同一个容器？Anthropic 用操作系统虚拟化硬件的历史作类比，把三层拆成稳定接口，换来 p95 首 token 延迟下降 90% 以上。">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/managed-agents/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic Research · 2026-04-08</p><h1 class="h1-wrap"><span class="h1-en" lang="en">Scaling Managed Agents: Decoupling the brain from the hands</span><span class="h1-zh">扩展托管智能体：把「大脑」和「双手」拆开</span></h1><div class="hero-meta"><span>原文 2000 词</span><span>中文 4500 字</span><span>逐句对照 <i>103</i> 句</span><span>预计 9 分钟</span><span><a href="https://www.anthropic.com/research/managed-agents" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 6 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：托管智能体（Managed Agents）把智能体拆成会话、运行框架、沙箱三个接口，每层都能独立替换；对接口形态有主张，对背后跑什么不做假设。</li><li><b>问题从哪来</b>：最初三样东西塞在一个容器里，好处是文件编辑就是系统调用、没有服务边界；代价是容器成了「宠物」——挂了会话就丢，不响应就得人工救，而且只有一条 WebSocket 事件流可以看。</li><li><b>第二次卡住</b>：运行框架默认 Claude 的工作对象就在容器里。客户要把 Claude 接进自己的 VPC，只能做网络对等互联，或把框架搬过去——一个写死在框架里的假设，变成了接不同基础设施的障碍。</li><li><b>解法</b>：把「大脑」（Claude 与运行框架）从「双手」（沙箱与工具）和「会话」（只追加的事件日志）里拆出来。容器通过 execute(name, input) 调用，失败当成工具错误交回 Claude；会话日志在框架之外，框架崩了可以 wake 重新拉起。</li><li><b>安全边界</b>：凭据永远不进跑 Claude 生成代码的沙箱。Git 访问令牌在沙箱初始化时写进 remote 配置，MCP 走代理从保险库取令牌，运行框架全程不知道凭据。</li><li><b>收益与边界</b>：p50 首 token 延迟降约 60%，p95 降 90% 以上；一个大脑可接多只手，手也能在多个大脑之间传递。文章对「大脑和手该有多少、放在哪」不做任何假设。</li></ul><div class="compare"><div class="cmp"><h3>单容器：会话、框架、沙箱耦合</h3><ol><li>文件编辑是直接系统调用，没有服务边界</li><li>容器失败，会话就丢了</li><li>容器不响应，要人工进 shell 救</li><li>只有 WebSocket 事件流可看，定位不到故障层</li><li>接客户 VPC 要做对等互联，或把框架搬过去</li><li>凭据和 Claude 生成的代码在同一个容器里</li></ol></div><div class="cmp win"><h3>托管智能体：三层接口解耦</h3><ol><li>容器通过 execute(name, input) → string 调用</li><li>容器是「牲畜」，失败当工具错误交回 Claude</li><li>会话日志在框架之外，用 wake(sessionId) 恢复</li><li>事件可用 getEvents() 按位置切片重读</li><li>框架不在容器里，接 VPC 不再需要搬框架</li><li>凭据在保险库，沙箱与框架都拿不到</li></ol></div></div><p class="ov-foot cmp-foot">六行大致对应正文的 Don’t adopt a pet / Decouple the brain from the hands / The session is not Claude’s context window / Many brains, many hands 四节。差别不在功能，而在「谁可以独立失败、独立替换」。</p><p class="ov-foot">读法建议：先看第 2、3 条理解「为什么拆」，再看第 4 条的三个接口怎么接上；第 5 条是安全部分，容易被跳过，但它解释了为什么「窄权限」不够。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>运行框架里固化着「Claude 自己做不到什么」的假设，而模型变强会让这些假设过时。托管智能体想做的，是把智能体拆成语义稳定的接口，让任何具体实现——包括今天的——都能被替换，就像操作系统用进程和文件这类抽象撑过了硬件的更迭。</p></div>
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Get started with Claude <span class='term' data-term='managed-agents'>Managed Agents</span> by following our <a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/overview' target='_blank' rel='noopener' data-link='L1'>docs</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">想开始用 Claude <span class='term' data-term='managed-agents'>托管智能体</span>，跟着我们的<a class='lnk' href='https://platform.claude.com/docs/en/managed-agents/overview' target='_blank' rel='noopener' data-link='L1'>文档</a>走就行。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">A running topic on the Engineering Blog is how to <a class='lnk' href='https://www.anthropic.com/engineering/building-effective-agents' target='_blank' rel='noopener' data-link='L2'>build effective agents</a> and <a class='lnk' href='https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L3'>design harnesses</a> for <a class='lnk' href='https://www.anthropic.com/engineering/harness-design-long-running-apps' target='_blank' rel='noopener' data-link='L4'>long-running work</a>.</span> <span class="s" data-k="intro-b1-1">A common thread across this work is that <span class='term' data-term='harness'>harnesses</span> encode assumptions about what Claude can’t do on its own.</span> <span class="s" data-k="intro-b1-2">However, those assumptions need to be frequently questioned because they can <a class='lnk' href='http://www.incompleteideas.net/IncIdeas/BitterLesson.html' target='_blank' rel='noopener' data-link='L5'>go stale</a> as models improve.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">工程博客上有一个持续讨论的主题：如何<a class='lnk' href='https://www.anthropic.com/engineering/building-effective-agents' target='_blank' rel='noopener' data-link='L2'>构建高效的智能体</a>，以及如何<a class='lnk' href='https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents' target='_blank' rel='noopener' data-link='L3'>设计运行框架</a>来应对<a class='lnk' href='https://www.anthropic.com/engineering/harness-design-long-running-apps' target='_blank' rel='noopener' data-link='L4'>长时间运行的工作</a>。</span><span class="s" data-k="intro-b1-1">这些工作有一条共同的线索：<span class='term' data-term='harness'>运行框架</span>会把「Claude 自己做不到什么」这类假设编进去。</span><span class="s" data-k="intro-b1-2">但这些假设需要被经常质疑，因为随着模型变强，它们可能<a class='lnk' href='http://www.incompleteideas.net/IncIdeas/BitterLesson.html' target='_blank' rel='noopener' data-link='L5'>过时</a>。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">As just one example, in prior work <a class='lnk' href='https://www.anthropic.com/engineering/harness-design-long-running-apps' target='_blank' rel='noopener' data-link='L4'>we found</a> that Claude Sonnet 4.5 would wrap up tasks prematurely as it sensed its context limit approaching—a behavior sometimes called “context anxiety.” We addressed this by adding context resets to the harness.</span> <span class="s" data-k="intro-b2-1">But when we used the same harness on Claude Opus 4.5, we found that the behavior was gone.</span> <span class="s" data-k="intro-b2-2">The resets had become dead weight.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">只举一个例子：在之前的工作里，<a class='lnk' href='https://www.anthropic.com/engineering/harness-design-long-running-apps' target='_blank' rel='noopener' data-link='L4'>我们发现</a> Claude Sonnet 4.5 在感觉到上下文快到上限时，会过早地把任务收尾——这种行为有时被叫作「上下文焦虑」。我们的应对办法，是在运行框架里加上上下文重置。</span><span class="s" data-k="intro-b2-1">但当我们把同一套运行框架用在 Claude Opus 4.5 上时，发现这种行为消失了。</span><span class="s" data-k="intro-b2-2">那些重置已经成了累赘。</span></p></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">We expect harnesses to continue evolving.</span> <span class="s" data-k="intro-b3-1">So we built Managed Agents: a hosted service in the Claude Platform that runs long-horizon agents on your behalf through a small set of <span class='term' data-term='interface'>interfaces</span> meant to outlast any particular implementation—including the ones we run today.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">我们预计运行框架会继续演进。</span><span class="s" data-k="intro-b3-1">于是我们做了托管智能体（Managed Agents）：Claude 平台上的一个托管服务，通过一小套<span class='term' data-term='interface'>接口</span>替你运行长周期智能体；这套接口要活得比任何具体实现都久——包括我们今天在跑的那些实现。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">Building Managed Agents meant solving an old problem in computing: how to design a system for “ <a class='lnk' href='http://www.catb.org/esr/writings/taoup/html/ch03s01.html' target='_blank' rel='noopener' data-link='L6'>programs as yet unthought of</a>.” Decades ago, operating systems solved this problem by virtualizing hardware into abstractions— <i>process, file</i> —general enough for programs that didn't exist yet.<sup class='tn' data-note='N1'>1</sup></span> <span class="s" data-k="intro-b4-1">The abstractions outlasted the hardware.</span> <span class="s" data-k="intro-b4-2">The `read()` command is agnostic as to whether it’s accessing a disk pack from the 1970s or a modern SSD.</span> <span class="s" data-k="intro-b4-3">The abstractions on top stayed stable while the implementations underneath changed freely.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">构建托管智能体，意味着要解决计算领域一个老问题：如何为「<a class='lnk' href='http://www.catb.org/esr/writings/taoup/html/ch03s01.html' target='_blank' rel='noopener' data-link='L6'>尚未被想到的程序</a>」设计系统。几十年前，操作系统解决这个问题的方式，是把硬件虚拟化成抽象——<i>进程、文件</i>——抽象得足够通用，能容纳当时还不存在的程序。<sup class='tn' data-note='N1'>1</sup></span><span class="s" data-k="intro-b4-1">这些抽象比硬件活得更久。</span><span class="s" data-k="intro-b4-2">`read()` 命令并不关心自己访问的是 1970 年代的磁盘组，还是现代的固态硬盘。</span><span class="s" data-k="intro-b4-3">上层的抽象保持稳定，底层的实现则自由更换。</span></p></div></div>
+<div class="row" data-rid="intro-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b5-0">Managed Agents follow the same pattern.</span> <span class="s" data-k="intro-b5-1">We virtualized the components of an agent: a <span class='term' data-term='session'>session</span> (the append-only log of everything that happened), a harness (the loop that calls Claude and routes Claude’s tool calls to the relevant infrastructure), and a <span class='term' data-term='sandbox'>sandbox</span> (an execution environment where Claude can run code and edit files).</span> <span class="s" data-k="intro-b5-2">This allows the implementation of each to be swapped without disturbing the others.</span> <span class="s" data-k="intro-b5-3">We're opinionated about the shape of these interfaces, not about what runs behind them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b5-0">托管智能体遵循同样的模式。</span><span class="s" data-k="intro-b5-1">我们把智能体的各个组件虚拟化了：<span class='term' data-term='session'>会话</span>是一份只追加的日志，记录发生过的一切；运行框架是一个循环，负责调用 Claude，并把 Claude 的工具调用转给对应的基础设施；<span class='term' data-term='sandbox'>沙箱</span>则是一个执行环境，Claude 可以在里面运行代码、编辑文件。</span><span class="s" data-k="intro-b5-2">这样一来，每一部分的实现都能替换，而不打扰其它部分。</span><span class="s" data-k="intro-b5-3">我们对这些接口的形状有明确主张，但对它们背后跑什么没有。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="Harness 居中，四个接口围着它"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="Diagram with Harness at the center, connected to Session, Sandbox, Tools, and Orchestration."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Harness 居中，四个接口围着它</b>　正文说把 agent 拆成 session、harness、sandbox 三块，对接口形状有主见、对实现没有。图上 Harness 居正中，另四个方框分挂四侧，每条连线都是一实一虚的反向箭头。</p><p class="cap-en">原文图注：Diagram with Harness at the center, connected to Session, Sandbox, Tools, and Orchestration.</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>先看正中橙色星芒的 Harness 方框：全图只有它和另外四个方框都有连线，是唯一的枢纽。</li><li>左边 Session 方框里是勾加横线的清单图标，对应正文里「按序追加的事件日志」。</li><li>右边 Sandbox 方框里是 >_ 终端提示符，说明它是跑代码的地方，不是存数据的地方。</li><li>上下两框是 Tools（带 + Resources / MCP 小字）和 Orchestration（循环图标）。</li><li>每条连线都是一实一虚的反向箭头，但图上没有图例说明哪条是调用、哪条是返回。</li></ol><p class="takeaway">一句话：Harness 只对接口有主见，四边的实现都能独立替换。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-don-t-adopt-a-pet">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Don’t adopt a pet</span><span class="h-zh">别把宠物领回家</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>把所有组件塞进一个容器，短期省事：文件编辑是直接系统调用，也不用设计服务边界。代价是服务器变成了丢不起的「宠物」：容器一挂会话就丢，出故障时只剩 WebSocket 事件流可看，连故障发生在哪一层都分不出来；而运行框架还默认资源就住在容器旁边，接客户自己的云就成了难题。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="don-t-adopt-a-pet-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b0-0">We started by placing all agent components into a single container, which meant the session, agent harness, and sandbox all shared an environment.</span> <span class="s" data-k="don-t-adopt-a-pet-b0-1">There were benefits to this approach, including that file edits are direct syscalls, and there were no service boundaries to design.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b0-0">一开始，我们把智能体的所有组件都塞进同一个容器，也就是说会话、智能体运行框架和沙箱共享同一个环境。</span><span class="s" data-k="don-t-adopt-a-pet-b0-1">这种做法有好处：文件编辑是直接的系统调用，也不需要设计服务边界。</span></p></div></div>
+<div class="row" data-rid="don-t-adopt-a-pet-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b1-0">But by coupling everything into one container, we ran into an old infrastructure problem: we’d adopted a <a class='lnk' href='https://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/' target='_blank' rel='noopener' data-link='L7'><i>pet</i></a>.<sup class='tn' data-note='N2'>2</sup></span> <span class="s" data-k="don-t-adopt-a-pet-b1-1">In the pets-vs-cattle analogy, a pet is a named, hand-tended individual you can’t afford to lose, while cattle are interchangeable.</span> <span class="s" data-k="don-t-adopt-a-pet-b1-2">In our case, the server became that pet; if a container failed, the session was lost.</span> <span class="s" data-k="don-t-adopt-a-pet-b1-3">If a container was unresponsive, we had to nurse it back to health.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b1-0">但把所有东西耦合成一个容器之后，我们撞上了一个老掉牙的基础设施问题：我们养了一只<a class='lnk' href='https://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/' target='_blank' rel='noopener' data-link='L7'><i>宠物</i></a>。<sup class='tn' data-note='N2'>2</sup></span><span class="s" data-k="don-t-adopt-a-pet-b1-1">在「宠物与牲畜」的比喻里，宠物是有名字、要亲手照料、丢不起的个体；牲畜则可以随意替换。</span><span class="s" data-k="don-t-adopt-a-pet-b1-2">在我们的场景里，服务器成了那只宠物：某个容器一挂，会话就丢了。</span><span class="s" data-k="don-t-adopt-a-pet-b1-3">某个容器没了响应，我们就得把它救回来。</span></p></div></div>
+<div class="row" data-rid="don-t-adopt-a-pet-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b2-0">Nursing containers meant debugging unresponsive stuck sessions.</span> <span class="s" data-k="don-t-adopt-a-pet-b2-1">Our only window in was the WebSocket event stream, but that couldn’t tell us <i>where</i> failures arose, which meant that a bug in the harness, a packet drop in the event stream, or a container going offline all presented the same.</span> <span class="s" data-k="don-t-adopt-a-pet-b2-2">To figure out what went wrong, an engineer had to open a shell inside the container, but because that container often also held user data, that approach essentially meant we lacked the ability to debug.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b2-0">所谓救容器，就是去调试那些卡死的会话。</span><span class="s" data-k="don-t-adopt-a-pet-b2-1">我们唯一的观察窗口是 WebSocket 事件流，但它说不清故障出在<i>哪里</i>；结果就是，运行框架里的一个 bug、事件流里的一次丢包、一个容器掉线，看起来全都一模一样。</span><span class="s" data-k="don-t-adopt-a-pet-b2-2">要弄清哪里出了错，工程师得在容器里开一个 shell；可那个容器里往往还放着用户数据，所以这么做实际上等于我们压根没有调试能力。</span></p></div></div>
+<div class="row" data-rid="don-t-adopt-a-pet-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b3-0">A second issue was that the harness assumed that whatever Claude worked on lived in the container with it.</span> <span class="s" data-k="don-t-adopt-a-pet-b3-1">When customers asked us to connect Claude to their virtual private cloud, they had to either peer their network with ours, or run our harness in their own environment.</span> <span class="s" data-k="don-t-adopt-a-pet-b3-2">An assumption baked into the harness became a problem when we wanted to connect it to different infrastructure.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="don-t-adopt-a-pet-b3-0">第二个问题是，运行框架默认 Claude 处理的一切都和它住在同一个容器里。</span><span class="s" data-k="don-t-adopt-a-pet-b3-1">客户要求把 Claude 接到他们自己的虚拟私有云时，要么把他们的网络和我们的做对等互联，要么在他们自己的环境里跑我们的运行框架。</span><span class="s" data-k="don-t-adopt-a-pet-b3-2">一个固化在运行框架里的假设，在我们想把它接到不同基础设施上时就变成了问题。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-decouple-the-brain-from-the-hands">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">Decouple the brain from the hands</span><span class="h-zh">把大脑和手解耦</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>解法是把「大脑」（Claude 和它的运行框架）与「手」（沙箱和工具）以及「会话」解耦。运行框架因此离开容器，容器和框架都变成可随时替换的牲畜；凭据也不再和 Claude 生成的代码待在一起，而是留在沙箱之外的保险库里，由代理按会话 token 代取。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="decouple-the-brain-from-the-hands-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b0-0">The solution we arrived at was to decouple what we thought of as the “brain” (Claude and its harness) from both the “hands” (sandboxes and tools that perform actions) and the “session” (the log of session events).</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b0-1">Each became an interface that made few assumptions about the others, and each could fail or be replaced independently.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b0-0">我们最终得到的方案，是把我们眼中的「大脑」（Claude 和它的运行框架）与「手」（执行动作的沙箱和工具）以及「会话」（会话事件的日志）解耦。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b0-1">每一部分都变成一个接口，对其它部分几乎没有假设，而且各自都能独立失败或替换。</span></p></div></div>
+<div class="row" data-rid="decouple-the-brain-from-the-hands-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b1-0"><b>The harness leaves the container.</b> Decoupling the brain from the hands meant the harness no longer lived inside the container.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b1-1">It called the container the way it called any other tool: `execute(name, input) → string`.<sup class='tn' data-note='N3'>3</sup></span> <span class="s" data-k="decouple-the-brain-from-the-hands-b1-2">The container became cattle.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b1-3">If the container died, the harness caught the failure as a tool-call error and passed it back to Claude.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b1-4">If Claude decided to retry, a new container could be reinitialized with a standard recipe: `provision({resources})`.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b1-5">We no longer had to nurse failed containers back to health.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b1-0"><b>运行框架离开容器。</b>把大脑和手解耦，意味着运行框架不再住在容器里。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b1-1">它调用容器，就像调用任何别的工具：`execute(name, input) → string`。<sup class='tn' data-note='N3'>3</sup></span><span class="s" data-k="decouple-the-brain-from-the-hands-b1-2">容器变成了牲畜。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b1-3">容器死了，运行框架就把它当作一次工具调用错误接住，再回传给 Claude。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b1-4">如果 Claude 决定重试，可以用一套标准配方重新初始化一个新容器：`provision({resources})`。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b1-5">我们再也不必把挂掉的容器救回来了。</span></p></div></div>
+<div class="row" data-rid="decouple-the-brain-from-the-hands-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b2-0"><b>Recovering from harness failure.</b> The harness also became cattle.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b2-1">Because the session log sits outside the harness, nothing in the harness needs to survive a crash.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b2-2">When one fails, a new one can be rebooted with `wake(sessionId)`, use `getSession(id)` to get back the event log, and resume from the last event.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b2-3">During the agent loop, the harness writes to the session with `emitEvent(id, event)` in order to keep a durable record of events.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b2-0"><b>从运行框架故障中恢复。</b>运行框架也变成了牲畜。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b2-1">因为会话日志在运行框架之外，运行框架里没有任何东西需要熬过一次崩溃。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b2-2">某一个挂掉时，可以用 `wake(sessionId)` 重启一个新的，用 `getSession(id)` 取回事件日志，再从最后一个事件接着跑。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b2-3">在智能体循环期间，运行框架用 `emitEvent(id, event)` 往会话里写入，以便留下持久的事件记录。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="组件、接口，以及谁能满足它"><div class="fig-media"><img class="still" src="media/fig2.webp" loading="lazy" decoding="async" alt="Table listing six agent components (Session, Orchestration, Harness, Sandbox, Resources, Tools), each with an interface signature and a list of services that can satisfy it."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>组件、接口，以及谁能满足它</b>　正文说三块各自成为接口、彼此少做假设，并能独立失败或替换。这张图把六个组件排成一张表，逐行给出调用形状与可替换物，等于把「接口长什么样」直接列成了清单。</p><p class="cap-en">原文图注：Table listing six agent components (Session, Orchestration, Harness, Sandbox, Resources, Tools), each with an interface signature and a list of services that can satisfy it.</p><details class="howto" open><summary>这张图怎么看（5 条）</summary><ol><li>三列表头是 Component、Interface、Satisfied by：谁、长什么样、能换成什么。</li><li>Session 行有三个函数：getSession、getEvents 与 emitEvent，读取和写入都在这里。</li><li>Harness 行只有 yield Effect&lt;T&gt; -&gt; EffectResult&lt;T&gt;；接口只承诺产出效果，实现还要把进度追加到会话日志。</li><li>Sandbox 行给出 execute(name, input) -> String：配好之后当工具反复调。</li><li>最右列是可替换物举例：Postgres、SQLite、cron job、Filestore、S3、MCP server 等。</li></ol><p class="takeaway">一句话：六个组件各只承诺一个接口，背后换成什么都行。</p></details></figcaption></figure>
+<div class="row" data-rid="decouple-the-brain-from-the-hands-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b4-0"><b>The security boundary.</b> In the coupled design, any untrusted code that Claude generated was run in the same container as credentials—so a <span class='term' data-term='prompt-injection'>prompt injection</span> only had to convince Claude to read its own environment.<sup class='tn' data-note='N4'>4</sup></span> <span class="s" data-k="decouple-the-brain-from-the-hands-b4-1">Once an attacker has those tokens, they can spawn fresh, unrestricted sessions and delegate work to them.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b4-2">Narrow scoping is an obvious mitigation, but this encodes an assumption about what Claude can't do with a limited token—and Claude is getting increasingly smart.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b4-3">The structural fix was to make sure the tokens are never reachable from the sandbox where Claude’s generated code runs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b4-0"><b>安全边界。</b>在耦合式设计里，Claude 生成的任何不可信代码，都和凭据跑在同一个容器里——所以一次<span class='term' data-term='prompt-injection'>提示注入</span>只需要说服 Claude 去读它自己的环境就够了。<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="decouple-the-brain-from-the-hands-b4-1">攻击者一旦拿到这些访问令牌（token），就能开出一批全新的、不受限制的会话，再把活派给它们。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b4-2">收窄权限范围是显而易见的缓解办法，但这也固化了「Claude 拿着受限的访问令牌就做不成某些事」的假设——而 Claude 正变得越来越聪明。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b4-3">结构性的修法，是让 Claude 生成的代码所在的沙箱绝不会够到这些访问令牌。</span></p></div></div>
+<div class="row" data-rid="decouple-the-brain-from-the-hands-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b5-0">We used two patterns to ensure this.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-1">Auth can be bundled with a resource or held in a vault outside the sandbox.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-2">For Git, we use each repository’s access token to clone the repo during sandbox initialization and wire it into the local git remote.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-3">Git `push` and `pull` work from inside the sandbox without the agent ever handling the token itself.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-4">For custom tools, we support <span class='term' data-term='mcp'>MCP</span> and store OAuth tokens in a secure vault.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-5">Claude calls MCP tools via a dedicated proxy; this proxy takes in a token associated with the session.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-6">The proxy can then fetch the corresponding credentials from the vault and make the call to the external service.</span> <span class="s" data-k="decouple-the-brain-from-the-hands-b5-7">The harness is never made aware of any credentials.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="decouple-the-brain-from-the-hands-b5-0">我们用两种模式来保证这一点。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-1">鉴权信息可以跟资源打包在一起，也可以放在沙箱之外的保险库里。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-2">对 Git 来说，我们在沙箱初始化时用每个仓库的访问令牌克隆仓库，并把它写进本地仓库的 git remote 配置（远程仓库地址）。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-3">Git 的 `push` 和 `pull` 能在沙箱内部直接工作，而智能体全程不碰 token 本身。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-4">对自定义工具，我们支持 <span class='term' data-term='mcp'>MCP</span>，并把 OAuth 令牌存在安全的保险库里。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-5">Claude 通过一个专用代理调用 MCP 工具；这个代理接收一个与会话关联的 token。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-6">代理随后可以从保险库取出对应的凭据，再向外部服务发起调用。</span><span class="s" data-k="decouple-the-brain-from-the-hands-b5-7">运行框架从不会接触到任何凭据。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-the-session-is-not-claude-s-context-window">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">The session is not Claude’s context window</span><span class="h-zh">会话不是 Claude 的上下文窗口</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>长周期任务常常超出上下文窗口，而压缩、裁剪这类标准做法都涉及「留下什么」的不可逆决定。托管智能体把完整上下文持久存进会话日志，让 getEvents() 按位置切片取用；怎么组织、怎么转换，则交给运行框架，因为未来模型需要什么样的上下文工程无法预判。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="the-session-is-not-claude-s-context-window-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b0-0">Long-horizon tasks often exceed the length of Claude’s <span class='term' data-term='context-window'>context window</span>, and the standard ways to address this all involve irreversible decisions about what to keep.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b0-1">We’ve explored these techniques in <a class='lnk' href='https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents' target='_blank' rel='noopener' data-link='L8'>prior work</a> on <span class='term' data-term='context-engineering'>context engineering</span>.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b0-2">For example, <span class='term' data-term='compaction'>compaction</span> lets Claude save a summary of its context window and the memory tool lets Claude write context to files, enabling learning across sessions.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b0-3">This can be paired with context trimming, which selectively removes tokens such as old tool results or thinking blocks.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b0-0">长周期任务常常超出 Claude <span class='term' data-term='context-window'>上下文窗口</span>的长度，而应对这一点的标准做法，都涉及「留下什么」的不可逆决定。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b0-1">我们在<span class='term' data-term='context-engineering'>上下文工程</span>方面的<a class='lnk' href='https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents' target='_blank' rel='noopener' data-link='L8'>先前工作</a>里探讨过这些技术。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b0-2">例如，<span class='term' data-term='compaction'>压缩</span>让 Claude 能保存一份上下文窗口的摘要，记忆工具让 Claude 能把上下文写进文件，从而支持跨会话学习。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b0-3">这还可以搭配上下文裁剪：有选择地移除一些 token，比如旧的工具结果或思考块。</span></p></div></div>
+<div class="row" data-rid="the-session-is-not-claude-s-context-window-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b1-0">But irreversible decisions to selectively retain or discard context can lead to failures.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b1-1">It is difficult to know which tokens the future turns will need.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b1-2">If messages are transformed by a compaction step, the harness removes compacted messages from Claude’s context window, and these are recoverable only if they are stored.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b1-3">Prior work <a class='lnk' href='https://arxiv.org/pdf/2512.24601' target='_blank' rel='noopener' data-link='L9'>has explored</a> ways to address this by storing context as an object that lives <i>outside</i> the context window.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b1-4">For example, context can be an object in a REPL that the LLM programmatically accesses by writing code to filter or slice it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b1-0">但有选择地保留或丢弃上下文，这些不可逆的决定可能导致失败。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b1-1">很难知道后面的轮次会需要哪些 token。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b1-2">如果消息经过压缩步骤的转换，运行框架会把被压缩的消息从 Claude 的上下文窗口里移除；只有把它们存下来，这些消息才可恢复。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b1-3">先前的工作<a class='lnk' href='https://arxiv.org/pdf/2512.24601' target='_blank' rel='noopener' data-link='L9'>已经探索过</a>一些办法：把上下文存成一个活在上下文窗口<i>之外</i>的对象。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b1-4">例如，上下文可以是 REPL（一个能交互执行代码的环境）里的对象；LLM 写代码过滤或切分它，就能以编程方式访问。</span></p></div></div>
+<figure class="row wide fig" id="fig3" data-cap="Events 进，getEvents 出"><div class="fig-media"><img class="still" src="media/fig3.webp" loading="lazy" decoding="async" alt="Session on the left and Harness on the right: Events flow from Session to Harness, while getEvents is called back from the Harness."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>Events 进，getEvents 出</b>　正文说 session 是活在 Claude 上下文窗口之外的上下文对象，靠 getEvents() 按位置切片取事件。图上 Session 与 Harness 之间正好是这两条反向箭头：一条标 Events，一条标 getEvents。</p><p class="cap-en">原文图注：Session on the left and Harness on the right: Events flow from Session to Harness, while getEvents is called back from the Harness.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左边 Session 卡片里是勾选清单图标，右边 Harness 卡片里是橙色星芒，两张卡之间只有两条水平箭头。</li><li>上面那条实线箭头向右、标着 Events，是事件从会话流向 Harness 的方向。</li><li>下面那条实线箭头向左、标着 getEvents，是大脑回头按位置切片取事件的接口。</li><li>Harness 卡片内部还有一条虚线箭头指向星芒：取回来的事件会先在 harness 里变换，再进上下文窗口。</li></ol><p class="takeaway">一句话：上下文放在窗口外，取哪一段由大脑自己决定。</p></details></figcaption></figure>
+<div class="row" data-rid="the-session-is-not-claude-s-context-window-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b3-0">In Managed Agents, the session provides this same benefit, serving as a context object that lives outside Claude’s context window.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b3-1">But rather than be stored within the sandbox or REPL, context is durably stored in the session log.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b3-2">The interface, `getEvents(),` allows the brain to interrogate context by selecting positional slices of the event stream.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b3-3">The interface can be used flexibly, allowing the brain to pick up from wherever it last stopped reading, rewinding a few events before a specific moment to see the lead up, or rereading context before a specific action.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b3-0">在托管智能体里，会话提供了同样的好处：它充当一个活在 Claude 上下文窗口之外的上下文对象。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b3-1">但上下文并不存放在沙箱或 REPL 里，而是持久地保存在会话日志中。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b3-2">`getEvents()` 这个接口让大脑可以通过选取事件流里按位置切出的片段，来查询上下文。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b3-3">这个接口的用法很灵活：大脑可以从上次读到的地方接着读，可以倒回某个时刻之前的几个事件看看前因，也可以在某个具体动作之前重读上下文。</span></p></div></div>
+<div class="row" data-rid="the-session-is-not-claude-s-context-window-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b4-0">Any fetched events can also be transformed in the harness before being passed to Claude’s context window.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b4-1">These transformations can be whatever the harness encodes, including context organization to achieve a high prompt cache hit rate and context engineering.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b4-2">We separated the concerns of recoverable context storage in the session and arbitrary context management in the harness because we can’t predict what specific context engineering will be required in future models.</span> <span class="s" data-k="the-session-is-not-claude-s-context-window-b4-3">The interfaces push that context management into the harness, and only guarantee that the session is durable and available for interrogation.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="the-session-is-not-claude-s-context-window-b4-0">取回的任何事件，也可以先在运行框架里做转换，再送进 Claude 的上下文窗口。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b4-1">这些转换可以是运行框架里写定的任何处理，包括为了拿到高提示缓存命中率而做的上下文组织，以及上下文工程。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b4-2">我们把「会话里可恢复的上下文存储」和「运行框架里随意的上下文管理」这两件事分开，因为我们无法预测未来的模型会需要什么样的具体上下文工程。</span><span class="s" data-k="the-session-is-not-claude-s-context-window-b4-3">接口把上下文管理这件事推给运行框架，只保证会话是持久的、可供查询的。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-many-brains-many-hands">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Many brains, many hands</span><span class="h-zh">多个大脑，多只手</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>大脑离开容器后，接入客户自己的 VPC 不再被「资源必须在容器旁边」这个假设锁死，容器也只在真正需要时才创建，p50 TTFT 因此大约降了 60%、p95 降了 90% 以上。另一头，每个大脑都能接多只手：手统一成同一个工具调用接口——传入名字和输入，返回一个字符串，容器、手机、模拟器都行，大脑之间还能互相传递手。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="many-brains-many-hands-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="many-brains-many-hands-b0-0"><b>Many brains.</b> Decoupling the brain from the hands solved one of our earliest customer complaints.</span> <span class="s" data-k="many-brains-many-hands-b0-1">When teams wanted Claude to work against resources in their own <span class='term' data-term='vpc'>VPC</span>, the only path was to peer their network with ours, because the container holding the harness assumed every resource sat next to it.</span> <span class="s" data-k="many-brains-many-hands-b0-2">Once the harness was no longer in the container, that assumption went away.</span> <span class="s" data-k="many-brains-many-hands-b0-3">The same change had a performance payoff.</span> <span class="s" data-k="many-brains-many-hands-b0-4">When we initially put the brain in a container, it meant that many brains required as many containers.</span> <span class="s" data-k="many-brains-many-hands-b0-5">For each brain, no inference could happen until that container was provisioned; every session paid the full container setup cost up front.</span> <span class="s" data-k="many-brains-many-hands-b0-6">Every session, even ones that would never touch the sandbox, had to clone the repo, boot the process, fetch pending events from our servers.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="many-brains-many-hands-b0-0"><b>多个大脑。</b>把大脑和手解耦，解决了我们最早一批客户投诉里的一个。</span><span class="s" data-k="many-brains-many-hands-b0-1">当团队想让 Claude 在他们自己的<span class='term' data-term='vpc'>虚拟私有云</span>（VPC）里对着资源干活时，唯一的路径是把他们的网络和我们的做对等互联，因为装着运行框架的容器默认所有资源都在它旁边。</span><span class="s" data-k="many-brains-many-hands-b0-2">运行框架一旦不再待在容器里，这个假设就消失了。</span><span class="s" data-k="many-brains-many-hands-b0-3">同一个改动还带来了性能上的回报。</span><span class="s" data-k="many-brains-many-hands-b0-4">我们最初把大脑放进容器时，意味着有多少个大脑就要有多少个容器。</span><span class="s" data-k="many-brains-many-hands-b0-5">对每个大脑来说，容器没准备好之前就无法进行推理；每个会话都要预先付出完整的容器启动成本。</span><span class="s" data-k="many-brains-many-hands-b0-6">每个会话，哪怕从不会碰沙箱，也得克隆仓库、启动进程、从我们的服务器拉取待处理事件。</span></p></div></div>
+<div class="row" data-rid="many-brains-many-hands-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="many-brains-many-hands-b1-0">That dead time is expressed in <span class='term' data-term='ttft'>time-to-first-token</span> (TTFT), which measures how long a session waits between accepting work and producing its first response token.<sup class='tn' data-note='N5'>5</sup></span> <span class="s" data-k="many-brains-many-hands-b1-1">TTFT is the latency the user most acutely <i>feels</i>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="many-brains-many-hands-b1-0">这段空转时间体现在<span class='term' data-term='ttft'>首 token 延迟</span>（TTFT）上，它衡量的是一个会话从接下任务到产出第一个响应 token 之间等了多久。<sup class='tn' data-note='N5'>5</sup></span><span class="s" data-k="many-brains-many-hands-b1-1">首 token 延迟是用户感受最<i>强烈</i>的那种延迟。</span></p></div></div>
+<div class="row" data-rid="many-brains-many-hands-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="many-brains-many-hands-b2-0">Decoupling the brain from the hands means that containers are provisioned by the brain via a tool call `(execute(name, input) → string)` only if they are needed.</span> <span class="s" data-k="many-brains-many-hands-b2-1">So a session that didn't need a container right away didn't wait for one.</span> <span class="s" data-k="many-brains-many-hands-b2-2">Inference could start as soon as the orchestration layer pulled pending events from the session log.</span> <span class="s" data-k="many-brains-many-hands-b2-3">Using this architecture, our p50 TTFT dropped roughly 60% and p95 dropped over 90%.<sup class='tn' data-note='N6'>6</sup></span> <span class="s" data-k="many-brains-many-hands-b2-4">Scaling to many brains just meant starting many <span class='term' data-term='stateless'>stateless</span> harnesses, and connecting them to hands only if needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="many-brains-many-hands-b2-0">把大脑和手解耦，意味着只有在需要时，容器才会由大脑通过一次工具调用 `(execute(name, input) → string)` 创建出来。</span><span class="s" data-k="many-brains-many-hands-b2-1">所以，一个暂时不需要容器的会话，就不用等容器。</span><span class="s" data-k="many-brains-many-hands-b2-2">负责调度会话的编排层一旦从会话日志里取出待处理事件，推理就可以开始。</span><span class="s" data-k="many-brains-many-hands-b2-3">采用这套架构后，我们的 p50 TTFT（首 token 延迟）大约下降了 60%，p95 下降了 90% 以上。<sup class='tn' data-note='N6'>6</sup></span><span class="s" data-k="many-brains-many-hands-b2-4">扩展到多个大脑，只是启动多个<span class='term' data-term='stateless'>无状态</span>运行框架，并且只在需要时才把它们接到手上。</span></p></div></div>
+<div class="row" data-rid="many-brains-many-hands-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="many-brains-many-hands-b3-0"><b>Many hands.</b> We also wanted the ability to connect each brain to many hands.</span> <span class="s" data-k="many-brains-many-hands-b3-1">In practice, this means Claude must reason about many execution environments and decide where to send work—a harder cognitive task than operating in a single shell.</span> <span class="s" data-k="many-brains-many-hands-b3-2">We started with the brain in a single container because earlier models weren't capable of this.</span> <span class="s" data-k="many-brains-many-hands-b3-3">As intelligence scaled, the single container became the limitation instead: when that container failed, we lost state for every hand that the brain was reaching into.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="many-brains-many-hands-b3-0"><b>多只手。</b>我们还希望能把每个大脑接到多只手上。</span><span class="s" data-k="many-brains-many-hands-b3-1">在实践中，这意味着 Claude 必须对多个执行环境做推理，并决定把活派到哪里——这比在单一 shell 里操作更难，是更重的认知负担。</span><span class="s" data-k="many-brains-many-hands-b3-2">我们一开始把大脑放在单个容器里，是因为更早的模型做不到这件事。</span><span class="s" data-k="many-brains-many-hands-b3-3">随着智能水平提升，单个容器反而成了限制：那个容器一挂，大脑伸向的每一只手的状态都丢了。</span></p></div></div>
+<div class="row" data-rid="many-brains-many-hands-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="many-brains-many-hands-b4-0">Decoupling the brain from the hands makes each hand a tool, `execute(name, input) → string`: a name and input go in, and a string is returned.</span> <span class="s" data-k="many-brains-many-hands-b4-1">That interface supports any custom tool, any MCP server, and our own tools.</span> <span class="s" data-k="many-brains-many-hands-b4-2">The harness doesn’t know whether the sandbox is a container, a phone, or a Pokémon emulator.<sup class='tn' data-note='N7'>7</sup></span> <span class="s" data-k="many-brains-many-hands-b4-3">And because no hand is coupled to any brain, brains can pass hands to one another.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="many-brains-many-hands-b4-0">把大脑和手解耦，让每一只手都变成一个工具，`execute(name, input) → string`：传入一个名字和输入，返回一个字符串。</span><span class="s" data-k="many-brains-many-hands-b4-1">这个接口支持任何自定义工具、任何 MCP 服务器，以及我们自己的工具。</span><span class="s" data-k="many-brains-many-hands-b4-2">运行框架并不知道沙箱是一个容器、一部手机，还是一个宝可梦模拟器。<sup class='tn' data-note='N7'>7</sup></span><span class="s" data-k="many-brains-many-hands-b4-3">而且因为没有哪只手和某个大脑绑死，大脑之间可以互相传递手。</span></p></div></div>
+<figure class="row wide fig" id="fig4" data-cap="一摞 Harness，对一摞 Sandbox"><div class="fig-media"><img class="still" src="media/fig4.webp" loading="lazy" decoding="async" alt="Two stacks: many Harness instances on the left and many Sandbox instances on the right, connected by arrows so a harness can reach a sandbox on demand."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>一摞 Harness，对一摞 Sandbox</b>　正文说解耦之后，扩到多个 brain 就是多起几份无状态 harness，再按需连上多只手。图上左右各是一摞向后错位的卡片，左边标 Harness、右边标 Sandbox，中间仍是一虚一实两条反向箭头。</p><p class="cap-en">原文图注：Two stacks: many Harness instances on the left and many Sandbox instances on the right, connected by arrows so a harness can reach a sandbox on demand.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>左右两摞都向后错开叠了三层，这是整张图表达「多个」的唯一手段，画面里没有写任何数量。</li><li>左边每张卡都标 Harness 并配橙色星芒，右边每张卡都标 Sandbox 并配 >_ 终端符。</li><li>中间上面是一条指向 Sandbox 的虚线箭头，下面是一条指回 Harness 的实线箭头。</li><li>图里只留 Harness 和 Sandbox 两类卡片，没有画出具体的执行环境。</li></ol><p class="takeaway">一句话：脑与手解耦后，两边都能各自横向堆叠更多份。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-conclusion">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Conclusion</span><span class="h-zh">结语</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>托管智能体是同一精神下的元框架：对 Claude 周围的接口有主张（它需要操作会话、在沙箱里计算，也需要扩展到多个大脑和多只手），但对具体跑哪一种运行框架、需要多少、放在哪里不做假设。这样它才能容纳未来的运行框架与沙箱，跟上 Claude 的智能演进。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="conclusion-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="conclusion-b0-0">The challenge we faced is an old one: how to design a system for “programs as yet unthought of.” Operating systems have lasted decades by virtualizing the hardware into abstractions general enough for programs that didn't exist yet.</span> <span class="s" data-k="conclusion-b0-1">With Managed Agents, we aimed to design a system that accommodates future harnesses, sandboxes, or other components around Claude.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="conclusion-b0-0">我们面临的挑战是个老问题：如何为「尚未被想到的程序」设计系统。操作系统之所以能活过几十年，是因为把硬件虚拟化成足够通用的抽象，能容纳当时还不存在的程序。</span><span class="s" data-k="conclusion-b0-1">做托管智能体，我们想设计的正是这样一个系统：能容纳未来围绕 Claude 的运行框架、沙箱或其它组件。</span></p></div></div>
+<div class="row" data-rid="conclusion-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="conclusion-b1-0">Managed Agents is a <span class='term' data-term='meta-harness'>meta-harness</span> in the same spirit, unopinionated about the <i>specific</i> harness that Claude will need in the future.</span> <span class="s" data-k="conclusion-b1-1">Rather, it is a system with general interfaces that allow many different harnesses.</span> <span class="s" data-k="conclusion-b1-2">For example, Claude Code is an excellent harness that we use widely across tasks.</span> <span class="s" data-k="conclusion-b1-3">We’ve also shown that task-specific agent harnesses excel in narrow domains.</span> <span class="s" data-k="conclusion-b1-4">Managed Agents can accommodate any of these, matching Claude’s intelligence over time.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="conclusion-b1-0">托管智能体是同一精神下的<span class='term' data-term='meta-harness'>元框架</span>，对 Claude 未来会需要哪一种<i>具体</i>的运行框架不持立场。</span><span class="s" data-k="conclusion-b1-1">确切地说，它是一个拥有通用接口、能容纳许多不同运行框架的系统。</span><span class="s" data-k="conclusion-b1-2">例如，Claude Code 就是一个出色的运行框架，我们在各种任务里广泛使用它。</span><span class="s" data-k="conclusion-b1-3">我们也已经证明，针对具体任务的智能体运行框架在狭窄领域里表现优异。</span><span class="s" data-k="conclusion-b1-4">托管智能体能容纳其中任何一种，并随时间跟上 Claude 的智能水平。</span></p></div></div>
+<div class="row" data-rid="conclusion-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="conclusion-b2-0">Meta-harness design means being opinionated about the interfaces around Claude: we expect that Claude will need the ability to manipulate state (the session) and perform computation (the sandbox).</span> <span class="s" data-k="conclusion-b2-1">We also expect that Claude will require the ability to scale to many brains and many hands.</span> <span class="s" data-k="conclusion-b2-2">We designed the interfaces so that these can be run reliably and securely over long time horizons.</span> <span class="s" data-k="conclusion-b2-3">But we make no assumptions about the number or location of brains or hands that Claude will need.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="conclusion-b2-0">元框架的设计，意味着要对 Claude 周围的接口有明确主张：我们预期 Claude 会需要操作状态（会话）和执行计算（沙箱）的能力。</span><span class="s" data-k="conclusion-b2-1">我们也预期 Claude 会需要扩展到多个大脑、多只手的能力。</span><span class="s" data-k="conclusion-b2-2">我们这样设计接口，是为了让这些东西能在长周期里可靠、安全地运行。</span><span class="s" data-k="conclusion-b2-3">但对于 Claude 会需要多少个大脑、多少只手，以及它们位于哪里，我们不做任何假设。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 10 处正文引用，指向 9 个不同链接；另有 4 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>《构建有效的智能体》</h4><p class="lnk-site">Anthropic Research · Building effective agents</p><p class="lnk-anchors">正文对应：<em>构建高效的智能体</em></p><p><b>这是什么：</b>Anthropic 的经典长文，区分 workflow 与 agent 两类智能体系统，并给出五种常见编排模式。</p><p><b>为什么值得点：</b>原文开头「一直在讲怎么构建有效智能体」指的就是这篇；它提供后文「harness 编码了假设」的词汇基础。</p><p><b>访问说明：</b>链接返回 308，跳到 /research/building-effective-agents；同一篇换了栏目路径，正文完整可读。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章先把 agentic system 分成两类：按预定义代码路径编排的 workflow，和由模型自己决定流程的 agent，主张先用最简单的方案、只在必要时加复杂度。随后逐一介绍 prompt chaining、routing、parallelization、orchestrator-workers、evaluator-optimizer 五种模式，并强调给模型设计好工具接口。</p><ul><li>workflow 走固定代码路径，agent 自己决定流程</li><li>能用一次调用解决就别上 agent</li><li>五种模式：链式、路由、并行、编排者-工作者、评估者-优化者</li><li>工具接口（ACI）的投入要和 prompt 一样多</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>《为长时间运行的智能体设计有效的运行框架》</h4><p class="lnk-site">Anthropic Research · Effective harnesses for long-running agents</p><p class="lnk-anchors">正文对应：<em>设计运行框架</em></p><p><b>这是什么：</b>2025 年 11 月的工程文，讲怎么让编码智能体跨多个上下文窗口持续推进同一个项目。</p><p><b>为什么值得点：</b>原文「为长时任务设计 harness」的出处之一；initializer 加 coding agent 的分工，正是「会话之间靠产物交接」的原型。</p><p><b>访问说明：</b>链接返回 308，跳到 /research/effective-harnesses-for-long-running-agents；同一篇换了路径，正文完整。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章把长任务失败归成两类：一次想做太多留下半成品，以及后来者看到有进展就宣布完工。解法是首轮用 initializer agent 建好环境（init.sh、claude-progress.txt、初始 git commit），之后每个会话的 coding agent 只做增量并留下结构化交接，让新会话靠进度文件与 git 历史快速接上。</p><ul><li>两类失败：一口吃成胖子、误判已完成</li><li>initializer agent 建环境：init.sh、进度文件、首个 commit</li><li>coding agent 每轮只做增量并留下记录</li><li>靠 claude-progress.txt 与 git 历史跨会话交接</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>《长时间运行应用的运行框架设计》</h4><p class="lnk-site">Anthropic Research · Harness design for long-running apps</p><p class="lnk-anchors">正文对应：<em>长时间运行的工作</em> <em>我们发现</em></p><p><b>这是什么：</b>2026 年 3 月的实战文，用 planner、generator、evaluator 三个智能体跑多小时的全栈开发。</p><p><b>为什么值得点：</b>原文两次引用它：一次说「我们此前发现」，一次讲 Sonnet 4.5 的 context anxiety 与 context reset 正是从这里来的。</p><p><b>访问说明：</b>链接返回 308，跳到 /research/harness-design-long-running-apps；同一篇换了路径，正文完整。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>作者借鉴 GAN 的生成器-判别器结构，搭了 planner、generator、evaluator 三个智能体，把「设计好不好」这种主观判断拆成可打分的标准。文章记录了两个失败模式——上下文填满后失去连贯性，以及 context anxiety 让模型提前收尾——并说明 context reset（清空窗口加结构化交接）为何比 compaction 更有效。</p><ul><li>三智能体：planner / generator / evaluator</li><li>借鉴 GAN，把主观设计质量拆成可评分标准</li><li>context reset 清空窗口，compaction 只压缩历史</li><li>Sonnet 4.5 上 compaction 不够，reset 成为必需</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/engineering/harness-design-long-running-apps" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 6 个读</span><span class="chip">本区域受限</span></div><h4>《Managed Agents 概览》</h4><p class="lnk-site">Claude Platform Docs · Managed Agents overview</p><p class="lnk-anchors">正文对应：<em>文档</em></p><p><b>这是什么：</b>Claude 平台里 Managed Agents 的官方文档入口，讲怎么创建会话、接工具、跑长任务——本机被区域限制挡下。</p><p><b>为什么值得点：</b>原文第一句就把读者送到这里；要真正上手托管智能体，需要这份文档里的接口与配额细节。</p><p><b>访问说明：</b>本机访问时 307 跳 https://www.anthropic.com/app-unavailable-in-region?utm_source=country，落地页标题为 App unavailable in region | Claude by Anthropic。属于地区限制而非链接失效，换到可用地区的网络应能打开。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>本机网络无法访问：platform.claude.com 返回 307，跳到 anthropic.com/app-unavailable-in-region，看到的是一张「该地区不可用」页。因此这条只能确认它是 Managed Agents 的文档入口，具体章节、接口与配额细节未能核实，本文不做转述。</p><ul><li>链接 307 跳转到「该地区不可用」页面</li><li>正文无法读取，接口细节未核实</li><li>原文首句指向这里作为上手入口</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/managed-agents/overview" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip bg">背景</span><span class="chip">建议第 4 个读</span></div><h4>《为 AI 智能体做有效的上下文工程》</h4><p class="lnk-site">Anthropic Research · Effective context engineering for AI agents</p><p class="lnk-anchors">正文对应：<em>先前工作</em></p><p><b>这是什么：</b>2025 年 9 月的文章，把上下文工程定义为推理时维护最优 token 集合，并给出长任务三件套。</p><p><b>为什么值得点：</b>原文说压缩、记忆工具这些手段是「在先前工作中探索过」的；这篇解释它们各自解决什么问题、代价是什么。</p><p><b>访问说明：</b>链接返回 308，跳到 /research/effective-context-engineering-for-ai-agents；同一篇换了路径，正文完整。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>文章区分 prompt engineering（写好指令）与 context engineering（维护整个上下文状态），认为后者才是构建可控智能体的核心。针对长任务给出三种手段：compaction（摘要后重开窗口）、structured note-taking（写到文件里跨会话记忆）、子智能体架构（只回传结论），并主张按需检索而不是预先塞满上下文。</p><ul><li>上下文工程 = 维护推理时的最优 token 集合</li><li>compaction 摘要后重开窗口，保留架构决策与未解 bug</li><li>structured note-taking 让记忆跨会话</li><li>子智能体隔离细节，只回传摘要</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>《递归语言模型》</h4><p class="lnk-site">arXiv · Recursive Language Models</p><p class="lnk-anchors">正文对应：<em>已经探索过</em></p><p><b>这是什么：</b>MIT 的论文，提出把超长 prompt 放到模型外部环境，让模型写代码检查、切分并递归调用自己。</p><p><b>为什么值得点：</b>原文说先前工作探索过「把上下文存成窗口外的对象」；RLM 正是那条路线：上下文变成 REPL 里的对象，而不是被压缩掉。</p><p><b>访问说明：</b>直接下载 arXiv PDF（43 页），摘要与引言可读；代码仓库见论文中的 github.com/alexzhang13/rlm。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>RLM 把长 prompt 当作外部环境的一部分，模型通过写代码来查看、分解它，并在片段上递归调用自己，因此能处理比上下文窗口大一个数量级的输入。在四个长上下文任务上，它优于 GPT-5 原生、compaction、CodeAct 等基线且成本相当；作者还后训练了 RLM-Qwen3-8B，中位数比基座高 28%。</p><ul><li>RLM = 把长 prompt 放进外部环境，用代码访问</li><li>可处理超出窗口一个数量级的输入</li><li>在 GPT-5 上比 compaction 高 26%、比 CodeAct 高 130%</li><li>RLM-Qwen3-8B 比 Qwen3-8B 中位数高 28%</li></ul></details><a class="lnk-open" href="https://arxiv.org/pdf/2512.24601" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip bg">背景</span><span class="chip">建议第 7 个读</span></div><h4>《苦涩的教训》</h4><p class="lnk-site">incompleteideas.net · The Bitter Lesson</p><p class="lnk-anchors">正文对应：<em>过时</em></p><p><b>这是什么：</b>Rich Sutton 2019 年的短文：七十年 AI 研究最大的教训，是利用算力的通用方法最终胜出。</p><p><b>为什么值得点：</b>原文说 harness 里的假设会「过时」，理论依据就是这条：算力持续变便宜，靠人类知识做的精巧设计终会被通用方法超越。</p><p><b>访问说明：</b>本机解析 www 子域失败（DNS SERVFAIL），去掉 www 的 http://incompleteideas.net/IncIdeas/BitterLesson.html 返回 200，正文完整；页面本身没有重定向。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Sutton 认为 AI 研究长期假设算力不变，于是把精力花在注入人类知识上；但算力持续指数级变便宜，长期看只有利用算力的通用方法才有效。他用国际象棋、围棋、语音识别、计算机视觉的例子说明：人类知识短期好用，长期反而成为拖累。</p><ul><li>作者 Rich Sutton，2019 年 3 月 13 日</li><li>核心论点：利用算力的通用方法最终最有效</li><li>人类知识短期提升、长期成为瓶颈</li><li>例证覆盖象棋、围棋、语音、视觉</li></ul></details><a class="lnk-open" href="http://www.incompleteideas.net/IncIdeas/BitterLesson.html" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip bg">背景</span><span class="chip">建议第 8 个读</span></div><h4>《宠物与牲畜比喻的来历，以及如何正确使用它》</h4><p class="lnk-site">Cloudscaling · The History of Pets vs Cattle and How to Use the Analogy Properly</p><p class="lnk-anchors">正文对应：<em>宠物</em></p><p><b>这是什么：</b>Randy Bias 2016 年追溯「宠物与牛」比喻的来历：pet 是取名、手工照料、丢了不行的服务器。</p><p><b>为什么值得点：</b>原文说「我们把服务器养成了宠物」；这篇给出比喻的准确定义与出处，避免把它误用成扩容方式的对比。</p><p><b>访问说明：</b>直接打开，HTTP 200，正文完整可读。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>作者回忆这个比喻源自 Bill Baker 讲 SQL Server 扩容的演讲，他把它搬进云计算语境，强调关键不是 scale-up 还是 scale-out，而是你把服务器看成独一无二的宠物，还是可替换的牛。宠物要命名、要护理、坏了要救；牛是编号的、可批量替换的。</p><ul><li>作者 Randy Bias，2016 年 9 月 29 日</li><li>比喻源自 Bill Baker 的 SQL Server 扩容演讲</li><li>pet：有名字、手工照料、不可丢失</li><li>cattle：可替换、批量管理、坏了就换</li></ul></details><a class="lnk-open" href="https://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip bg">背景</span><span class="chip">建议第 9 个读</span></div><h4>《操作系统风格的要件》</h4><p class="lnk-site">catb.org · The Elements of Operating-System Style</p><p class="lnk-anchors">正文对应：<em>尚未被想到的程序</em></p><p><b>这是什么：</b>ESR《Unix 编程艺术》第 3 章第 1 节，用统一理念、多任务、通信方式等维度对比不同操作系统的风格。</p><p><b>为什么值得点：</b>原文引的「为尚未想到的程序而设计」就出自这节里 Doug McIlroy 的话，是「接口要比实现活得久」的原始表述。</p><p><b>访问说明：</b>页面是 http 明文、latin-1 编码；本机 node fetch 直接失败，改用 curl 带浏览器 UA 取到 200，正文可读。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这一节讨论操作系统设计如何塑造编程风格，Unix 的统一理念是「一切皆文件」加管道。文中引用 Doug McIlroy：Unix 的程序不是为彼此而写，而是为「尚未想到的程序」而写——接口要通用到能承接未来的用法，而不是绑定当下的实现。</p><ul><li>ESR《Unix 编程艺术》第 3 章第 1 节</li><li>Unix 的统一理念：一切皆文件加管道</li><li>McIlroy：程序应为「尚未想到的程序」而设计</li><li>接口通用性优先于针对具体搭档优化</li></ul></details><a class="lnk-open" href="http://www.catb.org/esr/writings/taoup/html/ch03s01.html" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 14 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">meta-harness</span><span class="gl-zh">元框架</span></div><p class="gl-def">套在具体运行框架之外的一层系统，只约定会话、沙箱等接口的形状。本文指 Managed Agents：将来要哪种运行框架都能接进来。</p><p class="gl-ana">像插座标准：电器随便换，墙上的孔不必改。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Managed Agents</span><span class="gl-zh">托管智能体</span></div><p class="gl-def">Anthropic 推出的托管服务，替你跑长周期的智能体。本文指由会话、运行框架、沙箱三个接口组成的那套平台。</p><p class="gl-ana">像请了个包工头：你只提要求，工序和材料他张罗。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">harness</span><span class="gl-zh">运行框架</span></div><p class="gl-def">包在模型外面、循环调用 Claude 并把工具调用接到相应基础设施的那层代码。本文里它可以整体换掉、崩了直接重启。</p><p class="gl-ana">像司机：车（模型）不换，开法可以整套换。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">session</span><span class="gl-zh">会话</span></div><p class="gl-def">把发生过的每件事按序追加写下的日志，在本文里它独立于运行框架存在。正因如此，运行框架崩溃后才能从最后一条事件接着跑。</p><p class="gl-ana">像行车记录仪：车撞坏了，录像还在。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">sandbox</span><span class="gl-zh">沙箱</span></div><p class="gl-def">Claude 跑代码、改文件的执行环境。本文里它是一个可随时弃置重开的执行器，凭证刻意不放在里面，生成代码读不到令牌。</p><p class="gl-ana">像一次性手套，脏了就扔，不必洗。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">interface</span><span class="gl-zh">接口</span></div><p class="gl-def">只规定调用形状、不规定背后实现的约定，例如 execute(name, input) → string。本文强调只对形状有主见，对实现没有。</p><p class="gl-ana">像 USB-C 口：只管插得进，不管里面是什么。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口</span></div><p class="gl-def">模型单次推理能看到的 token 上限。本文指出长任务会超出它，而 session 就是放在这个窗口之外、可被反复取用的上下文。</p><p class="gl-ana">像一张只能摊开固定大小的桌面。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context engineering</span><span class="gl-zh">上下文工程</span></div><p class="gl-def">决定把哪些内容、按什么顺序放进上下文窗口的手艺，压缩和裁剪都算。本文把它留在 harness 里，因为未来模型需要什么无法预判。</p><p class="gl-ana">像出门前挑行李：带什么、怎么塞。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">compaction</span><span class="gl-zh">压缩</span></div><p class="gl-def">把窗口里已有的上下文压成摘要，腾出空间继续跑。本文指送入窗口前的不可逆变换，被压掉的原文只有存进会话日志才找得回。</p><p class="gl-ana">像把长会记成纪要，细节得另存一份。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">TTFT / time-to-first-token</span><span class="gl-zh">首 token 延迟</span></div><p class="gl-def">从会话接下任务，到吐出第一个 token 之间用户等待的时间。本文用它量化解耦收益：p50 降约 60%，p95 降幅超过 90%。</p><p class="gl-ana">像点单到上第一道菜之间的等待。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">VPC</span><span class="gl-zh">虚拟私有云</span></div><p class="gl-def">企业自己划定、外部默认进不去的云上网络。本文指客户希望 Claude 直接操作自己 VPC 里的资源，而旧设计逼他们先打通两个网络。</p><p class="gl-ana">像自家院子，外人默认进不来。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">prompt injection</span><span class="gl-zh">提示注入</span></div><p class="gl-def">把指令藏进 Claude 会读到的内容里，诱使它违反原意去操作。本文指耦合设计下攻击者只要让 Claude 读自己的环境就能拿到凭证。</p><p class="gl-ana">像在信封里夹一张假便条。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">MCP</span><span class="gl-zh">MCP</span></div><p class="gl-def">让模型用统一方式调用外部工具和数据的开放协议。本文指自定义工具走 MCP，OAuth 令牌存在沙箱外的保险库里，由代理代为取用。</p><p class="gl-ana">像万能转接头，各家工具都插得上。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">stateless</span><span class="gl-zh">无状态</span></div><p class="gl-def">自身不保存状态、随时可以新起一份实例的进程。本文指运行框架无状态，所以能直接横向扩到多个大脑，失败了也换一份重来。</p><p class="gl-ana">像共享单车，谁骑都行，坏了换一辆。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>「尚未被想到的程序」</h4><p>这句话出自《Unix 编程艺术》，讲的是系统设计要为还没被发明出来的程序留出空间。操作系统靠把硬件抽象成进程、文件，才活过了硬件的好几代。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>宠物 vs 牲畜</h4><p>运维里的一个比喻：宠物是有名字、要亲手照料、丢了不行的个体；牲畜是可替换的群体。把容器当宠物养，意味着它一坏你就得救，而不是直接换一个。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>接口签名</h4><p>execute(name, input) → string 的意思是：给一个工具名和输入，拿回一个字符串。容器、MCP 服务、自定义工具都可以套进这个签名，调用方不需要知道背后是什么。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>提示注入与 token 边界</h4><p>如果凭据和 Claude 生成的代码在同一个容器里，一次提示注入只要让 Claude 读自己的环境变量，就能拿到访问令牌（token）；拿到之后还能开新会话把活派出去。所以结构性的修法是不让 token 进入沙箱。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>首 token 延迟（TTFT）</h4><p>从会话接下任务，到产出第一个响应 token 之间的等待时间。用户对这段「什么都没发生」的时间最敏感，所以它比总耗时更能代表体感。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>p50 与 p95</h4><p>把一批请求的延迟从小到大排：p50 是中位数，一半请求比它快；p95 是第 95 百分位，只有 5% 的请求比它更慢。p95 更能暴露长尾卡顿。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>宝可梦模拟器</h4><p>一个刻意的夸张例子：对手方（运行框架）不需要知道工具背后是容器、手机还是游戏模拟器。只要工具遵守同一个签名，接什么都可以。</p></div></div></div></section><footer><p>本文为学习用途的双语对照页：英文原文版权归 Anthropic 所有；中文译文、术语卡与译注由译者添加。</p><p>原文：<a href="https://www.anthropic.com/research/managed-agents" target="_blank" rel="noopener">Scaling Managed Agents: Decoupling the brain from the hands</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-don-t-adopt-a-pet"><span class="dot">●</span>别把宠物领回家</a><a class="l2" href="#s-decouple-the-brain-from-the-hands"><span class="dot">●</span>把大脑和手解耦</a><a class="l2" href="#s-the-session-is-not-claude-s-context-window"><span class="dot">●</span>会话不是 Claude 的上下文窗口</a><a class="l2" href="#s-many-brains-many-hands"><span class="dot">●</span>多个大脑，多只手</a><a class="l2" href="#s-conclusion"><span class="dot">●</span>结语</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"《Managed Agents 概览》","title_en":"Managed Agents overview","site":"Claude Platform Docs","what_zh":"Claude 平台里 Managed Agents 的官方文档入口，讲怎么创建会话、接工具、跑长任务——本机被区域限制挡下。","why_zh":"原文第一句就把读者送到这里；要真正上手托管智能体，需要这份文档里的接口与配额细节。","tier":"必读","order":6,"url":"https://platform.claude.com/docs/en/managed-agents/overview"},"L2":{"title_zh":"《构建有效的智能体》","title_en":"Building effective agents","site":"Anthropic Research","what_zh":"Anthropic 的经典长文，区分 workflow 与 agent 两类智能体系统，并给出五种常见编排模式。","why_zh":"原文开头「一直在讲怎么构建有效智能体」指的就是这篇；它提供后文「harness 编码了假设」的词汇基础。","tier":"必读","order":1,"url":"https://www.anthropic.com/engineering/building-effective-agents"},"L3":{"title_zh":"《为长时间运行的智能体设计有效的运行框架》","title_en":"Effective harnesses for long-running agents","site":"Anthropic Research","what_zh":"2025 年 11 月的工程文，讲怎么让编码智能体跨多个上下文窗口持续推进同一个项目。","why_zh":"原文「为长时任务设计 harness」的出处之一；initializer 加 coding agent 的分工，正是「会话之间靠产物交接」的原型。","tier":"必读","order":2,"url":"https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents"},"L4":{"title_zh":"《长时间运行应用的运行框架设计》","title_en":"Harness design for long-running apps","site":"Anthropic Research","what_zh":"2026 年 3 月的实战文，用 planner、generator、evaluator 三个智能体跑多小时的全栈开发。","why_zh":"原文两次引用它：一次说「我们此前发现」，一次讲 Sonnet 4.5 的 context anxiety 与 context reset 正是从这里来的。","tier":"必读","order":3,"url":"https://www.anthropic.com/engineering/harness-design-long-running-apps"},"L5":{"title_zh":"《苦涩的教训》","title_en":"The Bitter Lesson","site":"incompleteideas.net","what_zh":"Rich Sutton 2019 年的短文：七十年 AI 研究最大的教训，是利用算力的通用方法最终胜出。","why_zh":"原文说 harness 里的假设会「过时」，理论依据就是这条：算力持续变便宜，靠人类知识做的精巧设计终会被通用方法超越。","tier":"背景","order":7,"url":"http://www.incompleteideas.net/IncIdeas/BitterLesson.html"},"L6":{"title_zh":"《操作系统风格的要件》","title_en":"The Elements of Operating-System Style","site":"catb.org","what_zh":"ESR《Unix 编程艺术》第 3 章第 1 节，用统一理念、多任务、通信方式等维度对比不同操作系统的风格。","why_zh":"原文引的「为尚未想到的程序而设计」就出自这节里 Doug McIlroy 的话，是「接口要比实现活得久」的原始表述。","tier":"背景","order":9,"url":"http://www.catb.org/esr/writings/taoup/html/ch03s01.html"},"L7":{"title_zh":"《宠物与牲畜比喻的来历，以及如何正确使用它》","title_en":"The History of Pets vs Cattle and How to Use the Analogy Properly","site":"Cloudscaling","what_zh":"Randy Bias 2016 年追溯「宠物与牛」比喻的来历：pet 是取名、手工照料、丢了不行的服务器。","why_zh":"原文说「我们把服务器养成了宠物」；这篇给出比喻的准确定义与出处，避免把它误用成扩容方式的对比。","tier":"背景","order":8,"url":"https://cloudscaling.com/blog/cloud-computing/the-history-of-pets-vs-cattle/"},"L8":{"title_zh":"《为 AI 智能体做有效的上下文工程》","title_en":"Effective context engineering for AI agents","site":"Anthropic Research","what_zh":"2025 年 9 月的文章，把上下文工程定义为推理时维护最优 token 集合，并给出长任务三件套。","why_zh":"原文说压缩、记忆工具这些手段是「在先前工作中探索过」的；这篇解释它们各自解决什么问题、代价是什么。","tier":"背景","order":4,"url":"https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents"},"L9":{"title_zh":"《递归语言模型》","title_en":"Recursive Language Models","site":"arXiv","what_zh":"MIT 的论文，提出把超长 prompt 放到模型外部环境，让模型写代码检查、切分并递归调用自己。","why_zh":"原文说先前工作探索过「把上下文存成窗口外的对象」；RLM 正是那条路线：上下文变成 REPL 里的对象，而不是被压缩掉。","tier":"背景","order":5,"url":"https://arxiv.org/pdf/2512.24601"}},"terms":{"meta-harness":{"en":"meta-harness","zh":"元框架","def_zh":"套在具体运行框架之外的一层系统，只约定会话、沙箱等接口的形状。本文指 Managed Agents：将来要哪种运行框架都能接进来。","analogy_zh":"像插座标准：电器随便换，墙上的孔不必改。"},"managed-agents":{"en":"Managed Agents","zh":"托管智能体","def_zh":"Anthropic 推出的托管服务，替你跑长周期的智能体。本文指由会话、运行框架、沙箱三个接口组成的那套平台。","analogy_zh":"像请了个包工头：你只提要求，工序和材料他张罗。"},"harness":{"en":"harness","zh":"运行框架","def_zh":"包在模型外面、循环调用 Claude 并把工具调用接到相应基础设施的那层代码。本文里它可以整体换掉、崩了直接重启。","analogy_zh":"像司机：车（模型）不换，开法可以整套换。"},"session":{"en":"session","zh":"会话","def_zh":"把发生过的每件事按序追加写下的日志，在本文里它独立于运行框架存在。正因如此，运行框架崩溃后才能从最后一条事件接着跑。","analogy_zh":"像行车记录仪：车撞坏了，录像还在。"},"sandbox":{"en":"sandbox","zh":"沙箱","def_zh":"Claude 跑代码、改文件的执行环境。本文里它是一个可随时弃置重开的执行器，凭证刻意不放在里面，生成代码读不到令牌。","analogy_zh":"像一次性手套，脏了就扔，不必洗。"},"interface":{"en":"interface","zh":"接口","def_zh":"只规定调用形状、不规定背后实现的约定，例如 execute(name, input) → string。本文强调只对形状有主见，对实现没有。","analogy_zh":"像 USB-C 口：只管插得进，不管里面是什么。"},"context-window":{"en":"context window","zh":"上下文窗口","def_zh":"模型单次推理能看到的 token 上限。本文指出长任务会超出它，而 session 就是放在这个窗口之外、可被反复取用的上下文。","analogy_zh":"像一张只能摊开固定大小的桌面。"},"context-engineering":{"en":"context engineering","zh":"上下文工程","def_zh":"决定把哪些内容、按什么顺序放进上下文窗口的手艺，压缩和裁剪都算。本文把它留在 harness 里，因为未来模型需要什么无法预判。","analogy_zh":"像出门前挑行李：带什么、怎么塞。"},"compaction":{"en":"compaction","zh":"压缩","def_zh":"把窗口里已有的上下文压成摘要，腾出空间继续跑。本文指送入窗口前的不可逆变换，被压掉的原文只有存进会话日志才找得回。","analogy_zh":"像把长会记成纪要，细节得另存一份。"},"ttft":{"en":"TTFT / time-to-first-token","zh":"首 token 延迟","def_zh":"从会话接下任务，到吐出第一个 token 之间用户等待的时间。本文用它量化解耦收益：p50 降约 60%，p95 降幅超过 90%。","analogy_zh":"像点单到上第一道菜之间的等待。"},"vpc":{"en":"VPC","zh":"虚拟私有云","def_zh":"企业自己划定、外部默认进不去的云上网络。本文指客户希望 Claude 直接操作自己 VPC 里的资源，而旧设计逼他们先打通两个网络。","analogy_zh":"像自家院子，外人默认进不来。"},"prompt-injection":{"en":"prompt injection","zh":"提示注入","def_zh":"把指令藏进 Claude 会读到的内容里，诱使它违反原意去操作。本文指耦合设计下攻击者只要让 Claude 读自己的环境就能拿到凭证。","analogy_zh":"像在信封里夹一张假便条。"},"mcp":{"en":"MCP","zh":"MCP","def_zh":"让模型用统一方式调用外部工具和数据的开放协议。本文指自定义工具走 MCP，OAuth 令牌存在沙箱外的保险库里，由代理代为取用。","analogy_zh":"像万能转接头，各家工具都插得上。"},"stateless":{"en":"stateless","zh":"无状态","def_zh":"自身不保存状态、随时可以新起一份实例的进程。本文指运行框架无状态，所以能直接横向扩到多个大脑，失败了也换一份重来。","analogy_zh":"像共享单车，谁骑都行，坏了换一辆。"}},"notes":{"N1":{"title_zh":"「尚未被想到的程序」","body_zh":"这句话出自《Unix 编程艺术》，讲的是系统设计要为还没被发明出来的程序留出空间。操作系统靠把硬件抽象成进程、文件，才活过了硬件的好几代。"},"N2":{"title_zh":"宠物 vs 牲畜","body_zh":"运维里的一个比喻：宠物是有名字、要亲手照料、丢了不行的个体；牲畜是可替换的群体。把容器当宠物养，意味着它一坏你就得救，而不是直接换一个。"},"N3":{"title_zh":"接口签名","body_zh":"execute(name, input) → string 的意思是：给一个工具名和输入，拿回一个字符串。容器、MCP 服务、自定义工具都可以套进这个签名，调用方不需要知道背后是什么。"},"N4":{"title_zh":"提示注入与 token 边界","body_zh":"如果凭据和 Claude 生成的代码在同一个容器里，一次提示注入只要让 Claude 读自己的环境变量，就能拿到访问令牌（token）；拿到之后还能开新会话把活派出去。所以结构性的修法是不让 token 进入沙箱。"},"N5":{"title_zh":"首 token 延迟（TTFT）","body_zh":"从会话接下任务，到产出第一个响应 token 之间的等待时间。用户对这段「什么都没发生」的时间最敏感，所以它比总耗时更能代表体感。"},"N6":{"title_zh":"p50 与 p95","body_zh":"把一批请求的延迟从小到大排：p50 是中位数，一半请求比它快；p95 是第 95 百分位，只有 5% 的请求比它更慢。p95 更能暴露长尾卡顿。"},"N7":{"title_zh":"宝可梦模拟器","body_zh":"一个刻意的夸张例子：对手方（运行框架）不需要知道工具背后是容器、手机还是游戏模拟器。只要工具遵守同一个签名，接什么都可以。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
