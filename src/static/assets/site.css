@@ -786,7 +786,7 @@ h1, h2, h3, h4 { font-weight: 400; }
 }
 .prose h3 { margin: 1.9em 0 .55em; font-family: var(--serif); font-size: 18.5px; line-height: 1.6; font-weight: 600; }
 .prose h4 { margin: 1.6em 0 .5em; font-family: var(--sans); font-size: 15px; font-weight: 600; }
-.prose a { color: var(--accent-2); text-decoration: underline; text-decoration-color: var(--rule-2); text-underline-offset: 3px; }
+.prose a { color: var(--accent-2); text-decoration: underline; text-decoration-color: var(--rule-2); text-underline-offset: 3px; overflow-wrap: anywhere; }
 .prose a:hover { text-decoration-color: var(--accent); }
 .prose ul, .prose ol { margin: 0 0 1.1em; padding-left: 1.4em; }
 .prose li { margin: .3em 0; }
