@@ -70,6 +70,17 @@ python3 -m http.server -d dist 8000
 - 图片/目录含中文或括号时，canonical 与 sitemap 必须百分号编码（`abs_url` 已处理）。
 - 本机 `github.com` 直连基本会超时，push 要过本地代理。端口不固定：先试 `HTTPS_PROXY=http://127.0.0.1:7890`，不通就换 `7897`（2026-11-20 实测可用）；都失败时用 `scutil --proxy` 看当前 `HTTPPort`，别把端口写死。
 
+## 上站前校验（本地 ≠ 站点）
+
+精读页在 `bilingual-readers` 里是单文件，本机双击就能看；**上站后它是 `/readers/<slug>/` 的一个网页**。两者口径不同，别把"本地能打开"当成交付成立。
+
+- 文案按站点写：不出现"本机文件 / 离线 / 断网可用 / 打开本地文件"这类描述；也不要承诺"内容都在这一页里"。
+- 跨页指路用站内绝对路径 `/blog-xiuerhuahuazi/readers/<slug>/`，不用 `../<slug>/index.html`；卡片 `site` 写"本站"。
+- 引入源的时机：`import_readers.py --force` 会删掉不在 `readers_curated.json` 里的目录——新精读先补策展条目，再导入。
+- 导入后核对：`check.py` 会验所引站内路径在 `dist/` 中存在；再 `grep` 一遍旧口径词（本机/离线/断网可用）应为 0 命中。
+- push 后验线上：`curl` 该 URL 拿到 200，并用浏览器确认文案是新版（Actions 有延迟，几十秒到两分钟；必要时硬刷新）。
+- 判据只有一条：**线上那条 URL 打开是什么样，就是交付成什么样**。
+
 ## 发布
 
 推 `main` 触发 `.github/workflows/pages.yml`，构建 `dist/` 并通过 GitHub Pages 部署。Pages 发布源必须是 **GitHub Actions**。`dist/` 不入库，不要为发布再提交一份产物。
