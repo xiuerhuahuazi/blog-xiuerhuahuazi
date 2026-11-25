@@ -1,0 +1,51 @@
+{
+  "slug": "雷雳桥对端-装Ollama与Qwen3-8B",
+  "path": "2026/11/25/雷雳桥对端-装Ollama与Qwen3-8B",
+  "title": "雷雳桥对端的本地推理：无 sudo 装 Ollama 与 Qwen3-8B",
+  "description": "一台 M6 / 24GB 的 Mac mini，什么都没装。从勘察环境到 Qwen3-8B 跑起来，实测生成、预填充、冷启动和内存账。",
+  "date": "2026-11-25",
+  "tags": [
+    "ollama",
+    "qwen3",
+    "雷雳桥",
+    "本地部署"
+  ],
+  "content": "<p>两台 Mac mini 用雷雳桥连起来，桥给的是链路本地地址（<code>169.254.x.x</code>，文中以 <code>192.0.2.10</code> 代指对端），链路 40Gb/s。这次要在对端装一个本地 LLM，后续做信息抽取、分类这类离线处理，第一台先选 Qwen3-8B 量化版。</p>\n<p>先把对端的底摸清楚，因为它什么都没有：</p>\n<ul><li>Mac mini，<strong>M6</strong>：12 核 CPU（2 超级核 + 4 性能核 + 6 能效核）、12 核 GPU、24GB 统一内存</li><li>macOS 27.2.1，460GB 盘剩 315GB</li><li>地址 <code>192.0.2.10</code></li><li>没有 Homebrew、没有 Ollama、没有 llama.cpp，只有系统自带的 Python 3.9</li></ul>\n<h2 id=\"安装-不进入系统路径-也不动-sudo\">安装：不进入系统路径，也不动 sudo</h2>\n<p>安装目标是「不污染系统、不依赖 Homebrew、开机自启」：</p>\n<ul><li><a href=\"https://ollama.com\">Ollama</a> v0.40.17 解到 <code>~/opt/ollama-v0.40.17</code></li><li>用 LaunchAgent（<code>com.ollama.serve</code>）注册为开机自启，端口 11434</li><li>模型放默认的 <code>~/.ollama</code>，服务跑在当前账号下，不需要 sudo</li></ul>\n<p>模型选官方的 <strong>Qwen3-8B-Q4_K_M</strong>（5.03GB），导入后命名 <code>qwen3-8b</code>。下载源这件事值得记：直连境外只有 30–60 KB/s，换 <a href=\"https://modelscope.cn\">ModelScope</a> 到 1.6 MB/s，差一个数量级。</p>\n<h2 id=\"实测\">实测</h2>\n<p>从我这台机器穿过桥发起请求：</p>\n<ul><li>生成：<strong>29 token/s</strong>，模型显存占用 6.8GB</li><li>预填充：<strong>约 800 token/s</strong>，1400 token 的长文本 2.5 秒返回</li><li>上下文：16384</li><li>空闲自动卸载，再调用冷启动约 2 秒</li></ul>\n<p>对本地批处理来说，预填充速度比生成速度更影响体感——一次要喂几千字进去抽取，2 秒能接受。</p>\n<h2 id=\"三种用法\">三种用法</h2>\n<p>命令行：<code>~/bin/qwen \"问题\"</code>，加 <code>-t</code> 开思考模式。</p>\n<p>原生接口：<code>http://192.0.2.10:11434/api/chat</code>。</p>\n<p>OpenAI 兼容：<code>http://192.0.2.10:11434/v1</code>（<a href=\"https://docs.ollama.com/api/openai-compatibility\">接口文档</a>），<code>OpenAI(base_url=..., api_key=\"ollama\")</code> 直接可用。</p>\n<p><strong>批量处理一定要带 <code>\"think\": false</code>。</strong> 8B 模型默认会先输出一大段推理过程，速度差 2–4 倍；对话里也可以直接在消息末尾加 <code>/no_think</code>。这是 Qwen3 系列的训练习惯，不是 Ollama 的开关。</p>\n<h2 id=\"24gb-的内存账\">24GB 的内存账</h2>\n<p>8B Q4 占 6.8GB，看着宽裕，但要留出别的服务的位置：</p>\n<ul><li>8B Q4：约 6.8GB，29 token/s</li><li>14B Q4：约 9GB，15–18 token/s，24GB 能跑，但基本就占满了</li><li>再往上就不是这台机器的事</li></ul>\n<p>所以策略是让模型空闲即卸载。一开始空闲 30 分钟才回收，后来改成 5 分钟——因为这台机器同时还要跑生图和 TTS，谁都不肯让内存，最后就是系统进 swap。</p>\n<h2 id=\"一个安全问题\">一个安全问题</h2>\n<p>默认 <code>OLLAMA_HOST</code> 监听 0.0.0.0 的话，11434 对局域网 <code>192.168.x.x</code> 也是开的。只希望雷雳桥访问的话，把 <code>OLLAMA_HOST</code> 收到桥的地址段即可。本地服务默认不设防，端口一开等于对整栋楼开放。</p>\n<p>下一篇是同一个对端的后半段：怎么把生图和 TTS 挂进 Open WebUI，以及在 24GB 上怎么让三个服务轮流用内存、而不是一起抢。</p>",
+  "toc": [
+    {
+      "level": 2,
+      "text": "安装：不进入系统路径，也不动 sudo",
+      "id": "安装-不进入系统路径-也不动-sudo"
+    },
+    {
+      "level": 2,
+      "text": "实测",
+      "id": "实测"
+    },
+    {
+      "level": 2,
+      "text": "三种用法",
+      "id": "三种用法"
+    },
+    {
+      "level": 2,
+      "text": "24GB 的内存账",
+      "id": "24gb-的内存账"
+    },
+    {
+      "level": 2,
+      "text": "一个安全问题",
+      "id": "一个安全问题"
+    }
+  ],
+  "related": [
+    "OpenWebUI-接本地模型与内存闸门"
+  ],
+  "files": [
+    {
+      "href": "files/local-llm/local-llm-cheatsheet.md",
+      "name": "本地推理部署速查",
+      "desc": "机器、Ollama、Open WebUI 的命令与参数，地址已脱敏"
+    }
+  ]
+}

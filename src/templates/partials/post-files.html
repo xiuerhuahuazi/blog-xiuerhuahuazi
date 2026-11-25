@@ -1,0 +1,21 @@
+<section class="wrap post-files">
+  <div class="files-inner">
+    <h2 class="files-h" id="files-h">文章相关文档</h2>
+    <p class="files-note">{{note}}</p>
+    <ul class="file-list">{{items}}</ul>
+  </div>
+  <div class="doc-modal" id="doc-modal" role="dialog" aria-modal="true" aria-labelledby="doc-modal-title" hidden>
+    <div class="doc-backdrop" data-doc-close></div>
+    <div class="doc-panel">
+      <header class="doc-head">
+        <span class="doc-kind" id="doc-modal-kind">MD</span>
+        <h2 class="doc-title" id="doc-modal-title"></h2>
+        <div class="doc-actions">
+          <button class="doc-copy" type="button">复制</button>
+          <button class="doc-close" type="button" data-doc-close aria-label="关闭">×</button>
+        </div>
+      </header>
+      <pre class="doc-body" id="doc-modal-body"></pre>
+    </div>
+  </div>
+</section>

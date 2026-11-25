@@ -1,0 +1,62 @@
+{
+  "slug": "OpenWebUI-接本地模型与内存闸门",
+  "path": "2026/11/25/OpenWebUI-接本地模型与内存闸门",
+  "title": "Open WebUI 接本地模型：生图、TTS 和 24GB 的三道闸",
+  "description": "把 Ollama、ComfyUI 生图、Qwen3-TTS 都挂到同一个网页界面，再让它们在 24GB 上轮流用内存。含一次把系统拖进 swap 的真实事故。",
+  "date": "2026-11-25",
+  "tags": [
+    "open-webui",
+    "comfyui",
+    "内存",
+    "本地部署"
+  ],
+  "content": "<p>对端已经跑起 Ollama，接下来要一个能点的界面：选模型、聊天、生图、朗读。用 <a href=\"https://docs.openwebui.com\">Open WebUI</a> 0.13.4，访问 <code>http://192.0.2.10:8080</code>，从桥这边打开 8ms。第一次打开要注册账号，第一个注册的自动成为管理员，数据落在 <code>~/.open-webui</code>。</p>\n<p>这篇记的不是「怎么装」，而是接进去之后遇到的三个坑：配置键换位置、音频要 MP3、以及 24GB 内存被三样东西同时抢。</p>\n<h2 id=\"生图-0-13-4-把配置键换了位置\">生图：0.13.4 把配置键换了位置</h2>\n<p>ComfyUI 在 <code>127.0.0.1:8188</code>，直接接就能出图。第一次接完页面里看不到模型，原因不是连接方式，是我把配置写在了旧位置：</p>\n<ul><li>0.13.4 已经换成「图像连接」架构，配置键是 <code>images.connections</code></li><li>旧写法 <code>image_generation.engine</code> / <code>comfyui.base_url</code> 页面根本不读</li></ul>\n<p>改成 <code>images.connections</code> 后注册了三个模型，下拉里能切：</p>\n<ul><li><code>qwen-image-2.1-turbo</code>：主力，1024×1024 约 100 秒/张（首次含加载约 2 分钟）</li><li><code>krea2-turbo</code>：风格更强，但见下面内存那一节</li><li><code>moss-image-sft</code>：备选风格</li></ul>\n<p>两个入口都能用：图像工作台 <code>/playground/images</code> 直接写提示词；聊天里点输入框左侧「＋」，打开「图像生成」开关，图片会作为附件回到对话。聊天这条路默认会先让本地 Qwen3-8B 润色提示词，首字会多等几秒；嫌偏或慢可以关掉。</p>\n<p>纯接口也能调：</p>\n<pre><code class=\"language-bash\">curl -X POST http://192.0.2.10:8080/api/v1/images/generations \\\n  -H &quot;Authorization: Bearer &lt;token&gt;&quot; -H &quot;Content-Type: application/json&quot; \\\n  -d &#x27;{&quot;model&quot;:&quot;comfyui-qwen:qwen-image-2.1-turbo&quot;,&quot;prompt&quot;:&quot;一只橘猫在窗台&quot;,&quot;size&quot;:&quot;1024x1024&quot;}&#x27;</code></pre>\n<h2 id=\"tts-gradio-得先包成-openai-接口\">TTS：Gradio 得先包成 OpenAI 接口</h2>\n<p>Qwen3-TTS 原本是 Gradio 页面，Open WebUI 只认 OpenAI 的 <code>/v1/audio/speech</code>。写了一个中转 <code>tts_openai_shim.py</code>，把 Gradio 的 <code>/run_instruct</code> 包成标准接口，超过 120 字按句切分再拼接。</p>\n<p>两个模型：</p>\n<ul><li><code>qwen3-tts</code>：0.6B CustomVoice，9 个预置音色（Vivian、Serena、Ryan、Aiden……），默认 Vivian</li><li><code>qwen3-tts-voice-design</code>：1.7B，<code>voice</code> 字段可以直接写自然语言描述，比如「成熟沉稳的中年男声，播报新闻的语气」</li></ul>\n<p>第一个坑：配置生效了，点朗读却返回 500。原因是 Open WebUI 要把音频转成 MP3，需要 <code>ffprobe</code>，这台机器没装 ffmpeg。解法不是装 ffmpeg，是让中转直接输出 MP3——用本地 <code>lameenc</code> 编码，链路里就没有格式转换这一步了。实测中文合成 5.7 秒音频、耗时 7.8 秒，大致实时。</p>\n<p>音乐接不进来：Open WebUI 只有图像和语音入口，没有音乐。机器上的 DiffSinger（歌声合成）、Seed-VC（音色转换）都是独立 WebUI，ComfyUI 的 <code>audio_encoders</code> 也是空的。要「点一下就出音乐」，得先装音乐模型（比如 ACE-Step）并让 ComfyUI 具备音频能力，或者单独起一个页面。</p>\n<h2 id=\"冷启动-24gb-上谁都不许常驻\">冷启动：24GB 上谁都不许常驻</h2>\n<p>这台机器只有 24GB，三样东西都常驻就是互相踩。策略是只保留不吃 GPU 的部分：</p>\n<ul><li>常驻：Open WebUI（约 130MB）+ Ollama 的 API 进程</li><li>Ollama 模型空闲时间从 30 分钟缩到 <strong>5 分钟</strong>，用完自动卸载，释放约 6.8GB</li><li>Qwen3-TTS 两个模型改成按需拉起：第一次朗读才加载，空闲 10 分钟回收；冷启动出音约 10 秒，热启动 3 秒</li><li>原来的常驻 TTS 服务 <code>com.qwen3tts.serve</code> 注销，改由中转进程管</li></ul>\n<p>冷启动 10 秒对朗读来说是可接受的，换来的是空闲时那 2GB 内存。</p>\n<h2 id=\"一次把系统拖进-swap-的事故\">一次把系统拖进 swap 的事故</h2>\n<p>我很快遇到一个很现实的需求：只在切换不同模型时才 <code>/free</code> 卸载，同一个模型连续出图不要反复加载。</p>\n<p>于是加了一层代理：三个图像连接都指向新增的 <code>127.0.0.1:8189</code>（LaunchAgent <code>com.comfyui.proxy</code>），转发到 8188，并在提交前判断：</p>\n<ul><li>提取工作流里的底模名（<code>unet_name</code> 和 <code>clip_name</code>）做签名，和上次一样就直接转发，不动内存</li><li>只有换模型才调 <code>/free</code></li><li>卸载前先等队列空闲；卸载后等可用内存回到 6GB 以上，不够就重试</li><li>ComfyUI 没启动就自动冷启动，所以可以随时 <code>pkill</code> 它来省内存</li></ul>\n<p>第一次测试就出了事：<code>/free</code> 恰好在上一张图还没算完时被触发，返回 <code>0 models unloaded</code>。qwen 和 krea 两个模型同时占着内存，24GB 撑不住——系统 compressor 涨到 11GB，swapin 累计 4200 万次，那张图卡了 16 分钟没算完。重启 ComfyUI 后空闲回到 18.8GB，代理补上「等队列跑空再卸载」，重测确认一次能释放回 11.6GB。</p>\n<p>这里最值得记的一条：<strong><code>/free</code> 返回成功不代表卸载了。</strong> 它只回「卸载了几个模型」，队列还在跑时就是 0，而调用方如果只看 HTTP 200，就会以为内存已经腾出来了。判断「闸门是否生效」要看可用内存，不要看接口返回。</p>\n<h2 id=\"三个生图模型在这台机器上的真实速度\">三个生图模型在这台机器上的真实速度</h2>\n<p>走完整切换流程，1024×1024：</p>\n<ul><li><code>qwen-image-2.1-turbo</code>：约 96 秒，稳定，适合当默认</li><li><code>moss-image-sft</code>：约 385 秒</li><li><code>krea2-turbo</code>：约 379 秒，8 步却要 6 分钟——13GB 权重加 4.6GB 文本编码器正好顶到 24GB 天花板，一直在压缩换页</li></ul>\n<p>结论很直白：qwen 是唯一日常顺手的；krea 在这个内存下不适合当主力，要么从下拉列表摘掉，要么只留 moss 当风格备选。</p>\n<h2 id=\"需要彻底停掉-ollama-时\">需要彻底停掉 Ollama 时</h2>\n<pre><code class=\"language-bash\">curl -s http://127.0.0.1:11434/api/chat -d &#x27;{&quot;model&quot;:&quot;qwen3-8b&quot;,&quot;keep_alive&quot;:0}&#x27;\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.ollama.serve.plist</code></pre>\n<p>恢复：</p>\n<pre><code class=\"language-bash\">ssh peer &#x27;launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ollama.serve.plist&#x27;</code></pre>\n<p>停掉之后 Open WebUI 里的聊天和语音润色都不能用，生图不受影响（只是那一步「用本地模型改写提示词」会静默跳过）。</p>\n<p>另外一个数字要知道：那轮内存耗尽把 swap 撑到 30.8GB（总共 31.7GB），macOS 不会自动缩回去，系统会长期偏慢。想彻底恢复，重启那台机器最省事。</p>\n<h2 id=\"总结成一条\">总结成一条</h2>\n<p>在 24GB 的机器上跑本地模型，问题从来不是「装不上」，是三件事：</p>\n<ol><li>配置要写给当前版本读的键，不是文档里残留的旧键</li><li>格式转换（音频 MP3、图像尺寸）尽量放到自己可控的中转里，而不是指望环境里有 ffmpeg</li><li>内存闸门要看结果（可用内存、队列状态），不要看接口返回</li></ol>",
+  "toc": [
+    {
+      "level": 2,
+      "text": "生图：0.13.4 把配置键换了位置",
+      "id": "生图-0-13-4-把配置键换了位置"
+    },
+    {
+      "level": 2,
+      "text": "TTS：Gradio 得先包成 OpenAI 接口",
+      "id": "tts-gradio-得先包成-openai-接口"
+    },
+    {
+      "level": 2,
+      "text": "冷启动：24GB 上谁都不许常驻",
+      "id": "冷启动-24gb-上谁都不许常驻"
+    },
+    {
+      "level": 2,
+      "text": "一次把系统拖进 swap 的事故",
+      "id": "一次把系统拖进-swap-的事故"
+    },
+    {
+      "level": 2,
+      "text": "三个生图模型在这台机器上的真实速度",
+      "id": "三个生图模型在这台机器上的真实速度"
+    },
+    {
+      "level": 2,
+      "text": "需要彻底停掉 Ollama 时",
+      "id": "需要彻底停掉-ollama-时"
+    },
+    {
+      "level": 2,
+      "text": "总结成一条",
+      "id": "总结成一条"
+    }
+  ],
+  "related": [
+    "雷雳桥对端-装Ollama与Qwen3-8B",
+    "Krea2-双采-一采定构图二采加质感"
+  ],
+  "files": [
+    {
+      "href": "files/local-llm/local-llm-cheatsheet.md",
+      "name": "本地推理部署速查",
+      "desc": "含 /free 闸门条件、冷启动策略与 24GB 实测耗时"
+    }
+  ]
+}

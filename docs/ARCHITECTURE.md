@@ -98,8 +98,8 @@ python3 -m http.server -d dist 8000
 
 ## 当前验收基线（2026-11-16）
 
-- build：16 个生成页；`dist/` 共 27 个 HTML 页、127 个文件。
-- check：27 个页面 / 660 个引用，exit 0。
+- build：23 个生成页（含 6 篇 2026-11-25 手记）。
+- check：44 个页面 / 1136 个引用，exit 0。
 - tests：9 条（`tests/test_sitecheck.py`）。
 - 精读：13 篇；源仓未变时重导 `src/readers/` 与 `readers.json` 零差异。
 - 数字随内容与模板变化；每次改版后重跑并更新本节。
@@ -107,6 +107,7 @@ python3 -m http.server -d dist 8000
 ## 内容工作流
 
 - 新手记：`tools/new_post.py` 写 `src/content/posts/<slug>.json`，自动 build + check。正文图片用 `{{ROOT}}img/...`，构建时按页面层级替换；不要写 `/img/...`。
+- 手记页两个可选块：`related`（相关文章 slug 列表，始终补足 3 篇：显式优先 → 标签重合度 → 日期；桌面渲染在左栏目录下的星座小球，≤1024px 移到文末）与 `files`（`{href,name,desc}`，文件放 `src/static/files/`，构建时算体积；正文以弹框预览纯文本、可复制，行内另有「下载」链接）。
 - 新精读：先在 `bilingual-readers` 生成 `cloud/`，再 `import_readers.py --force`，然后 build。分类、导读、`featured` 改 `src/content/readers_curated.json`。
 - 导入预检：`import_readers.py` 会校验 `meta.json` 必需字段、`meta.cover.asset` 指向的媒体文件、`glossary.json` / `figures.json` 的结构；缺 glossary / figures 会告警并按 0 计，不再静默。
 - 老文章：`tools/oneoff/import_legacy.py` 只对 Butterfly 时期原始页面有效，正常维护不要跑。

@@ -168,7 +168,113 @@ def build_about():
                        active="about/")
 
 
-def build_post(p, prev, nxt):
+RELATED_DOTS = [
+    (20, 23, 13, "#c9a597"),
+    (73, 13, 13, "#9aa896"),
+    (128, 24, 13, "#cdbd9c"),
+    (183, 12, 13, "#8d99a5"),
+    (234, 21, 13, "#bd8e7d"),
+]
+
+
+def related_posts(p, posts, limit=3):
+    """显式 related 排前面，不够再用标签重合度补齐；同分按日期新到旧。"""
+    by_slug = {q["slug"]: q for q in posts}
+    picked = [by_slug[s] for s in p.get("related", [])
+              if s in by_slug and s != p["slug"]][:limit]
+    if len(picked) >= limit:
+        return picked
+    tags = set(p.get("tags", []))
+    seen = {q["slug"] for q in picked}
+    scored = []
+    for q in posts:
+        if q["slug"] == p["slug"] or q["slug"] in seen:
+            continue
+        shared = tags & set(q.get("tags", []))
+        if shared:
+            scored.append((len(shared), q["date"], q))
+    scored.sort(key=lambda t: (t[0], t[1]), reverse=True)
+    filled = picked + [q for _, _, q in scored[:limit - len(picked)]]
+    if len(filled) < limit:
+        seen = {q["slug"] for q in filled} | {p["slug"]}
+        rest = sorted((q for q in posts if q["slug"] not in seen),
+                      key=lambda q: q["date"], reverse=True)
+        filled += rest[:limit - len(filled)]
+    return filled
+
+
+def prompt_html(text):
+    """提示词的最小 Markdown：空行分段、**加粗**、`code`，其余按原文转义。"""
+    out = []
+    for block in re.split(r"\n\s*\n", text.strip()):
+        block = block.strip()
+        if not block:
+            continue
+        html = esc(block)
+        html = re.sub(r"`([^`]+)`", r"<code>\1</code>", html)
+        html = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html)
+        out.append(f"<p>{html}</p>")
+    return "".join(out)
+
+
+def human_size(n):
+    if n >= 1024 * 1024:
+        return f"{n / 1048576:.1f} MB"
+    return f"{max(1, round(n / 1024))} KB"
+
+
+def _slide_html(it, depth):
+    return PARTIALS.render("gallery-slide.html", {
+        "src": rel(depth) + esc(it["img"]),
+        "ar": it.get("ar", 1.5),
+        "wide": "1" if float(it.get("ar", 1.5)) >= 1.3 else "0",
+        "caption": txt(it["caption"]),
+        "meta": txt(it["meta"]),
+        "prompt_html": prompt_html(it["prompt"]),
+        "prompt": esc(it["prompt"]),
+    })
+
+
+def render_figures(content, p, depth):
+    """正文里的 {{fig:id}} / {{deck:group}} 换成图卡或叠卡轮播。"""
+    groups = [g for g in p.get("gallery", [])]
+    needles = re.findall(r"\{\{(fig|deck):([A-Za-z0-9_-]+)\}\}", content)
+    if not needles:
+        return content
+    gmap = {g.get("id", ""): g for g in groups}
+    imap = {}
+    for g in groups:
+        for it in g["items"]:
+            key = it.get("id") or it["img"].rsplit("/", 1)[-1].rsplit(".", 1)[0]
+            imap[key] = it
+    for kind, key in needles:
+        if kind == "fig":
+            it = imap.get(key)
+            if it is None:
+                raise ValueError(f"未知图片 id：{key}")
+            html = PARTIALS.render("figure-inline.html", {
+                "src": rel(depth) + esc(it["img"]),
+                "ar": it.get("ar", 1.5),
+                "wide": "1" if float(it.get("ar", 1.5)) >= 1.3 else "0",
+                "caption": txt(it["caption"]),
+                "meta": txt(it["meta"]),
+                "prompt_html": prompt_html(it["prompt"]),
+                "prompt": esc(it["prompt"]),
+            })
+        else:
+            g = gmap.get(key)
+            if g is None:
+                raise ValueError(f"未知图组 id：{key}")
+            html = PARTIALS.render("figure-deck.html", {
+                "slides": "".join(_slide_html(it, depth) for it in g["items"]),
+                "count": len(g["items"]),
+                "wide": "1" if max(float(i.get("ar", 1.5)) for i in g["items"]) >= 1.3 else "0",
+            })
+        content = content.replace("{{%s:%s}}" % (kind, key), html)
+    return content
+
+
+def build_post(p, prev, nxt, posts):
     depth = depth_of(p["path"] + "/index.html")
     content = p["content"].replace("{{ROOT}}", rel(depth))
     toc_items = [t for t in p.get("toc", []) if t.get("id")]
@@ -196,10 +302,65 @@ def build_post(p, prev, nxt):
         }) if nxt else empty)
         nav_links = PARTIALS.render("post-nav.html", {"prev": prev_html, "next": next_html})
 
+    related_html = ""
+    related_end_html = ""
+    rel_posts = related_posts(p, posts)
+    if rel_posts:
+        dots = []
+        for i, q in enumerate(rel_posts):
+            dots.append(PARTIALS.render("related-dot.html", {
+                "href": rel(depth) + q["path"] + "/",
+                "color": RELATED_DOTS[i % len(RELATED_DOTS)][3],
+                "label": txt(q["title"]),
+                "meta": txt((q["tags"][0] if q.get("tags") else "技术手记") +
+                            " · " + human_date(q["date"])),
+                "title": txt(q["title"]),
+            }))
+        dots_html = "".join(dots)
+        related_html = PARTIALS.render("related.html", {
+            "dots": dots_html, "root": rel(depth),
+        })
+        related_end_html = PARTIALS.render("related-end.html", {
+            "dots": dots_html, "root": rel(depth),
+        })
+
+    prompt_modal_html = ""
+    if p.get("gallery"):
+        prompt_modal_html = PARTIALS.render("prompt-modal.html", {})
+        content = render_figures(content, p, depth)
+
+    files_html = ""
+    if p.get("files"):
+        rows = []
+        for f in p["files"]:
+            src = STATIC / f["href"]
+            kind = f["href"].rsplit(".", 1)[-1].upper()
+            body = ""
+            if src.exists():
+                try:
+                    body = esc(src.read_text(encoding="utf-8"))
+                except (UnicodeDecodeError, OSError):
+                    body = ""
+            rows.append(PARTIALS.render("file-row.html", {
+                "href": rel(depth) + esc(f["href"]),
+                "kind": kind,
+                "name": txt(f["name"]),
+                "desc": txt(f.get("desc", "")),
+                "size": human_size(src.stat().st_size) if src.exists() else "",
+                "doc": body,
+            }))
+        files_html = PARTIALS.render("post-files.html", {
+            "items": "".join(rows),
+            "note": txt(p.get("files_note",
+                            "可直接下载；文中的示例地址与主机名已做脱敏。")),
+        })
+
     body = T.render("post.html", {
         "root": rel(depth), "date": p["date"], "human_date": human_date(p["date"]),
         "tags": tags, "title": txt(p["title"]), "description": txt(p["description"]),
         "toc": toc, "content": content, "nav_links": nav_links,
+        "related": related_html, "related_end": related_end_html,
+        "prompt_modal": prompt_modal_html, "files": files_html,
     })
     return render_page(p["path"] + "/index.html", p["title"], p["description"], body,
                        active="notes/", ogtype="article", extra="", bodyclass="is-post")
@@ -244,7 +405,7 @@ def main():
     for i, p in enumerate(posts):
         prev = posts[i + 1] if i + 1 < len(posts) else None
         nxt = posts[i - 1] if i > 0 else None
-        pages.append((p["path"] + "/index.html", build_post(p, prev, nxt)))
+        pages.append((p["path"] + "/index.html", build_post(p, prev, nxt, posts)))
     pages.append(("404.html", build_404()))
     pages.append(("sitemap.xml", build_sitemap(posts)))
     pages.append(("robots.txt", f"User-agent: *\nAllow: /\nSitemap: {BASE}/sitemap.xml\n"))

@@ -1,0 +1,23 @@
+<section class="wrap post-gallery" aria-labelledby="gallery-h">
+  <div class="gallery-inner">
+    <h2 class="gallery-h" id="gallery-h">图片与提示词</h2>
+    <p class="gallery-note">{{note}}</p>
+    {{groups}}
+  </div>
+  <div class="prompt-modal" id="prompt-modal" role="dialog" aria-modal="true" aria-labelledby="pm-title" hidden>
+    <div class="pm-backdrop" data-pm-close></div>
+    <div class="pm-panel">
+      <button class="pm-close" type="button" data-pm-close aria-label="关闭">×</button>
+      <div class="pm-media">
+        <img class="pm-img" id="pm-img" alt="">
+        <div class="pm-dots" id="pm-dots"></div>
+      </div>
+      <div class="pm-side">
+        <p class="pm-meta" id="pm-meta"></p>
+        <h3 class="pm-title" id="pm-title"></h3>
+        <div class="pm-prompt" id="pm-prompt"></div>
+        <div class="pm-foot"><button class="pm-copy" type="button">复制提示词</button></div>
+      </div>
+    </div>
+  </div>
+</section>
