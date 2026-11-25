@@ -1,101 +1,109 @@
 {
- "featured": "always-on-agents",
- "readers": {
-  "agent-manager": {
-   "category": "智能体协作",
-   "blurb": "写代码的智能体一多，你就成了项目经理。文章把这件事拆成 12 个可执行的习惯，也点明智能体和初级工程师的 6 处不同。"
-  },
-  "anthropic-scm": {
-   "category": "工程基建",
-   "blurb": "合并量五个月涨十倍，git 撑不住了：7 个人、5 个月自研版本控制系统 Scion，把内部 monorepo 全量迁了过去。"
-  },
-  "claude-code-review": {
-   "category": "工程实践",
-   "blurb": "当 Claude 写掉约 90% 的代码，review 不再是路尽头的闸门，而是写代码时的拼写检查。"
-  },
-  "claude-sdlc-sec": {
-   "category": "安全",
-   "blurb": "AI 写代码之后，安全边界该放在哪：从会话、权限与审批，到部署后的监控与回滚。"
-  },
-  "claude-subagent-loop": {
-   "category": "智能体架构",
-   "blurb": "什么时候该把子智能体折叠回主循环？答案取决于上下文隔离、工具数量与成本，而不是「多一层更专业」。"
-  },
-  "fable-multi-agent": {
-   "category": "智能体架构",
-   "blurb": "1,000 个智能体、28.7 小时、一个费马大定理的形式化证明：一篇关于「扩到多大才安全」的实验报告。"
-  },
-  "harness-reader": {
-   "category": "智能体架构",
-   "blurb": "把主观设计变成可评分项，让生成与评估两个智能体互相制衡：长程自主编程的流水线长什么样。"
-  },
-  "always-on-agents": {
-   "category": "智能体架构",
-   "blurb": "常驻智能体不是更聪明的循环，而是五件基础设施围着同一个循环：事件收件箱、定时器、记忆、权限、发件箱。"
-  },
-  "loops-graphs": {
-   "category": "智能体架构",
-   "blurb": "循环让一个工作单元自己检查到通过，图决定有哪些单元、谁等谁；两条回传路径，加上按影响半径开的闸门。"
-  },
-  "loop-engineering": {
-   "category": "智能体架构",
-   "blurb": "四层循环：干活的智能体循环、打分的验证循环、被事件触发的事件循环、用 trace 自我改进的爬坡循环。前三层自动化工作，第四层自动化改进。"
-  },
-  "robotics-engineer-6mo": {
-   "category": "学习路线",
-   "blurb": "六个月、每月一个能动的实物、三档预算、100 多个资源：一份零基础可执行的机器人路线。"
-  },
-  "super-agent-design": {
-   "category": "智能体架构",
-   "blurb": "路由层 + 工作层、事件驱动、算存分离、外部看门狗：为什么「一个会话 + 一个人盯着」撑不起整个团队。"
-  },
-  "wiki-layer": {
-   "category": "上下文工程",
-   "blurb": "把「每次上传文件」换成「先编译成 Wiki，再提问」：把 Karpathy 的 LLM Wiki 讲成四步流程。"
-  },
-  "grok-bot-automation": {
-   "category": "自动化",
-   "blurb": "自动化难的不是工具，是想清楚：一位 Grok Bot 作者把「定目标 → 讲流程 → 自己找反馈 → 设例程」拆成五步，五段提示词可以直接抄。"
-  },
-  "finding-unknowns": {
-   "category": "智能体协作",
-   "blurb": "强模型下卡住你的不是能力，是你讲不清的「未知」。地图不是实地，四格拆解，加上实现前、中、后八种把未知挖出来的动作。"
-  },
-  "claude-verification": {
-   "category": "工程实践",
-   "blurb": "约 90% 的代码由 Claude 写、也由 Claude 审。三类测试谁最值得投入，以及八条做法让验证器别自欺：检查不能修改审判它的检查，新闸门先跑 observe。"
-  },
-  "chaos-loop-docs": {
-   "category": "工程实践",
-   "blurb": "发布前三周还是单节点上的概念验证。让 Claude 在预发集群连跑两周故意弄坏服务，20 亿请求只 60 次服务器错误；顺带算出小团队版本要花多少钱。"
-  },
-  "dynamic-workflows": {
-   "category": "智能体架构",
-   "blurb": "与其让 Claude 在一个上下文窗口里既计划又执行，不如让它现写一段脚本，把活派给一群上下文独立的子智能体：六种可组合模式、十类场景，以及什么时候根本不该用。"
-  },
-  "seeing-like-an-agent": {
-   "category": "智能体架构",
-   "blurb": "为了让 Claude 好好提问，他们改了两版都没成。工具设计的标准只有一个：它是否长得像模型此刻的能力——而能力会变，工具就得跟着换。"
-  },
-  "prompt-caching": {
-   "category": "工程实践",
-   "blurb": "提示缓存只认前缀匹配，所以「怎么排」和「什么不许动」比「写得多好」更影响账单：三条禁令，外加压缩时为什么不能另起一个摘要调用。"
-  },
-  "agent-memory": {
-   "category": "上下文工程",
-   "blurb": "记忆不是存得越多越好。文章把智能体记忆拆成四层——会话记录、记忆笔记、记忆表示（维基）、注入上下文，再给一个贯穿四层的离线动作「做梦」；拿 CL-Bench、宝可梦红、4.2 亿 token 文档库与法律简报逐层验证。"
-  },
-  "anthropic-safety-evals": {
-   "category": "安全",
-   "blurb": "「模型更安全」这句话，只有背后的评测站得住才成立。四组建议配系统卡里的真实数字：恰当回应率、±10 个百分点的区间、34 个百分点的配置差异。"
-  },
-  "managed-agents": {
-   "category": "智能体架构",
-   "blurb": "会话、运行框架、沙箱该不该塞进一个容器？把「大脑」和「双手」拆成三层稳定接口，p95 首 token 延迟降了 90% 以上。"
-  },
-  "skills-over-mcp": {
-   "category": "智能体架构",
-   "blurb": "MCP 从「只交工具」升级成「能交技能」：服务器可以把 SKILL.md 那套说明随工具一起发，按需加载、随服务器更新。再加上 Tasks、Elicitation、File Uploads，服务器开始像另一个智能体——能跑长活、能中途问你、能收文件。"
+  "featured": "always-on-agents",
+  "readers": {
+    "agent-manager": {
+      "category": "智能体协作",
+      "blurb": "写代码的智能体一多，你就成了项目经理。文章把这件事拆成 12 个可执行的习惯，也点明智能体和初级工程师的 6 处不同。"
+    },
+    "anthropic-scm": {
+      "category": "工程基建",
+      "blurb": "合并量五个月涨十倍，git 撑不住了：7 个人、5 个月自研版本控制系统 Scion，把内部 monorepo 全量迁了过去。"
+    },
+    "claude-code-review": {
+      "category": "工程实践",
+      "blurb": "当 Claude 写掉约 90% 的代码，review 不再是路尽头的闸门，而是写代码时的拼写检查。"
+    },
+    "claude-sdlc-sec": {
+      "category": "安全",
+      "blurb": "AI 写代码之后，安全边界该放在哪：从会话、权限与审批，到部署后的监控与回滚。"
+    },
+    "claude-subagent-loop": {
+      "category": "智能体架构",
+      "blurb": "什么时候该把子智能体折叠回主循环？答案取决于上下文隔离、工具数量与成本，而不是「多一层更专业」。"
+    },
+    "fable-multi-agent": {
+      "category": "智能体架构",
+      "blurb": "1,000 个智能体、28.7 小时、一个费马大定理的形式化证明：一篇关于「扩到多大才安全」的实验报告。"
+    },
+    "harness-reader": {
+      "category": "智能体架构",
+      "blurb": "把主观设计变成可评分项，让生成与评估两个智能体互相制衡：长程自主编程的流水线长什么样。"
+    },
+    "always-on-agents": {
+      "category": "智能体架构",
+      "blurb": "常驻智能体不是更聪明的循环，而是五件基础设施围着同一个循环：事件收件箱、定时器、记忆、权限、发件箱。"
+    },
+    "loops-graphs": {
+      "category": "智能体架构",
+      "blurb": "循环让一个工作单元自己检查到通过，图决定有哪些单元、谁等谁；两条回传路径，加上按影响半径开的闸门。"
+    },
+    "loop-engineering": {
+      "category": "智能体架构",
+      "blurb": "四层循环：干活的智能体循环、打分的验证循环、被事件触发的事件循环、用 trace 自我改进的爬坡循环。前三层自动化工作，第四层自动化改进。"
+    },
+    "robotics-engineer-6mo": {
+      "category": "学习路线",
+      "blurb": "六个月、每月一个能动的实物、三档预算、100 多个资源：一份零基础可执行的机器人路线。"
+    },
+    "super-agent-design": {
+      "category": "智能体架构",
+      "blurb": "路由层 + 工作层、事件驱动、算存分离、外部看门狗：为什么「一个会话 + 一个人盯着」撑不起整个团队。"
+    },
+    "wiki-layer": {
+      "category": "上下文工程",
+      "blurb": "把「每次上传文件」换成「先编译成 Wiki，再提问」：把 Karpathy 的 LLM Wiki 讲成四步流程。"
+    },
+    "grok-bot-automation": {
+      "category": "自动化",
+      "blurb": "自动化难的不是工具，是想清楚：一位 Grok Bot 作者把「定目标 → 讲流程 → 自己找反馈 → 设例程」拆成五步，五段提示词可以直接抄。"
+    },
+    "finding-unknowns": {
+      "category": "智能体协作",
+      "blurb": "强模型下卡住你的不是能力，是你讲不清的「未知」。地图不是实地，四格拆解，加上实现前、中、后八种把未知挖出来的动作。"
+    },
+    "claude-verification": {
+      "category": "工程实践",
+      "blurb": "约 90% 的代码由 Claude 写、也由 Claude 审。三类测试谁最值得投入，以及八条做法让验证器别自欺：检查不能修改审判它的检查，新闸门先跑 observe。"
+    },
+    "chaos-loop-docs": {
+      "category": "工程实践",
+      "blurb": "发布前三周还是单节点上的概念验证。让 Claude 在预发集群连跑两周故意弄坏服务，20 亿请求只 60 次服务器错误；顺带算出小团队版本要花多少钱。"
+    },
+    "dynamic-workflows": {
+      "category": "智能体架构",
+      "blurb": "与其让 Claude 在一个上下文窗口里既计划又执行，不如让它现写一段脚本，把活派给一群上下文独立的子智能体：六种可组合模式、十类场景，以及什么时候根本不该用。"
+    },
+    "seeing-like-an-agent": {
+      "category": "智能体架构",
+      "blurb": "为了让 Claude 好好提问，他们改了两版都没成。工具设计的标准只有一个：它是否长得像模型此刻的能力——而能力会变，工具就得跟着换。"
+    },
+    "prompt-caching": {
+      "category": "工程实践",
+      "blurb": "提示缓存只认前缀匹配，所以「怎么排」和「什么不许动」比「写得多好」更影响账单：三条禁令，外加压缩时为什么不能另起一个摘要调用。"
+    },
+    "agent-memory": {
+      "category": "上下文工程",
+      "blurb": "记忆不是存得越多越好。文章把智能体记忆拆成四层——会话记录、记忆笔记、记忆表示（维基）、注入上下文，再给一个贯穿四层的离线动作「做梦」；拿 CL-Bench、宝可梦红、4.2 亿 token 文档库与法律简报逐层验证。"
+    },
+    "anthropic-safety-evals": {
+      "category": "安全",
+      "blurb": "「模型更安全」这句话，只有背后的评测站得住才成立。四组建议配系统卡里的真实数字：恰当回应率、±10 个百分点的区间、34 个百分点的配置差异。"
+    },
+    "managed-agents": {
+      "category": "智能体架构",
+      "blurb": "会话、运行框架、沙箱该不该塞进一个容器？把「大脑」和「双手」拆成三层稳定接口，p95 首 token 延迟降了 90% 以上。"
+    },
+    "skills-over-mcp": {
+      "category": "智能体架构",
+      "blurb": "MCP 从「只交工具」升级成「能交技能」：服务器可以把 SKILL.md 那套说明随工具一起发，按需加载、随服务器更新。再加上 Tasks、Elicitation、File Uploads，服务器开始像另一个智能体——能跑长活、能中途问你、能收文件。"
+    },
+    "shipping-with-claude-code": {
+      "category": "工程实践",
+      "blurb": "开完 PR 之后的收尾活怎么交给机器：本地的 /ship、仓库里的规则文件、团队策略，分三层接手，而不是一个命令包办。"
+    },
+    "introducing-claude-ship": {
+      "category": "工程实践",
+      "blurb": "PR 之后的三段被拆成三个 agent：找问题、养绿、按策略批。这篇讲清边界、计费、谁能用，以及哪三类组织用不了。"
+    }
   }
- }
 }

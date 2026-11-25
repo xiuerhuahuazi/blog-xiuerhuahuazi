@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>用 Claude Code 把 PR 一路送到可合并｜A practical guide to shipping with Claude Code</title>
+<meta name="description" content="用 Claude Code 把 PR 一路送到可合并｜A practical guide to shipping with Claude Code：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/shipping-with-claude-code/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="用 Claude Code 把 PR 一路送到可合并">
+<meta property="og:description" content="开完 PR 的收尾活交给 /ship，注意力留给下一件事">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/shipping-with-claude-code/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Addy Osmani · Claude Code 团队（Anthropic） · 2026-11-24</p><h1 class="h1-wrap"><span class="h1-en" lang="en">A practical guide to shipping with Claude Code</span><span class="h1-zh">用 Claude Code 把 PR 一路送到可合并</span></h1><div class="hero-meta"><span>原文 3890 词</span><span>中文 7800 字</span><span>逐句对照 <i>198</i> 句</span><span>预计 16 分钟</span><span><a href="https://claude.dev/blog/the-work-after-you-open-a-pr/" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇文章在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 9 条，再看原文会快很多。</p><ul class="ov-list"><li><b>先知道一件事</b>：这是「动手篇」，讲怎么在自己仓库里配。想知道多少钱、谁能用、什么情况下别开，看姊妹篇《Claude Ship 发布：审、修、批，都可以交给 Claude》——页底延伸阅读地图里标 L9 的那张卡可以直接点开（本机文件，断网可用）。</li><li><b>一句话</b>：开完 PR 之后那一堆收尾小活——CI 挂了、评审回了六条、主干合并出冲突——现在可以交给 Claude；本文讲的是怎么在你自己的仓库里一步步把这套接上，而不是等管理员给你开。</li><li><b>三层分工</b>：「代码审查（Code Review）」负责找问题，「PR Steward」负责把 PR 养到绿（设计上不批准、也不合并），「Claude Approvals」按团队写的策略文件判断还要谁批。前两步今天可以部分自动化，最后一步是你自己在分支保护和策略文件里定的。</li><li><b>最低成本的起点</b>：推送前先跑 <code>/code-review</code>；下一个 PR 用 <code>/ship</code>，让它替你开 PR、审一遍、再盯最多七天。已经开好的 PR 只想找人照看，用 <code>/steward</code>。</li><li><b>规则要沉淀成文件</b>：同一句评论在两个以上的 PR 上重复，才值得写进 <code>CLAUDE.md</code>、<code>REVIEW.md</code> 或某个 skill；写进去之后先让它跑几遍，再信任它。</li><li><b>最容易忽略的坑</b>：Claude 的批准在 GitHub 上是真批准。只要求一次批准的规则集，它一个就够；再配上 auto-merge，可能出现谁都没动手、PR 自己合了。</li><li><b>上线顺序</b>：先在 observe 模式跑一两周，把「它会怎么判」和「人怎么判」逐条对；先把第二行（它说该过、人却要求改）修掉，再逐条收紧，最后才把 Claude Approvals 设成必需检查。</li><li><b>安全边界</b>：watch 在你自己的机器上、用你的凭证跑测试。只有当你信任所有能往主干合代码的人时，才在本地跑它。</li><li><b>责任</b>：谁叫的 agent，谁对这次改动负责，就像代码是自己敲的一样。</li></ul><div class="compare"><div class="cmp"><h3>常见做法：开完 PR 等人来救火</h3><ol><li>开完 PR 就等人审、等 CI，自己被反复拽离手上的活</li><li>规则留在脑子里，每次口头重复一遍</li><li>想省事，直接把自动批准打开</li><li>出了事再回滚、再找人追责</li></ol></div><div class="cmp win"><h3>本文做法：分层接手，先观察后收紧</h3><ol><li>推送前 `/code-review` 自查，开 PR 后 `/ship` 盯最多七天</li><li>重复两次以上的评论写进 CLAUDE.md / REVIEW.md / skill</li><li>策略先用 observe 跑，比对判断之后再收紧</li><li>Claude 的批准算真批准，按路径写清谁能批</li></ol></div></div><p class="ov-foot cmp-foot">这张对比卡是译者按正文归纳的，不是原文的表格。原文更强调「先让机器接手可重复的部分，再用观察数据决定放开到哪一步」，而不是一步到位全自动。</p><p class="ov-foot">读法建议：先看第一节的分工表，建立「云端三个 agent / 本地三条命令」的坐标系；再按「自己的 PR → 仓库里的规则文件 → 团队策略」的顺序读，这三段正好对应你能独立做到的三层。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+<div class="gist"><span class="gist-label">导读</span><p>这篇要解决的是一个很具体的痛点：PR 一开，你就被各种小活反复打断。作者给的不是口号，而是三层可落地的接手方式——本地命令、仓库里的规则文件、团队策略。</p></div>
+<div class="reader-body">
+<div class="row wide"><div class="lede"><div class="lede-grid"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">After you open a <span class='term' data-term='pr'>pull request</span>, hand the follow up to Claude Code using /ship. Here's how to dial in your preferences to stay in flow.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">开完一个<span class='term' data-term='pr'>拉取请求</span>（PR）之后，把后续的收尾工作交给 Claude Code 的 <code>/ship</code>。下面讲怎么把你的偏好调到位，好让自己一直待在心流里。</span></p></div></div></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">When you open a pull request, there's usually a bunch of follow-up work to be done:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">每开一个 PR，通常都有一堆后续工作要做：</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="intro-b2-0-0"><span class='term' data-term='ci'>CI</span> fails</span></li><li><span class="s" data-k="intro-b2-1-0">A review comes back with six comments</span></li><li><span class="s" data-k="intro-b2-2-0">A main merge creates a conflict</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="intro-b2-0-0"><span class='term' data-term='ci'>持续集成</span>（CI）挂了</span></li><li><span class="s" data-k="intro-b2-1-0">一次评审回来，带了六条评论</span></li><li><span class="s" data-k="intro-b2-2-0">主干合并过来，产生了冲突</span></li></ul></div></div>
+<div class="row" data-rid="intro-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b3-0">They're all tiny little tasks, but each one takes you off your focus work.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b3-0">每一件都是零碎的小活，但每一件都会把你从正在专注的事情上拽走。</span></p></div></div>
+<div class="row" data-rid="intro-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b4-0">On the Claude Code team, an <span class='term' data-term='agent'>agent</span> commonly does this follow-up work.</span> <span class="s" data-k="intro-b4-1">For example, it can pick up an issue a reviewer found, so when the author gets back, the PR has already been updated once.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b4-0">在 Claude Code 团队，这类收尾工作通常由一个<span class='term' data-term='agent'>智能体</span>来做。</span><span class="s" data-k="intro-b4-1">比如，审查者发现的一个问题它可以接手改掉，等作者回来时，这个 PR 已经被更新过一轮了。</span></p></div></div>
+<div class="row" data-rid="intro-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b5-0">In my experience this is a more productive and enjoyable way to code.</span> <span class="s" data-k="intro-b5-1">It minimizes context switching and keeps me in a flow state.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b5-0">以我的经验，这样写代码效率更高，也更舒服。</span><span class="s" data-k="intro-b5-1">它把上下文切换压到最低，让我能一直待在心流状态里。</span></p></div></div>
+<div class="row" data-rid="intro-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b6-0">We've talked about the process the Claude Code team uses for code review <a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>here</a>, and about the verification process underneath it <a class='lnk' href='https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/' target='_blank' rel='noopener' data-link='L2'>here</a>.</span> <span class="s" data-k="intro-b6-1">This post is about getting your own repository set up to do this using some of the new functionality we recently added with the <a class='lnk' href='https://claude.com/resources/articles/introducing-claude-ship' target='_blank' rel='noopener' data-link='L3'>Claude Ship launch</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b6-0">Claude Code 团队做代码审查的流程，我们<a class='lnk' href='https://claude.dev/blog/solving-code-review-at-anthropic/' target='_blank' rel='noopener' data-link='L1'>之前写过</a>；它底下那套验证流程，也<a class='lnk' href='https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/' target='_blank' rel='noopener' data-link='L2'>之前写过</a>。</span><span class="s" data-k="intro-b6-1"><b>本文要讲的是，怎么把你自己的仓库也配成能这么做</b>——用的正是我们最近随<a class='lnk' href='https://claude.com/resources/articles/introducing-claude-ship' target='_blank' rel='noopener' data-link='L3'>Claude Ship 发布</a>加上的那部分新功能。</span></p></div></div>
+<div class="row" data-rid="intro-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b7-0">It's for a developer or tech lead whose team works on GitHub and who doesn't have admin privileges.</span> <span class="s" data-k="intro-b7-1">You can start on your own right now by running a few commands, and save what you learn to files in your repo for the team to review.</span> <span class="s" data-k="intro-b7-2">Admins only need to get involved if your team wants agents doing this automatically on the team's PRs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b7-0">它面向的是在 GitHub 上协作、但自己没有管理员权限的开发者或技术负责人。</span><span class="s" data-k="intro-b7-1">你现在就可以自己动手，跑几条命令开始，再把摸索出来的东西写进仓库里的文件，交给团队去看。</span><span class="s" data-k="intro-b7-2">只有当团队想让智能体在大家的 PR 上自动做这些事时，才需要管理员介入。</span></p></div></div>
+<div class="row" data-rid="intro-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b8-0">You're still the architect of the process, so you're defining what to build, how to build it, and what the bar for merging is.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b8-0">这个流程的设计者仍然是你：做什么、怎么做、合并的门槛定在哪，都由你来定。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-ship">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">THE POST-PR PROCESS</span><span class="h-zh">开完 PR 之后的流程</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>三个智能体 各管一段。先认清「哪一步在哪跑」：前三行用的是你自己的会话，最后一行才是 Anthropic 的云。这张表是全文的坐标系。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="ship-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ship-b0-0">After you've opened a PR, you want to find issues, address issues, and make a final decision on if the change can be merged.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ship-b0-0">开完 PR 之后，你要做三件事：找出问题、解决问题，最后判断这次改动能不能合并。</span></p></div></div>
+<div class="row" data-rid="ship-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ship-b1-0">Claude Ship is three agents that tackle this work: <span class='term' data-term='codereview'>Code Review</span>, PR Steward (beta), and Claude Approvals (beta).</span> <span class="s" data-k="ship-b1-1">Code Review is generally available, and the other two are in beta.</span> <span class="s" data-k="ship-b1-2">/ship is a command you run yourself in Claude Code to try Claude Ship on your own pull requests.</span> <span class="s" data-k="ship-b1-3">It comes with the latest version of Claude Code, and it works even before an admin has turned on any of the agents.</span> <span class="s" data-k="ship-b1-4">You can partially automate the first two steps today.</span> <span class="s" data-k="ship-b1-5">The last step is a decision that you set in your branch protections and (if your team adopts one) your policy file.</span> <span class="s" data-k="ship-b1-6">Here is how it breaks down using the three agents that are part of Claude Ship:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ship-b1-0">Claude Ship 是接手这段工作的三个智能体：<span class='term' data-term='codereview'>代码审查</span>（Code Review）、PR Steward（公测）和 Claude Approvals（公测）。</span><span class="s" data-k="ship-b1-1">代码审查已正式可用，另外两个还在公测。<sup class='tn' data-note='N1'>1</sup></span><span class="s" data-k="ship-b1-2"><code>/ship</code> 是你在 Claude Code 里自己敲的命令，用来在自己的 PR 上试这套 Claude Ship。</span><span class="s" data-k="ship-b1-3">它随最新版 Claude Code 一起装上；管理员一个 智能体 都还没开的时候，它也能用。</span><span class="s" data-k="ship-b1-4">前两步今天就可以先部分自动化。</span><span class="s" data-k="ship-b1-5">最后一步是个决定：写进你的分支保护，团队如果采用了策略文件，也写进策略文件。</span><span class="s" data-k="ship-b1-6">按 Claude Ship 这三个 智能体 来拆，就是下面这张表：</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">You want Claude to</span><span class="th-zh">你想让 Claude 做的事</span></th><th><span class="th-en">Run</span><span class="th-zh">用哪条</span></th><th><span class="th-en">Where it runs</span><span class="th-zh">在哪里跑</span></th></tr></thead><tbody><tr><td><span class="td-en">Find bugs before anyone else looks</span><span class="td-zh">在别人看之前先把 bug 找出来</span></td><td><span class="td-en"><code>/code-review</code></span><span class="td-zh"><code>/code-review</code></span></td><td><span class="td-en">Your session</span><span class="td-zh">你自己的会话</span></td></tr><tr><td><span class="td-en">Open a PR, review it and keep working on what comes back</span><span class="td-zh">开一个 PR、审一遍，再继续处理回来的反馈</span></td><td><span class="td-en"><code>/ship</code></span><span class="td-zh"><code>/ship</code></span></td><td><span class="td-en">Your session</span><span class="td-zh">你自己的会话</span></td></tr><tr><td><span class="td-en">Look after a PR you already opened</span><span class="td-zh">照看一个你已经开好的 PR</span></td><td><span class="td-en"><code>/steward</code></span><span class="td-zh"><code>/steward</code></span></td><td><span class="td-en">Your session</span><span class="td-zh">你自己的会话</span></td></tr><tr><td><span class="td-en">Do this across a team's PRs automatically</span><span class="td-zh">在团队的 PR 上自动做这些事</span></td><td><span class="td-en">Claude Ship</span><span class="td-zh">Claude Ship</span></td><td><span class="td-en">Anthropic's cloud by default, set up by your team</span><span class="td-zh">默认跑在 Anthropic 的云上，由你的团队配置</span></td></tr></tbody></table></div></div>
+</div>
+</section>
+<section class="sec" id="s-ownprs">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">ON YOUR OWN PRS</span><span class="h-zh">在你自己的 PR 上</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一段是「今天就能上手」的部分：推送前先用 /code-review 自查，下一个 PR 用 /ship 让它开 PR、审一遍、再盯七天；已经开好的 PR 用 /steward 只做值守。所有命令都跑在你自己的会话里。</p></div>
+<div class="reader-body">
+<div class="row h3row wide" id="h-ownprs-b0"><h3><span class='h3-en'>Getting started today with /code-review</span><span class='h3-zh'>从今天开始：/code-review</span></h3></div>
+<div class="row" data-rid="ownprs-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b1-0">If you only do one thing from this post, review your branch before you push it.</span> <span class="s" data-k="ownprs-b1-1">Bugs you catch here are less likely to come back as review comments or failed checks that pull you off your next task.</span> <span class="s" data-k="ownprs-b1-2">At the Claude Code prompt, enter this command:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b1-0">如果这篇文章你只做一件事，那就是在推送之前先把自己的分支审一遍。</span><span class="s" data-k="ownprs-b1-1">在这个阶段抓到的 bug，之后变成评审评论或失败的检查、再把你从下一件事上拽走的概率就低得多。</span><span class="s" data-k="ownprs-b1-2">在 Claude Code 的提示符下，输入这条命令：</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>最常用的那一条<span class="code-note">审查当前分支的提交与未提交改动，找正确性 bug</span></summary><pre>/code-review</pre></details></div>
+<div class="row" data-rid="ownprs-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b3-0">It reviews the commits on your branch and your uncommitted changes for correctness bugs.</span> <span class="s" data-k="ownprs-b3-1">A few variations to keep in mind:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b3-0">它会审查你分支上的提交，以及还没提交的改动，找的是正确性 bug。</span><span class="s" data-k="ownprs-b3-1">有几条变体可以记一下：</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>四条变体<span class="code-note">力度、直接改、发到 PR、云端深审</span></summary><pre>/code-review high 1234       # review PR 1234 at high effort
+/code-review --fix           # apply the findings to your working tree
+/code-review --comment 1234  # post the findings on the PR
+/code-review ultra           # run a deeper review in the cloud</pre></details></div>
+<div class="row" data-rid="ownprs-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b5-0">The effort goes from low to max.</span> <span class="s" data-k="ownprs-b5-1">At low you only see the findings the review is most sure about.</span> <span class="s" data-k="ownprs-b5-2">Go higher and you see more, including some it's less sure about.</span> <span class="s" data-k="ownprs-b5-3">Claude remembers the last level you used, so if the risk changes, set it again.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b5-0">力度（effort）从 low 到 max。</span><span class="s" data-k="ownprs-b5-1">用 low，你只会看到它最有把握的那些发现。</span><span class="s" data-k="ownprs-b5-2">往上调就能看到更多，包括一些它自己也没那么确定的。</span><span class="s" data-k="ownprs-b5-3">Claude 会记住你上次用的档位；风险变了，记得重新设。</span></p></div></div>
+<div class="row" data-rid="ownprs-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b6-0">A few caveats:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b6-0">有几点要注意：</span></p></div></div>
+<div class="row" data-rid="ownprs-b7"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="ownprs-b7-0-0">You will want to take extra care when using the ultra setting, which runs in the cloud, needs a login at claude.ai, and can be billed separately from your plan.</span> <span class="s" data-k="ownprs-b7-0-1">Read the <a class='lnk' href='https://code.claude.com/docs/en/ultrareview' target='_blank' rel='noopener' data-link='L4'>ultrareview docs</a> before trying it.</span></li><li><span class="s" data-k="ownprs-b7-1-0">Edits made by <code>--fix</code> during a background review may not be caught by <code>/rewind</code>.</span> <span class="s" data-k="ownprs-b7-1-1">Commit first if you want an easy way back.</span></li><li><span class="s" data-k="ownprs-b7-2-0">Local <code>/code-review</code> reads your <code>CLAUDE.md</code> files, but not <code>REVIEW.md</code>.</span> <span class="s" data-k="ownprs-b7-2-1">This matters later.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="ownprs-b7-0-0">用 ultra 档要格外小心：它跑在云端，需要登录 claude.ai，而且可能和你的套餐分开计费。</span><span class="s" data-k="ownprs-b7-0-1">试之前先读一下<a class='lnk' href='https://code.claude.com/docs/en/ultrareview' target='_blank' rel='noopener' data-link='L4'>ultrareview 文档</a>。</span></li><li><span class="s" data-k="ownprs-b7-1-0">后台审查期间由 <code>--fix</code> 做出的修改，<code>/rewind</code> 可能抓不到。</span><span class="s" data-k="ownprs-b7-1-1">想留一条好回退的路，就先提交。</span></li><li><span class="s" data-k="ownprs-b7-2-0">本地的 <code>/code-review</code> 会读你的 <code>CLAUDE.md</code>，但不读 <code>REVIEW.md</code>。</span><span class="s" data-k="ownprs-b7-2-1">这一点后面会用到。</span></li></ul></div></div>
+<div class="row" data-rid="ownprs-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b8-0">The first thing you should do is run <code>/code-review</code> a few times to understand what it catches and where it gets things wrong.</span> <span class="s" data-k="ownprs-b8-1">You'll use this later.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b8-0">你该做的第一件事，是把 <code>/code-review</code> 跑上几次，摸清它能抓到什么、又在哪里会判断错。</span><span class="s" data-k="ownprs-b8-1">后面你会用到这个判断。</span></p></div></div>
+<div class="row h3row wide" id="h-ownprs-b9"><h3><span class='h3-en'>Run /ship for your next PR</span><span class='h3-zh'>下一个 PR，跑 /ship</span></h3></div>
+<div class="row" data-rid="ownprs-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b10-0">Once you're ready, type:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b10-0">准备好了，就输入：</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>开 PR 并盯着它<span class="code-note">要本地的 GitHub 仓库，需要 Claude Code v2.1.330 以上</span></summary><pre>/ship</pre></details></div>
+<div class="row" data-rid="ownprs-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b12-0">If you don't have a PR for your branch yet, <code>/ship</code> will:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b12-0">如果你的分支还没有对应的 PR，<code>/ship</code> 会做这几件事：</span></p></div></div>
+<div class="row" data-rid="ownprs-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b13-0">1. Commit your pending changes. It behaves as if you had run <code>git add -A</code>, so it will respect your <code>.gitignore</code>. It will create a branch if necessary, and it will use your session to write the commit message. You will be notified of this before the commit, and can abort by hitting Esc.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b13-0">1. 提交你还没提交的改动。它的行为等同于你跑了 <code>git add -A</code>，所以会遵守你的 <code>.gitignore</code>。必要的话它会新建分支，并用你当前这个会话写提交信息。提交之前它会先告诉你，你可以按 Esc 中止。</span></p></div></div>
+<div class="row" data-rid="ownprs-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b14-0">2. Push and create the PR as you.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b14-0">2. 以你的身份推送，并以你的身份开 PR。</span></p></div></div>
+<div class="row" data-rid="ownprs-b15"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b15-0">3. Perform a code review using <code>/code-review</code>, unless the commit has already been reviewed by Code Review. If the code review reports any issues, it will fix the ones it judges as valid for you.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b15-0">3. 用 <code>/code-review</code> 做一次代码审查——除非这次提交已经被 Code Review 审过。如果审查报了问题，它会把它认为成立的那些直接帮你改掉。</span></p></div></div>
+<div class="row" data-rid="ownprs-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b16-0">4. Watch the PR for up to seven days. It will work on failing checks, conflicts, and review comments, and will exit if the PR is merged or closed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b16-0">4. 照看这个 PR，最多七天。它会处理失败的检查、冲突和评审评论；PR 一旦合并或被关闭，它就退出。</span></p></div></div>
+<div class="row" data-rid="ownprs-b17"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b17-0">The first step, where <code>/ship</code> commits your pending changes as if you had run <code>git add -A</code>, sometimes catches people by surprise, so be sure to run <code>git status</code> before running <code>/ship</code>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b17-0">第一步——<code>/ship</code> 像跑了 <code>git add -A</code> 那样提交你的待提交改动——有时会让人措手不及，所以跑 <code>/ship</code> 之前一定先跑一遍 <code>git status</code>。</span></p></div></div>
+<div class="row" data-rid="ownprs-b18"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b18-0">The command will not commit changes that touch files with names that look like secrets, or files that set rules, like <code>CLAUDE.md</code>, <code>REVIEW.md</code>, or anything in the <code>.claude/</code> or <code>.github/</code> directories.</span> <span class="s" data-k="ownprs-b18-1">You will need to make these commits manually beforehand.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b18-0">有些改动它不会替你提交：名字看起来像密钥的文件，以及用来定规则的文件，比如 <code>CLAUDE.md</code>、<code>REVIEW.md</code>，还有 <code>.claude/</code> 或 <code>.github/</code> 目录里的任何东西。</span><span class="s" data-k="ownprs-b18-1">这些提交你得自己先手动做好。<sup class='tn' data-note='N2'>2</sup></span></p></div></div>
+<div class="row" data-rid="ownprs-b19"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b19-0">Also, if you are working in a public repository, the command will not commit any changes for you.</span> <span class="s" data-k="ownprs-b19-1">You will need to commit any pending changes manually before you can proceed, and if the PR already exists, it won't include your pending changes.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b19-0">另外，如果你在一个公开仓库里工作，这条命令不会替你提交任何改动。</span><span class="s" data-k="ownprs-b19-1">你得先把待提交的改动自己提交掉才能往下走；如果 PR 已经存在，它也不会把这些还没提交的改动带进去。</span></p></div></div>
+<div class="row" data-rid="ownprs-b20"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b20-0"><b>Optional: specifying effort level, PR, or bot</b></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b20-0"><b>可选：指定力度、PR 编号或机器人</b></span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>四条参数<span class="code-note">力度放最前面；+名字 表示额外读某个机器人的评论</span></summary><pre>/ship high            # run at high effort
+/ship 41              # work on pull request #41
+/ship +my-lint-bot    # also read comments from my-lint-bot
+/ship stop            # end the watch</pre></details></div>
+<div class="row" data-rid="ownprs-b22"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b22-0">The command will by default read comments by you, people with write access, and the Claude GitHub App.</span> <span class="s" data-k="ownprs-b22-1">You can specify additional bots in the form <code>+name</code>.</span> <span class="s" data-k="ownprs-b22-2">If that bot comments, it will be treated as an assertion to check against the code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b22-0">默认情况下，它会读你的评论、有写权限的人的评论，以及 Claude GitHub App 的评论。</span><span class="s" data-k="ownprs-b22-1">你可以用 <code>+名字</code> 的形式额外指定别的机器人。</span><span class="s" data-k="ownprs-b22-2">那个机器人一旦评论，这条评论就会被当成一条断言，拿去和代码核对。</span></p></div></div>
+<div class="row h3row wide" id="h-ownprs-b23"><h3><span class='h3-en'>Letting Claude watch the PR</span><span class='h3-zh'>让 Claude 替你盯着 PR</span></h3></div>
+<div class="row" data-rid="ownprs-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b24-0">Claude watches the PR as you, on your machine, and uses your quota.</span> <span class="s" data-k="ownprs-b24-1">Closing your laptop stops it, so keep the session open and the machine awake.</span> <span class="s" data-k="ownprs-b24-2">You'll also need to be logged in to the GitHub CLI (run <code>gh auth login</code> first), and it only watches a PR that you opened.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b24-0">Claude 是以你的身份、在你的机器上盯着这个 PR 的，用的是你的额度。</span><span class="s" data-k="ownprs-b24-1">合上笔记本它就停了，所以要让会话开着、机器保持唤醒。</span><span class="s" data-k="ownprs-b24-2">你还需要登录 GitHub CLI（先跑 <code>gh auth login</code>），而且它只盯你自己开的 PR。</span></p></div></div>
+<div class="row" data-rid="ownprs-b25"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b25-0">For anything other than <a class='lnk' href='https://code.claude.com/docs/en/permission-modes' target='_blank' rel='noopener' data-link='L5'>auto mode</a>, <a class='lnk' href='https://code.claude.com/docs/en/ship-command' target='_blank' rel='noopener' data-link='L6'>the watch</a> stops at every prompt and requires your response.</span> <span class="s" data-k="ownprs-b25-1">It won't watch in bypass-permissions mode.</span> <span class="s" data-k="ownprs-b25-2">Note that on Windows, <code>/ship</code> opens the PR and reviews, but <span class='term' data-term='watch'>the watch</span> doesn't start.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b25-0">只要不是 <a class='lnk' href='https://code.claude.com/docs/en/permission-modes' target='_blank' rel='noopener' data-link='L5'>auto 模式</a>，<a class='lnk' href='https://code.claude.com/docs/en/ship-command' target='_blank' rel='noopener' data-link='L6'>值守</a>在每一个提示处都会停下来，等你回应。</span><span class="s" data-k="ownprs-b25-1">在跳过权限的模式下，它不会值守。</span><span class="s" data-k="ownprs-b25-2">注意：在 Windows 上，<code>/ship</code> 会开 PR、也会审，但<span class='term' data-term='watch'>值守</span>不会启动。</span></p></div></div>
+<div class="row" data-rid="ownprs-b26"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b26-0">Ensure that the watch has its own checkout.</span> <span class="s" data-k="ownprs-b26-1">You need to leave the branch checked out.</span> <span class="s" data-k="ownprs-b26-2">If you're just going to jump straight into your next task, then make sure to use a separate <span class='term' data-term='worktree'>worktree</span> for one of them.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b26-0">要保证值守有自己的一份检出。</span><span class="s" data-k="ownprs-b26-1">你得让那个分支一直处于检出状态。</span><span class="s" data-k="ownprs-b26-2">如果你马上要跳进下一件事，那就给其中一边单独开一个<span class='term' data-term='worktree'>工作树</span>。</span></p></div></div>
+<div class="row" data-rid="ownprs-b27"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b27-0">If the watch fails to start, Claude will explain why but still review the PR.</span> <span class="s" data-k="ownprs-b27-1">For example, you can't run a watch if you have a <code>PreToolUse</code> or <code>PermissionRequest</code> <span class='term' data-term='hook'>hook</span> on Bash in the <code>.claude/settings.json</code> of your repo.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b27-0">如果值守没能启动，Claude 会说明原因，但仍然会把 PR 审完。</span><span class="s" data-k="ownprs-b27-1">举个例子：如果仓库的 <code>.claude/settings.json</code> 里给 Bash 挂了 <code>PreToolUse</code> 或 <code>PermissionRequest</code> <span class='term' data-term='hook'>钩子</span>，值守就跑不起来。</span></p></div></div>
+<div class="row" data-rid="ownprs-b28"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b28-0">Additionally, the watch uses up model turns while you're away, so it counts against your plan usage or API bill.</span> <span class="s" data-k="ownprs-b28-1">The first time you use it, it's a good idea to be near your machine to make sure usage is within your expectations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b28-0">另外，你不在的时候值守也在消耗模型轮次，所以会计入你的套餐用量或 API 账单。</span><span class="s" data-k="ownprs-b28-1">第一次用的时候，最好人就在机器旁边，确认消耗在你预期之内。</span></p></div></div>
+<div class="row h3row wide" id="h-ownprs-b29"><h3><span class='h3-en'>Only run the watch on repos you trust</span><span class='h3-zh'>只在你信任的仓库上跑值守</span></h3></div>
+<div class="row" data-rid="ownprs-b30"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b30-0">The watch will merge the base branch into yours when necessary and then run commands like your tests.</span> <span class="s" data-k="ownprs-b30-1">In other words, anyone who has the ability to land changes on the base branch has the ability to run commands on your machine during the watch.</span> <span class="s" data-k="ownprs-b30-2"><b>Only run the watch locally on a repo where you trust everyone who can land changes on the base branch.</b></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b30-0">值守会在需要时把主干分支合进你的分支，然后跑你的测试之类的命令。</span><span class="s" data-k="ownprs-b30-1">换句话说，任何有能力把改动落进主干分支的人，都有能力在值守期间于你的机器上执行命令。</span><span class="s" data-k="ownprs-b30-2"><b>只有在这样一个仓库里——你信任每一个能把改动落进主干的人——才在本地跑值守。</b><sup class='tn' data-note='N3'>3</sup></span></p></div></div>
+<div class="row" data-rid="ownprs-b31"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b31-0">Claude is told never to merge the PR, and Claude Code also constrains the gh and git commands it can run during an unattended turn, preventing direct merging or force-pushing.</span> <span class="s" data-k="ownprs-b31-1">The watch's own commits also leave out the files that set the rules: <code>.github/</code>, <code>CODEOWNERS</code>, <code>CLAUDE.md</code>, <code>.claude/</code>, git hooks, etc.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b31-0">Claude 被明确要求永远不要合并这个 PR；Claude Code 也会在无人值守的轮次里限制它能跑的 gh 和 git 命令，防止直接合并或强推。</span><span class="s" data-k="ownprs-b31-1">值守自己做的提交，也会绕开那些定规则的文件：<code>.github/</code>、<code>CODEOWNERS</code>、<code>CLAUDE.md</code>、<code>.claude/</code>、git hooks 等等。</span></p></div></div>
+<div class="row" data-rid="ownprs-b32"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b32-0">However, this doesn't protect against all vectors.</span> <span class="s" data-k="ownprs-b32-1">For example, the test script also runs under your credentials, and if you type a message during a turn, that will allow the constraints to be lifted for that turn.</span> <span class="s" data-k="ownprs-b32-2">Additionally, if <span class='term' data-term='automerge'>auto-merge</span> is enabled, a fix from the watch could end up being what allows GitHub to merge.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b32-0">不过，这防不住所有路径。</span><span class="s" data-k="ownprs-b32-1">比如测试脚本本身也是用你的凭证跑的；而如果你在某一轮进行中打了一句话，那一轮的约束就会被解除。</span><span class="s" data-k="ownprs-b32-2">另外，如果开了<span class='term' data-term='automerge'>自动合并</span>，值守推上去的一个修复，就可能正好凑齐 GitHub 合并所需的条件。</span></p></div></div>
+<div class="row" data-rid="ownprs-b33"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b33-0">Furthermore, the commits and pushes made by Claude during the watch are not affected by git hooks in your repo, so make sure any checks that need to be present are added to CI and branch rules.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b33-0">还有一点：值守期间 Claude 做的提交和推送不受你仓库里 git hooks 的影响，所以凡是必须存在的检查，一定要加进 CI 和分支规则。</span></p></div></div>
+<div class="row" data-rid="ownprs-b34"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b34-0">For the full terms of the watch, run <code>/ship terms</code> in the product before your first time using it.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b34-0">值守的完整条款，第一次用之前在产品里跑一下 <code>/ship terms</code> 看一遍。</span></p></div></div>
+<div class="row h3row wide" id="h-ownprs-b35"><h3><span class='h3-en'>/steward for existing PRs</span><span class='h3-zh'>已经开好的 PR：/steward</span></h3></div>
+<div class="row" data-rid="ownprs-b36"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b36-0">Many PRs don't need another review, but need someone to see them through to merge.</span> <span class="s" data-k="ownprs-b36-1">If you have such a PR, check out the branch and run:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b36-0">很多 PR 并不需要再审一遍，只是需要有人把它一路看到能合并。</span><span class="s" data-k="ownprs-b36-1">手上要是有这样的 PR，检出那个分支然后跑：</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>只值守、不重审<span class="code-note">数字是 PR 编号；不写就盯当前分支对应的那个</span></summary><pre>/steward 41</pre></details></div>
+<div class="row" data-rid="ownprs-b38"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b38-0">It will run just the watch component of <code>/ship</code>.</span> <span class="s" data-k="ownprs-b38-1">It will watch the PR you opened and do things like fix failing checks, resolve conflicts, and address comments, without reviewing it first.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b38-0">它只跑 <code>/ship</code> 里的值守那一部分。</span><span class="s" data-k="ownprs-b38-1">它会盯着你开的这个 PR，处理失败的检查、化解冲突、回应评论之类，但不会先审一遍。</span></p></div></div>
+<div class="row" data-rid="ownprs-b39"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b39-0">If you don't specify a PR number, it will watch the PR for the current branch.</span> <span class="s" data-k="ownprs-b39-1">It will take the same <code>+name</code> bots, and the same caveats as before apply.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b39-0">如果不指定 PR 编号，它就盯当前分支对应的那个 PR。</span><span class="s" data-k="ownprs-b39-1">它同样接受 <code>+名字</code> 形式的机器人，前面那些注意事项也照样适用。</span></p></div></div>
+<div class="row" data-rid="ownprs-b40"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b40-0">However, if a PR is already labeled Steward, it will not run the local watch.</span> <span class="s" data-k="ownprs-b40-1">And if it is unable to run a watch, <code>/steward</code> will not do anything.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b40-0">不过，如果一个 PR 已经被标上了 Steward，它就不会再跑本地值守。</span><span class="s" data-k="ownprs-b40-1">而如果它没法启动值守，<code>/steward</code> 就什么也不做。</span></p></div></div>
+<div class="row" data-rid="ownprs-b41"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b41-0">If you want to stop the watch, you can use either <code>/steward stop</code> or <code>/ship stop</code>.</span> <span class="s" data-k="ownprs-b41-1">Since a session can only run one watch at a time, starting a new one will terminate the previous one.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b41-0">想停掉值守，用 <code>/steward stop</code> 或 <code>/ship stop</code> 都行。</span><span class="s" data-k="ownprs-b41-1">一个会话同时只能跑一个值守，所以开新的会把前一个终止掉。</span></p></div></div>
+<div class="row" data-rid="ownprs-b42"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b42-0">Don't confuse <code>/steward</code> with PR Steward, which is a team service that runs as <code>claude[bot]</code> after being enabled by an admin.</span> <span class="s" data-k="ownprs-b42-1">The <code>/steward</code> command runs as you, in your session.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b42-0">别把 <code>/steward</code> 和 PR Steward 搞混：后者是团队服务，由管理员开启后以 <code>claude[bot]</code> 的身份运行。</span><span class="s" data-k="ownprs-b42-1"><code>/steward</code> 这条命令是以你的身份、在你自己的会话里跑的。</span></p></div></div>
+<div class="row" data-rid="ownprs-b43"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b43-0">A PR that has red checks is a good place to start.</span> <span class="s" data-k="ownprs-b43-1">A PR that gets stuck in a conflict loop is also a good candidate.</span> <span class="s" data-k="ownprs-b43-2">On the flip side, a PR that's in the middle of a design debate is a bad one because that's your debate to settle.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b43-0">一个检查飘红的 PR，是个不错的起点。</span><span class="s" data-k="ownprs-b43-1">一个反复卡在冲突里的 PR，也很适合。</span><span class="s" data-k="ownprs-b43-2">反过来，一个正处在设计争论中的 PR 就不适合——那场争论该由你自己去定。</span></p></div></div>
+<div class="row h3row wide" id="h-ownprs-b44"><h3><span class='h3-en'>Claude escalates bigger calls to you</span><span class='h3-zh'>更大的决定，Claude 会交回给你</span></h3></div>
+<div class="row" data-rid="ownprs-b45"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b45-0">As part of the watch, Claude is told to make small changes and elevate the bigger ones.</span> <span class="s" data-k="ownprs-b45-1">Things like:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b45-0">值守过程中，Claude 被要求只做小改动，把更大的事情往上交。</span><span class="s" data-k="ownprs-b45-1">比如：</span></p></div></div>
+<div class="row" data-rid="ownprs-b46"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="ownprs-b46-0-0">A request to redesign something, like a new API or a bigger scope</span></li><li><span class="s" data-k="ownprs-b46-1-0">A security issue it wasn't able to resolve</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="ownprs-b46-0-0">有人要求重新设计某个东西，比如一个新 API，或者更大的范围</span></li><li><span class="s" data-k="ownprs-b46-1-0">一个它没能解决的安全问题</span></li></ul></div></div>
+<div class="row" data-rid="ownprs-b47"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b47-0">It also pushes at most 3 times for a given issue, and then reports the attempted solutions.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b47-0">同一个问题，它最多推 3 次，然后把试过的方案报上来。</span></p></div></div>
+<div class="row" data-rid="ownprs-b48"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b48-0">That's roughly equivalent to our claim in the <a class='lnk' href='https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/' target='_blank' rel='noopener' data-link='L2'>verification blog post</a>: if we keep running the same check and it keeps failing after three rounds, then the approach is probably wrong.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b48-0">这大致对应我们在<a class='lnk' href='https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/' target='_blank' rel='noopener' data-link='L2'>那篇讲验证的博文</a>里的说法：同一个检查一直跑、跑了三轮还是失败，那多半是思路错了。</span></p></div></div>
+<div class="row" data-rid="ownprs-b49"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="ownprs-b49-0">At this point, it escalates to the author of the code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="ownprs-b49-0">到这个地步，它就上报给写这段代码的作者。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-repo">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">IN YOUR REPO</span><span class="h-zh">在你的仓库里</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>同一句评论出现两次、同一个启动步骤反复解释、同一个检查老是飘——这些「重复」才是该写下来的东西。这一段给出一张「什么放哪儿、谁读」的表，再给三个文件的具体写法。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="repo-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b0-0">As you get a few PRs under your belt, you'll start to notice patterns.</span> <span class="s" data-k="repo-b0-1">For instance:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b0-0">手上过几个 PR 之后，你就会开始看出一些套路。</span><span class="s" data-k="repo-b0-1">比如：</span></p></div></div>
+<div class="row" data-rid="repo-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="repo-b1-0-0">The same comment from the same reviewer</span></li><li><span class="s" data-k="repo-b1-1-0">A setup instruction that Claude has to figure out</span></li><li><span class="s" data-k="repo-b1-2-0">A flaky check</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="repo-b1-0-0">同一个评审者，每次都提同一条评论</span></li><li><span class="s" data-k="repo-b1-1-0">一条 Claude 每次都得自己摸索的启动说明</span></li><li><span class="s" data-k="repo-b1-2-0">一个老是偶发失败的检查</span></li></ul></div></div>
+<div class="row" data-rid="repo-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b2-0">You can start to write these down for your team, in one of a few files, depending on which tool needs to read it:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b2-0">你可以开始把这些写下来留给团队，放在几个文件里的某一个——取决于哪个工具需要读到它：</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">What keeps repeating</span><span class="th-zh">反复出现的是什么</span></th><th><span class="th-en">Put it in</span><span class="th-zh">放在哪里</span></th><th><span class="th-en">Read by</span><span class="th-zh">谁来读</span></th></tr></thead><tbody><tr><td><span class="td-en">A convention that code should follow</span><span class="td-zh">代码应该遵守的约定</span></td><td><span class="td-en"><code>CLAUDE.md</code></span><span class="td-zh"><code>CLAUDE.md</code></span></td><td><span class="td-en">Claude Code, local <code>/code-review</code>, Code Review and PR Steward</span><span class="td-zh">Claude Code、本地 <code>/code-review</code>、Code Review 和 PR Steward</span></td></tr><tr><td><span class="td-en">A rule about how PRs get reviewed</span><span class="td-zh">PR 该怎么被审的规则</span></td><td><span class="td-en"><code>REVIEW.md</code></span><span class="td-zh"><code>REVIEW.md</code></span></td><td><span class="td-en">Code Review and PR Steward, not local <code>/code-review</code></span><span class="td-zh">Code Review 和 PR Steward，不含本地 <code>/code-review</code></span></td></tr><tr><td><span class="td-en">How to start and exercise the app</span><span class="td-zh">怎么把应用起起来、走一遍</span></td><td><span class="td-en"><code>.claude/skills/verify/SKILL.md</code></span><span class="td-zh"><code>.claude/skills/verify/SKILL.md</code></span></td><td><span class="td-en">Claude Code when it verifies a change</span><span class="td-zh">Claude Code 在验证一个改动时</span></td></tr><tr><td><span class="td-en">How PRs here should be looked after</span><span class="td-zh">这个仓库的 PR 该怎么照看</span></td><td><span class="td-en"><code>.claude/skills/steward/SKILL.md</code></span><span class="td-zh"><code>.claude/skills/steward/SKILL.md</code></span></td><td><span class="td-en"><code>/ship</code>, <code>/steward</code> and PR Steward</span><span class="td-zh"><code>/ship</code>、<code>/steward</code> 和 PR Steward</span></td></tr></tbody></table></div></div>
+<div class="row h3row wide" id="h-repo-b4"><h3><span class='h3-en'>Repeat comments become review rules</span><span class='h3-zh'>重复的评论，变成审查规则</span></h3></div>
+<div class="row" data-rid="repo-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b5-0">Let's say you get asked by a peer twice to make sure a new query contains a tenant check.</span> <span class="s" data-k="repo-b5-1">If you use local review, you can write this down in <code>CLAUDE.md</code>, since <code>/ship</code> uses <code>/code-review</code> to review.</span> <span class="s" data-k="repo-b5-2">If you have Code Review on your repository, you can write review-only rules in the root <code>REVIEW.md</code>:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b5-0">假设一个同事两次要求你确认：新写的查询里带了租户（tenant）校验。</span><span class="s" data-k="repo-b5-1">如果你用的是本地审查，可以把这条写进 <code>CLAUDE.md</code>，因为 <code>/ship</code> 就是用 <code>/code-review</code> 来审的。</span><span class="s" data-k="repo-b5-2">如果仓库里开了 Code Review，那你可以在根目录的 <code>REVIEW.md</code> 里写只给审查用的规则：</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>REVIEW.md 的示例<span class="code-note">定义什么算重要、必须检查什么、哪些噪音要压掉</span></summary><pre># Review instructions
+
+## What Important means here
+Wrong results, leaked data or anything that blocks a rollback.
+Style and naming are Nit at most.
+
+## Always check
+- Database queries are scoped to the caller's tenant.
+- New API routes have an integration test.
+
+## Keep it quiet
+- Report at most five Nits.
+- Skip generated files and lockfiles.
+- Behavior claims need a file and line.</pre></details></div>
+<div class="row" data-rid="repo-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b7-0">Code Review won't read the <code>REVIEW.md</code> file from the PR being reviewed.</span> <span class="s" data-k="repo-b7-1">It will also only respect some instructions, like excluding paths and limiting nits, when the default branch is protected.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b7-0">Code Review 不会读「正在被审的那个 PR」里的 <code>REVIEW.md</code>。</span><span class="s" data-k="repo-b7-1">而且只有在默认分支受保护时，它才会认其中一部分指令，比如排除某些路径、限制 nit 数量。</span></p></div></div>
+<div class="row" data-rid="repo-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b8-0">Not every comment should be elevated.</span> <span class="s" data-k="repo-b8-1">On our team, we have a principle that a pattern has to be repeated on at least 2 PRs to be considered for a rule.</span> <span class="s" data-k="repo-b8-2">A person then approves the PR that adds the rule.</span> <span class="s" data-k="repo-b8-3">That's a good bar to adopt.</span> <span class="s" data-k="repo-b8-4">You should also be deleting rules as needed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b8-0">不是每条评论都值得升级成规则。</span><span class="s" data-k="repo-b8-1">我们团队的原则是：一个模式至少在 2 个 PR 上重复出现，才会被考虑写成规则。<sup class='tn' data-note='N4'>4</sup></span><span class="s" data-k="repo-b8-2">然后由一个人来批准那条新增规则的 PR。</span><span class="s" data-k="repo-b8-3">这个门槛值得照着用。</span><span class="s" data-k="repo-b8-4">该删的规则也要删。</span></p></div></div>
+<div class="row h3row wide" id="h-repo-b9"><h3><span class='h3-en'>Repeat setup becomes verify skills</span><span class='h3-zh'>重复的启动步骤，变成 verify skill</span></h3></div>
+<div class="row" data-rid="repo-b10"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b10-0">If you find yourself constantly telling Claude how to boot up the app and navigate to specific pages, you should just write it down.</span> <span class="s" data-k="repo-b10-1">Create <code>.claude/skills/verify/SKILL.md</code>.</span> <span class="s" data-k="repo-b10-2">This can be in the root or in the directory of the code.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b10-0">如果你发现自己总在告诉 Claude 怎么把应用起起来、怎么走到某几个页面，那就干脆写下来。</span><span class="s" data-k="repo-b10-1">建一个 <code>.claude/skills/verify/SKILL.md</code>。</span><span class="s" data-k="repo-b10-2">放在根目录或代码所在目录都行。</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>verify skill 的示例<span class="code-note">五步：起服务、等健康检查、登录、走改动、报证据</span></summary><pre>---
+name: verify
+description: Run the web app and exercise a change end to end. Use before committing.
+---
+
+1. Start the stack with npm run dev:stack.
+2. Wait for /healthz on port 3000 to return 200.
+3. Sign in with the seeded test account.
+4. Exercise the changed flow in the browser and take a screenshot.
+5. Report the steps you ran and what you saw. Don't report success without them.</pre></details></div>
+<div class="row" data-rid="repo-b12"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b12-0">Be sure to customize the commands.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b12-0">记得把里面的命令换成你自己的。</span></p></div></div>
+<div class="row" data-rid="repo-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b13-0">Have Claude run it a few times, and fix any flaky behaviors.</span> <span class="s" data-k="repo-b13-1">People ignore verification they don't trust.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b13-0">让 Claude 跑上几次，把不稳的行为修掉。</span><span class="s" data-k="repo-b13-1">人不会理会自己不信任的验证。</span></p></div></div>
+<div class="row h3row wide" id="h-repo-b14"><h3><span class='h3-en'>Repeat PR maintenance becomes steward rules</span><span class='h3-zh'>重复的 PR 维护动作，变成 steward 规则</span></h3></div>
+<div class="row" data-rid="repo-b15"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b15-0">This one can be easy to miss.</span> <span class="s" data-k="repo-b15-1">The local watch reads the <code>.claude/skills/steward/SKILL.md</code> file from your working directory.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b15-0">这一条很容易被忽略。</span><span class="s" data-k="repo-b15-1">本地值守读的是你工作目录里的 <code>.claude/skills/steward/SKILL.md</code>。</span></p></div></div>
+<div class="row" data-rid="repo-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b16-0">PR Steward, which runs in Anthropic's cloud, reads it from the default branch.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b16-0">跑在 Anthropic 云上的 PR Steward，读的是默认分支上的那一份。</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>steward skill 的示例<span class="code-note">两行设置让它不出现在斜杠菜单、也不被自动挑中</span></summary><pre>---
+name: steward
+description: House rules for looking after PRs in this repository
+user-invocable: false
+disable-model-invocation: true
+---
+
+- Regenerate the lockfile with npm install; don't edit it by hand.
+- `e2e-nightly` is flaky. Re-run it once before looking for a cause.
+- Run npm test and npm run lint before pushing a fix.
+- Leave comments about API design to the author.</pre></details></div>
+<div class="row" data-rid="repo-b18"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b18-0">In the example above, the two settings keep it out of the / menu and out of the skills Claude picks on its own.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b18-0">上面这个例子里，那两行设置让它不出现在 <code>/</code> 菜单里，也不会被 Claude 自己挑中去用。</span></p></div></div>
+<div class="row" data-rid="repo-b19"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b19-0">The steward file can't change the watch's restrictions.</span> <span class="s" data-k="repo-b19-1">However, anyone who can merge to the repository can edit the file, so review changes to it as carefully as you would review any changes to CI.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b19-0">steward 这个文件改不了值守的限制。</span><span class="s" data-k="repo-b19-1">但任何能往仓库合并代码的人都能改这个文件，所以要像审 CI 改动那样审它的改动。</span></p></div></div>
+<div class="row" data-rid="repo-b20"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="repo-b20-0">If your team turns on PR Steward later, those guidelines will apply in Anthropic's cloud once they're on the default branch.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="repo-b20-0">如果团队之后开了 PR Steward，这些约定只要进了默认分支，就会在 Anthropic 的云上生效。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-team">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">ACROSS YOUR TEAM'S PRS</span><span class="h-zh">在团队的 PR 上</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这一段是跟管理员谈的那部分：要一个仓库、几个志愿者、一点时间；按顺序开三个 agent；用一份观察模式的策略先收集判断，再对照人审结果决定收紧到哪一步。核心风险是「Claude 的批准算真批准」。</p></div>
+<div class="reader-body">
+<div class="row h3row wide" id="h-team-b0"><h3><span class='h3-en'>Standardizing the post-PR process</span><span class='h3-zh'>把开完 PR 之后的流程标准化</span></h3></div>
+<div class="row" data-rid="team-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b1-0">Once you've run <code>/ship</code> on a few of your own PRs, you'll have a good sense of what Claude Ship could do across your team's PRs.</span> <span class="s" data-k="team-b1-1">The rest of this post is for that conversation with your admins: what to ask for, and how to roll it out safely.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b1-0">在自己的几个 PR 上跑过 <code>/ship</code> 之后，你对 Claude Ship 能在团队的 PR 上做什么就有了底。</span><span class="s" data-k="team-b1-1">文章剩下的部分是留给你和管理员谈那场话用的：要什么，以及怎么安全地推开。</span></p></div></div>
+<div class="row" data-rid="team-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b2-0">To <a class='lnk' href='https://code.claude.com/docs/en/claude-ship' target='_blank' rel='noopener' data-link='L7'>get started</a>, you'll need to ask your administrators for a single repository, a few volunteers, and a limited amount of time to test Claude Ship on your own pull requests.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b2-0">要<a class='lnk' href='https://code.claude.com/docs/en/claude-ship' target='_blank' rel='noopener' data-link='L7'>起步</a>，你需要向管理员要一个仓库、几个志愿者，以及一段有限的时间，在你们自己的 PR 上试 Claude Ship。</span></p></div></div>
+<div class="row" data-rid="team-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b3-0">1. <b>Agree on your budget constraints ahead of time.</b></span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b3-0">1. <b>先把预算的边界谈清楚。</b></span></p></div></div>
+<div class="row" data-rid="team-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b4-0">2. <b>Protect the default branch of the repository.</b> A repository admin can set up this requirement, ensuring that any updates require a PR with an approval on the latest push, and that the Claude GitHub App is not on the bypass list.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b4-0">2. <b>保护仓库的默认分支。</b> 仓库管理员可以设这条要求：任何更新都必须走 PR，且批准必须针对最新那次推送；同时把 Claude GitHub App 排除在绕过名单之外。</span></p></div></div>
+<div class="row" data-rid="team-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b5-0">3. <b>Enable Code Review for this repository.</b> An Owner, the admin role in your Claude organization, can enable Code Review.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b5-0">3. <b>给这个仓库开代码审查。</b> Owner——你 Claude 组织里的管理员角色——可以开启 Code Review。</span></p></div></div>
+<div class="row" data-rid="team-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b6-0">4. <b>Enable PR Steward in Manual mode.</b> The same Owner can enable PR Steward to kick in when a user with write access comments <code>@claude steward</code>, or when authors opt in for it to kick in automatically. Comment <code>@claude stop</code> to stop Steward.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b6-0">4. <b>用 Manual 模式开 PR Steward。</b> 同一个 Owner 可以把它设成：有写权限的人评论 <code>@claude steward</code> 时启动，或者作者选择让它自动启动。评论 <code>@claude stop</code> 可以让 Steward 停下。</span></p></div></div>
+<div class="row" data-rid="team-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b7-0">5. <b>Create an <span class='term' data-term='observemode'>observe mode</span> approval policy.</b> This file acts like any other file; you can create it in your own PR, but since merging this file enables Approvals for the repository, clear it with an Owner first.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b7-0">5. <b>建一份<span class='term' data-term='observemode'>观察模式</span>的批准策略。</b> 这个文件和其他文件一样，你可以在自己的 PR 里建；但把它并进去就等于给这个仓库开了 Approvals，所以先跟 Owner 报备。</span></p></div></div>
+<div class="row" data-rid="team-b8"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b8-0">PR Steward is designed not to approve or merge pull requests, so make sure you use <span class='term' data-term='branchprotection'>branch protection</span> to require the approvals you want before merging.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b8-0">PR Steward 的设计就是不批准、也不合并 PR，所以合并前你需要几次批准，得靠<span class='term' data-term='branchprotection'>分支保护</span>去要求。</span></p></div></div>
+<div class="row" data-rid="team-b9"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b9-0">PR Steward reads the comments from reviewers and performs some actions based on them.</span> <span class="s" data-k="team-b9-1">Like any text-parsing agent, it can be fooled by what people say.</span> <span class="s" data-k="team-b9-2">Make sure you use it only in repositories with trusted collaborators, and check the changes made by PR Steward on comments from untrusted users.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b9-0">PR Steward 会读评审者的评论，并根据评论做一些动作。</span><span class="s" data-k="team-b9-1">和任何做文本解析的智能体一样，它会被人的说法骗过去。</span><span class="s" data-k="team-b9-2">所以只在协作者可信的仓库里用它，并且要检查那些由不可信用户的评论触发的改动。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b10"><h3><span class='h3-en'>Configure your first approval policy</span><span class='h3-zh'>配出你的第一份批准策略</span></h3></div>
+<div class="row" data-rid="team-b11"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b11-0">For approval policies, Claude Approvals reads from the <code>.claude/approvals.yml</code> file on the default branch.</span> <span class="s" data-k="team-b11-1">A simple first policy could be:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b11-0">批准策略方面，Claude Approvals 读的是默认分支上的 <code>.claude/approvals.yml</code>。</span><span class="s" data-k="team-b11-1">第一份策略可以写得很简单：</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>第一份 approvals.yml<span class="code-note">两套要求：普通改动两人；动到规则文件也两人，且继承到子目录</span></summary><pre># .claude/approvals.yml
+version: 1
+mode: observe
+rules:
+  - purpose: "A change takes two people."
+    paths: ["**"]
+    verdict: { claude: comments, seats: 2 }
+    advisory: [claude/code_review]
+  - purpose: "A change to the review rules takes two people."
+    paths: ["**/.claude/**", "**/REVIEW.md", "**/CLAUDE.md", "**/CODEOWNERS", ".github/**"]
+    nested: inherit
+    verdict: { claude: comments, seats: 2 }</pre></details></div>
+<div class="row" data-rid="team-b13"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b13-0"><code><span class='term' data-term='seats'>seats</span></code> is the number of people who have to approve, and the author can take one of those seats.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b13-0"><code>seats</code>（<span class='term' data-term='seats'>席位</span>）是要几个人批准；作者本人可以占其中一个席位。</span></p></div></div>
+<div class="row" data-rid="team-b14"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b14-0">There's one catch.</span> <span class="s" data-k="team-b14-1">After the watch has merged the base branch, the most recent commit will be a <span class='term' data-term='mergecommit'>merge commit</span>, and nobody sits in the author's seat for it, so the PR author should comment <code>@claude approve</code>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b14-0">有个坑。</span><span class="s" data-k="team-b14-1">值守把主干分支合进来之后，最新那次提交会是一个<span class='term' data-term='mergecommit'>合并提交</span>，这次提交上没人占作者席位，所以 PR 作者要评论一句 <code>@claude approve</code>。</span></p></div></div>
+<div class="row" data-rid="team-b15"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b15-0">When a rule's verdict is <code>claude: comments</code>, Claude won't approve.</span> <span class="s" data-k="team-b15-1">If more than one rule matches, the strictest one wins.</span> <span class="s" data-k="team-b15-2">In observe mode the check just tells you what it would have decided.</span> <span class="s" data-k="team-b15-3">Claude doesn't approve anything.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b15-0">当一条规则的判定是 <code>claude: comments</code> 时，Claude 不会批准。</span><span class="s" data-k="team-b15-1">多条规则同时命中，取最严的那条。</span><span class="s" data-k="team-b15-2">观察模式下，这个检查只告诉你「它本来会怎么判」。</span><span class="s" data-k="team-b15-3">Claude 什么都不批准。</span></p></div></div>
+<div class="row" data-rid="team-b16"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b16-0">Don't drop the advisory line.</span> <span class="s" data-k="team-b16-1">Once the policy file is on the default branch, Code Review only kicks off automatically on PRs that match a rule naming it.</span> <span class="s" data-k="team-b16-2">Without that line, your automatic reviews just stop.</span> <span class="s" data-k="team-b16-3">Advisory reviews don't change the verdict, and they run on whatever settings you already have.</span> <span class="s" data-k="team-b16-4">A policy that names Code Review can start billed reviews, even where Code Review is turned off.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b16-0">别把 advisory 那一行删掉。</span><span class="s" data-k="team-b16-1">策略文件一进默认分支，代码审查就只会在「命中了点名它的规则」的那些 PR 上自动启动。</span><span class="s" data-k="team-b16-2">没有那一行，你的自动审查就直接停了。</span><span class="s" data-k="team-b16-3">advisory 审查不改变判定，而且用的是你已有的设置。</span><span class="s" data-k="team-b16-4">一份点名了 Code Review 的策略，即使在 Code Review 关着的地方也能拉起计费审查。<sup class='tn' data-note='N5'>5</sup></span></p></div></div>
+<div class="row" data-rid="team-b17"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b17-0">If you want to see where a passing Claude review could lower what a path needs, swap the advisory line for an <span class='term' data-term='override'>override</span>, and update the rule's purpose to match, for example “When Claude's review passes, one is enough and Claude approves.”</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b17-0">如果你想知道「Claude 的审查通过时，某条路径的要求能降到多低」，就把 advisory 那一行换成<span class='term' data-term='override'>覆盖规则</span>，并把规则的 purpose 改成对应的说法，比如「Claude 的审查通过时，一个人就够，且由 Claude 批准」。</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>把 advisory 换成 override<span class="code-note">审查通过时，判定换成「一个席位 + Claude 批准」</span></summary><pre>override:
+  - { if: "claude/code_review = pass", verdict: { claude: approves, seats: 1 } }</pre></details></div>
+<div class="row" data-rid="team-b19"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b19-0">The override names Code Review too, so those pull requests still get automatic reviews.</span> <span class="s" data-k="team-b19-1">When a review passes, the override swaps the rule's decision for one seat plus Claude's approval.</span> <span class="s" data-k="team-b19-2">The author can fill that one seat, so the check can now report that Claude would have approved.</span> <span class="s" data-k="team-b19-3">But text in a pull request can sway Claude's review, and when it does, this override lowers what that pull request needs.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b19-0">这条覆盖规则同样点名了 Code Review，所以那些 PR 仍然会有自动审查。</span><span class="s" data-k="team-b19-1">审查通过时，覆盖规则把原判定换成「一个席位 + Claude 的批准」。</span><span class="s" data-k="team-b19-2">作者可以占掉那一个席位，于是检查就能报出「Claude 本来会批准」。</span><span class="s" data-k="team-b19-3">但 PR 里的文字能影响 Claude 的审查；一旦被影响，这条覆盖规则就会降低那个 PR 的要求。</span></p></div></div>
+<div class="row" data-rid="team-b20"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b20-0">If there are some paths that need to always require a human, put them in a rule without an override (next section, step 1).</span> <span class="s" data-k="team-b20-1">Before you merge this, tell the budget owner.</span> <span class="s" data-k="team-b20-2"><b>A policy that uses Claude's review this way starts billing Code Reviews, even in observe mode.</b></span> <span class="s" data-k="team-b20-3">It can bill whenever you push, regardless of your Code Review settings.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b20-0">如果有些路径永远需要人来批，就把它们放进一条不带覆盖规则的规则里（下一节第 1 步）。</span><span class="s" data-k="team-b20-1">合并之前，先告诉管预算的人。</span><span class="s" data-k="team-b20-2"><b>这样用 Claude 审查的策略，即使在观察模式下也开始给代码审查计费。</b></span><span class="s" data-k="team-b20-3">它可能在你每次推送时计费，跟你 Code Review 的设置无关。</span></p></div></div>
+<div class="row" data-rid="team-b21"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b21-0">You can also build your own <span class='term' data-term='classifier'>classifiers</span> for questions like “is this PR related to a migration?” <a class='lnk' href='https://code.claude.com/docs/en/approvals-classifiers' target='_blank' rel='noopener' data-link='L8'>Custom classifiers</a> live in <code>.claude/classifiers/&lt;name&gt;/def.yml</code> on the default branch, and each run is billed, even in observe mode.</span> <span class="s" data-k="team-b21-1">Start out by focusing on paths and the Code Review result.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b21-0">你也可以为自己的问题建<span class='term' data-term='classifier'>分类器</span>，比如「这个 PR 和迁移有关吗？」<a class='lnk' href='https://code.claude.com/docs/en/approvals-classifiers' target='_blank' rel='noopener' data-link='L8'>自定义分类器</a>放在默认分支的 <code>.claude/classifiers/<名字>/def.yml</code>，每次运行都计费，观察模式也一样。</span><span class="s" data-k="team-b21-1">起步阶段，先盯路径和代码审查的结果就好。</span></p></div></div>
+<div class="row h3row wide" id="h-team-b22"><h3><span class='h3-en'>Monitoring and transitioning to enforcement</span><span class='h3-zh'>观察，然后过渡到强制执行</span></h3></div>
+<div class="row" data-rid="team-b23"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b23-0">Our team uses the same process as observe mode for our own internal commit gate.</span> <span class="s" data-k="team-b23-1">It logs the decisions it would have made in observe mode, so we can analyze false positives before making them mandatory.</span> <span class="s" data-k="team-b23-2">You will see the decisions in the Claude Approvals check and the associated comment.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b23-0">我们团队自己的内部提交门禁，用的也是观察模式这套流程。</span><span class="s" data-k="team-b23-1">它会把「如果在观察模式下会怎么判」记进日志，这样我们能在强制之前先分析误判。</span><span class="s" data-k="team-b23-2">这些判定你会在 Claude Approvals 的检查和它附带的评论里看到。</span></p></div></div>
+<div class="row" data-rid="team-b24"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b24-0">Keep in mind that you only get the value of observe mode if you actually monitor it.</span> <span class="s" data-k="team-b24-1">After a week or two of having it in place, revisit the merged PRs and see how the decisions compare to your reviewers' behavior.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b24-0">记住：只有你真的去看，观察模式才有价值。</span><span class="s" data-k="team-b24-1">跑上一两周之后，回头翻那些已经合并的 PR，看看它的判定和你们评审者的实际行为差在哪。</span></p></div></div>
+<div class="row" data-rid="team-b25"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b25-0">The first two rows apply once you've added the override.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b25-0">前两行要等你加了覆盖规则之后才成立。</span></p></div></div>
+<div class="row wide tblrow"><div class="tbl-wrap"><table class="bt"><thead><tr><th><span class="th-en">The policy said</span><span class="th-zh">策略当时怎么判</span></th><th><span class="th-en">Your reviewers</span><span class="th-zh">你们的评审者</span></th><th><span class="th-en">What to do</span><span class="th-zh">该怎么做</span></th></tr></thead><tbody><tr><td><span class="td-en">Would approve</span><span class="td-zh">会批准</span></td><td><span class="td-en">Approved with nothing to add</span><span class="td-zh">看了一眼就批了，没补充</span></td><td><span class="td-en">Keep the rule</span><span class="td-zh">保留这条规则</span></td></tr><tr><td><span class="td-en">Would approve</span><span class="td-zh">会批准</span></td><td><span class="td-en">Asked for changes</span><span class="td-zh">要求改</span></td><td><span class="td-en">Add a path rule that needs a person, or fix <code>REVIEW.md</code> if review should have caught it</span><span class="td-zh">加一条需要人批的路径规则；如果本来就该被审查抓到，就去修 <code>REVIEW.md</code></span></td></tr><tr><td><span class="td-en">Needs two people</span><span class="td-zh">需要两个人</span></td><td><span class="td-en">Approved at a glance every time</span><span class="td-zh">每次都扫一眼就批</span></td><td><span class="td-en">Consider narrowing the rule once you've seen enough examples</span><span class="td-zh">看够例子之后，考虑把这条规则收窄</span></td></tr><tr><td><span class="td-en">Needs two people</span><span class="td-zh">需要两个人</span></td><td><span class="td-en">Had real questions</span><span class="td-zh">真的提了问题</span></td><td><span class="td-en">Keep the rule</span><span class="td-zh">保留这条规则</span></td></tr></tbody></table></div></div>
+<div class="row" data-rid="team-b27"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b27-0">Go through a few example PRs.</span> <span class="s" data-k="team-b27-1">How would you have decided?</span> <span class="s" data-k="team-b27-2">Which rule made the decision?</span> <span class="s" data-k="team-b27-3">What would you change?</span> <span class="s" data-k="team-b27-4">Pay the most attention to the second row, and fix those before you relax any rules.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b27-0">拿几个真实的 PR 过一遍。</span><span class="s" data-k="team-b27-1">你会怎么判？</span><span class="s" data-k="team-b27-2">是哪条规则做的这个判定？</span><span class="s" data-k="team-b27-3">你会改什么？</span><span class="s" data-k="team-b27-4">最该盯的是第二行；在放宽任何规则之前，先把这一类修掉。</span></p></div></div>
+<div class="row" data-rid="team-b28"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b28-0">One thing to know before you enforce: Claude's approvals count as real approvals on GitHub.</span> <span class="s" data-k="team-b28-1">If a ruleset only needs one approval, Claude's can be enough on its own.</span> <span class="s" data-k="team-b28-2">So read your policy and your branch rules together.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b28-0">强制执行之前要知道一件事：Claude 的批准，在 GitHub 上算真批准。<sup class='tn' data-note='N6'>6</sup></span><span class="s" data-k="team-b28-1">如果一套规则只要求一次批准，Claude 这一次就够。</span><span class="s" data-k="team-b28-2">所以要把你的策略和分支规则放在一起读。</span></p></div></div>
+<div class="row" data-rid="team-b29"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b29-0">If you use auto-merge, and have policies that only the author can fulfill (like the override above), you can have PRs that get merged without anyone doing anything.</span> <span class="s" data-k="team-b29-1">Decide explicitly whether that's OK for each path, and write it down.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b29-0">如果你用了自动合并，而策略里又有「只有作者能满足」的条件（比如上面那条覆盖规则），就可能出现谁都没动手、PR 自己合了。</span><span class="s" data-k="team-b29-1">每条路径是否接受这种结果，都要显式决定，并写下来。</span></p></div></div>
+<div class="row" data-rid="team-b30"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b30-0">Then lock it down in this order:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b30-0">然后按这个顺序收紧：</span></p></div></div>
+<div class="row" data-rid="team-b31"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b31-0">1. Use a rule without an if or override for paths where you always need a second set of eyes. No classifier result can override it, and <code>nested: inherit</code> carries it into subdirectories that have their own policies.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b31-0">1. 对那些永远需要第二双眼睛的路径，用一条不带 if、也不带 override 的规则。任何分类器的结果都覆盖不了它；<code>nested: inherit</code> 会把它带进有自己策略的子目录。</span></p></div></div>
+<div class="row wide coderow"><details class="code-box"><summary>第 1 步那条规则的完整写法<span class="code-note">认证、计费、CI 三块永远要一个不是作者的人</span></summary><pre>- purpose: "Auth, billing and CI take a person who isn't an author."
+  paths: ["src/auth/**", "src/billing/**", ".github/**"]
+  nested: inherit
+  verdict:
+    claude: comments
+    seats: [{ count: 1, from: [humans, "!pr/authors"] }]</pre></details></div>
+<div class="row" data-rid="team-b33"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b33-0">2. Remove <code>mode: observe</code> and merge. Now Claude can approve wherever the rules say it approves.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b33-0">2. 删掉 <code>mode: observe</code> 再合并。这样规则说它能批的地方，Claude 就能批了。</span></p></div></div>
+<div class="row" data-rid="team-b34"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b34-0">3. About five minutes later, comment <code>@claude approvals rerun</code> on open PRs, so any stale results get cleaned up. Reruns can charge for classifiers again.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b34-0">3. 大约五分钟后，在还开着的 PR 上评论 <code>@claude approvals rerun</code>，把过期的结果清理掉。重跑会再次给分类器计费。</span></p></div></div>
+<div class="row" data-rid="team-b35"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b35-0">4. Ask a repository admin to make the Claude Approvals check required, and to pick the Claude app as its source. Until then, your PR can get merged regardless of what the check says.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b35-0">4. 请仓库管理员把 Claude Approvals 这个检查设成必需，并把 Claude 应用指定为它的来源。在这之前，不管这个检查说什么，你的 PR 都可能被合掉。</span></p></div></div>
+<div class="row" data-rid="team-b36"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="team-b36-0">Claude Ship and the local commands use AI, and they can miss bugs, security problems, and other issues, so keep all your existing tests, scanners, and reviewers.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="team-b36-0">Claude Ship 和本地这些命令都用 AI，它们会漏掉 bug、安全问题和其他毛病，所以现有的测试、扫描器和评审者都要留着。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-week">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">THINGS TO TRY THIS WEEK</span><span class="h-zh">这一周可以试的三件事</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>收尾给的是三条能在一周内做完的动作：今天跑一次 /code-review；下一个 PR 用 /ship 并在旁边守着；本周五之前把最常重复的那条规则写成文件。作者最后留了个问题：哪条规则最有用，哪些活你选择继续自己做。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="week-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="week-b0-0">I'd like to make it clear that for the Claude Code team, the person who called the agent is responsible for a change.</span> <span class="s" data-k="week-b0-1">It's as if they typed it themselves.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="week-b0-0">我想把话说清楚：在 Claude Code 团队，叫了 智能体 的那个人，要为这次改动负责。</span><span class="s" data-k="week-b0-1">就像这段代码是他自己敲的一样。</span></p></div></div>
+<div class="row" data-rid="week-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="week-b1-0">Your team should still be responsible for the PR scope, design, evidence, and rules for when it can merge.</span> <span class="s" data-k="week-b1-1">With these principles in mind, here is where you can get started:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="week-b1-0">团队仍然要为 PR 的范围、设计、证据，以及「什么时候能合」的规则负责。</span><span class="s" data-k="week-b1-1">把这些原则放在心里，可以从这几件事开始：</span></p></div></div>
+<div class="row" data-rid="week-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="week-b2-0">1. <b>Today:</b> Run <code>/code-review</code> on your current branch. Make a note of what it got wrong and what it missed.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="week-b2-0">1. <b>今天：</b> 在当前分支上跑一遍 <code>/code-review</code>。记下它判错了什么、又漏了什么。</span></p></div></div>
+<div class="row" data-rid="week-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="week-b3-0">2. <b>Next PR:</b> In a repository where you trust everyone who can merge, try <code>/ship</code>, and stick around. Try <code>/steward</code> on an existing PR, in a different terminal and git checkout.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="week-b3-0">2. <b>下一个 PR：</b> 在一个你信任所有能合并的人的仓库里，试试 <code>/ship</code>，并且人就在旁边守着。再找一个已有的 PR，在另一个终端、另一份检出里试 <code>/steward</code>。</span></p></div></div>
+<div class="row" data-rid="week-b4"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="week-b4-0">3. <b>By Friday:</b> Create a small PR with the rule you repeated most, in your <code>CLAUDE.md</code>, <code>REVIEW.md</code>, or a skill. Do the commit yourself, since <code>/ship</code> will not commit rule files. Share the PR and the example observe-mode policy with your team.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="week-b4-0">3. <b>本周五之前：</b> 把重复得最多的那条规则，做成一个小 PR，写进 <code>CLAUDE.md</code>、<code>REVIEW.md</code> 或某个 skill。提交要你自己做，因为 <code>/ship</code> 不会提交规则文件。把这个 PR 和那份观察模式的示例策略分享给团队。</span></p></div></div>
+<div class="row" data-rid="week-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="week-b5-0">If you do so, I would love to know which rule file was most impactful, and which tasks you chose to keep doing yourself.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="week-b5-0">如果你真这么做了，我很想知道：哪个规则文件最有用，哪些事你选择继续自己做。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 9 处正文引用，指向 9 个不同链接。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>Claude Code 团队怎么做代码审查</h4><p class="lnk-site">claude.dev · How the Claude Code team does code review</p><p class="lnk-anchors">正文对应：<em>之前写过</em></p><p><b>这是什么：</b>上一篇：当 Claude 写了约 90% 的代码，团队怎么重排代码审查的分层、度量与人的位置。</p><p><b>为什么值得点：</b>本文所有「为什么值得把读代码交给机器」的前提都在这篇里。先读它，再看这篇的落地步骤，顺序反过来会觉得作者在跳步。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>6 月到 9 月，合并进 Claude Code 的 PR 数量翻了一倍多，需要撤销的比例反而降了 40% 以上。做法不是把审查做快，而是把大部分「读」自动化，再把人的注意力按风险重新分配：验证前置、每个 PR 的 AI 审查、能阻断合并的安全审查、CI、按风险分级的人审、合并队列加功能开关、回滚兜底。批准只对那一次提交有效。</p><ul><li>多半「读」发生在 PR 存在之前：验证前置 + 用新上下文的子智能体审 diff。</li><li>六层检查叠起来，一层漏了还有下一层；回滚是托底的底座，不算一层。</li><li>度量看「每个 PR 的人工批准数」和「等人时长」，护栏是撤销率与事故率。</li><li>人剩下的四件事：决定该不该做、审危险代码、定架构、对结果负责。</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/solving-code-review-at-anthropic/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>Claude Code 团队怎么看待验证</h4><p class="lnk-site">claude.dev · How the Claude Code team thinks about verification</p><p class="lnk-anchors">正文对应：<em>之前写过</em> <em>那篇讲验证的博文</em></p><p><b>这是什么：</b>验证流程的方法论：给 Claude 一个能返回 pass/fail 的检查，让它自己闭环，而不是靠人盯着看。</p><p><b>为什么值得点：</b>本文「同一项检查连跑三次还失败就上报」和「watch 只做小改动、大改交回作者」两条，都直接来自这套原则。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>核心是给 Claude 可运行的检查：测试、构建退出码、linter、截图对比都算，有了它 Claude 才能自己判断改对了没有。同一个检查连跑三轮还失败，就停下来找人，而不是继续换花样硬试——这通常意味着思路错了。reviewer 用全新上下文审 diff，避免「我刚写完，肯定没问题」的偏差。</p><ul><li>最有用的一行 CLAUDE.md 往往是跑检查的那条命令。</li><li>检查要能自己返回 pass/fail，人只负责看证据，不负责复述结果。</li><li>三轮不收敛 = 换人，不是加轮次。</li><li>让没参与写代码的审查者看 diff，视角才干净。</li></ul></details><a class="lnk-open" href="https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>Claude Ship 发布公告</h4><p class="lnk-site">claude.com · Introducing Claude Ship</p><p class="lnk-anchors">正文对应：<em>Claude Ship 发布</em></p><p><b>这是什么：</b>Claude Ship 的发布公告：三个 agent 各管一段，以及哪些组织能用。</p><p><b>为什么值得点：</b>本文开头那句「我们刚发布 Claude Ship」的出处。想先弄清产品边界（谁能用、怎么计费），十分钟读完这篇再去读本文会顺很多。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>Claude Ship 是把 PR 从「开出来」送到「可合并」的一组 agent：Code Review 找问题，PR Steward 处理反馈与失败检查，Claude Approvals 按你写的策略判断还差谁批。Code Review 已正式可用，另两个在公测；面向 Team 与 Enterprise，按 token 走 usage credits 单独计费。什么能合，最终还是由你的设置与 GitHub 分支规则决定。</p><ul><li>三个 agent 可以分开开，不必一次全上。</li><li>PR Steward 在设计上不批准、不合并，合并门槛仍靠分支保护。</li><li>组织级能力：需要 Owner 角色，个人计划用不了云端这三个。</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/introducing-claude-ship" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>用 /ship 与 /steward 把 PR 养到可合并</h4><p class="lnk-site">code.claude.com · Get a pull request ready with /ship and /steward</p><p class="lnk-anchors">正文对应：<em>值守</em></p><p><b>这是什么：</b>/ship 与 /steward 的完整参考：watch 期间 Claude 具体会做哪些动作、哪些命令被挡住。</p><p><b>为什么值得点：</b>正文里关于 watch 的每条限制——不合并、不强推、hooks 不生效、什么时候可能被合——都能在这份文档找到原文与边界条件。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>watch 用你的 gh / git 登录身份工作，会改代码、推提交、把主干合进来、重跑失败的检查、回评论、重新请求审查。无人值守时会挡住合并 PR、批准、打开自动合并、强推这几类命令，并把 gh / git 限制在一个短名单里。但这些限制不覆盖一切：测试脚本以你的凭证运行，脚本自己就能合并或强推；你在它空闲时插一句话，那一轮的约束会解除。</p><ul><li>watch 只在你自己开的 PR 上跑，且需要本地检出那个分支。</li><li>同一个会话同时只能跑一个 watch，开新的会终止旧的。</li><li>完整条款在产品里用 `/ship terms` 看，用之前先看一遍。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/ship-command" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip must">必读</span><span class="chip">建议第 9 个读</span></div><h4>Claude Ship 发布：审、修、批，都可以交给 Claude（姊妹篇）</h4><p class="lnk-site">本机 · 姊妹篇 · Introducing Claude Ship</p><p><b>这是什么：</b>发布公告：三个 agent 各管一段、按 token 计费、谁能用、三类合规配置为什么用不了、关闭顺序。</p><p><b>为什么值得点：</b>本文讲「怎么配」，那篇讲「多少钱、谁能用、什么时候别开」。动手之前先花十分钟读它，能避开观察模式也计费、Approvals 不设必需检查就不挡合并这类坑。</p><p><b>访问说明：</b>本机文件：与本页同级的 introducing-claude-ship/index.html</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>公告把 PR 之后拆成三段：Code Review 找问题（正式可用，按仓库选 Quick / Standard / Deep），PR Steward 把 PR 养绿但不批准、不合并（公测），Claude Approvals 按仓库里的策略文件判要不要批（公测）。开发者用 /ship，管理员逐仓库开；计费按 token，观察模式也计费；ZDR、HIPAA、CMEK 组织用不了。</p><ul><li>三种 agent 可以只开其中一个，不必整套上。</li><li>策略只要点名 Claude 的审查，观察模式下也会拉起一次计费的 Code Review。</li><li>Approvals 只有在 GitHub 里被设成必需检查，才真的挡合并。</li><li>关闭顺序：先 Approvals、再 PR Steward、最后 Code Review。</li></ul></details><a class="lnk-open" href="../introducing-claude-ship/index.html" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip bg">背景</span><span class="chip">建议第 5 个读</span></div><h4>用 ultrareview 找 bug（官方文档）</h4><p class="lnk-site">code.claude.com · Find bugs with ultrareview - Claude Code Docs</p><p class="lnk-anchors">正文对应：<em>ultrareview 文档</em></p><p><b>这是什么：</b>`/code-review ultra` 的官方文档：云端沙箱里跑一队审查 agent，做深度审查。</p><p><b>为什么值得点：</b>正文提醒「ultra 要单独登录 claude.ai、可能单独计费」，具体条件、价格和降级行为都在这份文档里，动手前值得看一眼。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>每条发现都会被独立复现、验证过才报出来，所以噪音比本地审查低；覆盖也更广，但一次要跑 5–15 分钟。Pro / Max / Ultra 各有 3 次一次性免费额度，之后按用量计费，通常每次 5–25 美元。需要 claude.ai 账号登录；用 Bedrock、Google Cloud Agent Platform、Microsoft Foundry，或组织开了 ZDR / HIPAA / CMEK 时不可用，会退回本地审查。</p><ul><li>跑在云端沙箱，不占你本地的机器和终端。</li><li>免费额度用完即计费，组织必须先打开 usage credits。</li><li>PR 模式不会上传你本地工作区，只从 github.com 克隆该 PR。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/ultrareview" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip bg">背景</span><span class="chip">建议第 6 个读</span></div><h4>选择权限模式（官方文档）</h4><p class="lnk-site">code.claude.com · Choose a permission mode - Claude Code Docs</p><p class="lnk-anchors">正文对应：<em>auto 模式</em></p><p><b>这是什么：</b>Claude Code 的权限模式说明，包括 auto 模式的判定方式、开启条件与它挡不住的东西。</p><p><b>为什么值得点：</b>正文说「非 auto 模式下，watch 在每个提示处都要你回应」。为什么 auto 能不打断、它又靠什么判断危险动作，这份文档讲得最清楚。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>auto 模式由一个独立的分类器模型在动作执行前审查：超出你请求范围的、指向陌生基础设施的、看起来被 Claude 读到的恶意内容驱动的动作会被拦下；显式写的 ask 规则仍然会弹提示。新版里它已是交互式会话的默认起始模式。文档明确说：它减少打断，但不保证安全，敏感操作仍应保留人工审查。</p><ul><li>auto 不是「全部放行」，是「分类器先过一遍」。</li><li>bypassPermissions 会连安全检查一起关掉，只适合容器里完全无人值守。</li><li>ask 规则优先级高于 auto，写死的提示不会被跳过。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/permission-modes" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip bg">背景</span><span class="chip">建议第 7 个读</span></div><h4>Claude Ship（官方文档）</h4><p class="lnk-site">code.claude.com · Claude Ship - Claude Code Docs</p><p class="lnk-anchors">正文对应：<em>起步</em></p><p><b>这是什么：</b>Claude Ship 的组织级设置文档：谁能开、按什么顺序开、每个 agent 怎么计费。</p><p><b>为什么值得点：</b>正文那段「找管理员要一个仓库、几个志愿者、一点时间」的清单，就是这份文档的精简版。真要落地，照着它一步步开最稳。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>入口是 Organization settings &gt; Claude Ship，需要 Owner 角色。建议一次只开一个仓库里的一个 agent：先 Code Review，再 PR Steward（触发方式从 Manual 开始），最后 Claude Approvals（先 observe）。三者都按 token 计 usage credits，observe 模式同样计费；关掉 usage credits 不会让已开的 agent 停跑，要按顺序显式关。</p><ul><li>PR Steward 没有自己的花费上限，除非你先设一个。</li><li>策略文件一进默认分支就会改变哪些 PR 会被自动审查。</li><li>关闭顺序：先 Approvals，再 PR Steward，最后 Code Review。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/claude-ship" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip">可选</span><span class="chip">建议第 8 个读</span></div><h4>Claude Approvals 分类器（官方文档）</h4><p class="lnk-site">code.claude.com · Claude Approvals classifiers</p><p class="lnk-anchors">正文对应：<em>自定义分类器</em></p><p><b>这是什么：</b>自定义分类器：在 `.claude/classifiers/&lt;name&gt;/def.yml` 里写一个问题，让模型对 PR 给出答案。</p><p><b>为什么值得点：</b>正文结尾提到「你也能为『这个 PR 是不是和迁移有关』建分类器」。真要做，定义文件怎么写、答案怎么被规则读走，都在这份文档。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>def.yml 里写 `prompt`（问什么）、`model`（用哪个模型）、`outputs`（可选答案），再在 `approvals.yml` 的 `advisory` 或 `if` 里引用它。每次调用模型都计费，包括 observe 模式和最后没给出答案的失败run；单次默认花费上限 10 美元，可用 `budget` 调低。建议先从路径和 Code Review 结果入手，别一上来就堆分类器。</p><ul><li>advisory 里的分类器只出答案，不改变判定。</li><li>答案可以之后挪进 override 的 if，让规则依赖它。</li><li>模型写家族名（opus / sonnet）会随新版变化，成本和答案都可能变。</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/approvals-classifiers" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 14 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体</span></div><p class="gl-def">能自己读代码、改文件、跑命令的 AI 程序。本文里它既当写 PR 的人，也当审 PR 的人，还当值守。</p><p class="gl-ana">像一个能自己动手的同事：你给目标和检查清单，它自己跑。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">pull request</span><span class="gl-zh">拉取请求</span></div><p class="gl-def">把一份改动提交给仓库、请求并进主干的提案。改动内容、说明、各项检查结果和评审意见都挂在这里。</p><p class="gl-ana">像把改好的稿子交上去，附上改了什么、为什么改。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Code Review</span><span class="gl-zh">代码审查</span></div><p class="gl-def">Claude Ship 里的第一个 agent：拿改动和周边代码一起读，按严重度把发现以行内评论发到 PR 上。</p><p class="gl-ana">像一个不限时的第一读者，先把硬伤挑出来，再轮到人。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">CI</span><span class="gl-zh">持续集成</span></div><p class="gl-def">代码推上去之后自动跑的检查：编译、测试、lint、构建。它红了，PR 就进不了合并队列。</p><p class="gl-ana">像交稿后的自动校对机，不通过就不往下走。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">the watch</span><span class="gl-zh">值守</span></div><p class="gl-def">`/ship` 或 `/steward` 之后，Claude 在你机器上持续盯着这个 PR：修失败检查、解冲突、回评论，最多七天。</p><p class="gl-ana">像请人替你守在 PR 旁边，有事就动手，没事就等。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">worktree</span><span class="gl-zh">工作树</span></div><p class="gl-def">同一个仓库的另一个独立检出目录，可以停在不同分支上。值守要占着一个，所以另开一个工作树才能同时干下一件事。</p><p class="gl-ana">像同一份稿子的两个工作台，各摊各的，互不挪动。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">hook</span><span class="gl-zh">钩子</span></div><p class="gl-def">在特定时刻自动执行的脚本，比如工具调用前（PreToolUse）。仓库里挂了 Bash 钩子，值守就可能起不来。</p><p class="gl-ana">像门上的弹簧：谁进出都会触发，不看你是谁。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">branch protection</span><span class="gl-zh">分支保护</span></div><p class="gl-def">GitHub 上对主干的规则：必须走 PR、必须有几次批准、必须过哪些检查。它是真正决定「能不能合」的那道门。</p><p class="gl-ana">像大楼的门禁：谁能进、要几个人陪同，写在规则里，不看谁在门口说好话。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">classifier</span><span class="gl-zh">分类器</span></div><p class="gl-def">让模型回答一个固定问题的判定器，比如「这个 PR 算低风险吗」。它的答案会被批准策略里的规则读走，每次运行计费。</p><p class="gl-ana">像一个只答选择题的评审员，答案只有几个选项。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">observe mode</span><span class="gl-zh">观察模式</span></div><p class="gl-def">策略只记录「如果按这套规则判，会是什么结果」，不真的批准也不阻断。用来先收集判断样本，再决定收不收紧。</p><p class="gl-ana">像新规则先试运行一段时间，只记账、不罚款。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">seats</span><span class="gl-zh">席位</span></div><p class="gl-def">一条规则要求几个人批准。作者本人在自己的 PR 上可以占一个席位，所以 seats: 2 常常等于「作者 + 另一个人」。</p><p class="gl-ana">像签字栏：有几栏就得有几个不同的人签。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">override</span><span class="gl-zh">覆盖规则</span></div><p class="gl-def">挂在某条规则上的例外：满足 if 条件时，用它替换原判定。比如「Claude 的审查通过时，一个人就够」。</p><p class="gl-ana">像主条款下面的「除…外」，条件成立才生效。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">auto-merge</span><span class="gl-zh">自动合并</span></div><p class="gl-def">GitHub 的设置：检查与批准都满足时自动把 PR 合掉，不需要人再点一下。和宽松的批准策略叠在一起，就可能没人动手也合了。</p><p class="gl-ana">像设了自动放行的闸机：票检通过就开门，没人再看你一眼。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">merge commit</span><span class="gl-zh">合并提交</span></div><p class="gl-def">把主干合进你的分支时产生的那次提交。它的作者是执行合并的一方，所以没人占「作者席位」，需要作者补一句 `@claude approve`。</p><p class="gl-ana">像两份稿子拼在一起时新加的那页，署名不是原来任何一位作者。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>云端三个 agent 和本地三条命令，不是一回事</h4><p>Code Review、PR Steward、Claude Approvals 是 Anthropic 云上的团队服务，要 Owner 在组织设置里逐个打开，只在 Team/Enterprise 计划提供；`/code-review`、`/ship`、`/steward` 跑在你自己终端的会话里，用的是你的额度。文中那张表就是把「你想让 Claude 做的事」映射到「用哪条、在哪里跑」。个人开发者今天能玩的，是本地那三条。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>为什么 /ship 会替你 commit，却专门绕开规则文件</h4><p>一条命令能 `git add -A` 再直接推上去，听起来很危险。作者划的线是：名字像密钥的文件，以及能改规则的 `CLAUDE.md`、`REVIEW.md`、`.claude/`、`.github/` 一律不碰；公共仓库更是一律不代提交。逻辑很直白——agent 不该有权改约束它自己的规则，也不该有权把密钥推上去，这些提交必须由你手动做。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>watch 的边界：它拦得住什么，拦不住什么</h4><p>无人值守时，Claude Code 会挡住会合并 PR、批准、打开自动合并、强推的 gh / git 命令。但测试脚本是用你的凭证跑的，脚本自己就能合并或强推；你在它空闲时打一句话，那一轮的约束还会临时解除；仓库里的 git hooks 也不作用于它自己的提交与推送。所以作者的结论是：必须存在的检查，要落在 CI 和分支规则里，别指望 hooks。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>为什么「重复两次」才值得立成规则</h4><p>一条评论只出现一次，可能只是那个人的偏好；在两个以上的 PR 上重复，才像团队级的约定。而且规则也要删——只加不减，最后得到的是一份没人读得完的 `REVIEW.md`。作者团队的做法是：重复到第 2 次才提案，由一个人批准那条新增规则的 PR。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>observe 模式为什么会花钱</h4><p>策略文件一旦进了主干，只要规则里点名 `claude/code_review`（写在 advisory 或 override 里都算），代码审查就会被自动拉起并计费——哪怕策略还在 observe 模式、哪怕这个仓库的 Code Review 是关着的。自定义分类器同理：每次调用模型都计费，包括最后没给出答案的失败run。所以作者提醒：合并这份策略之前，先跟管预算的人打招呼。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>Claude 的批准，是 GitHub 眼里的「真批准」</h4><p>GitHub 只认「有几次批准」，不认这个批准来自人还是 App。所以一个只要求 1 次批准的 ruleset，Claude 自己就能满足；再叠上 auto-merge，就可能出现「谁都没动手、PR 自己合了」。作者要求把每条路径都显式想一遍并写进策略；确实需要第二双眼睛的路径，用不带 if / override 的规则锁死。</p></div></div></div></section><footer><p>本页是学习用途的中英对照精读版：英文原文版权归 Addy Osmani 与 Anthropic 所有，中文译文、速览、对比卡、术语卡与译注为译者整理，非官方译文。原文以博客形式发布于 2026-11-24（claude.dev）；作者同日在 X 上发了一版带截图的改写版，本页以博客原版为准，X 版里的截图未收录。 姊妹篇《Claude Ship 发布：审、修、批，都可以交给 Claude》讲这套东西是什么、多少钱、谁能用，见本页底部延伸阅读地图里标着「L9」的那张卡（本机文件，点开即读）。</p><p>原文：<a href="https://claude.dev/blog/the-work-after-you-open-a-pr/" target="_blank" rel="noopener">A practical guide to shipping with Claude Code</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-ship"><span class="dot">●</span>开完 PR 之后的流程</a><a class="l2" href="#s-ownprs"><span class="dot">●</span>在你自己的 PR 上</a><a class="l3" href="#h-ownprs-b0"><span class="dot">●</span>从今天开始：/code-review</a><a class="l3" href="#h-ownprs-b9"><span class="dot">●</span>下一个 PR，跑 /ship</a><a class="l3" href="#h-ownprs-b23"><span class="dot">●</span>让 Claude 替你盯着 PR</a><a class="l3" href="#h-ownprs-b29"><span class="dot">●</span>只在你信任的仓库上跑值守</a><a class="l3" href="#h-ownprs-b35"><span class="dot">●</span>已经开好的 PR：/steward</a><a class="l3" href="#h-ownprs-b44"><span class="dot">●</span>更大的决定，Claude 会交回给你</a><a class="l2" href="#s-repo"><span class="dot">●</span>在你的仓库里</a><a class="l3" href="#h-repo-b4"><span class="dot">●</span>重复的评论，变成审查规则</a><a class="l3" href="#h-repo-b9"><span class="dot">●</span>重复的启动步骤，变成 verify skill</a><a class="l3" href="#h-repo-b14"><span class="dot">●</span>重复的 PR 维护动作，变成 steward 规则</a><a class="l2" href="#s-team"><span class="dot">●</span>在团队的 PR 上</a><a class="l3" href="#h-team-b0"><span class="dot">●</span>把开完 PR 之后的流程标准化</a><a class="l3" href="#h-team-b10"><span class="dot">●</span>配出你的第一份批准策略</a><a class="l3" href="#h-team-b22"><span class="dot">●</span>观察，然后过渡到强制执行</a><a class="l2" href="#s-week"><span class="dot">●</span>这一周可以试的三件事</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"Claude Code 团队怎么做代码审查","title_en":"How the Claude Code team does code review","site":"claude.dev","what_zh":"上一篇：当 Claude 写了约 90% 的代码，团队怎么重排代码审查的分层、度量与人的位置。","why_zh":"本文所有「为什么值得把读代码交给机器」的前提都在这篇里。先读它，再看这篇的落地步骤，顺序反过来会觉得作者在跳步。","tier":"必读","order":1,"url":"https://claude.dev/blog/solving-code-review-at-anthropic/"},"L2":{"title_zh":"Claude Code 团队怎么看待验证","title_en":"How the Claude Code team thinks about verification","site":"claude.dev","what_zh":"验证流程的方法论：给 Claude 一个能返回 pass/fail 的检查，让它自己闭环，而不是靠人盯着看。","why_zh":"本文「同一项检查连跑三次还失败就上报」和「watch 只做小改动、大改交回作者」两条，都直接来自这套原则。","tier":"必读","order":2,"url":"https://claude.dev/blog/how-the-claude-code-team-thinks-about-verification/"},"L3":{"title_zh":"Claude Ship 发布公告","title_en":"Introducing Claude Ship","site":"claude.com","what_zh":"Claude Ship 的发布公告：三个 agent 各管一段，以及哪些组织能用。","why_zh":"本文开头那句「我们刚发布 Claude Ship」的出处。想先弄清产品边界（谁能用、怎么计费），十分钟读完这篇再去读本文会顺很多。","tier":"必读","order":3,"url":"https://claude.com/resources/articles/introducing-claude-ship"},"L4":{"title_zh":"用 ultrareview 找 bug（官方文档）","title_en":"Find bugs with ultrareview - Claude Code Docs","site":"code.claude.com","what_zh":"`/code-review ultra` 的官方文档：云端沙箱里跑一队审查 agent，做深度审查。","why_zh":"正文提醒「ultra 要单独登录 claude.ai、可能单独计费」，具体条件、价格和降级行为都在这份文档里，动手前值得看一眼。","tier":"背景","order":5,"url":"https://code.claude.com/docs/en/ultrareview"},"L5":{"title_zh":"选择权限模式（官方文档）","title_en":"Choose a permission mode - Claude Code Docs","site":"code.claude.com","what_zh":"Claude Code 的权限模式说明，包括 auto 模式的判定方式、开启条件与它挡不住的东西。","why_zh":"正文说「非 auto 模式下，watch 在每个提示处都要你回应」。为什么 auto 能不打断、它又靠什么判断危险动作，这份文档讲得最清楚。","tier":"背景","order":6,"url":"https://code.claude.com/docs/en/permission-modes"},"L6":{"title_zh":"用 /ship 与 /steward 把 PR 养到可合并","title_en":"Get a pull request ready with /ship and /steward","site":"code.claude.com","what_zh":"/ship 与 /steward 的完整参考：watch 期间 Claude 具体会做哪些动作、哪些命令被挡住。","why_zh":"正文里关于 watch 的每条限制——不合并、不强推、hooks 不生效、什么时候可能被合——都能在这份文档找到原文与边界条件。","tier":"必读","order":4,"url":"https://code.claude.com/docs/en/ship-command"},"L7":{"title_zh":"Claude Ship（官方文档）","title_en":"Claude Ship - Claude Code Docs","site":"code.claude.com","what_zh":"Claude Ship 的组织级设置文档：谁能开、按什么顺序开、每个 agent 怎么计费。","why_zh":"正文那段「找管理员要一个仓库、几个志愿者、一点时间」的清单，就是这份文档的精简版。真要落地，照着它一步步开最稳。","tier":"背景","order":7,"url":"https://code.claude.com/docs/en/claude-ship"},"L8":{"title_zh":"Claude Approvals 分类器（官方文档）","title_en":"Claude Approvals classifiers","site":"code.claude.com","what_zh":"自定义分类器：在 `.claude/classifiers/<name>/def.yml` 里写一个问题，让模型对 PR 给出答案。","why_zh":"正文结尾提到「你也能为『这个 PR 是不是和迁移有关』建分类器」。真要做，定义文件怎么写、答案怎么被规则读走，都在这份文档。","tier":"可选","order":8,"url":"https://code.claude.com/docs/en/approvals-classifiers"},"L9":{"title_zh":"Claude Ship 发布：审、修、批，都可以交给 Claude（姊妹篇）","title_en":"Introducing Claude Ship","site":"本机 · 姊妹篇","what_zh":"发布公告：三个 agent 各管一段、按 token 计费、谁能用、三类合规配置为什么用不了、关闭顺序。","why_zh":"本文讲「怎么配」，那篇讲「多少钱、谁能用、什么时候别开」。动手之前先花十分钟读它，能避开观察模式也计费、Approvals 不设必需检查就不挡合并这类坑。","tier":"必读","order":9,"url":"../introducing-claude-ship/index.html"}},"terms":{"agent":{"en":"agent","zh":"智能体","def_zh":"能自己读代码、改文件、跑命令的 AI 程序。本文里它既当写 PR 的人，也当审 PR 的人，还当值守。","analogy_zh":"像一个能自己动手的同事：你给目标和检查清单，它自己跑。"},"pr":{"en":"pull request","zh":"拉取请求","def_zh":"把一份改动提交给仓库、请求并进主干的提案。改动内容、说明、各项检查结果和评审意见都挂在这里。","analogy_zh":"像把改好的稿子交上去，附上改了什么、为什么改。"},"codereview":{"en":"Code Review","zh":"代码审查","def_zh":"Claude Ship 里的第一个 agent：拿改动和周边代码一起读，按严重度把发现以行内评论发到 PR 上。","analogy_zh":"像一个不限时的第一读者，先把硬伤挑出来，再轮到人。"},"ci":{"en":"CI","zh":"持续集成","def_zh":"代码推上去之后自动跑的检查：编译、测试、lint、构建。它红了，PR 就进不了合并队列。","analogy_zh":"像交稿后的自动校对机，不通过就不往下走。"},"watch":{"en":"the watch","zh":"值守","def_zh":"`/ship` 或 `/steward` 之后，Claude 在你机器上持续盯着这个 PR：修失败检查、解冲突、回评论，最多七天。","analogy_zh":"像请人替你守在 PR 旁边，有事就动手，没事就等。"},"worktree":{"en":"worktree","zh":"工作树","def_zh":"同一个仓库的另一个独立检出目录，可以停在不同分支上。值守要占着一个，所以另开一个工作树才能同时干下一件事。","analogy_zh":"像同一份稿子的两个工作台，各摊各的，互不挪动。"},"hook":{"en":"hook","zh":"钩子","def_zh":"在特定时刻自动执行的脚本，比如工具调用前（PreToolUse）。仓库里挂了 Bash 钩子，值守就可能起不来。","analogy_zh":"像门上的弹簧：谁进出都会触发，不看你是谁。"},"branchprotection":{"en":"branch protection","zh":"分支保护","def_zh":"GitHub 上对主干的规则：必须走 PR、必须有几次批准、必须过哪些检查。它是真正决定「能不能合」的那道门。","analogy_zh":"像大楼的门禁：谁能进、要几个人陪同，写在规则里，不看谁在门口说好话。"},"classifier":{"en":"classifier","zh":"分类器","def_zh":"让模型回答一个固定问题的判定器，比如「这个 PR 算低风险吗」。它的答案会被批准策略里的规则读走，每次运行计费。","analogy_zh":"像一个只答选择题的评审员，答案只有几个选项。"},"observemode":{"en":"observe mode","zh":"观察模式","def_zh":"策略只记录「如果按这套规则判，会是什么结果」，不真的批准也不阻断。用来先收集判断样本，再决定收不收紧。","analogy_zh":"像新规则先试运行一段时间，只记账、不罚款。"},"seats":{"en":"seats","zh":"席位","def_zh":"一条规则要求几个人批准。作者本人在自己的 PR 上可以占一个席位，所以 seats: 2 常常等于「作者 + 另一个人」。","analogy_zh":"像签字栏：有几栏就得有几个不同的人签。"},"override":{"en":"override","zh":"覆盖规则","def_zh":"挂在某条规则上的例外：满足 if 条件时，用它替换原判定。比如「Claude 的审查通过时，一个人就够」。","analogy_zh":"像主条款下面的「除…外」，条件成立才生效。"},"automerge":{"en":"auto-merge","zh":"自动合并","def_zh":"GitHub 的设置：检查与批准都满足时自动把 PR 合掉，不需要人再点一下。和宽松的批准策略叠在一起，就可能没人动手也合了。","analogy_zh":"像设了自动放行的闸机：票检通过就开门，没人再看你一眼。"},"mergecommit":{"en":"merge commit","zh":"合并提交","def_zh":"把主干合进你的分支时产生的那次提交。它的作者是执行合并的一方，所以没人占「作者席位」，需要作者补一句 `@claude approve`。","analogy_zh":"像两份稿子拼在一起时新加的那页，署名不是原来任何一位作者。"}},"notes":{"N1":{"title_zh":"云端三个 agent 和本地三条命令，不是一回事","body_zh":"Code Review、PR Steward、Claude Approvals 是 Anthropic 云上的团队服务，要 Owner 在组织设置里逐个打开，只在 Team/Enterprise 计划提供；`/code-review`、`/ship`、`/steward` 跑在你自己终端的会话里，用的是你的额度。文中那张表就是把「你想让 Claude 做的事」映射到「用哪条、在哪里跑」。个人开发者今天能玩的，是本地那三条。"},"N2":{"title_zh":"为什么 /ship 会替你 commit，却专门绕开规则文件","body_zh":"一条命令能 `git add -A` 再直接推上去，听起来很危险。作者划的线是：名字像密钥的文件，以及能改规则的 `CLAUDE.md`、`REVIEW.md`、`.claude/`、`.github/` 一律不碰；公共仓库更是一律不代提交。逻辑很直白——agent 不该有权改约束它自己的规则，也不该有权把密钥推上去，这些提交必须由你手动做。"},"N3":{"title_zh":"watch 的边界：它拦得住什么，拦不住什么","body_zh":"无人值守时，Claude Code 会挡住会合并 PR、批准、打开自动合并、强推的 gh / git 命令。但测试脚本是用你的凭证跑的，脚本自己就能合并或强推；你在它空闲时打一句话，那一轮的约束还会临时解除；仓库里的 git hooks 也不作用于它自己的提交与推送。所以作者的结论是：必须存在的检查，要落在 CI 和分支规则里，别指望 hooks。"},"N4":{"title_zh":"为什么「重复两次」才值得立成规则","body_zh":"一条评论只出现一次，可能只是那个人的偏好；在两个以上的 PR 上重复，才像团队级的约定。而且规则也要删——只加不减，最后得到的是一份没人读得完的 `REVIEW.md`。作者团队的做法是：重复到第 2 次才提案，由一个人批准那条新增规则的 PR。"},"N5":{"title_zh":"observe 模式为什么会花钱","body_zh":"策略文件一旦进了主干，只要规则里点名 `claude/code_review`（写在 advisory 或 override 里都算），代码审查就会被自动拉起并计费——哪怕策略还在 observe 模式、哪怕这个仓库的 Code Review 是关着的。自定义分类器同理：每次调用模型都计费，包括最后没给出答案的失败run。所以作者提醒：合并这份策略之前，先跟管预算的人打招呼。"},"N6":{"title_zh":"Claude 的批准，是 GitHub 眼里的「真批准」","body_zh":"GitHub 只认「有几次批准」，不认这个批准来自人还是 App。所以一个只要求 1 次批准的 ruleset，Claude 自己就能满足；再叠上 auto-merge，就可能出现「谁都没动手、PR 自己合了」。作者要求把每条路径都显式想一遍并写进策略；确实需要第二双眼睛的路径，用不带 if / override 的规则锁死。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>
