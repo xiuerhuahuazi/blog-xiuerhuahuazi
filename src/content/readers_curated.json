@@ -92,6 +92,10 @@
   "managed-agents": {
    "category": "智能体架构",
    "blurb": "会话、运行框架、沙箱该不该塞进一个容器？把「大脑」和「双手」拆成三层稳定接口，p95 首 token 延迟降了 90% 以上。"
+  },
+  "skills-over-mcp": {
+   "category": "智能体架构",
+   "blurb": "MCP 从「只交工具」升级成「能交技能」：服务器可以把 SKILL.md 那套说明随工具一起发，按需加载、随服务器更新。再加上 Tasks、Elicitation、File Uploads，服务器开始像另一个智能体——能跑长活、能中途问你、能收文件。"
   }
  }
 }

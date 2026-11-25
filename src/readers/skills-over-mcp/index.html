@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MCP 服务器现在能随工具一起发布技能，还能接下长任务｜MCP servers can now ship skills, run tasks, and more with Claude</title>
+<meta name="description" content="MCP 服务器现在能随工具一起发布技能，还能接下长任务｜MCP servers can now ship skills, run tasks, and more with Claude：英文原文 + 中文逐句对照，附术语卡、图片解读与延伸阅读地图。">
+<style>/* ============================================================
+   双语对照阅读器 · 样式
+   设计原则：正文永远是主角；所有"补充层"只在需要时出现
+   ============================================================ */
+
+:root{
+  --paper:#fbf8f3;
+  --paper-2:#f4efe7;
+  --card:#fffdf9;
+  --ink:#241f1a;
+  --ink-2:#574e45;
+  --ink-3:#8c8175;
+  --rule:#e6ded1;
+  --rule-2:#d8cfc0;
+  --accent:#b0512b;
+  --accent-2:#8f3f1f;
+  --accent-soft:#f7ebdf;
+  --hl:rgba(203,124,66,.17);
+  --term:#7d6a3c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --fs-en:18.5px;
+  --fs-zh:16.5px;
+  --lh-en:1.72;
+  --lh-zh:1.95;
+  --reader:1420px;
+  --gap:64px;
+  --bar:46px;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  counter-reset:none;
+}
+::selection{background:rgba(176,81,43,.18)}
+a{color:inherit}
+
+/* ---------- 顶部条 ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--accent),#d99a63);
+  z-index:90;transition:width .1s linear;
+}
+.topbar{
+  position:sticky;top:0;z-index:80;height:var(--bar);
+  background:rgba(251,248,243,.88);
+  backdrop-filter:blur(12px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+  text-decoration:none;white-space:nowrap}
+.brand b{color:var(--ink);font-weight:700;letter-spacing:.06em}
+.ctrls{display:flex;align-items:center;gap:10px}
+.seg{display:flex;border:1px solid var(--rule-2);border-radius:999px;overflow:hidden;background:var(--card)}
+.seg button{
+  appearance:none;border:0;background:transparent;font:600 12px/1 var(--sans);
+  color:var(--ink-3);padding:7px 11px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.seg button:hover{color:var(--ink);background:rgba(0,0,0,.03)}
+.seg button.on{background:var(--ink);color:#fdfbf7}
+.pill{
+  appearance:none;border:1px solid var(--rule-2);background:var(--card);border-radius:999px;
+  font:600 12px/1 var(--sans);color:var(--ink-2);padding:8px 13px;cursor:pointer;transition:.15s;
+}
+.pill:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 正文容器 ---------- */
+main{max-width:var(--reader);margin:0 auto;padding:0 28px}
+
+/* ---------- 封面 ---------- */
+.hero{padding:56px 0 10px;border-bottom:1px solid var(--rule)}
+.kicker{font:600 11.5px/1.5 var(--sans);letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px}
+.hero h1{margin:0}
+.h1-wrap{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);align-items:start}
+.h1-en{display:block;text-wrap:balance;font:400 clamp(24px,2.6vw,36px)/1.24 var(--serif);letter-spacing:-.01em}
+.h1-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,27px)/1.46 var(--sans);color:var(--ink);
+  letter-spacing:.01em;padding-top:2px}
+body[data-mode="en"] .h1-wrap,
+body[data-mode="zh"] .h1-wrap{grid-template-columns:1fr}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:22px 0 0;color:var(--ink-3);
+  font-size:12.5px;letter-spacing:.02em;padding-bottom:26px}
+.hero-meta span{display:inline-flex;align-items:center;gap:6px}
+.hero-meta i{font-style:normal;color:var(--accent)}
+
+/* ---------- 题图 ---------- */
+.cover{margin:18px 0 0;padding:0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:var(--card)}
+.cover img{display:block;width:100%;height:auto}
+.cover figcaption{padding:9px 14px 11px;color:var(--ink-3);font-size:12px;line-height:1.7}
+
+/* ---------- 速览 ---------- */
+.overview{margin:40px 0 8px;padding:26px 28px 24px;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px}
+.overview > h2{margin:0 0 4px;font:700 15px/1.4 var(--sans);letter-spacing:.02em}
+.ov-sub{margin:0 0 18px;font-size:12px;color:var(--ink-3);letter-spacing:.02em}
+.ov-list{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.ov-list li{position:relative;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--ink-2)}
+.ov-list li::before{content:"";position:absolute;left:2px;top:.72em;width:7px;height:7px;
+  border-radius:50%;background:var(--accent);opacity:.55}
+.ov-list b{color:var(--ink);font-weight:700}
+.ov-foot{margin:18px 0 0;padding-top:14px;border-top:1px dashed var(--rule-2);
+  font-size:12.5px;line-height:1.8;color:var(--ink-3)}
+
+/* 5 层 vs 1 循环 对比卡 */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0 0}
+.cmp{border:1px solid var(--rule);border-radius:12px;padding:15px 16px;background:var(--paper-2)}
+.cmp.win{background:#fdf3ea;border-color:#eccdb8}
+.cmp h3{margin:0 0 10px;font:700 12.5px/1.4 var(--sans);letter-spacing:.04em;color:var(--ink-2)}
+.cmp.win h3{color:var(--accent-2)}
+.cmp ol{margin:0;padding-left:17px;font-size:12.5px;line-height:1.95;color:var(--ink-2)}
+.cmp.win ol{color:var(--ink)}
+
+/* ---------- 阅读区：双栏 ---------- */
+.reader{margin-top:34px;padding-bottom:20px}
+.colheads{
+  position:sticky;top:var(--bar);z-index:40;display:grid;grid-template-columns:1fr 1fr;
+  column-gap:var(--gap);padding:10px 0 9px;margin-bottom:10px;
+  background:var(--paper);border-bottom:1px solid var(--rule);
+}
+.colheads span{font:700 10.5px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+.colheads span:last-child{color:var(--accent);opacity:.75}
+
+.sec{margin-top:54px}
+.sec-head{display:flex;gap:16px;align-items:baseline;padding:0 0 12px;border-bottom:1px solid var(--rule-2)}
+.sec-num{font:700 12px/1 var(--mono);color:var(--accent);letter-spacing:.06em;padding-top:2px}
+.sec-head h2{margin:0}
+.h-en{display:block;font:600 11px/1.5 var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h-zh{display:block;text-wrap:balance;font:700 clamp(20px,2vw,26px)/1.42 var(--sans);letter-spacing:.01em}
+.gist{
+  margin:16px 0 8px;padding:13px 16px 13px 15px;background:var(--accent-soft);
+  border-left:2px solid var(--accent);border-radius:0 8px 8px 0;
+}
+.gist-label{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-2);margin-bottom:7px;opacity:.85}
+.gist p{margin:0;font-size:13.5px;line-height:1.86;color:#4a3a2e}
+
+/* 行：一句一行对齐 */
+.row{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap);
+  margin:0 0 26px}
+.row::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;width:1px;
+  background:repeating-linear-gradient(var(--rule) 0 6px,transparent 6px 12px);opacity:.9}
+.row.wide::before{display:none}
+.row.wide{grid-template-columns:1fr;column-gap:0}
+.cell{min-width:0}
+
+/* 英文 */
+.cell.en{font-family:var(--serif);font-size:var(--fs-en);line-height:var(--lh-en);
+  color:#2a251f;text-wrap:pretty;hyphens:auto}
+/* 中文 */
+.cell.zh{font-family:var(--sans);font-size:var(--fs-zh);line-height:var(--lh-zh);
+  color:#332c25;letter-spacing:.012em;text-align:justify;text-justify:inter-ideograph}
+
+.para{margin:0}
+.para + .para{margin-top:.7em}
+
+/* 句子：悬停联动的最小单位 */
+.s{
+  border-radius:3px;
+  transition:background-color .16s ease, box-shadow .16s ease, opacity .16s ease;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.s.hl{background:var(--hl);box-shadow:inset 2px 0 0 var(--accent)}
+.row.focus .s:not(.hl){opacity:.46}
+.s.pin{background:rgba(203,124,66,.10);box-shadow:inset 2px 0 0 rgba(176,81,43,.55)}
+
+/* 链接：极轻的下划虚线与箭头，不抢戏 */
+a.lnk{border-bottom:1px solid rgba(176,81,43,.42);padding-bottom:.5px;text-decoration:none;
+  transition:background .15s, border-color .15s}
+a.lnk:hover{background:rgba(176,81,43,.09);border-bottom-color:var(--accent-2)}
+a.lnk::after{content:"↗";font-family:var(--sans);font-size:.62em;vertical-align:.32em;
+  margin-left:.14em;opacity:.5;border:0}
+.cell.zh a.lnk::after{content:"";margin:0}
+
+/* 术语 */
+.term{border-bottom:1px dotted var(--term);cursor:help;transition:background .15s}
+.term:hover{background:rgba(125,106,60,.1)}
+
+/* 译注角标 */
+sup.tn{font:700 .58em/1 var(--sans);color:var(--accent);background:var(--accent-soft);
+  border-radius:3px;padding:1px 4px;margin-left:2px;cursor:help;vertical-align:.45em;
+  border:1px solid #eccdb8}
+sup.tn:hover{background:var(--accent);color:#fff}
+
+/* 原文笔误 */
+.typo{border-bottom:1px dotted #c0392b;cursor:help}
+.typo:hover{background:rgba(192,57,43,.08)}
+
+/* ---------- 列表 ---------- */
+.cell ul.para,.cell ol.para{margin:0;padding-left:19px}
+.cell ul.para li,.cell ol.para li{margin-bottom:.42em}
+.cell ul.para li::marker,.cell ol.para li::marker{color:var(--accent);opacity:.7}
+.row.nested{margin-top:-16px;margin-bottom:24px}
+.row.nested .cell{padding-left:22px;border-left:1px solid var(--rule)}
+.row.nested .cell ul.para li::marker,.row.nested .cell ol.para li::marker{color:var(--ink-3)}
+
+/* ---------- 小标题 h3 ---------- */
+.row.h3row{margin:36px 0 18px}
+.row.h3row::before{display:none}
+.h3-en{display:block;font:600 10.5px/1.4 var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:5px}
+.h3-zh{display:block;font:700 18.5px/1.5 var(--sans);letter-spacing:.01em}
+.h3-zh::before{content:"§";color:var(--accent);font-weight:400;margin-right:8px;opacity:.7;font-size:.85em}
+
+/* ---------- 图片 ---------- */
+.fig{margin:36px 0 40px}
+.fig-media{position:relative;background:#fff;border:1px solid var(--rule-2);border-radius:12px;
+  overflow:hidden;cursor:zoom-in}
+.fig-media img{display:block;width:100%;height:auto}
+.fig-media img.still[hidden]{display:none}
+.fig-bar{position:absolute;top:10px;right:10px;display:flex;gap:6px;opacity:0;transition:.18s}
+.fig:hover .fig-bar,.fig-bar:focus-within{opacity:1}
+.fig-bar button{
+  appearance:none;border:1px solid var(--rule-2);background:rgba(255,253,249,.94);
+  border-radius:8px;font:600 11px/1 var(--sans);color:var(--ink-2);padding:6px 9px;cursor:pointer;
+  backdrop-filter:blur(6px);
+}
+.fig-bar button:hover{border-color:var(--accent);color:var(--accent)}
+.fig-bar button.on{background:var(--ink);color:#fdfbf7;border-color:var(--ink)}
+figcaption{margin-top:15px;padding-left:15px;border-left:2px solid #eccdb8}
+.cap-zh{font-size:13.5px;line-height:1.85;color:var(--ink-2);margin:0}
+.cap-zh b{color:var(--ink)}
+.cap-en{margin:6px 0 0;font:italic 12px/1.7 var(--serif);color:var(--ink-3)}
+.howto{margin-top:12px;background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;
+  padding:0 14px}
+.howto summary{cursor:pointer;padding:11px 0;font:700 12.5px/1.4 var(--sans);color:var(--accent-2);
+  list-style:none;display:flex;align-items:center;gap:8px}
+.howto summary::-webkit-details-marker{display:none}
+.howto summary::before{content:"▸";transition:.2s;color:var(--accent)}
+.howto[open] summary::before{transform:rotate(90deg)}
+.howto ol{margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.88;color:var(--ink-2)}
+.howto ol li{margin-bottom:.4em}
+.howto ol b{color:var(--ink)}
+.takeaway{margin:10px 0 12px;font-size:12.5px;color:var(--accent-2);font-weight:600}
+
+/* ---------- 前置提示框 ---------- */
+.lede{background:var(--paper-2);border:1px solid var(--rule);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:20px 22px;margin:6px 0 30px}
+.lede-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.lede .cell.en{font-size:calc(var(--fs-en) - 1.5px);font-style:italic;color:var(--ink-2)}
+.lede .cell.zh{font-size:calc(var(--fs-zh) - .5px);color:var(--ink-2)}
+@media (max-width:1080px){.lede-grid{grid-template-columns:1fr;row-gap:12px}}
+
+/* ---------- 耐久原则块 ---------- */
+.row.principle{margin:24px 0 32px}
+.principle-box{background:var(--accent-soft);border-left:2px solid var(--accent);
+  border-radius:0 10px 10px 0;padding:15px 20px 14px}
+.principle-box .lab{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--accent-2);margin-bottom:9px;opacity:.8}
+.principle-box .lab-en{display:none}
+.principle-grid{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--gap)}
+.principle-grid .cell.en{font-size:calc(var(--fs-en) - .5px)}
+.principle-grid .cell.zh{font-size:calc(var(--fs-zh) - .5px)}
+body[data-mode="en"] .principle-box .lab-zh{display:none}
+body[data-mode="en"] .principle-box .lab-en{display:block}
+body[data-mode="en"] .principle-grid,
+body[data-mode="zh"] .principle-grid{grid-template-columns:1fr}
+@media (max-width:1080px){.principle-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 悬停卡片 ---------- */
+.card{
+  position:absolute;z-index:200;width:min(390px,calc(100vw - 20px));
+  background:var(--card);border:1px solid var(--rule-2);border-radius:12px;
+  box-shadow:0 18px 44px -12px rgba(60,40,20,.28),0 3px 10px rgba(60,40,20,.08);
+  padding:14px 16px 13px;opacity:0;transform:translateY(5px) scale(.99);
+  transition:opacity .14s ease,transform .14s ease;pointer-events:none;
+}
+.card.show{opacity:1;transform:none}
+.card .k{font:700 10px/1.4 var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.chip{font:700 10px/1 var(--sans);letter-spacing:.04em;padding:3px 6px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);border:1px solid var(--rule)}
+.chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+.chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+.card h4{margin:0 0 4px;font:700 15px/1.45 var(--sans);color:var(--ink)}
+.card .url{font:400 11px/1.5 var(--mono);color:var(--ink-3);word-break:break-all;margin:0 0 9px}
+.card .body{font-size:13px;line-height:1.74;color:var(--ink-2);margin:0}
+.card .body + .body{margin-top:8px}
+.card .body b{color:var(--ink)}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--rule-2);
+  font-size:11.5px;line-height:1.6;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.card .foot i{font-style:normal;color:var(--accent)}
+
+/* ---------- 灯箱 ---------- */
+.lb{position:fixed;inset:0;z-index:300;background:rgba(30,25,20,.93);display:none;
+  overscroll-behavior:contain}
+.lb.show{display:block}
+.lb-scroll{position:absolute;inset:44px 0 0;overflow:auto;padding:0 20px 30px}
+.lb img{display:block;width:min(1900px,100%);height:auto;margin:0 auto;background:#fff;border-radius:8px}
+.lb-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 18px;color:#e9e2d8;font-size:12.5px}
+.lb-bar button{appearance:none;border:1px solid rgba(255,255,255,.28);background:transparent;
+  color:#f2ece2;border-radius:7px;padding:6px 12px;font:600 12px/1 var(--sans);cursor:pointer}
+.lb-bar button:hover{background:rgba(255,255,255,.12)}
+
+/* ---------- 目录抽屉 ---------- */
+.toc{position:fixed;inset:0;z-index:250;display:none}
+.toc.show{display:block}
+.toc-bg{position:absolute;inset:0;background:rgba(30,25,20,.34);backdrop-filter:blur(2px)}
+.toc-panel{position:absolute;top:0;right:0;bottom:0;width:min(380px,90vw);background:var(--paper);
+  border-left:1px solid var(--rule);padding:20px 22px;overflow:auto;
+  box-shadow:-20px 0 50px rgba(40,25,10,.16)}
+.toc-panel h3{margin:0 0 14px;font:700 12px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3)}
+.toc-panel a{display:block;text-decoration:none;font-size:13.5px;line-height:1.6;padding:7px 0;
+  border-bottom:1px solid rgba(230,222,209,.7);color:var(--ink-2)}
+.toc-panel a:hover{color:var(--accent)}
+.toc-panel a.l2{font-weight:600;color:var(--ink)}
+.toc-panel a.l3{padding-left:16px;font-size:12.5px}
+.toc-panel .dot{color:var(--accent);margin-right:7px;font-size:10px}
+
+/* ---------- 附录 ---------- */
+.appendix{margin-top:86px;border-top:1px solid var(--rule-2);padding-top:40px}
+.app-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+.app-head h2{margin:0;font:700 22px/1.4 var(--sans)}
+.app-sub{margin:0 0 26px;font-size:13px;line-height:1.8;color:var(--ink-3)}
+.app-sect{margin:46px 0 0}
+.app-sect > h3{margin:0 0 4px;font:700 17px/1.45 var(--sans)}
+.app-sect > .desc{margin:0 0 20px;font-size:12.5px;line-height:1.75;color:var(--ink-3)}
+
+/* 延伸阅读卡片 */
+.lnk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.lnk-card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;
+  display:flex;flex-direction:column;gap:9px;transition:.18s;text-decoration:none}
+.lnk-card:hover{border-color:#e0c3ae;box-shadow:0 10px 26px -14px rgba(80,50,20,.28);transform:translateY(-1px)}
+.lnk-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.lnk-id{font:700 10.5px/1 var(--mono);color:var(--ink-3);letter-spacing:.04em}
+.lnk-card h4{margin:0;font:700 14.5px/1.5 var(--sans)}
+.lnk-site{font:400 11px/1.4 var(--mono);color:var(--ink-3);overflow-wrap:anywhere;word-break:normal}
+.lnk-card p{margin:0;font-size:12.5px;line-height:1.78;color:var(--ink-2)}
+.lnk-card p b{color:var(--ink)}
+.lnk-anchors{font-size:11.5px;line-height:1.7;color:var(--ink-3)}
+.lnk-anchors em{font-style:normal;background:var(--paper-2);border-radius:4px;padding:1px 5px;margin-right:4px}
+.lnk-card details{margin-top:2px;border-top:1px dashed var(--rule);padding-top:8px}
+.lnk-card details summary{cursor:pointer;font:600 11.5px/1.5 var(--sans);color:var(--accent-2);list-style:none}
+.lnk-card details summary::-webkit-details-marker{display:none}
+.lnk-card details summary::before{content:"＋ ";font-weight:400}
+.lnk-card details[open] summary::before{content:"－ "}
+.lnk-card details ul{margin:8px 0 0;padding-left:16px;font-size:12px;line-height:1.8;color:var(--ink-2)}
+.lnk-open{margin-top:auto;font:600 11.5px/1 var(--sans);color:var(--accent);text-decoration:none}
+.lnk-open:hover{text-decoration:underline}
+
+/* 术语表 */
+.gloss{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0;
+  border-top:1px solid var(--rule)}
+.gl-item{padding:16px 18px 16px 0;border-bottom:1px solid var(--rule)}
+.gl-head{display:flex;align-items:baseline;gap:9px;margin-bottom:6px;flex-wrap:wrap}
+.gl-en{font:700 13px/1.4 var(--mono);color:var(--ink);letter-spacing:.01em}
+.gl-zh{font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.gl-def{margin:0;font-size:12.5px;line-height:1.82;color:var(--ink-2)}
+.gl-ana{margin:7px 0 0;font-size:12px;line-height:1.75;color:var(--ink-3)}
+.gl-ana::before{content:"比方说：";color:var(--accent);font-weight:600}
+
+/* 译注 / 笔误 */
+.note-item{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:15px 0;
+  border-bottom:1px solid var(--rule)}
+.note-n{font:700 12px/1.6 var(--mono);color:var(--accent)}
+.note-item h4{margin:0 0 5px;font:700 14px/1.5 var(--sans)}
+.note-item p{margin:0;font-size:13px;line-height:1.85;color:var(--ink-2)}
+.typo-item{padding:14px 0;border-bottom:1px solid var(--rule)}
+.typo-item code{display:block;font:400 12px/1.7 var(--mono);background:var(--paper-2);
+  border:1px solid var(--rule);border-radius:6px;padding:8px 10px;margin-bottom:8px;color:#8f3f1f;
+  word-break:break-word}
+.typo-item p{margin:0;font-size:12.5px;line-height:1.8;color:var(--ink-2)}
+
+footer{margin:70px 0 0;padding:26px 0 60px;border-top:1px solid var(--rule);color:var(--ink-3);
+  font-size:12px;line-height:1.9}
+footer a{color:var(--ink-2)}
+
+/* ---------- 模式 ---------- */
+body[data-mode="en"] .cell.zh,
+body[data-mode="en"] .h-zh,
+body[data-mode="en"] .h1-zh,
+body[data-mode="en"] .gist,
+body[data-mode="en"] .cap-zh,
+body[data-mode="en"] .overview,
+body[data-mode="en"] .appendix,
+body[data-mode="en"] .howto{display:none}
+body[data-mode="en"] .row{grid-template-columns:1fr}
+body[data-mode="en"] .row::before{display:none}
+body[data-mode="en"] .colheads{grid-template-columns:1fr}
+body[data-mode="en"] .colheads span:last-child{display:none}
+body[data-mode="en"] .cell.en{font-size:calc(var(--fs-en) + 1.5px)}
+body[data-mode="en"] .row:not(.wide),
+body[data-mode="zh"] .row:not(.wide){max-width:760px;margin-left:auto;margin-right:auto}
+
+body[data-mode="zh"] .cell.en,
+body[data-mode="zh"] .h-en,
+body[data-mode="zh"] .h1-en,
+body[data-mode="zh"] .cap-en{display:none}
+body[data-mode="zh"] .row{grid-template-columns:1fr}
+body[data-mode="zh"] .row::before{display:none}
+body[data-mode="zh"] .colheads{grid-template-columns:1fr}
+body[data-mode="zh"] .colheads span:first-child{display:none}
+body[data-mode="zh"] .cell.zh{font-size:calc(var(--fs-zh) + 1.5px)}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:1080px){
+  :root{--gap:34px;--fs-en:17px;--fs-zh:15.5px}
+  .h1-wrap{grid-template-columns:1fr;row-gap:14px}
+  .row{grid-template-columns:1fr;row-gap:10px}
+  .row::before{display:none}
+  .cell.zh{padding-left:14px;border-left:2px solid var(--rule);opacity:.96}
+  .colheads{display:none}
+  .sec{margin-top:44px}
+}
+@media (max-width:720px){
+  main{padding:0 18px}
+  .topbar-in{padding:0 14px}
+  .brand{display:none}
+  .hero{padding:36px 0 6px}
+  .overview{padding:20px 18px;border-radius:12px}
+  .compare{grid-template-columns:1fr}
+  .row.wide{grid-column:1/-1}
+  .cell.zh{padding-left:12px}
+  .lnk-grid,.gloss{grid-template-columns:1fr}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  body{background:#fff;--fs-en:10.5pt;--fs-zh:9.6pt}
+  #progress,.topbar,.card,.lb,.toc,.fig-bar,.colheads{display:none!important}
+  .row{page-break-inside:avoid}
+  .gist,.overview{background:#fff;border:1px solid #ddd}
+  .sec{page-break-before:auto}
+  main{max-width:none;padding:0}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+
+/* ---------- 脚注条（原文脚注，非译者注） ---------- */
+.row.foot{margin:14px 0 30px}
+.foot-in{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:10px 2px 12px}
+.foot-n{display:block;font:700 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--gap)}
+.foot-grid .cell{font-size:calc(var(--fs-en) - 3px);line-height:1.78;color:var(--ink-2)}
+body[data-mode="en"] .foot-grid,
+body[data-mode="zh"] .foot-grid{grid-template-columns:1fr}
+sup.fn{font:600 .62em/1 var(--sans);color:var(--accent);padding:0 1px;vertical-align:super}
+@media (max-width:1080px){.foot-grid{grid-template-columns:1fr;row-gap:10px}}
+
+/* ---------- 数据表（原文表格的双语呈现） ---------- */
+.row.tblrow{margin:26px 0 36px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--card)}
+table.bt{width:100%;border-collapse:collapse;font-size:13px;line-height:1.7}
+table.bt th,table.bt td{padding:11px 15px;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule)}
+table.bt thead th{background:var(--paper-2);font:700 12.5px/1.5 var(--sans);color:var(--ink)}
+table.bt tbody tr:last-child td{border-bottom:0}
+table.bt tbody tr:hover td{background:#fdf8f1}
+.th-en,.td-en{display:block;color:var(--ink);font-weight:600}
+.th-zh,.td-zh{display:block;margin-top:2px;font-size:11.8px;line-height:1.7;color:var(--ink-3);font-weight:400}
+.th-zh{color:var(--accent-2);opacity:.88}
+table.bt code{font:400 .9em var(--mono);background:var(--paper-2);border:1px solid var(--rule);
+  border-radius:4px;padding:0 4px;color:#8f3f1f;word-break:break-word}
+table.bt b{color:var(--ink)}
+body[data-mode="en"] .th-zh,body[data-mode="en"] .td-zh{display:none}
+body[data-mode="zh"] .th-en,body[data-mode="zh"] .td-en{display:none}
+body[data-mode="zh"] .th-zh,body[data-mode="zh"] .td-zh{font-weight:600}
+@media (max-width:720px){table.bt{font-size:12.5px}table.bt th,table.bt td{padding:9px 11px}}
+
+/* ---------- 附录代码块（保留英文原文，可折叠） ---------- */
+.row.coderow{margin:26px 0 40px}
+.code-box{border:1px solid var(--rule);border-radius:12px;background:var(--card);overflow:hidden}
+.code-box summary{cursor:pointer;list-style:none;padding:14px 18px;font:700 13px/1.5 var(--sans);color:var(--ink);
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;background:var(--paper-2)}
+.code-box summary::-webkit-details-marker{display:none}
+.code-box summary::before{content:"▸";color:var(--accent);transition:.2s}
+.code-box[open] summary::before{transform:rotate(90deg)}
+.code-box .code-note{font:400 11.5px/1.6 var(--sans);color:var(--ink-3)}
+.code-box pre{margin:0;padding:18px 20px;background:var(--paper-2);
+  border-top:1px solid var(--rule);font:12.5px/1.75 var(--mono);color:var(--ink-2);
+  white-space:pre-wrap;overflow-x:auto;max-height:560px;overflow-y:auto}
+
+/* ---------- 视频图：播放入口 ---------- */
+.fig-bar .vbtn{
+  appearance:none;border:1px solid #eccdb8;background:rgba(253,243,234,.96);border-radius:8px;
+  font:600 11px/1 var(--sans);color:var(--accent-2);padding:6px 9px;cursor:pointer;
+  text-decoration:none;backdrop-filter:blur(6px);
+}
+.fig-bar .vbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 内嵌视频（demo：mp4 base64 进单文件） ---------- */
+fig.has-video .fig-media{background:#0b0b0b;cursor:default}
+.fig-media.has-video{position:relative}
+.fig-media .video-poster{display:block;width:100%;height:auto}
+.video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:6px;padding:16px 26px;border:1px solid rgba(255,255,255,.28);border-radius:14px;
+  background:rgba(16,13,10,.72);color:#fbf8f3;cursor:pointer;backdrop-filter:blur(6px);transition:.18s}
+.video-play:hover{background:rgba(176,81,43,.86);border-color:rgba(255,255,255,.5)}
+.video-play b{font:700 15px/1.2 var(--sans);letter-spacing:.04em}
+.video-play small{font:400 11.5px/1 var(--sans);opacity:.8;letter-spacing:.02em}
+.fig-video{display:block;width:100%;height:auto;background:#0b0b0b}
+fig.has-video .fig-bar{opacity:1;top:auto;bottom:10px}
+.fig-bar .vtag{
+  font:600 10.5px/1 var(--sans);letter-spacing:.06em;color:#f2ece2;background:rgba(20,16,12,.72);
+  padding:7px 10px;border-radius:999px;backdrop-filter:blur(4px)
+}
+.cap-video{margin:9px 0 0;font-size:12px;line-height:1.7;color:var(--ink-3)}
+.cap-video a{color:var(--accent);text-decoration:none;border-bottom:1px dotted #eccdb8}
+.cap-video a:hover{border-bottom-color:var(--accent)}
+
+</style>
+<script id="site-theme-boot">(function(){try{if(localStorage.getItem('site-theme')==='dark'){document.documentElement.setAttribute('data-theme','dark')}}catch(e){}})();</script>
+<style id="site-mast-style">
+/* ---------- 站点顶栏（阅读页） ---------- */
+:root{--mast:52px}
+html{scroll-padding-top:calc(var(--mast) + var(--bar) + 12px)}
+@media (min-width:1081px){html{scroll-padding-top:calc(var(--mast) + var(--bar) + 43px)}}
+.site-mast{
+  position:sticky;top:0;z-index:85;height:var(--mast);
+  background:rgba(251,248,243,.92);border-bottom:1px solid var(--rule);
+  -webkit-backdrop-filter:blur(14px) saturate(1.1);backdrop-filter:blur(14px) saturate(1.1);
+}
+[data-theme="dark"] .site-mast{background:rgba(21,19,15,.92)}
+.site-mast-in{max-width:var(--reader);margin:0 auto;height:100%;padding:0 28px;
+  display:flex;align-items:center;gap:clamp(16px,3vw,34px)}
+.sm-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);flex:none}
+.sm-mark{display:inline-grid;place-items:center;width:24px;height:24px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent);font:italic 400 15px/1 var(--serif);flex:none}
+.sm-word{font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:lowercase}
+.sm-nav{display:flex;align-items:center;gap:clamp(16px,2.4vw,28px);font-size:14.5px}
+.sm-nav a{position:relative;color:var(--ink-2);text-decoration:none;padding:4px 0;transition:color .2s}
+.sm-nav a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--accent);
+  transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.22,.61,.36,1)}
+.sm-nav a:hover{color:var(--ink)}
+.sm-nav a:hover::after,.sm-nav a.on::after{transform:scaleX(1)}
+.sm-nav a.on{color:var(--ink)}
+.sm-theme{margin-left:auto;display:inline-grid;place-items:center;width:32px;height:32px;
+  border:1px solid var(--rule-2);border-radius:50%;background:transparent;color:var(--ink-2);
+  cursor:pointer;transition:color .2s,border-color .2s,transform .3s}
+.sm-theme:hover{color:var(--accent);border-color:var(--accent);transform:rotate(12deg)}
+.sm-theme svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.sm-theme .i-moon{display:none}
+[data-theme="dark"] .sm-theme .i-moon{display:block}
+[data-theme="dark"] .sm-theme .i-sun{display:none}
+/* 阅读页自己的工具条挪到站点顶栏之下 */
+.topbar{top:var(--mast)}
+.topbar-in>.blogback{flex:none}
+.colheads{top:calc(var(--mast) + var(--bar))}
+@media (min-width:901px){.topbar-in>.brand.blogback{display:none!important}}
+@media (max-width:900px){.sm-nav{display:none}}
+@media (max-width:640px){:root{--mast:48px}}
+@media (max-width:359px){.sm-word{display:none}}
+
+/* ---------- 跨页过渡（Chrome 126+ 生效，其余浏览器照常跳转） ---------- */
+@view-transition{navigation:auto}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+@keyframes sm-vt-out{to{opacity:0}}
+@keyframes sm-vt-in{from{opacity:0}}
+@keyframes sm-vt-theme{
+  from{clip-path:circle(0 at var(--vt-x,50%) var(--vt-y,50%))}
+  to{clip-path:circle(var(--vt-r,120vmax) at var(--vt-x,50%) var(--vt-y,50%))}
+}
+@media (prefers-reduced-motion:no-preference){
+  /* 旧页退场与新页入场重叠，避免中间出现近空屏 */
+  ::view-transition-group(root){background:var(--paper)}
+  ::view-transition-old(root){animation:sm-vt-out .18s ease both}
+  ::view-transition-new(root){animation:sm-vt-in .24s ease both}
+  html.theme-vt::view-transition-old(root){animation:none}
+  html.theme-vt::view-transition-new(root){animation:sm-vt-theme .5s cubic-bezier(.22,.61,.36,1) both}
+}
+@media (prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+}
+
+/* ---------- 深色主题：先换变量，再补少量写死的浅色 ---------- */
+[data-theme="dark"]{
+  --paper:#15130f;--paper-2:#1c1a15;--card:#1a1813;
+  --ink:#efe9dd;--ink-2:#b4ab9c;--ink-3:#8b8274;
+  --rule:#2c2822;--rule-2:#3a352c;
+  --accent:#e0906a;--accent-2:#f0a780;--accent-soft:#2a211a;
+  --hl:rgba(224,144,106,.16);--term:#c9b07a;
+  color-scheme:dark;
+}
+[data-theme="dark"] ::selection{background:rgba(224,144,106,.24)}
+[data-theme="dark"] #progress{background:linear-gradient(90deg,var(--accent),#c98a5e)}
+[data-theme="dark"] .topbar{background:rgba(21,19,15,.9)}
+[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] .seg button.on{background:var(--ink);color:#15130f}
+[data-theme="dark"] .cmp.win{background:#241d16;border-color:#43301f}
+[data-theme="dark"] .gist p{color:var(--ink-2)}
+[data-theme="dark"] .cell.en,[data-theme="dark"] .cell.zh{color:var(--ink)}
+[data-theme="dark"] figcaption{border-left-color:#43301f}
+[data-theme="dark"] sup.tn{border-color:#43301f}
+[data-theme="dark"] .chip.must{background:#3a2a20;color:#f0a780;border-color:#43301f}
+[data-theme="dark"] .chip.bg{background:#232a1c;color:#b7c98f;border-color:#37402c}
+[data-theme="dark"] .lnk-card:hover{border-color:#43301f}
+[data-theme="dark"] .fig-bar button{background:rgba(21,19,15,.9);color:var(--ink);border-color:#43301f}
+[data-theme="dark"] .fig-bar button.on{background:var(--ink);color:#15130f;border-color:var(--ink)}
+[data-theme="dark"] .toc-panel{border-left-color:var(--rule);box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+[data-theme="dark"] .toc-panel a{border-bottom-color:rgba(255,255,255,.08)}
+[data-theme="dark"] .toc-bg{background:rgba(0,0,0,.5)}
+[data-theme="dark"] .card{box-shadow:0 18px 44px -12px rgba(0,0,0,.6),0 3px 10px rgba(0,0,0,.4)}
+[data-theme="dark"] table.bt tbody tr:hover td{background:#221f19}
+[data-theme="dark"] .typo{border-bottom-color:#e57373}
+[data-theme="dark"] .typo:hover{background:rgba(229,115,115,.12)}
+[data-theme="dark"] a.lnk{border-bottom-color:rgba(224,144,106,.5)}
+[data-theme="dark"] .s.pin{background:rgba(224,144,106,.16);box-shadow:inset 2px 0 0 rgba(224,144,106,.6)}
+[data-theme="dark"] .term:hover{background:rgba(201,176,122,.14)}
+[data-theme="dark"] .cap-video a{border-bottom-color:#43301f}
+@media print{
+  .site-mast{display:none!important}
+  [data-theme="dark"]{
+    --paper:#fff;--paper-2:#f5f5f5;--card:#fff;
+    --ink:#000;--ink-2:#333;--ink-3:#555;
+    --rule:#ddd;--rule-2:#ccc;
+    --accent:#8f3f1f;--accent-2:#7a3518;--accent-soft:#f2f2f2;
+    --hl:transparent;--term:#6b5a2e;
+    color-scheme:light;
+  }
+  [data-theme="dark"] .chip.must{background:#fbe4d6;color:#8f3f1f;border-color:#eccdb8}
+  [data-theme="dark"] .chip.bg{background:#eaf0e2;color:#4b5c2f;border-color:#d8e0c8}
+  [data-theme="dark"] .cmp.win{background:var(--paper);border-color:var(--rule)}
+}
+</style>
+<style id="site-nav-style">
+.topbar-in{justify-content:flex-start!important}
+.topbar-in>.brand{margin-right:18px}
+.topbar-in>.ctrls{margin-left:auto}
+.blogback{color:var(--accent)!important;letter-spacing:.02em}
+.blogback:hover{text-decoration:underline;text-underline-offset:3px}
+.topbar-in{flex-wrap:nowrap}
+.bb-short{display:none}
+@media (max-width:720px){
+  .topbar-in>.brand:not(.blogback){display:none}
+  .topbar-in>.blogback{display:inline-flex!important;margin-right:10px}
+  .bb-full{display:none}
+  .bb-short{display:inline}
+}
+@media print{.blogback{display:none!important}}
+</style>
+<link rel="canonical" href="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/skills-over-mcp/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="xiuerhuahuazi">
+<meta property="og:title" content="MCP 服务器现在能随工具一起发布技能，还能接下长任务">
+<meta property="og:description" content="Anthropic 2026-11-24 产品更新：Skills over MCP 进入公测，Tasks 与 Elicitation 正式可用，File Uploads 即将推出">
+<meta property="og:url" content="https://xiuerhuahuazi.github.io/blog-xiuerhuahuazi/readers/skills-over-mcp/">
+<meta name="twitter:card" content="summary">
+</head>
+<body data-mode="both">
+
+<!-- site-mast -->
+<header class="site-mast">
+  <div class="site-mast-in">
+    <a class="sm-brand" href="../../" aria-label="回到首页">
+      <span class="sm-mark" aria-hidden="true">x</span>
+      <span class="sm-word">xiuerhuahuazi</span>
+    </a>
+    <nav class="sm-nav" aria-label="主导航">
+      <a href="../../readers/" class="on">双语书架</a>
+      <a href="../../notes/">技术手记</a>
+      <a href="../../about/">关于</a>
+    </nav>
+    <button class="sm-theme" type="button" data-theme-toggle aria-label="切换深色模式" aria-pressed="false">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.6 8.6 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="progress"></div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <!-- site-nav --><a class="brand blogback" href="../" title="返回双语书架" aria-label="返回双语书架"><span aria-hidden="true">←</span><span class="bb-full">双语书架</span><span class="bb-short">书架</span></a>
+    <a class="brand" href="#top">EN <b>/</b> 中 · 逐句对照阅读</a>
+    <div class="ctrls">
+      <div class="seg" id="modeSeg" role="group" aria-label="显示模式">
+        <button data-mode="both" class="on">双语</button>
+        <button data-mode="en">EN</button>
+        <button data-mode="zh">中</button>
+      </div>
+      <div class="seg" id="fontSeg" role="group" aria-label="字号">
+        <button id="fMinus" aria-label="缩小字号">A−</button>
+        <button id="fPlus" aria-label="放大字号">A+</button>
+      </div>
+      <button id="tocBtn" class="pill" aria-haspopup="true">目录</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><p class="kicker">Anthropic · 2026-11-24</p><h1 class="h1-wrap"><span class="h1-en" lang="en">MCP servers can now ship skills, run tasks, and more with Claude</span><span class="h1-zh">MCP 服务器现在能随工具一起发布技能，还能接下长任务</span></h1><div class="hero-meta"><span>原文 810 词</span><span>中文 2300 字</span><span>逐句对照 <i>48</i> 句</span><span>预计 5 分钟</span><span><a href="https://claude.com/resources/articles/skills-over-mcp-tasks-and-more" target="_blank" rel="noopener" class="lnk">原文地址</a></span></div></section><section class="overview" id="overview"><h2>60 秒速览：这篇更新在说什么</h2><p class="ov-sub">译者所加，不是原文的一部分 —— 读完这 5 条，再看原文会快很多。</p><ul class="ov-list"><li><b>一句话结论</b>：MCP 不再只是「给智能体挂工具」的接线板。服务器现在能随工具一起发布技能（公测），还能把长任务丢到后台、中途向用户要确认、直接收发文件（文件上传即将推出）。</li><li><b>四个变化</b>：Skills over MCP（公测，Pro / Max / Ultra 默认开启）· Tasks（正式可用）· Elicitation（正式可用）· File Uploads（即将推出）。</li><li><b>技术上最关键的一句</b>：技能按需加载、随服务器一起更新，所以「用户没有额外要装的东西」。</li><li><b>规模</b>：MCP 每月 SDK 下载量超过 7 亿次，Claude 侧已有 10,000 多个 MCP 连接器。</li><li><b>怎么读</b>：第 1 节讲技能，第 2 节讲任务 / 征求确认 / 文件上传，第 3 节是给开发者的落地入口，第 4 节讲这一年 MCP 在 Claude 里怎么变好用。</li></ul><div class="compare"><div class="cmp"><h3>以前：只交工具</h3><ol><li>服务器暴露 tools（Claude 能执行的动作）</li><li>工具名 + 描述只说得清「能做什么」</li><li>「该怎么做」只能靠提示词临时补</li><li>调用必须当场跑完，Claude 才能往下走</li></ol></div><div class="cmp win"><h3>现在：工具 + 技能 + 任务</h3><ol><li>skills：把「怎么做」随服务器一起发，按需加载</li><li>Tasks：长活丢到后台，Claude 继续干别的</li><li>Elicitation：花钱、删数据之前先问用户</li><li>File Uploads（即将推出）：文件直达服务器，不占上下文</li></ol></div></div><p class="ov-foot cmp-foot">左栏是本文所描述的「此前」状态，右栏是 2026-11-24 这批更新之后的样子。</p><p class="ov-foot">速览与对比卡由译者所加，不是原文；正文逐句对照，术语首次出现可悬停看解释。</p></section><div class="colheads"><span>English original</span><span>中文译文</span></div>
+<div id="reader">
+<section class="sec" id="s-intro">
+
+<div class="reader-body">
+<div class="row" data-rid="intro-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b0-0">Skills over MCP is now in <span class='term' data-term='public-beta'>public beta</span> in Claude, so <span class='term' data-term='mcp-server'>MCP servers</span> can ship <span class='term' data-term='skill'>skills</span> alongside their tools.</span> <span class="s" data-k="intro-b0-1">We're also giving servers ways to handle longer, more interactive work with Claude: <span class='term' data-term='tasks'>Tasks</span> and <span class='term' data-term='elicitation'>Elicitation</span> are now generally available, and <span class='term' data-term='file-uploads'>File Uploads</span> is rolling out soon.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b0-0">Skills over MCP 现在已在 Claude 里进入<span class='term' data-term='public-beta'>公测</span>，也就是说 <span class='term' data-term='mcp-server'>MCP 服务器</span>可以把<span class='term' data-term='skill'>技能</span>和工具一起发出来<sup class='tn' data-note='N1'>1</sup>。</span><span class="s" data-k="intro-b0-1">我们同时让服务器能与 Claude 一起处理更耗时、更具交互性的工作：<span class='term' data-term='tasks'>任务</span>（Tasks）和<span class='term' data-term='elicitation'>征求确认</span>（Elicitation）现已正式可用，<span class='term' data-term='file-uploads'>文件上传</span>（File Uploads）也即将推出。</span></p></div></div>
+<div class="row" data-rid="intro-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b1-0">Two years ago, Anthropic <a class='lnk' href='https://www.anthropic.com/news/model-context-protocol' target='_blank' rel='noopener' data-link='L1'>launched the Model Context Protocol (MCP)</a> as a new standard for connecting AI <span class='term' data-term='agent'>agents</span> to the systems where data lives.</span> <span class="s" data-k="intro-b1-1">The <span class='term' data-term='spec'>spec</span> has kept evolving to meet the connectivity needs of agents in production, and is becoming foundational for agentic messaging and orchestration.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b1-0">两年前，Anthropic <a class='lnk' href='https://www.anthropic.com/news/model-context-protocol' target='_blank' rel='noopener' data-link='L1'>发布了模型上下文协议（MCP）</a>，把它作为一项新标准，用来把 AI <span class='term' data-term='agent'>智能体</span>连接到数据所在的系统。</span><span class="s" data-k="intro-b1-1">这份<span class='term' data-term='spec'>规范</span>一直在演进，以满足生产环境中智能体的连接需求，并正在成为智能体之间的消息传递与编排的基础<sup class='tn' data-note='N2'>2</sup>。</span></p></div></div>
+<div class="row" data-rid="intro-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="intro-b2-0">With today's updates, Claude can work with a server more like it works with another agent: learning from it, delegating to it, and exchanging input and files along the way.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="intro-b2-0">有了今天这些更新，Claude 跟一个服务器协作的方式，会更像它跟另一个智能体协作：向它学习、把任务委派给它，并在过程中互相交换输入和文件<sup class='tn' data-note='N3'>3</sup>。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-skills">
+<div class="sec-head"><span class="sec-num">01</span><h2><span class="h-en">Ship expertise alongside tools with Skills over MCP</span><span class="h-zh">随工具一起交付「怎么做」：Skills over MCP</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>工具的名字和描述只说得清「能做什么」，说不清「该怎么用」。Skills over MCP 让服务器把技能跟工具一起发布：按需加载，随服务器更新，用户没有额外要装的东西。Shopify、HubSpot、Atlassian 已经在用，Carta 即将推出。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="skills-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="skills-b0-0">Tool names and descriptions tell Claude what a server can do, but don't cover how to handle specific use cases.</span> <span class="s" data-k="skills-b0-1">With <a class='lnk' href='https://modelcontextprotocol.io/extensions/skills/overview' target='_blank' rel='noopener' data-link='L2'>Skills over MCP</a>, servers can publish skills alongside their tools to help Claude take on longer, multi-step work.</span> <span class="s" data-k="skills-b0-2">Claude loads a skill only when it's needed, keeping context use low.</span> <span class="s" data-k="skills-b0-3">Skills update with the server, so developers can ship tools and guidance together and users have nothing separate to install.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="skills-b0-0">工具的名字和描述告诉 Claude 这个服务器能做什么，但说不清具体场景该怎么处理。</span><span class="s" data-k="skills-b0-1">有了 <a class='lnk' href='https://modelcontextprotocol.io/extensions/skills/overview' target='_blank' rel='noopener' data-link='L2'>Skills over MCP</a>，服务器可以把技能跟工具一起发布，帮 Claude 承担更长的多步工作。</span><span class="s" data-k="skills-b0-2">Claude 只在需要时才加载技能，这样占用的上下文很少。</span><span class="s" data-k="skills-b0-3">技能随服务器一起更新，于是开发者可以把工具和说明一起交付，用户也不用再单独安装什么。</span></p></div></div>
+<div class="row" data-rid="skills-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="skills-b1-0">Skills can cover best practices, step-by-step workflows, or even playbooks tailored to a user's account or organization.</span> <span class="s" data-k="skills-b1-1">Using Skills over MCP:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="skills-b1-0">技能可以是最佳实践、分步骤的工作流，甚至可以是针对某个用户账户或某个组织专门定制的操作手册。</span><span class="s" data-k="skills-b1-1">在实际使用中，用上 Skills over MCP 的几家是这样：</span></p></div></div>
+<div class="row" data-rid="skills-b2"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="skills-b2-0-0"><a class='lnk' href='https://claude.com/marketplace/connectors/shopify' target='_blank' rel='noopener' data-link='L3'>Shopify</a> helps Claude design and update a merchant's online store end to end.</span></li><li><span class="s" data-k="skills-b2-1-0"><a class='lnk' href='https://claude.com/marketplace/connectors/hubspot' target='_blank' rel='noopener' data-link='L4'>HubSpot</a> onboards customers and gets them set up in Claude.</span></li><li><span class="s" data-k="skills-b2-2-0"><a class='lnk' href='https://claude.com/marketplace/connectors/atlassian' target='_blank' rel='noopener' data-link='L5'>Atlassian</a> helps Claude draw on deep organizational context for insights and work analysis.</span></li><li><span class="s" data-k="skills-b2-3-0"><a class='lnk' href='https://claude.com/marketplace/connectors/carta' target='_blank' rel='noopener' data-link='L6'>Carta</a> will help Claude draft and issue equity from an uploaded document (coming soon).</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="skills-b2-0-0"><a class='lnk' href='https://claude.com/marketplace/connectors/shopify' target='_blank' rel='noopener' data-link='L3'>Shopify</a> 帮 Claude 端到端地设计和更新商家的线上店铺。</span></li><li><span class="s" data-k="skills-b2-1-0"><a class='lnk' href='https://claude.com/marketplace/connectors/hubspot' target='_blank' rel='noopener' data-link='L4'>HubSpot</a> 帮客户完成上手引导，并在 Claude 里把他们配置好。</span></li><li><span class="s" data-k="skills-b2-2-0"><a class='lnk' href='https://claude.com/marketplace/connectors/atlassian' target='_blank' rel='noopener' data-link='L5'>Atlassian</a> 让 Claude 能借助对组织内部的深入了解，来做洞察和工作分析。</span></li><li><span class="s" data-k="skills-b2-3-0"><a class='lnk' href='https://claude.com/marketplace/connectors/carta' target='_blank' rel='noopener' data-link='L6'>Carta</a> 将让 Claude 基于上传的文档起草并发放股权（即将推出）。</span></li></ul></div></div>
+<div class="row" data-rid="skills-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="skills-b3-0">Skills over MCP is in public beta in Claude and Claude Code, on by default for Pro, Max, and Ultra plans and available to Team plans once an admin enables it.</span> <span class="s" data-k="skills-b3-1">Coming soon to Enterprise.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="skills-b3-0">Skills over MCP 在 Claude 和 Claude Code 里都是公测状态：Pro、Max、Ultra 套餐默认开启，Team 套餐要管理员打开后才能用<sup class='tn' data-note='N4'>4</sup>。</span><span class="s" data-k="skills-b3-1">Enterprise（企业版）即将跟进。</span></p></div></div>
+<figure class="row wide fig" id="fig1" data-cap="一张图看懂：MCP 服务器向 Claude 交付的三层东西"><div class="fig-media"><img class="still" src="media/fig1.webp" loading="lazy" decoding="async" alt="Skills over MCP (beta): an MCP server ships three layers to Claude. Skills carry domain knowledge tailored to each user or org, tools are actions Claude can take, and resources are context Claude can pull in. Skills load only when needed and update with the server."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>一张图看懂：MCP 服务器向 Claude 交付的三层东西</b>　Skills over MCP（公测）：一个 MCP 服务器向 Claude 交付三层东西——技能是知识，工具是可执行的动作，资源是可拉取的上下文。技能只在需要时加载，并随服务器一起更新。</p><p class="cap-en">原文图注：Skills over MCP (beta): an MCP server ships three layers to Claude. Skills carry domain knowledge tailored to each user or org, tools are actions Claude can take, and resources are context Claude can pull in. Skills load only when needed and update with the server.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>右边三块色条自上而下对应三层：Skills（珊瑚色）、Tools（黑色）、Resources（白色），每块后面跟着一句英文说明。</li><li>看每层后面的英文：Domain knowledge tailored to each user or org、Actions Claude can take、Context Claude can pull in——分别对应知识、动作、上下文。</li><li>左边是三层菱形自上而下叠放，用珊瑚色虚线竖向串联：虚线在 Tools 层处带一个 ▶ 箭头，到 Resources 层时以圆点收尾——图形讲的是分层，不是「谁调用谁」。</li><li>最下面那行 Skills load only when needed and update with the server 是全图最该记住的一句：按需加载 + 随服务器更新。</li></ol><p class="takeaway">一句话：技能不是又一套工具，而是叠在工具之上的一层「怎么做」。</p></details></figcaption></figure>
+</div>
+</section>
+<section class="sec" id="s-tasks">
+<div class="sec-head"><span class="sec-num">02</span><h2><span class="h-en">MCP servers can now take on long-running, interactive work with Claude</span><span class="h-zh">MCP 服务器现在能在 Claude 里承担长时、可交互的工作</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>以前工具调用必须当场跑完，Claude 才能往下走。现在有两条路：Tasks 把长活变成可轮询的后台任务；Elicitation 让服务器中途停下来问用户。第三条 File Uploads（文件直达服务器、不经过上下文窗口）即将推出。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="tasks-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tasks-b0-0">Agents in production are taking on longer, more consequential jobs.</span> <span class="s" data-k="tasks-b0-1">Servers can now support that work by running it in the background, checking in with users, and receiving files from Claude.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tasks-b0-0">生产环境里的智能体，正在承担更长、后果也更重的活儿。</span><span class="s" data-k="tasks-b0-1">服务器现在可以从三个方面支撑这类工作：把活儿放到后台执行、与用户沟通并征询意见、以及从 Claude 那里接收文件。</span></p></div></div>
+<div class="row" data-rid="tasks-b1"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tasks-b1-0"><b>Hand off long-running work with</b> <a class='lnk' href='https://modelcontextprotocol.io/extensions/tasks/overview' target='_blank' rel='noopener' data-link='L7'>Tasks</a>.</span> <span class="s" data-k="tasks-b1-1">Tool calls used to have to finish before Claude could move on.</span> <span class="s" data-k="tasks-b1-2">With Tasks, servers can run operations that take time, or even full agent loops, while Claude keeps working and picks up the result when it's ready.</span> <span class="s" data-k="tasks-b1-3">Using Tasks, <a class='lnk' href='https://claude.com/marketplace/connectors/zoominfo' target='_blank' rel='noopener' data-link='L8'>ZoomInfo</a> runs deeper accounts and contact research that previously took several prompts.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tasks-b1-0"><b>把长时工作交出去，用</b> <a class='lnk' href='https://modelcontextprotocol.io/extensions/tasks/overview' target='_blank' rel='noopener' data-link='L7'>任务（Tasks）</a><sup class='tn' data-note='N5'>5</sup>。</span><span class="s" data-k="tasks-b1-1">以前工具调用必须跑完，Claude 才能继续往下做。</span><span class="s" data-k="tasks-b1-2">有了任务，服务器可以跑那些耗时的操作，甚至跑完整的智能体循环；与此同时 Claude 继续干自己的活，等结果好了再来取。</span><span class="s" data-k="tasks-b1-3"><a class='lnk' href='https://claude.com/marketplace/connectors/zoominfo' target='_blank' rel='noopener' data-link='L8'>ZoomInfo</a> 用任务来做更深入的目标客户公司（accounts）与联系人调研——这种活儿以前要好几轮提示词才做得下来。</span></p></div></div>
+<figure class="row wide fig" id="fig2" data-cap="一张图看懂：Tasks 把长活交出去之后 Claude 在干什么"><div class="fig-media"><img class="still" src="media/fig2.webp" loading="lazy" decoding="async" alt="Tasks: Claude hands off a long-running job to an MCP server, keeps working, and picks up the result when it's ready."><div class="fig-bar"><button data-act="zoom">放大</button></div></div><figcaption><p class="cap-zh"><b>一张图看懂：Tasks 把长活交出去之后 Claude 在干什么</b>　Tasks：Claude 把一项长时工作交给 MCP 服务器，自己继续干活，等结果好了再把结果取回来。</p><p class="cap-en">原文图注：Tasks: Claude hands off a long-running job to an MCP server, keeps working, and picks up the result when it's ready.</p><details class="howto" open><summary>这张图怎么看（4 条）</summary><ol><li>上面那条带箭头的横线是 Claude 的时间线，中间一排黑方块是它继续做的其他事；Hand off 的箭头往下，指向 MCP 服务器那条长条。</li><li>下面那条标着 Long-running job 的珊瑚色长条，是这次被交出去的工作，它的长度代表耗时——比 Claude 那几步都长。</li><li>右侧向上的箭头写着 Returns the result，落在 Claude 时间线上带 ✓ 的那一格：这说明结果是在 Claude 主动来取时才对上号的。</li><li>最下面一句 Claude keeps working and picks up the result when it's ready 把整张图的意思说完了：不阻塞、异步取回。</li></ol><p class="takeaway">一句话：长任务不再阻塞对话，Claude 的时间线可以继续往前走。</p></details></figcaption></figure>
+<div class="row" data-rid="tasks-b3"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tasks-b3-0"><b>Ask for input mid-call with</b> <a class='lnk' href='https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation' target='_blank' rel='noopener' data-link='L9'>Elicitation</a>.</span> <span class="s" data-k="tasks-b3-1">Some actions need a user's sign-off, like spending money or deleting data.</span> <span class="s" data-k="tasks-b3-2">With Elicitation, a server can pause to ask the user for input through a form or link, then continue where it left off.</span> <span class="s" data-k="tasks-b3-3">Using Elicitation:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tasks-b3-0"><b>调用到一半需要输入，就用</b> <a class='lnk' href='https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation' target='_blank' rel='noopener' data-link='L9'>征求确认（Elicitation）</a>。</span><span class="s" data-k="tasks-b3-1">有些操作需要用户签字点头，比如花钱，或者删数据。</span><span class="s" data-k="tasks-b3-2">有了征求确认，服务器可以中途停下来，通过表单或链接向用户要输入，然后从停下之处接着继续<sup class='tn' data-note='N6'>6</sup>。</span><span class="s" data-k="tasks-b3-3">用上征求确认的几家是这样：</span></p></div></div>
+<div class="row" data-rid="tasks-b4"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="tasks-b4-0-0"><a class='lnk' href='https://claude.com/marketplace/connectors/supabase' target='_blank' rel='noopener' data-link='L10'>Supabase</a> confirms costs before creating a paid project and before running destructive SQL.</span></li><li><span class="s" data-k="tasks-b4-1-0"><a class='lnk' href='https://claude.com/marketplace/connectors/railway' target='_blank' rel='noopener' data-link='L11'>Railway</a> asks before making potentially destructive changes, like removing a service.</span></li><li><span class="s" data-k="tasks-b4-2-0"><a class='lnk' href='https://claude.com/marketplace/plugins/github' target='_blank' rel='noopener' data-link='L12'>GitHub</a> has users enter a repository's name before an agent deletes it.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="tasks-b4-0-0"><a class='lnk' href='https://claude.com/marketplace/connectors/supabase' target='_blank' rel='noopener' data-link='L10'>Supabase</a> 在创建付费项目之前、在运行破坏性 SQL 之前，都会先确认费用。</span></li><li><span class="s" data-k="tasks-b4-1-0"><a class='lnk' href='https://claude.com/marketplace/connectors/railway' target='_blank' rel='noopener' data-link='L11'>Railway</a> 在做可能造成破坏的改动（比如删掉一个服务）之前，会先问一句。</span></li><li><span class="s" data-k="tasks-b4-2-0"><a class='lnk' href='https://claude.com/marketplace/plugins/github' target='_blank' rel='noopener' data-link='L12'>GitHub</a> 会在智能体删除某个仓库之前，让用户先把仓库名输一遍。</span></li></ul></div></div>
+<div class="row" data-rid="tasks-b5"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tasks-b5-0">Tasks and Elicitation are now generally available in Claude and Claude Code for Pro, Max, and Ultra plans, and rolling out to Team and Enterprise organizations.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tasks-b5-0">任务和征求确认现在在 Claude 与 Claude Code 里对 Pro、Max、Ultra 套餐正式可用，并正在向 Team 与 Enterprise（企业版）组织逐步开放。</span></p></div></div>
+<div class="row" data-rid="tasks-b6"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tasks-b6-0"><b>Send and receive files with</b> <a class='lnk' href='https://github.com/modelcontextprotocol/experimental-ext-file-uploads' target='_blank' rel='noopener' data-link='L13'>File Uploads</a>.</span> <span class="s" data-k="tasks-b6-1">Claude will be able to pass files to MCP servers, not just text.</span> <span class="s" data-k="tasks-b6-2">The File Uploads <span class='term' data-term='extension'>extension</span> sends PDFs, spreadsheets, and images to a server without passing them through the <span class='term' data-term='context-window'>context window</span>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tasks-b6-0"><b>收发文件，用</b> <a class='lnk' href='https://github.com/modelcontextprotocol/experimental-ext-file-uploads' target='_blank' rel='noopener' data-link='L13'>文件上传（File Uploads）</a>。</span><span class="s" data-k="tasks-b6-1">Claude 将能把文件传给 MCP 服务器，而不只是文本。</span><span class="s" data-k="tasks-b6-2">文件上传（File Uploads）这个<span class='term' data-term='extension'>扩展</span>会把 PDF、电子表格和图片发给服务器，而不必让它们经过<span class='term' data-term='context-window'>上下文窗口</span><sup class='tn' data-note='N7'>7</sup>。</span></p></div></div>
+<div class="row" data-rid="tasks-b7"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="tasks-b7-0">File Uploads is rolling out soon in Claude and Claude Code to Pro, Max, Ultra, and eligible Team and Enterprise plans.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="tasks-b7-0">文件上传即将在 Claude 和 Claude Code 里向 Pro、Max、Ultra 以及符合条件的 Team 与 Enterprise（企业版）套餐推出。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-support">
+<div class="sec-head"><span class="sec-num">03</span><h2><span class="h-en">Add support to your plugins today</span><span class="h-zh">今天就可以给你的插件加上支持</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>这些能力属于开放的 MCP 规范和它的扩展，所以支持了就能在任何兼容客户端里用，不必只押在 Claude 上。官方给了四份开发者文档的入口。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="support-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="support-b0-0">These features are part of the open MCP spec and its extensions, so a server that supports them works in any compatible client, not just Claude.</span> <span class="s" data-k="support-b0-1">To add support, see the docs for <a class='lnk' href='https://code.claude.com/docs/en/mcp#use-skills-from-mcp-servers' target='_blank' rel='noopener' data-link='L14'>Skills over MCP</a>, <a class='lnk' href='https://code.claude.com/docs/en/mcp#mcp-tasks-for-server-authors' target='_blank' rel='noopener' data-link='L15'>Tasks</a>, <a class='lnk' href='https://code.claude.com/docs/en/mcp#respond-to-mcp-elicitation-requests' target='_blank' rel='noopener' data-link='L16'>Elicitation</a>, and <a class='lnk' href='https://claude.com/docs/connectors/building/files?open_in_browser=1' target='_blank' rel='noopener' data-link='L17'>File Uploads</a>.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="support-b0-0">这些功能都是开放的 MCP 规范及其扩展的一部分，所以一个支持它们的服务器，在任何兼容的客户端里都能用，而不只限于 Claude。</span><span class="s" data-k="support-b0-1">要加上支持，请看这四份文档：<a class='lnk' href='https://code.claude.com/docs/en/mcp#use-skills-from-mcp-servers' target='_blank' rel='noopener' data-link='L14'>Skills over MCP</a>、<a class='lnk' href='https://code.claude.com/docs/en/mcp#mcp-tasks-for-server-authors' target='_blank' rel='noopener' data-link='L15'>任务</a>、<a class='lnk' href='https://code.claude.com/docs/en/mcp#respond-to-mcp-elicitation-requests' target='_blank' rel='noopener' data-link='L16'>征求确认</a>、<a class='lnk' href='https://claude.com/docs/connectors/building/files?open_in_browser=1' target='_blank' rel='noopener' data-link='L17'>文件上传</a>。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-foundations">
+<div class="sec-head"><span class="sec-num">04</span><h2><span class="h-en">Built on stronger foundations for connecting agents in production</span><span class="h-zh">为生产环境的智能体连接，打更结实的地基</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>过去一年 MCP 在 Claude 里变好用的四件事：工具定义按需加载（多服务器场景能省 85% 以上的上下文）、规范改成无状态、企业托管授权、MCP Apps 带来完整界面。规模上，每月 SDK 下载量已超 7 亿次、连接器过万。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="foundations-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="foundations-b0-0">Thanks to contributions from across the AI ecosystem, MCP now sees over 700 million monthly SDK downloads, and there are over 10,000 MCP <span class='term' data-term='connector'>connectors</span> for Claude.</span> <span class="s" data-k="foundations-b0-1">We've worked with the MCP community to improve how MCP works in Claude.</span> <span class="s" data-k="foundations-b0-2">Over the past year, it has become:</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="foundations-b0-0">靠着整个 AI 生态的贡献，MCP 现在每月的 SDK 下载量超过 7 亿次，Claude 这边也已经有 10,000 多个 MCP <span class='term' data-term='connector'>连接器</span>。</span><span class="s" data-k="foundations-b0-1">我们跟 MCP 社区一起，改进了 MCP 在 Claude 里的工作方式。</span><span class="s" data-k="foundations-b0-2">过去一年里，它变成了这样：</span></p></div></div>
+<div class="row" data-rid="foundations-b1"><div class="cell en" lang="en"><ul class='para'><li><span class="s" data-k="foundations-b1-0-0"><b>More token efficient:</b> <a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L18'>Tool search</a> loads tool definitions only when needed, which can cut the context they use by over 85% in multi-server setups.</span></li><li><span class="s" data-k="foundations-b1-1-0"><b>Easier to scale:</b> The <a class='lnk' href='https://claude.com/resources/articles/bringing-mcp-2026-07-28-to-claude' target='_blank' rel='noopener' data-link='L19'>latest MCP spec</a> is <span class='term' data-term='stateless'>stateless</span> and supported across Claude products, making it easier to build servers and maintain their reliability as they grow.</span></li><li><span class="s" data-k="foundations-b1-2-0"><b>Simpler to authorize:</b> The <a class='lnk' href='https://claude.com/docs/connectors/building/enterprise-managed-auth' target='_blank' rel='noopener' data-link='L20'>Enterprise Managed Auth</a> extension lets admins authorize supported servers once, so users connect automatically.</span></li><li><span class="s" data-k="foundations-b1-3-0"><b>More interactive:</b> The <a class='lnk' href='https://claude.com/docs/connectors/building/mcp-apps/quickstart' target='_blank' rel='noopener' data-link='L21'>MCP Apps</a> extension brings full interfaces into Claude, beside the conversation or full screen.</span></li></ul></div><div class="cell zh"><ul class='para'><li><span class="s" data-k="foundations-b1-0-0"><b>更省 token：</b><a class='lnk' href='https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool' target='_blank' rel='noopener' data-link='L18'>工具检索（tool search）</a>只在需要时才加载工具定义；在多服务器配置下，这能把工具定义占用的上下文削减 85% 以上。</span></li><li><span class="s" data-k="foundations-b1-1-0"><b>更容易扩展：</b><a class='lnk' href='https://claude.com/resources/articles/bringing-mcp-2026-07-28-to-claude' target='_blank' rel='noopener' data-link='L19'>最新的 MCP 规范</a>是<span class='term' data-term='stateless'>无状态</span>的，并且在 Claude 各产品上都得到支持，这让构建服务器、以及随规模增长维持其可靠性都更容易。</span></li><li><span class="s" data-k="foundations-b1-2-0"><b>授权更简单：</b><a class='lnk' href='https://claude.com/docs/connectors/building/enterprise-managed-auth' target='_blank' rel='noopener' data-link='L20'>企业托管授权（Enterprise Managed Auth）</a>这个扩展让管理员一次性授权支持的服务器，用户端就能自动连上。</span></li><li><span class="s" data-k="foundations-b1-3-0"><b>更有交互：</b><a class='lnk' href='https://claude.com/docs/connectors/building/mcp-apps/quickstart' target='_blank' rel='noopener' data-link='L21'>MCP Apps</a> 扩展能把完整界面搬进 Claude——可以贴在对话旁边，也可以全屏打开。</span></li></ul></div></div>
+<div class="row" data-rid="foundations-b2"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="foundations-b2-0">Together, these improvements make MCP easier to build on and adopt, and give the standard a strong base to continue evolving for the needs of agents in production.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="foundations-b2-0">合在一起，这些改进让 MCP 更容易在其上搭建、也更容易被采用，也让这个标准有了一个结实的地基，可以继续朝着生产环境中智能体的需求演进。</span></p></div></div>
+</div>
+</section>
+<section class="sec" id="s-thanks">
+<div class="sec-head"><span class="sec-num">05</span><h2><span class="h-en">Thank you to the MCP community</span><span class="h-zh">谢谢 MCP 社区</span></h2></div><div class="gist"><span class="gist-label">本节要点</span><p>MCP 是开放标准，现在托管在中立的 Agentic AI Foundation；两年来的进展来自写规范、做 SDK、发布服务器、补客户端支持的人。这一节是致谢，也是这套东西能成立的真正原因。</p></div>
+<div class="reader-body">
+<div class="row" data-rid="thanks-b0"><div class="cell en" lang="en"><p class="para"><span class="s" data-k="thanks-b0-0">MCP is an open standard, hosted by the <a class='lnk' href='https://aaif.io/' target='_blank' rel='noopener' data-link='L22'>Agentic AI Foundation</a> and shaped by the people who build on it.</span> <span class="s" data-k="thanks-b0-1"><a class='lnk' href='https://blog.modelcontextprotocol.io/posts/mcp-turns-two' target='_blank' rel='noopener' data-link='L23'>Two years of progress</a> came from the maintainers, contributors, and developers who wrote the spec, built the SDKs, shipped servers, and added client support.</span> <span class="s" data-k="thanks-b0-2">Thank you for making MCP what it is today.</span></p></div><div class="cell zh"><p class="para"><span class="s" data-k="thanks-b0-0">MCP 是一项开放标准，现在由 <a class='lnk' href='https://aaif.io/' target='_blank' rel='noopener' data-link='L22'>Agentic AI Foundation</a> 托管，并由在它之上构建的人共同塑造。</span><span class="s" data-k="thanks-b0-1"><a class='lnk' href='https://blog.modelcontextprotocol.io/posts/mcp-turns-two' target='_blank' rel='noopener' data-link='L23'>两年的进展</a>，来自那些写规范、做 SDK、发布服务器、补上客户端支持的维护者、贡献者和开发者。</span><span class="s" data-k="thanks-b0-2">谢谢你们，让 MCP 成了今天的样子。</span></p></div></div>
+</div>
+</section>
+</div>
+<section class="appendix" id="appendix"><div class="app-head"><h2>补充材料</h2></div><p class="app-sub">下面几块都是译者所加，用来补上原文没展开的部分。正文里的虚线链接、虚线术语、上标数字，都能悬停看卡片；这里给出完整的清单，方便你事后再回头查。</p><div class="app-sect" id="links"><h3>延伸阅读地图</h3><p class="desc">原文 23 处正文引用，指向 23 个不同链接；另有 2 张配图未计入。按「不读会不会误解本文」分成三档：必读 / 背景 / 可选，建议顺序即卡片上标注的数字。每条都写了「不点开也能拿到的重点」，所以你可以完全不跳转地读完这篇文章。</p><div class="lnk-grid"><div class="lnk-card" id="link-L1"><div class="lnk-top"><span class="lnk-id">L1</span><span class="chip must">必读</span><span class="chip">建议第 1 个读</span></div><h4>发布 Model Context Protocol</h4><p class="lnk-site">anthropic.com · Introducing the Model Context Protocol</p><p class="lnk-anchors">正文对应：<em>发布了模型上下文协议（MCP）</em></p><p><b>这是什么：</b>MCP 的第一篇发布公告（2024-11-25）：为什么要做这个协议、整套东西由哪几块组成。</p><p><b>为什么值得点：</b>本文开头说「两年前」，起点就是这一篇。想弄清 MCP 解决的到底是哪个具体问题，读一手声明比读二手解读可靠。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>MCP 是开放标准，给开发者一对安全的双向连接：一边是 MCP 服务器（暴露数据与能力），一边是 MCP 客户端（AI 应用）。首发同时给了三样东西：规范与 SDK、Claude Desktop 的本地服务器支持、一批开源参考服务器（Google Drive、Slack、GitHub、Git、Postgres、Puppeteer）。动机写得很直白：每个数据源都要单独做一套集成，系统没法规模化地连起来。</p><ul><li>采用者：Block、Apollo 已接入；Zed、Replit、Codeium、Sourcegraph 在跟进</li><li>创建者是 David Soria Parra 与 Justin Spahr-Summers</li><li>明确定位是替换碎片化集成，而不是再加一层封装</li></ul></details><a class="lnk-open" href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L2"><div class="lnk-top"><span class="lnk-id">L2</span><span class="chip must">必读</span><span class="chip">建议第 2 个读</span></div><h4>Skills 扩展规范（MCP）</h4><p class="lnk-site">modelcontextprotocol.io · Skills — Model Context Protocol</p><p class="lnk-anchors">正文对应：<em>Skills over MCP</em></p><p><b>这是什么：</b>Skills 扩展的正式规范页：服务器怎么对外暴露技能、客户端怎么发现和读取。</p><p><b>为什么值得点：</b>本文第 1 节说的「按需加载」「随服务器更新」，在这页都能对上具体的协议消息，不是营销话术。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>扩展名 io.modelcontextprotocol/skills，对应的 SEP-2640 已经是 Final 状态。服务器必须同时声明 resources 能力和这个扩展，并实现 skills/list 与 skills/get；技能文件本身走 resources/read 读取。一个技能是含 SKILL.md 的目录，遵循 Agent Skills 规范，可以带附属文件；清单里每个文件都带 SHA-256 摘要和字节数，供客户端校验。</p><ul><li>只读 resources/read 不会激活技能——要由宿主走「加载技能」的路径，校验并（视需要）取得用户批准后才进模型上下文</li><li>支持分页（nextCursor），列表结果要求 resultType: complete</li><li>ttlMs 与 cacheScope 控制缓存新鲜度和共享范围</li></ul></details><a class="lnk-open" href="https://modelcontextprotocol.io/extensions/skills/overview" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L7"><div class="lnk-top"><span class="lnk-id">L7</span><span class="chip must">必读</span><span class="chip">建议第 3 个读</span></div><h4>Tasks 扩展规范（MCP）</h4><p class="lnk-site">modelcontextprotocol.io · Tasks — Model Context Protocol</p><p class="lnk-anchors">正文对应：<em>任务（Tasks）</em></p><p><b>这是什么：</b>Tasks 扩展的规范页：长请求怎么变成可轮询的任务、状态怎么走。</p><p><b>为什么值得点：</b>本文第 2 节的第一项能力。这页解释了「为什么不用直接把连接挂住」——那是理解 Tasks 的关键一问。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>服务器判断某个请求会很久时，先回一个任务句柄（resultType: task，含 taskId、初始状态、TTL、建议轮询间隔），而不是阻塞等结果。状态有 working、input_required、completed、failed、cancelled；客户端用 tasks/get 轮询，任务要输入时通过 tasks/update 交回去，也可以 tasks/cancel——取消是协作式的，服务器不保证立刻停。</p><ul><li>能力协商：客户端带 io.modelcontextprotocol/tasks，服务器在 server/discover 里声明</li><li>四个好处：不需要长连接、客户端崩溃能续、进度可见、可中途交互</li><li>任务在响应发出之前就已经落库，断线重连还能用同一个 ID 继续</li></ul></details><a class="lnk-open" href="https://modelcontextprotocol.io/extensions/tasks/overview" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L9"><div class="lnk-top"><span class="lnk-id">L9</span><span class="chip must">必读</span><span class="chip">建议第 4 个读</span></div><h4>Elicitation 规范（MCP 2026-07-28）</h4><p class="lnk-site">modelcontextprotocol.io · Elicitation — Model Context Protocol</p><p class="lnk-anchors">正文对应：<em>征求确认（Elicitation）</em></p><p><b>这是什么：</b>征求确认的正式规范：两种模式、能力声明、以及哪些信息绝不能走表单。</p><p><b>为什么值得点：</b>本文只用一句话带过「通过表单或链接」。链接二字背后其实是两套模式，安全边界也不同，看这页才知道差别在哪。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>服务器可以在处理请求途中向用户要信息，分两种模式：form 模式用服务器给的 JSON schema 渲染表单；URL 模式跳到外部链接，用于必须在客户端之外完成的敏感交互。规范明确禁止用 form 模式索要密码、API key、访问令牌、支付凭据，这类必须走 URL 模式。客户端要声明 elicitation 能力，空对象等于只支持 form。</p><ul><li>服务器不得用客户端没声明的模式发请求</li><li>客户端必须让用户看清是哪个服务器在要信息，并能拒绝、取消</li><li>URL 模式：跳转前要显示目标域名并取得同意</li></ul></details><a class="lnk-open" href="https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L13"><div class="lnk-top"><span class="lnk-id">L13</span><span class="chip must">必读</span><span class="chip">建议第 5 个读</span></div><h4>文件上传扩展（实验仓库）</h4><p class="lnk-site">github.com · modelcontextprotocol/experimental-ext-file-uploads</p><p class="lnk-anchors">正文对应：<em>文件上传（File Uploads）</em></p><p><b>这是什么：</b>文件上传扩展的代码仓库，由专门的 File Uploads 工作组维护。</p><p><b>为什么值得点：</b>本文说它「即将推出」。仓库名里的 experimental 就是这句话的证据：接口还在演进，别当成已冻结的标准去接。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>仓库自述是「用于通过 MCP 把文件上传给工具的实验性扩展」，由 File Uploads 工作组维护。也就是说它不是核心规范的一部分，而是挂在协议外面的一个扩展，还得靠客户端与服务端双方支持。</p><ul><li>实验状态，不是核心规范</li><li>工作组维护</li><li>接口细节以仓库为准，别照抄旧博客</li></ul></details><a class="lnk-open" href="https://github.com/modelcontextprotocol/experimental-ext-file-uploads" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L14"><div class="lnk-top"><span class="lnk-id">L14</span><span class="chip must">必读</span><span class="chip">建议第 6 个读</span></div><h4>Claude Code 文档：使用 MCP 服务器带来的技能</h4><p class="lnk-site">code.claude.com · Connect Claude Code to tools via MCP — Use skills from MCP servers</p><p class="lnk-anchors">正文对应：<em>Skills over MCP</em></p><p><b>这是什么：</b>Claude Code 文档里「怎么用服务器带来的技能」这一节，含组织层面的开关。</p><p><b>为什么值得点：</b>本文说「Pro / Max / Ultra 默认开启，Team 要管理员打开」。这页把 Team 具体点哪个开关写清楚了。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>三种服务器都支持：claude.ai 的连接器、你自己加的服务器、插件里的服务器。组织层面两条路——连接器由 Owner 在 Organization settings &gt; Connectors 里打开 Skills over MCP（组织的 Skills 开关也要开）；其他服务器要把 disableDirectMcpSkills 设为 false。文档明确警告：只在你信任成员服务器时才打开，技能里的指令或代码可能借提示注入让 Claude 做出意料之外的动作。</p><ul><li>默认策略按套餐分，Team / Enterprise 由管理员决定</li><li>安全前提是「信任服务器」，不是「功能好用」</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/mcp#use-skills-from-mcp-servers" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L15"><div class="lnk-top"><span class="lnk-id">L15</span><span class="chip must">必读</span><span class="chip">建议第 7 个读</span></div><h4>Claude Code 文档：给服务器作者的 Tasks 说明</h4><p class="lnk-site">code.claude.com · Connect Claude Code to tools via MCP — MCP tasks for server authors</p><p class="lnk-anchors">正文对应：<em>任务</em></p><p><b>这是什么：</b>从服务器作者角度写 Tasks：什么条件下能用任务回答、回答里必须有什么字段。</p><p><b>为什么值得点：</b>本文只讲了收益。这页讲的是最容易踩的坑：请求里没有那个扩展，你就不能回任务，回了就报错。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>在 2026-07-28 的连接上，Claude Code 会在 params._meta 的 clientCapabilities 里带上 io.modelcontextprotocol/tasks。只有请求带了这个扩展，你才能用任务回答，否则调用会以 Unsupported result type 'task' 失败；回答里没有 taskId 或合法 status 也会同样失败。任务对象就是 tools/call 的 JSON-RPC result，可选带 statusMessage 与 pollIntervalMs。</p><ul><li>先看客户端能力再决定回不回任务</li><li>任务对象不需要 content 数组</li><li>轮询间隔由服务器建议，客户端照办</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/mcp#mcp-tasks-for-server-authors" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L16"><div class="lnk-top"><span class="lnk-id">L16</span><span class="chip must">必读</span><span class="chip">建议第 8 个读</span></div><h4>Claude Code 文档：回应 MCP 的征求确认请求</h4><p class="lnk-site">code.claude.com · Connect Claude Code to tools via MCP — Respond to MCP elicitation requests</p><p class="lnk-anchors">正文对应：<em>征求确认</em></p><p><b>这是什么：</b>从用户视角写征求确认：终端里会弹什么、两种模式各自怎么操作。</p><p><b>为什么值得点：</b>本文说「通过表单或链接」。这页把「链接」模式在命令行里的实际体验写全了，包括 URL 太长时只能拒绝这种细节。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>服务器需要信息时，Claude Code 在终端自动弹对话框，用户侧不需要任何配置。form 模式是填表提交；URL 模式先问是否用浏览器打开，适合登录这类要在终端外完成的流程，URL 过长（受命令行参数长度限制）时只能拒绝。也可以用 Elicitation hook 自动应答，不弹窗。</p><ul><li>form：填字段、提交</li><li>URL：先确认再跳转，超长只能拒绝</li><li>可用 hook 自动应答</li></ul></details><a class="lnk-open" href="https://code.claude.com/docs/en/mcp#respond-to-mcp-elicitation-requests" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L17"><div class="lnk-top"><span class="lnk-id">L17</span><span class="chip must">必读</span><span class="chip">建议第 9 个读</span></div><h4>Claude 文档：支持文件的收发</h4><p class="lnk-site">claude.com · Support file uploads and downloads</p><p class="lnk-anchors">正文对应：<em>文件上传</em></p><p><b>这是什么：</b>给要接文件收发的服务器看的要求清单：存储前提、主机审批、各类限额。</p><p><b>为什么值得点：</b>本文只说「PDF、表格、图片直达服务器」。这页说明为什么需要审批主机，以及一次能传多少、多久超时——真要接的时候这些数字决定成败。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>存储侧：上传要能一次性 PUT / POST 收下整个文件，下载要能响应 GET（能给 byte range 更好）。存文件的主机必须先报 Anthropic 审批，至少一个；其它主机、IP、公共 CDN 一律拒绝。限额一类的硬指标：单次调用最多 10 个文件（Claude Code 发 8 个）、完成上传的响应要小于 1,000,000 字节、目标 URL 不超过 8,192 字节，还有一系列 30 / 60 / 290 秒级超时。</p><ul><li>主机白名单是前置条件，不是可选项</li><li>单次 10 个文件 / 响应 &lt; 1 MB</li><li>测试要用假文件，别拿真实数据试</li></ul></details><a class="lnk-open" href="https://claude.com/docs/connectors/building/files?open_in_browser=1" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L19"><div class="lnk-top"><span class="lnk-id">L19</span><span class="chip must">必读</span><span class="chip">建议第 10 个读</span></div><h4>MCP 2026-07-28 规范：无状态核心，正在进入 Claude</h4><p class="lnk-site">claude.com · MCP 2026-07-28 spec: stateless core, coming to Claude</p><p class="lnk-anchors">正文对应：<em>最新的 MCP 规范</em></p><p><b>这是什么：</b>第五版规范 2026-07-28 的官方解读：为什么改成无状态、扩展怎么规范化、授权改了什么。</p><p><b>为什么值得点：</b>本文第 4 节四条改进里最抽象的一条（stateless）在这里有完整来龙去脉，读完才知道「无状态」不是把功能砍掉。</p><details open><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>这版把 MCP 从双向有状态协议改成请求 / 响应模型，服务器因此能部署在 serverless 与边缘；MCP Apps 与 Tasks 正式进入带版本号的扩展框架，加能力不必动核心协议；授权对齐生产环境的 OAuth 2.0 与 OIDC，可直接接 Entra、Okta 这类企业身份系统。文中当时的数字：月下载 4 亿，Claude 目录约 950 个服务器。</p><ul><li>无状态换来的是可部署性，不是功能缩水</li><li>扩展框架让「加能力」不用改核心</li><li>950 个 → 本月的 10,000+，半年增长可见</li></ul></details><a class="lnk-open" href="https://claude.com/resources/articles/bringing-mcp-2026-07-28-to-claude" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L18"><div class="lnk-top"><span class="lnk-id">L18</span><span class="chip bg">背景</span><span class="chip">建议第 11 个读</span><span class="chip">本区域受限</span></div><h4>Tool search 工具（Claude 平台文档）</h4><p class="lnk-site">platform.claude.com · Tool search tool — Claude Platform Docs</p><p class="lnk-anchors">正文对应：<em>工具检索（tool search）</em></p><p><b>这是什么：</b>Claude 平台文档里关于 tool search 的那一页。</p><p><b>为什么值得点：</b>本文「可削减 85% 以上上下文」这一说法的来源。可惜这一页在本区域会跳到不可用页，只能确认链接有效、内容无法复核。</p><p><b>访问说明：</b>本区域（中国大陆）访问会跳转至「App unavailable in region」，属区域限制，不是链接失效。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>本区域打开会跳到 App unavailable in region，正文读不到。可核对的部分只有标题与站点归属：这是 Claude 平台文档中 tool search 工具的说明页。本文提到的「多服务器配置下削减 85% 以上上下文」出自原文，本页无法进一步证实。</p><ul><li>链接本身有效，属区域限制</li><li>85% 这个数字请以原文为准</li></ul></details><a class="lnk-open" href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L20"><div class="lnk-top"><span class="lnk-id">L20</span><span class="chip bg">背景</span><span class="chip">建议第 12 个读</span></div><h4>连接器的企业托管授权</h4><p class="lnk-site">claude.com · Enterprise Managed Auth for connectors</p><p class="lnk-anchors">正文对应：<em>企业托管授权（Enterprise Managed Auth）</em></p><p><b>这是什么：</b>企业托管授权的实现文档：用签名的身份断言替代 OAuth 同意页。</p><p><b>为什么值得点：</b>本文说「管理员授权一次，用户自动连上」。这页说明「自动」是怎么做到的——不是绕过授权，而是换了一种断言方式。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>EMA 让组织里的用户连 MCP 服务器时跳过 OAuth 同意页：Claude 把一份签名的 JWT 交给你的授权服务器，由客户的 IdP 或 Claude 签发，你的服务器校验后发 access token。目录里这类条目会标 Auto-connect。仅限 Team 与 Enterprise，且要发邮件申请开通。</p><ul><li>本质是身份断言换授权页，安全性靠签名校验</li><li>与 lazy authentication 配合：遇到 401 时后台完成交换再重试</li></ul></details><a class="lnk-open" href="https://claude.com/docs/connectors/building/enterprise-managed-auth" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L21"><div class="lnk-top"><span class="lnk-id">L21</span><span class="chip bg">背景</span><span class="chip">建议第 13 个读</span></div><h4>给你的 MCP 服务器加一个交互式界面</h4><p class="lnk-site">claude.com · Add an interactive UI to your MCP server</p><p class="lnk-anchors">正文对应：<em>MCP Apps</em></p><p><b>这是什么：</b>MCP Apps 的 quickstart：用一条 ui:// 资源把 HTML 界面接进对话。</p><p><b>为什么值得点：</b>本文只说到「把完整界面搬进 Claude」。这页能看到实现有多具体：一个资源 URI、一个指向它的字段、一层沙箱。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>一个 MCP App 就是一条 ui:// 资源，内容是渲染用的 HTML；工具的 _meta.ui.resourceUri 指向它。支持 MCP Apps 的宿主调用该工具时，读这个字段、取资源、在沙箱帧里渲染 HTML。quickstart 用一个骰子示例走完注册工具、注册资源、连接浏览器 SDK 的完整流程。</p><ul><li>ui:// 是资源协议，不是链接</li><li>界面跑在沙箱里</li><li>SDK 提供 registerAppTool / registerAppResource</li></ul></details><a class="lnk-open" href="https://claude.com/docs/connectors/building/mcp-apps/quickstart" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L22"><div class="lnk-top"><span class="lnk-id">L22</span><span class="chip bg">背景</span><span class="chip">建议第 14 个读</span></div><h4>Agentic AI Foundation（AAIF）</h4><p class="lnk-site">aaif.io · Agentic AI Foundation (AAIF)</p><p class="lnk-anchors">正文对应：<em>Agentic AI Foundation</em></p><p><b>这是什么：</b>托管 MCP 的那个中立基金会。</p><p><b>为什么值得点：</b>本文最后一句说 MCP 是开放标准、由它托管。点开能确认这不是修辞：基金会确实在推多个智能体方向的开放协议。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>AAIF 自我定位是「基于透明、协作与标准化的中立开放基金会」，目标是推进智能体 AI 的公共利益。首页把 A2A（Agent2Agent，让不同平台、不同框架的智能体互相通信、协作、安全交换信息与任务）等协议列为主推项目。</p><ul><li>非营利 / 中立定位</li><li>同时推进 A2A 等智能体互联协议</li></ul></details><a class="lnk-open" href="https://aaif.io/" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L23"><div class="lnk-top"><span class="lnk-id">L23</span><span class="chip bg">背景</span><span class="chip">建议第 15 个读</span></div><h4>MCP 的两年：建设者之年</h4><p class="lnk-site">blog.modelcontextprotocol.io · Two Years of MCP Builders</p><p class="lnk-anchors">正文对应：<em>两年的进展</em></p><p><b>这是什么：</b>MCP 两周年的官方回顾，作者是创始人 David Soria Parra 与 Den Delimarsky。</p><p><b>为什么值得点：</b>本文最后一段在致谢。这篇是同一天的完整版致谢，而且带了具体数字和项目清单，比一句 thank you 有料。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>两年累计 2,500+ 位贡献者；SDK 总下载突破 50 亿次，其中 45 亿来自过去一年。作者把第二年称为「builder 之年」，并列了社区作品：给 Ableton Live 做的语音编曲服务器、Blender 官方开源的 MCP 服务器、DaVinci Resolve 与 Cinema 4D 内置的服务器，以及硬件项目 Stack-chan。</p><ul><li>第一年立协议，第二年靠建设者铺开</li><li>50 亿下载 / 45 亿在最近一年</li><li>从音乐、3D 到视频与硬件都有落地</li></ul></details><a class="lnk-open" href="https://blog.modelcontextprotocol.io/posts/mcp-turns-two" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L3"><div class="lnk-top"><span class="lnk-id">L3</span><span class="chip">可选</span><span class="chip">建议第 16 个读</span></div><h4>Shopify 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · Shopify connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>Shopify</em></p><p><b>这是什么：</b>Claude 连接器目录里的 Shopify 条目，也就是本文举例的第一个使用者。</p><p><b>为什么值得点：</b>看它一眼能明白「技能」在真实产品里长什么样：不是抽象概念，而是一个在目录里可安装的条目。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>目录页对该连接器的概括是：「构建、管理与分析你的 Shopify 商店」。本文补了一句技能具体干什么：帮 Claude 端到端地设计和更新商家的线上店铺。</p><ul><li>属于 Claude 的连接器目录（marketplace）</li><li>覆盖建店、改店、看数据三类日常操作</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/shopify" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L4"><div class="lnk-top"><span class="lnk-id">L4</span><span class="chip">可选</span><span class="chip">建议第 17 个读</span></div><h4>HubSpot 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · HubSpot connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>HubSpot</em></p><p><b>这是什么：</b>Claude 目录里的 HubSpot 条目。</p><p><b>为什么值得点：</b>本文说它负责「客户上手引导」，目录页的说法是给每个回答、洞察和动作都带上 CRM 上下文——两句话能对照着看。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>目录页一句话定位：CRM context for every answer, insight, and action。本文强调的用法是 onboarding：把客户引导进来，并在 Claude 里把配置做完。</p><ul><li>定位是 CRM 上下文</li><li>本文侧重「新客户上手」这一段流程</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/hubspot" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L5"><div class="lnk-top"><span class="lnk-id">L5</span><span class="chip">可选</span><span class="chip">建议第 18 个读</span></div><h4>Atlassian MCP 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · Atlassian MCP connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>Atlassian</em></p><p><b>这是什么：</b>Claude 目录里的 Atlassian 条目，覆盖 Jira、Confluence、Bitbucket、Loom 等应用。</p><p><b>为什么值得点：</b>本文说它让 Claude 用上「组织内部的深层上下文」。这页给了这句话的具体边界：用的是你现有的 Atlassian 权限。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>可以在 Jira、Confluence、Bitbucket、Loom 等应用里搜索、读取并更新内容，权限沿用你现有的 Atlassian 授权。</p><ul><li>跨多个 Atlassian 应用</li><li>权限不另开一套，沿用原有账号</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/atlassian" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L6"><div class="lnk-top"><span class="lnk-id">L6</span><span class="chip">可选</span><span class="chip">建议第 19 个读</span></div><h4>Carta 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · Carta connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>Carta</em></p><p><b>这是什么：</b>Claude 目录里的 Carta 条目，做的是股权与私募资本那摊事。</p><p><b>为什么值得点：</b>本文唯一一个标了「即将推出」的案例。对照它和目录页，能看出「官宣」与「已上线」之间还有距离。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>目录页定位：the connected ERP for private capital（面向私募资本的联网 ERP）。本文说它将让 Claude 基于上传的文档起草并发放股权，并明确标注了 coming soon——也就是还不能用。</p><ul><li>尚未上线，本文自己标了 coming soon</li><li>上手方式是把文档上传，让 Claude 起草</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/carta" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L8"><div class="lnk-top"><span class="lnk-id">L8</span><span class="chip">可选</span><span class="chip">建议第 20 个读</span></div><h4>ZoomInfo 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · ZoomInfo connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>ZoomInfo</em></p><p><b>这是什么：</b>Claude 目录里的 ZoomInfo 条目，B2B 数据那一类。</p><p><b>为什么值得点：</b>本文用来说明 Tasks 的实际收益：以前要好几轮提示词的调研，现在一次任务就能跑完。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>目录页的四个动作：找潜在客户、做账户调研、用已核验的 B2B 数据补全买家画像、按意向信号行动。本文的说法是「更深的账户与联系人调研」，正是这类跑起来慢、需要多轮的活儿。</p><ul><li>B2B 数据与意向信号</li><li>典型的长任务：多层级调研</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/zoominfo" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L10"><div class="lnk-top"><span class="lnk-id">L10</span><span class="chip">可选</span><span class="chip">建议第 21 个读</span></div><h4>Supabase 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · Supabase connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>Supabase</em></p><p><b>这是什么：</b>Claude 目录里的 Supabase 条目：数据库、认证、存储。</p><p><b>为什么值得点：</b>本文举的第一个「花钱前先确认」的例子。这类场景最容易被智能体搞出账单，所以拿它当范例很合适。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>目录页定位：管理数据库、认证与存储。本文的具体用法是两道闸：创建付费项目之前确认费用，运行破坏性 SQL 之前再确认一次。</p><ul><li>数据库 / 认证 / 存储三块</li><li>两道确认闸：付费项目、破坏性 SQL</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/supabase" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L11"><div class="lnk-top"><span class="lnk-id">L11</span><span class="chip">可选</span><span class="chip">建议第 22 个读</span></div><h4>Railway 连接器（Claude 目录）</h4><p class="lnk-site">claude.com · Railway connector | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>Railway</em></p><p><b>这是什么：</b>Claude 目录里的 Railway 条目：部署与运维。</p><p><b>为什么值得点：</b>本文举的第二个例子，针对的是「可能造成破坏的改动」——注意原文用的是 potentially，不是确定会坏。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>目录页定位：在 Railway 上部署、管理、调试应用与基础设施。本文强调的用法：在可能造成破坏的改动（比如移除一个服务）之前先问一句。</p><ul><li>部署与调试</li><li>破坏性操作前的人工确认</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/connectors/railway" target="_blank" rel="noopener">打开原文 ↗</a></div><div class="lnk-card" id="link-L12"><div class="lnk-top"><span class="lnk-id">L12</span><span class="chip">可选</span><span class="chip">建议第 23 个读</span></div><h4>GitHub 插件（Claude 目录）</h4><p class="lnk-site">claude.com · GitHub | Claude by Anthropic</p><p class="lnk-anchors">正文对应：<em>GitHub</em></p><p><b>这是什么：</b>Claude 目录里的 GitHub 条目（官方 GitHub MCP 服务器）。</p><p><b>为什么值得点：</b>本文第三个例子用的手段更有意思：不是问「要不要删」，而是让你把仓库名手打一遍。</p><details><summary>不点开也能拿到的重点</summary><p style='margin:8px 0 0;font-size:12.5px;line-height:1.8;color:var(--ink-2)'>官方 GitHub MCP 服务器：建 issue、管 PR、审代码、搜仓库，可以直接操作 GitHub 的完整 API。本文提到的用法是在智能体删除某个仓库之前，要求用户先把仓库名输入一遍——用输入成本换掉误删。</p><ul><li>官方维护的 MCP 服务器</li><li>覆盖 issue / PR / 代码审查 / 仓库搜索</li></ul></details><a class="lnk-open" href="https://claude.com/marketplace/plugins/github" target="_blank" rel="noopener">打开原文 ↗</a></div></div></div><div class="app-sect" id="glossary"><h3>术语表</h3><p class="desc">正文里带虚线底线的词，悬停即出解释；这里是完整 14 条，可当速查用。</p><div class="gloss"><div class="gl-item"><div class="gl-head"><span class="gl-en">Model Context Protocol</span><span class="gl-zh">模型上下文协议（MCP）</span></div><p class="gl-def">Anthropic 2024 年开源的连接标准：用一套统一协议把 AI 客户端和外部系统（数据仓、代码仓、CRM 等）接起来，任何厂商都能实现。</p><p class="gl-ana">相当于智能体世界的 USB 接口。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">MCP server</span><span class="gl-zh">MCP 服务器</span></div><p class="gl-def">按 MCP 协议对外提供能力的一方：一个进程或远程服务，能提供工具、资源，现在还能提供技能。</p><p class="gl-ana">就是插在 USB 口上的那台设备。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">agent</span><span class="gl-zh">智能体（agent）</span></div><p class="gl-def">能自己多步行动的系统：读任务、调工具、看结果、再决定下一步，而不是一问一答。</p><p class="gl-ana">像会自己找工具的实习生。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">spec</span><span class="gl-zh">规范（spec）</span></div><p class="gl-def">MCP 的正式文本：规定消息格式、能力协商、各扩展的必须与可选行为，是实现和兼容性的依据。</p><p class="gl-ana">像插座标准，插头能不能插看它。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">public beta</span><span class="gl-zh">公测（public beta）</span></div><p class="gl-def">功能已对所有用户开放，但接口和行为还可能调整；与 GA（正式可用、承诺稳定）相对。</p><p class="gl-ana">能用了，但还会改。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">skills</span><span class="gl-zh">技能（skills）</span></div><p class="gl-def">写给模型看的操作说明，通常是一个含 SKILL.md 的目录，可以带附属文件；只在需要时加载。</p><p class="gl-ana">相当于随设备附赠的操作手册。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Tasks</span><span class="gl-zh">任务（Tasks）</span></div><p class="gl-def">MCP 的异步执行机制：服务器先返回 taskId 和状态，客户端轮询，跑完再取结果，不必一直占着连接。</p><p class="gl-ana">像取餐号：先给你号，好了再取。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">Elicitation</span><span class="gl-zh">征求确认（Elicitation）</span></div><p class="gl-def">服务器在调用途中向用户要信息或确认的机制：可以弹表单（form 模式），也可以跳到外部链接（URL 模式）。</p><p class="gl-ana">像付款前的确认弹窗。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">File Uploads</span><span class="gl-zh">文件上传（File Uploads）</span></div><p class="gl-def">MCP 扩展：客户端把 PDF、电子表格、图片等文件直接交给服务器，而不是把内容塞进对话上下文。</p><p class="gl-ana">像递 U 盘，而不是把文件念一遍。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">extension</span><span class="gl-zh">扩展（extension）</span></div><p class="gl-def">在 MCP 基础协议之外加的一层可选能力：双方都声明支持才启用，不支持就退回基础协议。</p><p class="gl-ana">像协议上的可选配件。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">context window</span><span class="gl-zh">上下文窗口（context window）</span></div><p class="gl-def">模型一次能看到的全部内容上限（对话、工具定义、文件内容都算）；塞得越满，留给干活的空间越少。</p><p class="gl-ana">像一张固定大小的书桌。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">tool search</span><span class="gl-zh">工具检索（tool search）</span></div><p class="gl-def">先只把工具索引给模型，需要时再按需加载工具定义，避免几十个服务器的定义把上下文撑满。</p><p class="gl-ana">像先看目录，再取书。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">stateless</span><span class="gl-zh">无状态（stateless）</span></div><p class="gl-def">每个请求自带所需信息，服务器不依赖上一次请求留下的会话；扩容、重连、部署到 serverless 都更容易。</p><p class="gl-ana">像每次进门都重新报一遍身份。</p></div><div class="gl-item"><div class="gl-head"><span class="gl-en">connector</span><span class="gl-zh">连接器（connector）</span></div><p class="gl-def">Claude 目录里对 MCP 服务器的产品化叫法：一键连上某个服务，背后是一个 MCP 服务器或插件。</p><p class="gl-ana">同一个东西，售卖页上的名字。</p></div></div></div><div class="app-sect" id="notes"><h3>译者注</h3><p class="desc">正文中上标数字对应这里，解释的是「直译会看不懂」或「原文本身含糊」的地方。</p><div class="note-item"><div class="note-n">01</div><div><h4>Skills over MCP 是功能名</h4><p>这里说的是一个具体功能：一套让 MCP 服务器把「技能」（含 SKILL.md 的说明目录）随工具一起发布的扩展。不是泛指「MCP 有很多技巧」。</p></div></div><div class="note-item"><div class="note-n">02</div><div><h4>agentic messaging and orchestration</h4><p>这两个词还没有稳定的中文定名。这里的含义是：智能体之间互相发消息、以及把多个智能体组织起来干活——MCP 正在成为这类协作的通用接口。</p></div></div><div class="note-item"><div class="note-n">03</div><div><h4>这句话是全文的框架</h4><p>「更像跟另一个智能体协作」是这批更新的主线：服务器不再是一个被动函数库，而是一个能学、能派活、能交换输入和文件的合作方。后面三项能力都在给这句话补细节。</p></div></div><div class="note-item"><div class="note-n">04</div><div><h4>套餐名保持原文</h4><p>套餐名保留英文原名，首次出现时括注中文，以免与实际计费页面对不上。本节说的是 Skills over MCP 的开放范围：Pro、Max、Ultra 默认开启，Team 要管理员打开，Enterprise 尚未开放。</p></div></div><div class="note-item"><div class="note-n">05</div><div><h4>Tasks 不是待办事项</h4><p>MCP 规范里的 Task 是一次异步执行的句柄：服务器先返回 taskId 和状态，客户端轮询，跑完了再取结果。跟产品界面里的「待办任务」不是一回事。</p></div></div><div class="note-item"><div class="note-n">06</div><div><h4>表单 / 链接对应两种模式</h4><p>规范里分 form 模式（服务器给 JSON 表单，客户端渲染）和 URL 模式（跳到外部链接处理，密码、支付凭据这类敏感信息不允许走 form 模式经过客户端）。</p></div></div><div class="note-item"><div class="note-n">07</div><div><h4>为什么强调「不经过上下文窗口」</h4><p>文件按字节直达服务器，模型不必先「读一遍」再复述，因此不占上下文、也不受上下文长度限制；这也是它能传 PDF、表格、图片的前提。</p></div></div></div></section><footer><p>原文 © Anthropic（2026-11-24）。本页为学习用途的双语精读，中文译文由译者提供；产品名、套餐名、协议名保留英文原样。两张配图均来自原文。</p><p>原文：<a href="https://claude.com/resources/articles/skills-over-mcp-tasks-and-more" target="_blank" rel="noopener">MCP servers can now ship skills, run tasks, and more with Claude</a>　·　本页由译文与补充材料构成，供学习阅读使用。</p></footer>
+</main>
+
+<div id="card" class="card" role="tooltip" aria-hidden="true"></div>
+
+<div id="lb" class="lb" aria-hidden="true">
+  <div class="lb-bar"><span id="lbCap"></span><button id="lbClose">关闭（ESC）</button></div>
+  <div class="lb-scroll"><img id="lbImg" alt=""></div>
+</div>
+
+<div id="toc" class="toc" aria-hidden="true">
+  <div class="toc-bg" data-close></div>
+  <nav class="toc-panel"><h3>目录</h3><a class="l2" href="#s-skills"><span class="dot">●</span>随工具一起交付「怎么做」：Skills over MCP</a><a class="l2" href="#s-tasks"><span class="dot">●</span>MCP 服务器现在能在 Claude 里承担长时、可交互的工作</a><a class="l2" href="#s-support"><span class="dot">●</span>今天就可以给你的插件加上支持</a><a class="l2" href="#s-foundations"><span class="dot">●</span>为生产环境的智能体连接，打更结实的地基</a><a class="l2" href="#s-thanks"><span class="dot">●</span>谢谢 MCP 社区</a></nav>
+</div>
+
+<script>window.CARDS={"links":{"L1":{"title_zh":"发布 Model Context Protocol","title_en":"Introducing the Model Context Protocol","site":"anthropic.com","what_zh":"MCP 的第一篇发布公告（2024-11-25）：为什么要做这个协议、整套东西由哪几块组成。","why_zh":"本文开头说「两年前」，起点就是这一篇。想弄清 MCP 解决的到底是哪个具体问题，读一手声明比读二手解读可靠。","tier":"必读","order":1,"url":"https://www.anthropic.com/news/model-context-protocol"},"L2":{"title_zh":"Skills 扩展规范（MCP）","title_en":"Skills — Model Context Protocol","site":"modelcontextprotocol.io","what_zh":"Skills 扩展的正式规范页：服务器怎么对外暴露技能、客户端怎么发现和读取。","why_zh":"本文第 1 节说的「按需加载」「随服务器更新」，在这页都能对上具体的协议消息，不是营销话术。","tier":"必读","order":2,"url":"https://modelcontextprotocol.io/extensions/skills/overview"},"L3":{"title_zh":"Shopify 连接器（Claude 目录）","title_en":"Shopify connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 连接器目录里的 Shopify 条目，也就是本文举例的第一个使用者。","why_zh":"看它一眼能明白「技能」在真实产品里长什么样：不是抽象概念，而是一个在目录里可安装的条目。","tier":"可选","order":16,"url":"https://claude.com/marketplace/connectors/shopify"},"L4":{"title_zh":"HubSpot 连接器（Claude 目录）","title_en":"HubSpot connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 HubSpot 条目。","why_zh":"本文说它负责「客户上手引导」，目录页的说法是给每个回答、洞察和动作都带上 CRM 上下文——两句话能对照着看。","tier":"可选","order":17,"url":"https://claude.com/marketplace/connectors/hubspot"},"L5":{"title_zh":"Atlassian MCP 连接器（Claude 目录）","title_en":"Atlassian MCP connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 Atlassian 条目，覆盖 Jira、Confluence、Bitbucket、Loom 等应用。","why_zh":"本文说它让 Claude 用上「组织内部的深层上下文」。这页给了这句话的具体边界：用的是你现有的 Atlassian 权限。","tier":"可选","order":18,"url":"https://claude.com/marketplace/connectors/atlassian"},"L6":{"title_zh":"Carta 连接器（Claude 目录）","title_en":"Carta connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 Carta 条目，做的是股权与私募资本那摊事。","why_zh":"本文唯一一个标了「即将推出」的案例。对照它和目录页，能看出「官宣」与「已上线」之间还有距离。","tier":"可选","order":19,"url":"https://claude.com/marketplace/connectors/carta"},"L7":{"title_zh":"Tasks 扩展规范（MCP）","title_en":"Tasks — Model Context Protocol","site":"modelcontextprotocol.io","what_zh":"Tasks 扩展的规范页：长请求怎么变成可轮询的任务、状态怎么走。","why_zh":"本文第 2 节的第一项能力。这页解释了「为什么不用直接把连接挂住」——那是理解 Tasks 的关键一问。","tier":"必读","order":3,"url":"https://modelcontextprotocol.io/extensions/tasks/overview"},"L8":{"title_zh":"ZoomInfo 连接器（Claude 目录）","title_en":"ZoomInfo connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 ZoomInfo 条目，B2B 数据那一类。","why_zh":"本文用来说明 Tasks 的实际收益：以前要好几轮提示词的调研，现在一次任务就能跑完。","tier":"可选","order":20,"url":"https://claude.com/marketplace/connectors/zoominfo"},"L9":{"title_zh":"Elicitation 规范（MCP 2026-07-28）","title_en":"Elicitation — Model Context Protocol","site":"modelcontextprotocol.io","what_zh":"征求确认的正式规范：两种模式、能力声明、以及哪些信息绝不能走表单。","why_zh":"本文只用一句话带过「通过表单或链接」。链接二字背后其实是两套模式，安全边界也不同，看这页才知道差别在哪。","tier":"必读","order":4,"url":"https://modelcontextprotocol.io/specification/2026-07-28/client/elicitation"},"L10":{"title_zh":"Supabase 连接器（Claude 目录）","title_en":"Supabase connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 Supabase 条目：数据库、认证、存储。","why_zh":"本文举的第一个「花钱前先确认」的例子。这类场景最容易被智能体搞出账单，所以拿它当范例很合适。","tier":"可选","order":21,"url":"https://claude.com/marketplace/connectors/supabase"},"L11":{"title_zh":"Railway 连接器（Claude 目录）","title_en":"Railway connector | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 Railway 条目：部署与运维。","why_zh":"本文举的第二个例子，针对的是「可能造成破坏的改动」——注意原文用的是 potentially，不是确定会坏。","tier":"可选","order":22,"url":"https://claude.com/marketplace/connectors/railway"},"L12":{"title_zh":"GitHub 插件（Claude 目录）","title_en":"GitHub | Claude by Anthropic","site":"claude.com","what_zh":"Claude 目录里的 GitHub 条目（官方 GitHub MCP 服务器）。","why_zh":"本文第三个例子用的手段更有意思：不是问「要不要删」，而是让你把仓库名手打一遍。","tier":"可选","order":23,"url":"https://claude.com/marketplace/plugins/github"},"L13":{"title_zh":"文件上传扩展（实验仓库）","title_en":"modelcontextprotocol/experimental-ext-file-uploads","site":"github.com","what_zh":"文件上传扩展的代码仓库，由专门的 File Uploads 工作组维护。","why_zh":"本文说它「即将推出」。仓库名里的 experimental 就是这句话的证据：接口还在演进，别当成已冻结的标准去接。","tier":"必读","order":5,"url":"https://github.com/modelcontextprotocol/experimental-ext-file-uploads"},"L14":{"title_zh":"Claude Code 文档：使用 MCP 服务器带来的技能","title_en":"Connect Claude Code to tools via MCP — Use skills from MCP servers","site":"code.claude.com","what_zh":"Claude Code 文档里「怎么用服务器带来的技能」这一节，含组织层面的开关。","why_zh":"本文说「Pro / Max / Ultra 默认开启，Team 要管理员打开」。这页把 Team 具体点哪个开关写清楚了。","tier":"必读","order":6,"url":"https://code.claude.com/docs/en/mcp#use-skills-from-mcp-servers"},"L15":{"title_zh":"Claude Code 文档：给服务器作者的 Tasks 说明","title_en":"Connect Claude Code to tools via MCP — MCP tasks for server authors","site":"code.claude.com","what_zh":"从服务器作者角度写 Tasks：什么条件下能用任务回答、回答里必须有什么字段。","why_zh":"本文只讲了收益。这页讲的是最容易踩的坑：请求里没有那个扩展，你就不能回任务，回了就报错。","tier":"必读","order":7,"url":"https://code.claude.com/docs/en/mcp#mcp-tasks-for-server-authors"},"L16":{"title_zh":"Claude Code 文档：回应 MCP 的征求确认请求","title_en":"Connect Claude Code to tools via MCP — Respond to MCP elicitation requests","site":"code.claude.com","what_zh":"从用户视角写征求确认：终端里会弹什么、两种模式各自怎么操作。","why_zh":"本文说「通过表单或链接」。这页把「链接」模式在命令行里的实际体验写全了，包括 URL 太长时只能拒绝这种细节。","tier":"必读","order":8,"url":"https://code.claude.com/docs/en/mcp#respond-to-mcp-elicitation-requests"},"L17":{"title_zh":"Claude 文档：支持文件的收发","title_en":"Support file uploads and downloads","site":"claude.com","what_zh":"给要接文件收发的服务器看的要求清单：存储前提、主机审批、各类限额。","why_zh":"本文只说「PDF、表格、图片直达服务器」。这页说明为什么需要审批主机，以及一次能传多少、多久超时——真要接的时候这些数字决定成败。","tier":"必读","order":9,"url":"https://claude.com/docs/connectors/building/files?open_in_browser=1"},"L18":{"title_zh":"Tool search 工具（Claude 平台文档）","title_en":"Tool search tool — Claude Platform Docs","site":"platform.claude.com","what_zh":"Claude 平台文档里关于 tool search 的那一页。","why_zh":"本文「可削减 85% 以上上下文」这一说法的来源。可惜这一页在本区域会跳到不可用页，只能确认链接有效、内容无法复核。","tier":"背景","order":11,"url":"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool"},"L19":{"title_zh":"MCP 2026-07-28 规范：无状态核心，正在进入 Claude","title_en":"MCP 2026-07-28 spec: stateless core, coming to Claude","site":"claude.com","what_zh":"第五版规范 2026-07-28 的官方解读：为什么改成无状态、扩展怎么规范化、授权改了什么。","why_zh":"本文第 4 节四条改进里最抽象的一条（stateless）在这里有完整来龙去脉，读完才知道「无状态」不是把功能砍掉。","tier":"必读","order":10,"url":"https://claude.com/resources/articles/bringing-mcp-2026-07-28-to-claude"},"L20":{"title_zh":"连接器的企业托管授权","title_en":"Enterprise Managed Auth for connectors","site":"claude.com","what_zh":"企业托管授权的实现文档：用签名的身份断言替代 OAuth 同意页。","why_zh":"本文说「管理员授权一次，用户自动连上」。这页说明「自动」是怎么做到的——不是绕过授权，而是换了一种断言方式。","tier":"背景","order":12,"url":"https://claude.com/docs/connectors/building/enterprise-managed-auth"},"L21":{"title_zh":"给你的 MCP 服务器加一个交互式界面","title_en":"Add an interactive UI to your MCP server","site":"claude.com","what_zh":"MCP Apps 的 quickstart：用一条 ui:// 资源把 HTML 界面接进对话。","why_zh":"本文只说到「把完整界面搬进 Claude」。这页能看到实现有多具体：一个资源 URI、一个指向它的字段、一层沙箱。","tier":"背景","order":13,"url":"https://claude.com/docs/connectors/building/mcp-apps/quickstart"},"L22":{"title_zh":"Agentic AI Foundation（AAIF）","title_en":"Agentic AI Foundation (AAIF)","site":"aaif.io","what_zh":"托管 MCP 的那个中立基金会。","why_zh":"本文最后一句说 MCP 是开放标准、由它托管。点开能确认这不是修辞：基金会确实在推多个智能体方向的开放协议。","tier":"背景","order":14,"url":"https://aaif.io/"},"L23":{"title_zh":"MCP 的两年：建设者之年","title_en":"Two Years of MCP Builders","site":"blog.modelcontextprotocol.io","what_zh":"MCP 两周年的官方回顾，作者是创始人 David Soria Parra 与 Den Delimarsky。","why_zh":"本文最后一段在致谢。这篇是同一天的完整版致谢，而且带了具体数字和项目清单，比一句 thank you 有料。","tier":"背景","order":15,"url":"https://blog.modelcontextprotocol.io/posts/mcp-turns-two"}},"terms":{"mcp":{"en":"Model Context Protocol","zh":"模型上下文协议（MCP）","def_zh":"Anthropic 2024 年开源的连接标准：用一套统一协议把 AI 客户端和外部系统（数据仓、代码仓、CRM 等）接起来，任何厂商都能实现。","analogy_zh":"相当于智能体世界的 USB 接口。"},"mcp-server":{"en":"MCP server","zh":"MCP 服务器","def_zh":"按 MCP 协议对外提供能力的一方：一个进程或远程服务，能提供工具、资源，现在还能提供技能。","analogy_zh":"就是插在 USB 口上的那台设备。"},"agent":{"en":"agent","zh":"智能体（agent）","def_zh":"能自己多步行动的系统：读任务、调工具、看结果、再决定下一步，而不是一问一答。","analogy_zh":"像会自己找工具的实习生。"},"spec":{"en":"spec","zh":"规范（spec）","def_zh":"MCP 的正式文本：规定消息格式、能力协商、各扩展的必须与可选行为，是实现和兼容性的依据。","analogy_zh":"像插座标准，插头能不能插看它。"},"public-beta":{"en":"public beta","zh":"公测（public beta）","def_zh":"功能已对所有用户开放，但接口和行为还可能调整；与 GA（正式可用、承诺稳定）相对。","analogy_zh":"能用了，但还会改。"},"skill":{"en":"skills","zh":"技能（skills）","def_zh":"写给模型看的操作说明，通常是一个含 SKILL.md 的目录，可以带附属文件；只在需要时加载。","analogy_zh":"相当于随设备附赠的操作手册。"},"tasks":{"en":"Tasks","zh":"任务（Tasks）","def_zh":"MCP 的异步执行机制：服务器先返回 taskId 和状态，客户端轮询，跑完再取结果，不必一直占着连接。","analogy_zh":"像取餐号：先给你号，好了再取。"},"elicitation":{"en":"Elicitation","zh":"征求确认（Elicitation）","def_zh":"服务器在调用途中向用户要信息或确认的机制：可以弹表单（form 模式），也可以跳到外部链接（URL 模式）。","analogy_zh":"像付款前的确认弹窗。"},"file-uploads":{"en":"File Uploads","zh":"文件上传（File Uploads）","def_zh":"MCP 扩展：客户端把 PDF、电子表格、图片等文件直接交给服务器，而不是把内容塞进对话上下文。","analogy_zh":"像递 U 盘，而不是把文件念一遍。"},"extension":{"en":"extension","zh":"扩展（extension）","def_zh":"在 MCP 基础协议之外加的一层可选能力：双方都声明支持才启用，不支持就退回基础协议。","analogy_zh":"像协议上的可选配件。"},"context-window":{"en":"context window","zh":"上下文窗口（context window）","def_zh":"模型一次能看到的全部内容上限（对话、工具定义、文件内容都算）；塞得越满，留给干活的空间越少。","analogy_zh":"像一张固定大小的书桌。"},"tool-search":{"en":"tool search","zh":"工具检索（tool search）","def_zh":"先只把工具索引给模型，需要时再按需加载工具定义，避免几十个服务器的定义把上下文撑满。","analogy_zh":"像先看目录，再取书。"},"stateless":{"en":"stateless","zh":"无状态（stateless）","def_zh":"每个请求自带所需信息，服务器不依赖上一次请求留下的会话；扩容、重连、部署到 serverless 都更容易。","analogy_zh":"像每次进门都重新报一遍身份。"},"connector":{"en":"connector","zh":"连接器（connector）","def_zh":"Claude 目录里对 MCP 服务器的产品化叫法：一键连上某个服务，背后是一个 MCP 服务器或插件。","analogy_zh":"同一个东西，售卖页上的名字。"}},"notes":{"N1":{"title_zh":"Skills over MCP 是功能名","body_zh":"这里说的是一个具体功能：一套让 MCP 服务器把「技能」（含 SKILL.md 的说明目录）随工具一起发布的扩展。不是泛指「MCP 有很多技巧」。"},"N2":{"title_zh":"agentic messaging and orchestration","body_zh":"这两个词还没有稳定的中文定名。这里的含义是：智能体之间互相发消息、以及把多个智能体组织起来干活——MCP 正在成为这类协作的通用接口。"},"N3":{"title_zh":"这句话是全文的框架","body_zh":"「更像跟另一个智能体协作」是这批更新的主线：服务器不再是一个被动函数库，而是一个能学、能派活、能交换输入和文件的合作方。后面三项能力都在给这句话补细节。"},"N4":{"title_zh":"套餐名保持原文","body_zh":"套餐名保留英文原名，首次出现时括注中文，以免与实际计费页面对不上。本节说的是 Skills over MCP 的开放范围：Pro、Max、Ultra 默认开启，Team 要管理员打开，Enterprise 尚未开放。"},"N5":{"title_zh":"Tasks 不是待办事项","body_zh":"MCP 规范里的 Task 是一次异步执行的句柄：服务器先返回 taskId 和状态，客户端轮询，跑完了再取结果。跟产品界面里的「待办任务」不是一回事。"},"N6":{"title_zh":"表单 / 链接对应两种模式","body_zh":"规范里分 form 模式（服务器给 JSON 表单，客户端渲染）和 URL 模式（跳到外部链接处理，密码、支付凭据这类敏感信息不允许走 form 模式经过客户端）。"},"N7":{"title_zh":"为什么强调「不经过上下文窗口」","body_zh":"文件按字节直达服务器，模型不必先「读一遍」再复述，因此不占上下文、也不受上下文长度限制；这也是它能传 PDF、表格、图片的前提。"}},"typos":[]};</script>
+<script>/* ============================================================
+   交互层：句级联动 / 悬停卡片 / 图切换与放大 / 模式与字号
+   ============================================================ */
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------------- 阅读进度 ---------------- */
+  var bar = $("#progress");
+  function onScroll() {
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + "%";
+    hideCard();
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- 句级联动 ---------------- */
+  var reader = $("#reader");
+  var current = null;   // 当前悬停的 data-k
+  var pinned = null;    // 点击钉住的 data-k
+
+  function pairsOf(k) {
+    return $$('.s[data-k="' + k + '"]', reader);
+  }
+  function paint(k) {
+    $$(".s.hl", reader).forEach(function (el) {
+      el.classList.remove("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.remove("focus");
+    });
+    if (!k) return;
+    var ps = pairsOf(k);
+    if (!ps.length) return;
+    ps.forEach(function (el) {
+      el.classList.add("hl");
+      var row = el.closest(".row");
+      if (row) row.classList.add("focus");
+    });
+  }
+  function pin(k) {
+    $$(".s.pin", reader).forEach(function (el) { el.classList.remove("pin"); });
+    if (k) pairsOf(k).forEach(function (el) { el.classList.add("pin"); });
+  }
+
+  if (reader) {
+    reader.addEventListener("pointerover", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      var k = s.getAttribute("data-k");
+      if (k === current) return;
+      current = k;
+      paint(k);
+    });
+    reader.addEventListener("pointerout", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.relatedTarget && s.contains(e.relatedTarget)) return;
+      current = null;
+      paint(pinned);
+    });
+    reader.addEventListener("click", function (e) {
+      var s = e.target.closest ? e.target.closest(".s") : null;
+      if (!s) return;
+      if (e.target.closest("a")) return;              // 点链接不钉住
+      var k = s.getAttribute("data-k");
+      if (pinned === k) { pinned = null; paint(current); }
+      else { pinned = k; paint(k); }
+      pin(pinned);
+    });
+  }
+
+  /* ---------------- 悬停卡片 ---------------- */
+  var card = $("#card");
+  var CARD_SEL = "[data-link],[data-term],[data-note],[data-typo]";
+  var chipTier = { "必读": "", "背景": "", "可选": "" };
+
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function buildCard(el) {
+    var C = window.CARDS || {};
+    var html = "";
+    var link = el.getAttribute("data-link");
+    var term = el.getAttribute("data-term");
+    var note = el.getAttribute("data-note");
+    var typo = el.getAttribute("data-typo");
+
+    if (link && C.links && C.links[link]) {
+      var L = C.links[link];
+      var cls = L.tier === "必读" ? " must" : (L.tier === "背景" ? " bg" : "");
+      html += '<div class="k">延伸阅读 · ' + esc(link) +
+        '<span class="chip' + cls + '">' + esc(L.tier || "可选") + '</span>' +
+        (L.order ? '<span class="chip">建议 ' + esc(L.order) + '</span>' : "") + "</div>";
+      html += "<h4>" + esc(L.title_zh || L.title_en || L.url) + "</h4>";
+      html += '<p class="url">' + esc(L.site || "") + "</p>";
+      if (L.what_zh) html += '<p class="body"><b>这是什么：</b>' + esc(L.what_zh) + "</p>";
+      if (L.why_zh) html += '<p class="body"><b>为什么值得点：</b>' + esc(L.why_zh) + "</p>";
+      html += '<div class="foot"><i>↗</i> 点击正文里的链接会在新标签页打开原文</div>';
+    } else if (term && C.terms && C.terms[term]) {
+      var T = C.terms[term];
+      html += '<div class="k">术语<span class="chip">TERM</span></div>';
+      html += "<h4>" + esc(T.en) + (T.zh ? " · " + esc(T.zh) : "") + "</h4>";
+      html += '<p class="body">' + esc(T.def_zh) + "</p>";
+      if (T.analogy_zh) html += '<p class="body"><b>打个比方：</b>' + esc(T.analogy_zh) + "</p>";
+    } else if (note && C.notes && C.notes[note]) {
+      var N = C.notes[note];
+      html += '<div class="k">译者注<span class="chip">NOTE</span></div>';
+      html += "<h4>" + esc(N.title_zh) + "</h4>";
+      html += '<p class="body">' + esc(N.body_zh) + "</p>";
+    } else if (typo !== null && typo !== undefined && C.typos && C.typos[typo]) {
+      var Y = C.typos[typo];
+      html += '<div class="k">原文如此<span class="chip">TYPO</span></div>';
+      html += '<p class="url">' + esc(Y.quote_en) + "</p>";
+      html += '<p class="body">' + esc(Y.body_zh) + "</p>";
+    } else { return false; }
+    card.innerHTML = html;
+    return true;
+  }
+
+  function placeCard(el) {
+    card.classList.add("show");
+    var r = el.getBoundingClientRect();
+    var cw = card.offsetWidth, ch = card.offsetHeight;
+    var sx = window.pageXOffset || 0, sy = window.pageYOffset || 0;
+    var vx = r.right + 14;
+    if (vx + cw > window.innerWidth - 12) vx = r.left - cw - 14;
+    if (vx < 12) vx = Math.max(12, window.innerWidth - cw - 12);
+    var vy = r.top + r.height / 2 - ch / 2;
+    vy = Math.max(12, Math.min(vy, window.innerHeight - ch - 12));
+    card.style.left = Math.round(vx + sx) + "px";
+    card.style.top = Math.round(vy + sy) + "px";
+  }
+
+  var cardTimer = null;
+  function hideCard() {
+    clearTimeout(cardTimer);
+    if (!card) return;
+    if (card.classList.contains("show")) card.classList.remove("show");
+  }
+  function showCard(el) {
+    clearTimeout(cardTimer);
+    if (!buildCard(el)) return;
+    card.classList.remove("show");
+    card.style.left = "-9999px"; card.style.top = "-9999px";
+    cardTimer = setTimeout(function () { placeCard(el); }, 70);
+  }
+
+  document.addEventListener("pointerover", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (el === card) return;
+    showCard(el);
+  });
+  document.addEventListener("pointerout", function (e) {
+    var el = e.target.closest ? e.target.closest(CARD_SEL) : null;
+    if (!el) return;
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    hideCard();
+  });
+
+  /* ---------------- 图片：静帧/动图、放大 ---------------- */
+  $$(".fig").forEach(function (fig) {
+    var gif = $("img.anim", fig), still = $("img.still", fig);
+    var bStill = $('[data-act="still"]', fig), bAnim = $('[data-act="anim"]', fig);
+    var cap = fig.getAttribute("data-cap") || "";
+    if (gif && still && bStill && bAnim) {
+      bStill.classList.add("on");
+      bStill.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = false; gif.hidden = true;
+        bStill.classList.add("on"); bAnim.classList.remove("on");
+      });
+      bAnim.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        still.hidden = true; gif.hidden = false;
+        bAnim.classList.add("on"); bStill.classList.remove("on");
+      });
+    }
+    var media = $(".fig-media", fig);
+    if (media) {
+      media.addEventListener("click", function (ev) {
+        if (ev.target.closest("a,button")) return;
+        var img = $("img:not([hidden])", media);
+        if (!img) return;
+        openLB(img.getAttribute("src"), cap);
+      });
+    }
+  });
+
+  var lb = $("#lb"), lbImg = $("#lbImg"), lbCap = $("#lbCap");
+  function openLB(src, cap) {
+    lbImg.src = src;
+    lbCap.textContent = cap || "";
+    lb.classList.add("show");
+    lb.setAttribute("aria-hidden", "false");
+    $(".lb-scroll", lb).scrollTop = 0;
+  }
+  function closeLB() {
+    lb.classList.remove("show");
+    lb.setAttribute("aria-hidden", "true");
+    setTimeout(function () { lbImg.removeAttribute("src"); }, 200);
+  }
+  $("#lbClose").addEventListener("click", closeLB);
+  lb.addEventListener("click", function (e) { if (e.target === lb || e.target.classList.contains("lb-scroll")) closeLB(); });
+
+  /* ---------------- 内嵌视频（demo）：点播才把 base64 解成 Blob URL ---------------- */
+  function initInlineVideos() {
+    $$(".video-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var id = btn.getAttribute("data-video");
+        var src = btn.getAttribute("data-src");
+        var holder = document.getElementById("vid-" + id);
+        var url;
+        if (src) {
+          url = src;
+        } else if (holder) {
+          var b64 = holder.textContent.replace(/\s/g, "");
+          var bin = atob(b64), n = bin.length, u8 = new Uint8Array(n);
+          for (var i = 0; i < n; i++) u8[i] = bin.charCodeAt(i);
+          url = URL.createObjectURL(new Blob([u8], { type: "video/mp4" }));
+        } else return;
+        var fig = btn.closest("figure");
+        var media = btn.parentNode;
+        var v = document.createElement("video");
+        v.className = "fig-video";
+        v.controls = true;
+        v.autoplay = true;
+        v.playsInline = true;
+        v.setAttribute("playsinline", "");
+        v.src = url;
+        media.insertBefore(v, btn);
+        var poster = media.querySelector(".video-poster");
+        if (poster) poster.remove();
+        btn.remove();
+        if (holder) holder.remove();
+        v.play().catch(function () {});
+      });
+    });
+  }
+  initInlineVideos();
+
+  /* ---------------- 模式 / 字号 ---------------- */
+  function setMode(m) {
+    document.body.setAttribute("data-mode", m);
+    $$("#modeSeg button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-mode") === m);
+    });
+    try { localStorage.setItem("mode", m); } catch (e) {}
+  }
+  $$("#modeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () { setMode(b.getAttribute("data-mode")); });
+  });
+  try {
+    var savedMode = localStorage.getItem("mode");
+    if (savedMode) setMode(savedMode);
+  } catch (e) {}
+
+  var BASE = { en: 18.5, zh: 16.5 };
+  var scale = 1;
+  try { scale = parseFloat(localStorage.getItem("scale")) || 1; } catch (e) {}
+  function applyScale() {
+    scale = Math.max(0.85, Math.min(1.32, scale));
+    document.documentElement.style.setProperty("--fs-en", (BASE.en * scale).toFixed(2) + "px");
+    document.documentElement.style.setProperty("--fs-zh", (BASE.zh * scale).toFixed(2) + "px");
+    try { localStorage.setItem("scale", String(scale)); } catch (e) {}
+  }
+  applyScale();
+  $("#fPlus").addEventListener("click", function () { scale += 0.06; applyScale(); });
+  $("#fMinus").addEventListener("click", function () { scale -= 0.06; applyScale(); });
+
+  /* ---------------- 目录 ---------------- */
+  var toc = $("#toc");
+  function openTOC() { toc.classList.add("show"); toc.setAttribute("aria-hidden", "false"); }
+  function closeTOC() { toc.classList.remove("show"); toc.setAttribute("aria-hidden", "true"); }
+  $("#tocBtn").addEventListener("click", openTOC);
+  toc.addEventListener("click", function (e) {
+    if (e.target.hasAttribute("data-close") || e.target.tagName === "A") closeTOC();
+  });
+
+  /* ---------------- 键盘 ---------------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeLB(); closeTOC(); hideCard(); }
+  });
+  window.addEventListener("resize", hideCard);
+})();
+</script>
+<script id="site-mast-script">
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var KEY = 'site-theme';
+  var btn = document.querySelector('[data-theme-toggle]');
+  var reduce = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  function isDark() { return root.getAttribute('data-theme') === 'dark'; }
+  function sync() {
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+    btn.setAttribute('aria-label', isDark() ? '切换到浅色模式' : '切换到深色模式');
+  }
+  function commit(dark) {
+    try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch (e) {}
+    sync();
+  }
+  if (!btn) return;
+  sync();
+  btn.addEventListener('click', function () {
+    var dark = !isDark();
+    function set() {
+      if (dark) { root.setAttribute('data-theme', 'dark'); } else { root.removeAttribute('data-theme'); }
+    }
+    if (typeof document.startViewTransition !== 'function' || (reduce && reduce.matches)) {
+      set(); commit(dark); return;
+    }
+    var r = btn.getBoundingClientRect();
+    var x = r.left + r.width / 2;
+    var y = r.top + r.height / 2;
+    var rad = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty('--vt-x', x + 'px');
+    root.style.setProperty('--vt-y', y + 'px');
+    root.style.setProperty('--vt-r', rad + 'px');
+    root.classList.add('theme-vt');
+    var vt = document.startViewTransition(function () { set(); commit(dark); });
+    function done() { root.classList.remove('theme-vt'); }
+    vt.finished.then(done, done);
+  });
+})();
+</script>
+<script id="site-a11y">
+(function () {
+  if (!window.PointerEvent) return;
+  var els = document.querySelectorAll("[data-term],[data-note],[data-typo]");
+  Array.prototype.forEach.call(els, function (el) {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    if (!el.getAttribute("aria-label")) {
+      el.setAttribute("aria-label", "查看注释：立即阅读");
+    }
+    el.addEventListener("focus", function () {
+      el.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+    });
+    el.addEventListener("blur", function () {
+      el.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") el.blur();
+    });
+  });
+})();
+</script>
+</body>
+</html>

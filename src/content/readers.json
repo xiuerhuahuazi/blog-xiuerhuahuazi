@@ -1,6 +1,24 @@
 {
  "readers": [
   {
+   "slug": "skills-over-mcp",
+   "title_zh": "MCP 服务器现在能随工具一起发布技能，还能接下长任务",
+   "title_en": "MCP servers can now ship skills, run tasks, and more with Claude",
+   "source_url": "https://claude.com/resources/articles/skills-over-mcp-tasks-and-more",
+   "org": "Anthropic",
+   "published": "2026-11-24",
+   "read_min": 5,
+   "category": "智能体架构",
+   "blurb": "MCP 从「只交工具」升级成「能交技能」：服务器可以把 SKILL.md 那套说明随工具一起发，按需加载、随服务器更新。再加上 Tasks、Elicitation、File Uploads，服务器开始像另一个智能体——能跑长活、能中途问你、能收文件。",
+   "pairs": 48,
+   "words": 810,
+   "chars": 2300,
+   "terms": 14,
+   "figures": 2,
+   "cover": "",
+   "featured": false
+  },
+  {
    "slug": "grok-bot-automation",
    "title_zh": "用 Grok Bot 自动化任何事",
    "title_en": "Automate Anything with Grok Bot",
