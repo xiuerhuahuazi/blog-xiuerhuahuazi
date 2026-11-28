@@ -96,13 +96,13 @@ python3 -m http.server -d dist 8000
 - 图片尺寸、颜色对比度、性能指标。
 - `404.html` 的 canonical / description 按设计跳过。
 
-## 当前验收基线（2026-11-16）
+## 当前验收基线（2026-11-28 实测）
 
-- build：23 个生成页（含 6 篇 2026-11-25 手记）。
-- check：44 个页面 / 1136 个引用，exit 0。
-- tests：9 条（`tests/test_sitecheck.py`）。
-- 精读：13 篇；源仓未变时重导 `src/readers/` 与 `readers.json` 零差异。
-- 数字随内容与模板变化；每次改版后重跑并更新本节。
+- build：23 个生成页（含 16 篇手记；其中 sitemap.xml / robots.txt 也计入这 23 项），**生成侧** HTML 合计 420 KB——不含导入的 26 篇精读页；`dist/` 全部 47 个 HTML 合计约 5.2 MiB。
+- check：47 个页面 / 1323 个引用，exit 0（`OK：链接、资源、锚点与 canonical 都正常`）。
+- tests：9 条（`tests/test_sitecheck.py`），全过。
+- 精读：26 篇（`src/readers/` 与 `readers.json` 各 26）；「源仓未变时重导零差异」是 2026-11-16 的实测，2026-11-28 未重跑导入。
+- 数字随内容与模板变化；每次改版后重跑并更新本节（上一版基线是 2026-11-16：44 页 / 1136 引用 / 13 篇精读）。
 
 ## 内容工作流
 
